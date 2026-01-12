@@ -1,0 +1,251 @@
+---
+name: manifold
+description: Constraint-first development framework. USE WHEN starting features, discovering requirements, surfacing conflicts, or generating artifacts. Commands /m0-/m5 + /m-status.
+---
+
+# Manifold
+
+Constraint-first development framework that makes ALL constraints visible BEFORE implementation.
+
+## Quick Start
+
+```
+/m0-init my-feature           # Initialize manifold
+/m1-constrain my-feature      # Discover constraints
+/m2-tension my-feature        # Surface conflicts
+/m3-anchor my-feature         # Backward reasoning
+/m4-generate my-feature       # Create all artifacts
+/m5-verify my-feature         # Validate constraints
+/m-status                     # Show current state
+```
+
+## Commands
+
+### /m0-init
+
+Initialize a constraint manifold for a feature.
+
+**Usage:** `/m0-init <feature-name> [--outcome="<desired outcome>"]`
+
+**What it does:**
+- Creates `.manifold/<feature-name>.yaml`
+- Initializes empty constraint categories (business, technical, UX, security, operational)
+
+**Example:**
+```
+/m0-init payment-retry --outcome="95% retry success for transient failures"
+```
+
+---
+
+### /m1-constrain
+
+Interview-driven constraint discovery across 5 categories.
+
+**Usage:** `/m1-constrain <feature-name> [--category=<category>]`
+
+**Constraint Categories:**
+1. **Business** - Revenue, compliance, stakeholders
+2. **Technical** - Performance, integration, data
+3. **User Experience** - Response times, errors, accessibility
+4. **Security** - Data protection, auth, audit
+5. **Operational** - Monitoring, SLAs, incidents
+
+**Constraint Types:**
+- **INVARIANT** - Must NEVER be violated
+- **GOAL** - Should be optimized
+- **BOUNDARY** - Hard limits
+
+**Example:**
+```
+/m1-constrain payment-retry
+
+Discovered:
+- B1: No duplicate payments (INVARIANT)
+- B2: 95% success rate (GOAL)
+- B3: Retry window ≤ 72 hours (BOUNDARY)
+```
+
+---
+
+### /m2-tension
+
+Surface and resolve constraint conflicts.
+
+**Usage:** `/m2-tension <feature-name> [--resolve]`
+
+**Tension Types:**
+1. **Direct Conflicts** - Contradictory constraints
+2. **Resource Tensions** - Competing for same resources
+3. **Trade-off Pairs** - Goals requiring balance
+4. **Hidden Dependencies** - Implicit relationships
+
+**Why this matters:** Requirements are rarely consistent. Real constraints often conflict:
+- "Fast response times" vs "Comprehensive validation"
+- "User-friendly errors" vs "Security through obscurity"
+- "High availability" vs "Strong consistency"
+
+**Example:**
+```
+/m2-tension payment-retry
+
+TENSION DETECTED:
+- T1: "API response < 200ms"
+- B1: "No duplicates" (idempotency check adds ~50ms)
+- Resolution: Cache recent transaction IDs
+```
+
+---
+
+### /m3-anchor
+
+Backward reasoning from desired outcome.
+
+**Usage:** `/m3-anchor <feature-name> [--outcome="<statement>"]`
+
+**Process:**
+1. Start with desired outcome
+2. Ask: "What must be TRUE?"
+3. Derive required conditions
+4. Identify gaps between current state and requirements
+5. Generate solution space
+
+**Why backward reasoning?** Forward planning misses implicit requirements. Backward reasoning surfaces them:
+
+**Forward:** "Build a retry system" → might miss edge cases
+
+**Backward:** "95% retry success" → REQUIRES:
+- Accurate failure classification
+- Sufficient retry budget
+- Stable downstream services
+- Idempotent operations
+
+**Example:**
+```
+/m3-anchor payment-retry --outcome="95% retry success"
+
+For 95% success, what MUST be true?
+- RT-1: Can distinguish transient from permanent failures
+- RT-2: Retries are idempotent
+- RT-3: Sufficient retry budget
+
+SOLUTION SPACE:
+A. Client-side exponential backoff
+B. Server-side queue with workflow engine
+C. Hybrid approach
+```
+
+---
+
+### /m4-generate
+
+Generate ALL artifacts simultaneously from the constraint manifold.
+
+**Usage:** `/m4-generate <feature-name> [--option=<A|B|C>] [--artifacts=<list>]`
+
+**Artifacts Generated:**
+- **Code** - Implementation with constraint traceability
+- **Tests** - Derived from constraints, not code
+- **Docs** - Design decisions with constraint rationale
+- **Runbooks** - Operational procedures for failure modes
+- **Dashboards** - Monitoring for goals and invariants
+- **Alerts** - Notifications for constraint violations
+
+**Why all at once?** Traditional: Code → Tests → Docs → Ops (often forgotten). Manifold: All artifacts derive from the SAME source.
+
+**Example:**
+```
+/m4-generate payment-retry --option=B
+
+Generated:
+- src/retry/payment-retry.ts
+- src/retry/payment-retry.test.ts
+- docs/payment-retry.md
+- ops/runbooks/payment-retry-failure.md
+- ops/dashboards/payment-retry.json
+- ops/alerts/payment-retry.yaml
+```
+
+---
+
+### /m5-verify
+
+Verify ALL artifacts against ALL constraints.
+
+**Usage:** `/m5-verify <feature-name> [--strict]`
+
+**Verification Matrix:**
+| Constraint | Code | Test | Docs | Ops | Status |
+|------------|------|------|------|-----|--------|
+| B1: No duplicates | ✓ | ✓ | ✓ | ✓ | SATISFIED |
+| T1: <200ms | ✓ | ◐ | ✓ | ✓ | PARTIAL |
+
+**Example:**
+```
+/m5-verify payment-retry
+
+Constraint Coverage:
+- INVARIANTS: 3/3 (100%)
+- GOALS: 4/5 (80%)
+- BOUNDARIES: 2/4 (50%)
+
+Gaps: Add test for ErrorClassifier.classify()
+```
+
+---
+
+### /m-status
+
+Show current Manifold state and next recommended action.
+
+**Usage:** `/m-status [<feature-name>]`
+
+**Example:**
+```
+/m-status
+
+MANIFOLD STATUS
+
+Feature: payment-retry
+Phase: ANCHORED (3/5)
+
+Constraint Summary:
+- Constraints: 12 discovered
+  - Invariants: 3
+  - Goals: 5
+  - Boundaries: 4
+- Tensions: 2 identified, 1 resolved
+- Solution Space: 3 options
+
+Workflow Progress:
+[✓] /m0-init
+[✓] /m1-constrain
+[✓] /m2-tension
+[✓] /m3-anchor
+[ ] /m4-generate
+[ ] /m5-verify
+
+Next: /m4-generate payment-retry --option=B
+```
+
+---
+
+## Storage
+
+All data stored in `.manifold/`:
+
+```
+.manifold/
+├── <feature>.yaml           # Constraint manifold
+├── <feature>.anchor.yaml    # Outcome anchoring
+└── <feature>.verify.yaml    # Verification results
+```
+
+## Philosophy
+
+Manifold treats development as **constraint satisfaction**, not feature building:
+
+1. **All constraints exist simultaneously** — business, technical, UX, security, operational, and future failure modes are all present-tense constraints
+2. **Surface conflicts early** — find tensions before they become bugs
+3. **Reason backward** — from outcome to requirements, not spec to implementation
+4. **Single source of truth** — all artifacts derive from the constraint manifold

@@ -1,0 +1,56 @@
+# Manifold - .gitignore
+# Only the toolkit implementation and installer should be committed
+
+# ===========================================
+# Development artifacts (exclude from repo)
+# ===========================================
+
+# FPF (First Principles Framework) - development decisioning
+.fpf/
+
+# Old temporal data directory
+.temporal/
+
+# Old command structure
+commands/
+
+# Old examples
+examples/
+
+# Test skill packages
+skill-package/
+.agents/
+
+# Old TDK skill directory
+install/tdk/
+
+# ===========================================
+# IDE and OS files
+# ===========================================
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ===========================================
+# Node/Bun artifacts
+# ===========================================
+node_modules/
+bun.lockb
+package-lock.json
+yarn.lock
+.npm/
+
+# ===========================================
+# Build artifacts
+# ===========================================
+dist/
+build/
+*.log
+
+# ===========================================
+# Runtime data (per-project, not in repo)
+# ===========================================
+.manifold/
