@@ -1,0 +1,101 @@
+---
+description: "Backward reasoning from desired outcome. Derives required conditions by asking 'What must be TRUE?'"
+---
+
+# /m3-anchor - Outcome Anchoring
+
+Backward reasoning from desired outcome to required conditions.
+
+## Usage
+
+```
+/m3-anchor <feature-name> [--outcome="<statement>"]
+```
+
+## Why Backward Reasoning?
+
+**Forward planning** (traditional): Start with spec → implement features → hope it works
+- Misses implicit requirements
+- Discovers edge cases late
+
+**Backward reasoning** (Manifold): Start with outcome → ask "What must be TRUE?" → derive requirements
+- Surfaces hidden assumptions
+- Identifies gaps early
+- Constrains solution space
+
+## Process
+
+1. **State the outcome** - Clear, measurable success criteria
+2. **Ask "What must be TRUE?"** - Necessary conditions for outcome
+3. **Derive required truths** - Chain backward from each condition
+4. **Identify gaps** - What's missing between current state and requirements?
+5. **Generate solution space** - Options that satisfy all required truths
+
+## Example
+
+```
+/m3-anchor payment-retry --outcome="95% retry success for transient failures"
+
+OUTCOME ANCHORING: payment-retry
+
+Outcome: 95% retry success for transient failures
+
+BACKWARD REASONING:
+
+For 95% retry success, what MUST be true?
+
+RT-1: Can distinguish transient from permanent failures
+      └── Requires: Error classification system
+      └── Gap: No current error taxonomy
+
+RT-2: Retries are idempotent
+      └── Requires: Transaction idempotency keys
+      └── Gap: Current system lacks idempotency
+
+RT-3: Sufficient retry budget
+      └── Requires: At least 3 attempts with exponential backoff
+      └── Gap: Need to define retry policy
+
+RT-4: Downstream services recoverable
+      └── Requires: Circuit breaker for dependencies
+      └── Gap: No circuit breaker implementation
+
+RT-5: Retry state persists across failures
+      └── Requires: Durable retry queue
+      └── Gap: In-memory only currently
+
+SOLUTION SPACE:
+
+Option A: Client-side Exponential Backoff
+├── Satisfies: RT-3
+├── Gaps: RT-2, RT-4, RT-5
+└── Complexity: Low
+
+Option B: Server-side Workflow Engine
+├── Satisfies: RT-1, RT-2, RT-3, RT-4, RT-5
+├── Gaps: None
+└── Complexity: High
+
+Option C: Hybrid (Client retry + Server queue)
+├── Satisfies: RT-1, RT-3, RT-5
+├── Gaps: None (with implementation)
+└── Complexity: Medium
+
+RECOMMENDATION: Option C (Hybrid)
+
+Updated: .manifold/payment-retry.anchor.yaml
+
+Next: /m4-generate payment-retry --option=C
+```
+
+## Execution Instructions
+
+1. Read manifold from `.manifold/<feature>.yaml`
+2. Get outcome from `--outcome` flag or manifold file
+3. For the outcome, recursively ask "What must be TRUE?"
+4. Each truth becomes an RT-N (Required Truth)
+5. Identify gaps between current state and requirement
+6. Generate 2-4 solution options
+7. Recommend best option with rationale
+8. Save to `.manifold/<feature>.anchor.yaml`
+9. Set phase to ANCHORED

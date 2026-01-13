@@ -11,8 +11,8 @@
 # Old temporal data directory
 .temporal/
 
-# Old command structure
-commands/
+# Old command structure (root only, not install/commands/)
+/commands/
 
 # Old examples
 examples/

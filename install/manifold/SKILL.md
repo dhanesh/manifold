@@ -1,6 +1,6 @@
 ---
 name: manifold
-description: Constraint-first development framework. USE WHEN starting features, discovering requirements, surfacing conflicts, or generating artifacts. Commands /m0-/m5 + /m-status.
+description: Constraint-first development framework overview. USE WHEN learning about Manifold or checking available commands. Individual commands are separate skills - use /m0-init, /m1-constrain, etc. directly.
 ---
 
 # Manifold
@@ -8,6 +8,8 @@ description: Constraint-first development framework. USE WHEN starting features,
 Constraint-first development framework that makes ALL constraints visible BEFORE implementation.
 
 ## Quick Start
+
+Each command is a separate skill. Use them directly:
 
 ```
 /m0-init my-feature           # Initialize manifold
@@ -18,6 +20,15 @@ Constraint-first development framework that makes ALL constraints visible BEFORE
 /m5-verify my-feature         # Validate constraints
 /m-status                     # Show current state
 ```
+
+**Available Skills:**
+- `/m0-init` - Initialize a constraint manifold
+- `/m1-constrain` - Interview-driven constraint discovery
+- `/m2-tension` - Surface and resolve conflicts
+- `/m3-anchor` - Backward reasoning from outcome
+- `/m4-generate` - Generate all artifacts
+- `/m5-verify` - Verify constraints coverage
+- `/m-status` - Show current state
 
 ## Commands
 
@@ -240,6 +251,71 @@ All data stored in `.manifold/`:
 ├── <feature>.anchor.yaml    # Outcome anchoring
 └── <feature>.verify.yaml    # Verification results
 ```
+
+## Task Tracking
+
+Manifold ensures tasks are completed through **constraint traceability**:
+
+### Generation Tracking (`/m4-generate`)
+Every generated artifact is recorded with the constraints it satisfies:
+```yaml
+generation:
+  artifacts:
+    - path: src/retry/PaymentRetryClient.ts
+      satisfies: [RT-1, RT-3]
+      status: generated
+  coverage:
+    constraints_addressed: 12
+    constraints_total: 12
+```
+
+### Verification Matrix (`/m5-verify`)
+Each constraint is checked across all artifacts:
+```yaml
+verification:
+  matrix:
+    - constraint: B1
+      code: true
+      test: true
+      docs: true
+      status: SATISFIED
+  gaps:
+    - id: G1
+      constraint: T2
+      action: "Add load test"
+```
+
+This enables:
+- **Programmatic CI/CD checks** - Validate `.verify.yaml` in pipelines
+- **Gap tracking** - Each gap has an actionable item
+- **Progress monitoring** - Coverage improves as gaps are addressed
+
+---
+
+## Context Preservation (Hook Setup)
+
+To preserve manifold state across context compaction, add to `~/.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "PreCompact": [{
+      "matcher": "",
+      "hooks": [{
+        "type": "command",
+        "command": "bun run ~/.claude/hooks/manifold-context.ts"
+      }]
+    }]
+  }
+}
+```
+
+This injects `.manifold/` state before compaction, so Claude remembers:
+- Current phase for each feature
+- Constraint counts and coverage
+- Next recommended action
+
+---
 
 ## Philosophy
 

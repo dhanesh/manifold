@@ -3,7 +3,7 @@
 # Manifold Installer
 # Usage: curl -fsSL https://raw.githubusercontent.com/dhanesh/manifold/main/install/install.sh | bash
 #
-# Installs Manifold skill for Claude Code and/or AMP
+# Installs Manifold for Claude Code and/or AMP
 #
 
 set -e
@@ -48,9 +48,8 @@ print_error() {
 
 # Detect Claude Code
 detect_claude_code() {
-    local claude_skills_dir="$HOME/.claude/skills"
     if [[ -d "$HOME/.claude" ]]; then
-        echo "$claude_skills_dir"
+        echo "$HOME/.claude"
         return 0
     fi
     return 1
@@ -59,33 +58,64 @@ detect_claude_code() {
 # Detect AMP
 detect_amp() {
     if command -v amp &> /dev/null; then
-        local amp_skills_dir="$HOME/.amp/skills"
-        echo "$amp_skills_dir"
+        echo "$HOME/.amp"
         return 0
     fi
     return 1
 }
 
-# Create skill directory
-create_skill() {
-    local target_dir="$1"
+# Command files to install (individual slash commands)
+COMMAND_FILES=(
+    "m0-init.md"
+    "m1-constrain.md"
+    "m2-tension.md"
+    "m3-anchor.md"
+    "m4-generate.md"
+    "m5-verify.md"
+    "m-status.md"
+)
+
+# Install Manifold
+install_manifold() {
+    local base_dir="$1"
     local agent_name="$2"
 
     print_step "Installing Manifold to $agent_name..."
 
-    # Create directory
-    mkdir -p "$target_dir/manifold"
+    local skills_dir="$base_dir/skills"
+    local commands_dir="$base_dir/commands"
+    local hooks_dir="$base_dir/hooks"
 
-    # Download or copy SKILL.md
+    # Create directories
+    mkdir -p "$skills_dir/manifold"
+    mkdir -p "$commands_dir"
+    mkdir -p "$hooks_dir"
+
+    # Install skill (for /manifold overview command)
     if [[ -n "$LOCAL_INSTALL" ]]; then
-        # Local install (for development)
-        cp "$SCRIPT_DIR/manifold/SKILL.md" "$target_dir/manifold/SKILL.md"
+        cp "$SCRIPT_DIR/manifold/SKILL.md" "$skills_dir/manifold/SKILL.md"
     else
-        # Remote install
-        curl -fsSL "$REPO/install/manifold/SKILL.md" -o "$target_dir/manifold/SKILL.md"
+        curl -fsSL "$REPO/install/manifold/SKILL.md" -o "$skills_dir/manifold/SKILL.md"
     fi
+    print_success "Installed /manifold skill to $skills_dir/manifold/"
 
-    print_success "Installed to $target_dir/manifold/"
+    # Install commands (for /m0-init, /m1-constrain, etc.)
+    for cmd_file in "${COMMAND_FILES[@]}"; do
+        if [[ -n "$LOCAL_INSTALL" ]]; then
+            cp "$SCRIPT_DIR/commands/$cmd_file" "$commands_dir/$cmd_file"
+        else
+            curl -fsSL "$REPO/install/commands/$cmd_file" -o "$commands_dir/$cmd_file"
+        fi
+    done
+    print_success "Installed ${#COMMAND_FILES[@]} commands to $commands_dir/"
+
+    # Install hook (for context preservation)
+    if [[ -n "$LOCAL_INSTALL" ]]; then
+        cp "$SCRIPT_DIR/hooks/manifold-context.ts" "$hooks_dir/manifold-context.ts"
+    else
+        curl -fsSL "$REPO/install/hooks/manifold-context.ts" -o "$hooks_dir/manifold-context.ts"
+    fi
+    print_success "Installed context hook to $hooks_dir/"
 }
 
 # Main installation
@@ -129,14 +159,13 @@ main() {
 
     # Install to Claude Code
     if [[ -n "$claude_dir" ]]; then
-        create_skill "$claude_dir" "Claude Code"
+        install_manifold "$claude_dir" "Claude Code"
         ((installed++))
     fi
 
     # Install to AMP
     if [[ -n "$amp_dir" ]]; then
-        mkdir -p "$amp_dir"
-        create_skill "$amp_dir" "AMP"
+        install_manifold "$amp_dir" "AMP"
         ((installed++))
     fi
 
@@ -155,13 +184,24 @@ main() {
     echo "  /m5-verify my-feature      # Validate constraints"
     echo "  /m-status                  # Show current state"
     echo ""
+    echo -e "${BOLD}Overview:${NC}"
+    echo "  /manifold                  # Show framework overview"
+    echo ""
+    echo -e "${BOLD}Optional: Enable Context Preservation${NC}"
+    echo ""
+    echo "Add to ~/.claude/settings.json under \"hooks\":{\"PreCompact\":[...]}:"
+    echo ""
+    echo "  {\"type\": \"command\", \"command\": \"bun run ~/.claude/hooks/manifold-context.ts\"}"
+    echo ""
+    echo "This preserves manifold state across context compaction."
+    echo ""
     echo "Documentation: https://github.com/dhanesh/manifold"
     echo ""
 }
 
 # Handle local install mode
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -f "$SCRIPT_DIR/manifold/SKILL.md" ]]; then
+if [[ -f "$SCRIPT_DIR/manifold/SKILL.md" && -d "$SCRIPT_DIR/commands" ]]; then
     LOCAL_INSTALL=1
 fi
 
