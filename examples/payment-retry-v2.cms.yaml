@@ -1,0 +1,232 @@
+# payment-retry-v2.cms.yaml
+# Constraint Manifold Specification
+# Generated: 2025-01-12
+# Status: VALIDATED
+
+meta:
+  id: "payment-retry-v2"
+  version: "1.0.0"
+  outcome_anchor: "Payment retry succeeds for 95% of transient failures within 3 attempts"
+  owners:
+    - name: "Dhanesh Purohit"
+      role: "CTO"
+    - name: "Backend Lead"
+      role: "Technical Owner"
+  created: "2025-01-12"
+  context:
+    company: "GrayQuest Education Finance"
+    domain: "Payment processing for education fees"
+  
+constraints:
+  business:
+    - id: "B1"
+      type: "invariant"
+      statement: "No duplicate payments for same invoice"
+      rationale: "Duplicate charges erode customer trust and require manual refunds"
+      violation_cost: "critical"
+      measurement: "duplicate_payment_count == 0"
+      _derived_from: "INC-2024-089"
+      
+    - id: "B2"
+      type: "goal"
+      statement: "Reduce manual payment intervention by 80%"
+      rationale: "Operations team currently handles 500+ manual cases/month"
+      measurement: "manual_intervention_count / total_failed_payments < 0.20"
+      current_baseline: "500 cases/month"
+      target: "< 100 cases/month"
+      
+    - id: "B3"
+      type: "boundary"
+      statement: "Retry window must not exceed 72 hours"
+      rationale: "NBFC reconciliation cycles require settlement within 72 hours"
+      measurement: "max(retry_completion_time - initial_failure_time) <= 72h"
+      
+    - id: "B4"
+      type: "invariant"
+      statement: "Failed payments after retry exhaustion must have defined escalation"
+      rationale: "5% of payments won't succeed - need clear handling"
+      measurement: "all exhausted retries have escalation_path != null"
+
+  technical:
+    - id: "T1"
+      type: "invariant"
+      statement: "Idempotency key must be preserved across retry attempts"
+      rationale: "Required to prevent duplicates at payment gateway level"
+      implementation_hint: "Use payment_id + attempt_number composite"
+      relates_to: ["B1"]
+      
+    - id: "T2"
+      type: "invariant"
+      statement: "Payment state machine transitions must be atomic"
+      rationale: "Partial state updates cause reconciliation nightmares"
+      relates_to: ["B1"]
+      implementation_hint: "Use Temporal workflow state, not database"
+      
+    - id: "T3"
+      type: "goal"
+      statement: "Retry decision latency < 100ms p99"
+      rationale: "Fast decisions enable better user experience"
+      measurement: "histogram_quantile(0.99, retry_decision_duration_seconds)"
+      target: "0.1"
+      
+    - id: "T4"
+      type: "boundary"
+      statement: "Must integrate with existing Temporal workflow engine"
+      rationale: "Temporal already deployed and team has expertise (ADR-007)"
+      implementation_hint: "Use Temporal retry policies where possible"
+      
+    - id: "T5"
+      type: "invariant"
+      statement: "Error classification must distinguish transient from permanent failures"
+      rationale: "Retrying permanent failures wastes resources and delays resolution"
+      relates_to: ["B2"]
+      
+  # Note: This example shows the extended CMS schema with additional metadata.
+  # Basic manifolds created by /m0-init use simplified structure.
+  user_experience:
+    - id: "U1"
+      type: "invariant"
+      statement: "User receives notification before first retry and on final outcome"
+      rationale: "Users need to know their payment is being handled"
+      channels: ["sms", "whatsapp", "email"]
+      
+    - id: "U2"
+      type: "goal"
+      statement: "User can cancel pending retry from notification"
+      rationale: "User may want to use different payment method"
+      implementation_hint: "Deep link to cancellation flow"
+      
+    - id: "U3"
+      type: "boundary"
+      statement: "Maximum 1 notification per 6 hour period"
+      rationale: "Prevent notification spam (ref: 47 SMS incident)"
+      _derived_from: "ticket_pattern_analysis"
+
+  security:
+    - id: "S1"
+      type: "invariant"
+      statement: "Payment credentials never logged or stored outside payment gateway"
+      rationale: "PCI-DSS compliance and SOC2 requirements"
+      compliance: ["SOC2", "PCI-DSS"]
+      audit: "Required for annual compliance audit"
+      
+    - id: "S2"
+      type: "invariant"
+      statement: "Retry operations authenticated via original transaction context"
+      rationale: "Prevent unauthorized retry triggering"
+      implementation_hint: "Carry session token in workflow state"
+
+  operational:
+    - id: "O1"
+      type: "goal"
+      statement: "Full observability of retry lifecycle"
+      rationale: "Support team needs visibility for customer queries"
+      measurement: "All state transitions logged to Mixpanel"
+      tooling: ["Mixpanel", "Internal Dashboard"]
+      
+    - id: "O2"
+      type: "boundary"
+      statement: "Graceful degradation if retry service unavailable"
+      rationale: "Core payment flow must not be blocked"
+      fallback: "Queue failed payments for manual processing"
+
+relationships:
+  - type: "dependency"
+    from: "T1"
+    to: "B1"
+    description: "T1 (idempotency) is the implementation mechanism for B1 (no duplicates)"
+    
+  - type: "dependency"
+    from: "T2"
+    to: "B1"
+    description: "T2 (atomic transitions) prevents partial states that could cause duplicates"
+    
+  - type: "tension"
+    between: ["U1", "U3"]
+    description: "User wants to know about retries vs. notification fatigue"
+    resolution: "Notify on first attempt and final outcome only, not intermediate attempts"
+    
+  - type: "tension"
+    between: ["T3", "T5"]
+    description: "Fast decisions vs. accurate classification may conflict"
+    resolution: "Cache classification results, async update for new error types"
+    
+  - type: "dependency"
+    from: "T5"
+    to: "B2"
+    description: "Accurate classification required to reduce manual intervention"
+
+failure_modes:
+  - id: "F1"
+    scenario: "Payment gateway returns ambiguous response (HTTP 200 with unclear status)"
+    probability: "medium"
+    impact: "high"
+    constraints_violated: ["B1", "T2"]
+    detection: "Response parsing fails to determine success/failure"
+    mitigation: "Mark as 'needs_verification', trigger manual check"
+    prevention: "Explicit handling for all known ambiguous responses"
+    _source: "INC-2024-156"
+    
+  - id: "F2"
+    scenario: "User cancels while retry in progress"
+    probability: "medium"
+    impact: "medium"
+    constraints_violated: ["B1"]
+    detection: "Cancellation signal received during payment activity"
+    mitigation: "Check payment status before confirming cancellation"
+    prevention: "Optimistic locking on payment state"
+    
+  - id: "F3"
+    scenario: "Notification service down during retry"
+    probability: "low"
+    impact: "low"
+    constraints_violated: ["U1"]
+    detection: "Notification activity fails"
+    mitigation: "Continue with retry, queue notification for later"
+    prevention: "Notification should not block payment flow"
+    
+  - id: "F_NEW_1"
+    scenario: "Gateway timeout after successful charge"
+    probability: "medium"
+    impact: "critical"
+    constraints_violated: ["B1"]
+    detection: "Timeout exception but no failure confirmation"
+    mitigation: "Query payment status before next attempt"
+    prevention: "Always check existing success before retry"
+    _source: "INC-2024-089"
+
+solution_space:
+  must_include:
+    - "Idempotent retry endpoint with key preservation"
+    - "State machine with atomic transitions (via Temporal)"
+    - "Error classification service"
+    - "Notification service integration with rate limiting"
+    - "Pre-retry success verification"
+    - "Observability hooks for all state transitions"
+    
+  may_include:
+    - "ML-based retry timing optimization"
+    - "User preference learning for notification channels"
+    - "Predictive failure classification"
+    
+  must_exclude:
+    - "Synchronous retry in main payment flow"
+    - "Client-side retry logic"
+    - "Retry without idempotency check"
+    - "Notification per retry attempt"
+    - "Storing payment credentials in retry service"
+    
+open_questions:
+  - question: "What is the escalation path for exhausted retries?"
+    impact_on_constraints: ["B4"]
+    decision_deadline: "Before implementation"
+    options:
+      - "Manual queue for ops team"
+      - "Automatic refund + user notification"
+      - "Escalation to relationship manager"
+    stakeholders: ["Product", "Ops", "Customer Success"]
+    
+  - question: "Should we support partial retries for bundled payments?"
+    impact_on_constraints: ["B1", "T2"]
+    decision_deadline: "Can be Phase 2"
+    current_assumption: "All-or-nothing retry for v1"

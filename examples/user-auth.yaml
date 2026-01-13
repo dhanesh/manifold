@@ -1,0 +1,74 @@
+# user-auth.yaml
+# Basic Manifold Example - Matches /m0-init output schema
+# This example shows the standard structure created by Manifold commands
+
+feature: user-auth
+outcome: "Secure user authentication with < 500ms login time"
+phase: CONSTRAINED
+created: "2026-01-14"
+
+constraints:
+  business:
+    - id: B1
+      type: invariant
+      statement: "User passwords must never be stored in plaintext"
+      rationale: "Security compliance and user trust"
+
+    - id: B2
+      type: goal
+      statement: "Support SSO for enterprise customers"
+      rationale: "Enterprise sales requirement"
+
+  technical:
+    - id: T1
+      type: boundary
+      statement: "Login API response < 500ms p99"
+      rationale: "User experience and conversion rates"
+
+    - id: T2
+      type: invariant
+      statement: "Session tokens expire after 24 hours"
+      rationale: "Security best practice"
+
+  user_experience:
+    - id: U1
+      type: goal
+      statement: "Clear error messages for failed login attempts"
+      rationale: "Reduce support tickets"
+
+    - id: U2
+      type: boundary
+      statement: "Maximum 3 login attempts before temporary lockout"
+      rationale: "Brute force protection"
+
+  security:
+    - id: S1
+      type: invariant
+      statement: "All authentication endpoints require HTTPS"
+      rationale: "Prevent credential interception"
+
+    - id: S2
+      type: invariant
+      statement: "Failed login attempts must be logged with IP"
+      rationale: "Security audit and threat detection"
+
+  operational:
+    - id: O1
+      type: goal
+      statement: "Authentication service 99.9% uptime"
+      rationale: "Core service availability"
+
+    - id: O2
+      type: boundary
+      statement: "Alert on > 10 failed logins per minute from same IP"
+      rationale: "Attack detection"
+
+tensions:
+  - id: TN1
+    type: trade_off
+    between: [T1, S2]
+    description: "Fast response vs comprehensive logging"
+    resolution: "Async logging to not block response"
+    status: resolved
+
+anchors: []

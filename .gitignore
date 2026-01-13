@@ -14,8 +14,7 @@
 # Old command structure (root only, not install/commands/)
 /commands/
 
-# Old examples
-examples/
+# Note: examples/ is now tracked (contains reference manifolds)
 
 # Test skill packages
 skill-package/
