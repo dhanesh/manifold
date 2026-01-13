@@ -42,7 +42,7 @@ For each category, ask probing questions:
 - What data consistency guarantees are needed?
 - What's the expected load/scale?
 
-### UX
+### User Experience
 - What response times are acceptable?
 - How should errors be communicated?
 - Are there accessibility requirements?

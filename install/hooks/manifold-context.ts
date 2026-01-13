@@ -24,7 +24,8 @@ interface ManifoldData {
   constraints?: {
     business?: any[];
     technical?: any[];
-    ux?: any[];
+    user_experience?: any[];  // Canonical schema
+    ux?: any[];               // Deprecated - for backward compatibility
     security?: any[];
     operational?: any[];
   };
@@ -57,7 +58,17 @@ function summarizeConstraints(constraints: ManifoldData['constraints']): string 
   const counts: string[] = [];
   if (constraints.business?.length) counts.push(`Business: ${constraints.business.length}`);
   if (constraints.technical?.length) counts.push(`Technical: ${constraints.technical.length}`);
-  if (constraints.ux?.length) counts.push(`UX: ${constraints.ux.length}`);
+
+  // Handle both old (ux) and new (user_experience) schema - Satisfies: T4
+  const uxCount = constraints.user_experience?.length || constraints.ux?.length;
+  if (uxCount) {
+    counts.push(`UX: ${uxCount}`);
+    // Log deprecation if using old schema
+    if (constraints.ux?.length && !constraints.user_experience?.length) {
+      console.error('[Manifold] DEPRECATION: Use "user_experience" instead of "ux" in YAML schema');
+    }
+  }
+
   if (constraints.security?.length) counts.push(`Security: ${constraints.security.length}`);
   if (constraints.operational?.length) counts.push(`Operational: ${constraints.operational.length}`);
 

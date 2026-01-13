@@ -32,7 +32,7 @@ created: <timestamp>
 constraints:
   business: []
   technical: []
-  ux: []
+  user_experience: []
   security: []
   operational: []
 
