@@ -1,0 +1,233 @@
+# manifold-cli.anchor.yaml
+# Backward Reasoning from Desired Outcome
+# Created: 2026-01-14
+
+feature: manifold-cli
+anchor_type: outcome_derivation
+
+# Refined outcome statement
+outcome:
+  original: "Native CLI tool for deterministic Manifold operations (status, validate, verify) with sub-100ms response times"
+  anchored: "Bun-compiled TypeScript CLI providing status, validate, init, and verify commands with identical output to AI equivalents, sub-100ms performance, and zero-friction distribution"
+
+# Required Truths - What MUST be TRUE for outcome
+required_truths:
+  - id: RT-1
+    statement: "YAML parsing must be fast and safe"
+    requires:
+      - "Safe YAML parser (no code execution)"
+      - "Schema validation for v1 and v2"
+      - "Parse time < 20ms for typical manifold"
+    maps_to_constraints: [T2, S1, T1]
+    current_state: "manifold-context.ts uses yaml library"
+    status: PARTIAL
+    priority: 1
+
+  - id: RT-2
+    statement: "Command output must match AI equivalents exactly"
+    requires:
+      - "Same formatting logic as /m-status"
+      - "Same convergence calculation algorithm"
+      - "Same coverage percentage formulas"
+    maps_to_constraints: [B2]
+    current_state: "No formal specification of output format"
+    status: NOT_SATISFIED
+    priority: 1
+
+  - id: RT-3
+    statement: "Exit codes must enable CI/CD automation"
+    requires:
+      - "0 = success"
+      - "1 = error (file not found, parse error)"
+      - "2 = validation failure (schema invalid, gaps found)"
+    maps_to_constraints: [T3, O3]
+    current_state: "Standard Unix conventions - well understood"
+    status: SPECIFICATION_READY
+    priority: 2
+
+  - id: RT-4
+    statement: "Distribution must be zero-friction"
+    requires:
+      - "Single binary via bun compile"
+      - "curl | bash installer"
+      - "npm/bun package registry option"
+    maps_to_constraints: [T4, O1, O4]
+    current_state: "No build/release infrastructure"
+    status: NOT_SATISFIED
+    priority: 2
+
+  - id: RT-5
+    statement: "Commands must handle edge cases gracefully"
+    requires:
+      - "Missing .manifold/ → clear error + init suggestion"
+      - "Malformed YAML → parse error with line number"
+      - "Missing fields → validation error with field name"
+      - "Large manifolds → efficient memory use"
+    maps_to_constraints: [U2, T5, T6]
+    current_state: "Error handling patterns not defined"
+    status: NOT_SATISFIED
+    priority: 2
+
+  - id: RT-6
+    statement: "TTY and color handling must be correct"
+    requires:
+      - "Auto-detect TTY"
+      - "NO_COLOR environment variable support"
+      - "--no-color and --force-color flags"
+      - "Clean output when piped"
+    maps_to_constraints: [U4, U5]
+    current_state: "Standard patterns available"
+    status: SPECIFICATION_READY
+    priority: 3
+
+# Dependency graph
+dependency_chain:
+  parallel_tracks:
+    - track_a: [RT-1, RT-2]  # Parsing → Output parity
+    - track_b: [RT-3, RT-6]  # Exit codes → Color handling
+  sequential:
+    - RT-1 -> RT-2  # Must parse before comparing output
+    - RT-2 -> RT-4  # Must have correct output before distributing
+    - RT-3 -> RT-4  # Must have exit codes before GitHub Action
+  blocking:
+    - RT-1  # Everything depends on YAML parsing
+
+# Solution options evaluated
+options:
+  - id: A
+    name: "Minimal TypeScript CLI"
+    description: "status and validate only, minimal dependencies"
+    tech_stack: "TypeScript + bun compile"
+    commands: ["status", "validate"]
+    satisfies: [RT-1, RT-2, RT-3, RT-6]
+    gaps: ["RT-4 partial", "RT-5 basic"]
+    effort: small
+    duration_estimate: "2-3 days"
+    risk: low
+
+  - id: B
+    name: "Full TypeScript CLI"
+    description: "All 4 deterministic commands with commander.js"
+    tech_stack: "TypeScript + bun compile + commander.js"
+    commands: ["status", "validate", "init", "verify"]
+    satisfies: [RT-1, RT-2, RT-3, RT-4, RT-5, RT-6]
+    gaps: []
+    effort: medium
+    duration_estimate: "5-7 days"
+    risk: low
+
+  - id: C
+    name: "Rust CLI"
+    description: "Maximum performance with Rust"
+    tech_stack: "Rust + clap + serde_yaml"
+    commands: ["status", "validate", "init", "verify"]
+    satisfies: [RT-1, RT-2, RT-3, RT-4, RT-5, RT-6]
+    gaps: []
+    effort: large
+    duration_estimate: "10-14 days"
+    risk: medium
+    note: "Diverges from TypeScript stack preferences"
+
+  - id: D
+    name: "Hybrid - Library + Scripts"
+    description: "TypeScript library with bun shebang scripts"
+    tech_stack: "TypeScript library + bun scripts"
+    commands: ["status", "validate", "init", "verify"]
+    satisfies: [RT-1, RT-2, RT-3, RT-5, RT-6]
+    gaps: ["RT-4 (multiple files)"]
+    effort: small_medium
+    duration_estimate: "4-5 days"
+    risk: low
+
+# Recommended solution
+recommendation:
+  selected_option: B
+  name: "Full TypeScript CLI"
+
+  rationale:
+    - "Stack alignment: TypeScript + Bun matches existing preferences"
+    - "Prior art leverage: Reuse parsing from manifold-context.ts"
+    - "Complete scope: All 4 deterministic commands in one delivery"
+    - "Single binary: bun compile satisfies distribution requirement"
+    - "Performance: 80ms startup acceptable per TN2 resolution"
+    - "Maintainability: Same language ecosystem as framework"
+
+  implementation_structure:
+    entry_point: "cli/index.ts"
+    directories:
+      - "cli/commands/       # Command implementations"
+      - "cli/lib/            # Shared utilities"
+      - "cli/lib/parser.ts   # YAML parsing (from hook)"
+      - "cli/lib/schema.ts   # Schema validation"
+      - "cli/lib/output.ts   # Formatting + colors"
+
+  deliverables:
+    - "manifold status [feature] [--json] [--history]"
+    - "manifold validate [feature] [--strict]"
+    - "manifold init <feature> [--outcome]"
+    - "manifold verify [feature] [--artifacts]"
+    - "manifold --version"
+    - "manifold --help"
+
+  build_artifacts:
+    - "manifold-darwin-arm64   # macOS Apple Silicon"
+    - "manifold-darwin-x64     # macOS Intel"
+    - "manifold-linux-x64      # Linux"
+    - "manifold-linux-arm64    # Linux ARM"
+
+# Critical path for implementation
+critical_path:
+  phase_1:
+    name: "Core Infrastructure"
+    tasks:
+      - "Set up cli/ directory structure"
+      - "Port YAML parsing from manifold-context.ts"
+      - "Implement schema v1/v2 detection"
+      - "Create output formatting utilities"
+    unblocks: [RT-1]
+
+  phase_2:
+    name: "Commands"
+    tasks:
+      - "Implement 'manifold status'"
+      - "Implement 'manifold validate'"
+      - "Implement 'manifold init'"
+      - "Implement 'manifold verify'"
+    unblocks: [RT-2, RT-3, RT-5]
+
+  phase_3:
+    name: "Polish"
+    tasks:
+      - "TTY detection and color handling"
+      - "Error messages with suggestions"
+      - "--json output mode"
+      - "Help text and --version"
+    unblocks: [RT-6]
+
+  phase_4:
+    name: "Distribution"
+    tasks:
+      - "bun compile for all platforms"
+      - "Update install.sh to include binary"
+      - "Create GitHub Action"
+      - "npm package (optional)"
+    unblocks: [RT-4]
+
+# Validation gates
+validation_gates:
+  phase_1:
+    - "YAML files from existing manifolds parse correctly"
+    - "Schema v1 and v2 both detected"
+    - "Parse time < 20ms for graph-d-validation.yaml"
+  phase_2:
+    - "manifold status output matches /m-status format"
+    - "Exit code 0 for valid manifolds"
+    - "Exit code 2 for schema violations"
+  phase_3:
+    - "Colors disabled when piped"
+    - "NO_COLOR env var respected"
+    - "--json produces valid JSON"
+  phase_4:
+    - "Single binary runs on macOS and Linux"
+    - "curl install works"
+    - "GitHub Action passes on sample repo"

@@ -1,0 +1,103 @@
+# framework-consolidation.yaml
+# Constraint Manifold for Manifold Framework Consolidation
+# Using Manifold to fix Manifold (dogfooding)
+
+feature: framework-consolidation
+outcome: "Single consistent naming, schema, and documentation for Manifold framework"
+phase: VERIFIED
+created: "2026-01-14"
+
+constraints:
+  business:
+    - id: B1
+      type: invariant
+      statement: "Existing install script must continue to work"
+      rationale: "Users may have already installed via curl | bash"
+
+    - id: B2
+      type: invariant
+      statement: "No breaking changes to /m* command syntax"
+      rationale: "/m commands are the installed canonical version"
+
+    - id: B3
+      type: goal
+      statement: "Single naming scheme across all documentation"
+      rationale: "Reduces confusion and cognitive load"
+
+  technical:
+    - id: T1
+      type: invariant
+      statement: "All YAML files must use consistent schema"
+      rationale: "Hook and tooling depend on predictable structure"
+
+    - id: T2
+      type: invariant
+      statement: "Directory path must be .manifold/ everywhere"
+      rationale: "Install script creates .manifold/, not .temporal/"
+
+    - id: T3
+      type: boundary
+      statement: "Schema must use snake_case for all keys"
+      rationale: "YAML convention and existing example uses snake_case"
+
+    - id: T4
+      type: goal
+      statement: "Hook must handle both old and new schema gracefully"
+      rationale: "Backward compatibility during transition"
+
+  user_experience:
+    - id: U1
+      type: goal
+      statement: "Single README with complete quick start"
+      rationale: "New users need one place to learn"
+
+    - id: U2
+      type: boundary
+      statement: "Command reference must be comprehensive in SKILL.md"
+      rationale: "AI agents read SKILL.md for command understanding"
+
+    - id: U3
+      type: goal
+      statement: "Example file must match actual generated schema"
+      rationale: "Examples should be copy-paste ready"
+
+  security:
+    - id: S1
+      type: invariant
+      statement: "No credentials or secrets in any file"
+      rationale: "Public repository"
+
+  operational:
+    - id: O1
+      type: goal
+      statement: "Archive deprecated files, don't delete"
+      rationale: "Preserve history and allow recovery"
+
+    - id: O2
+      type: boundary
+      statement: "All changes must be in single atomic commit"
+      rationale: "Easy to revert if issues found"
+
+tensions:
+  - id: TN1
+    type: trade_off
+    between: [T1, T4]
+    description: "Consistent schema vs backward compatibility"
+    resolution: "Hook handles both 'ux' and 'user_experience' keys, logs deprecation warning"
+    status: resolved
+
+  - id: TN2
+    type: resource
+    between: [B3, O1]
+    description: "Single naming scheme vs preserving old files"
+    resolution: "Move deprecated files to _archive/ directory with README explaining status"
+    status: resolved
+
+  - id: TN3
+    type: dependency
+    between: [U3, T3]
+    description: "Example must match schema, schema uses snake_case"
+    resolution: "Update example to use snake_case 'user_experience' instead of 'ux'"
+    status: resolved
+
+anchors: []

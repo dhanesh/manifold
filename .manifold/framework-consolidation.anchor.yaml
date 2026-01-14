@@ -1,0 +1,58 @@
+# framework-consolidation.anchor.yaml
+# Backward Reasoning from Desired Outcome
+
+outcome: "Single consistent naming, schema, and documentation for Manifold framework"
+
+backward_reasoning:
+  question: "For single consistent naming, schema, and documentation, what MUST be true?"
+
+required_truths:
+  - id: RT1
+    statement: "Only /m* commands exist in installed location"
+    gap: "commands/unified/t*.md and commands/phase*/ still exist"
+    action: "Archive to _archive/ directory"
+    satisfies: [B3, T2]
+
+  - id: RT2
+    statement: "All documentation references /m commands and .manifold/ directory"
+    gap: "skill-package/SKILL.md references /t commands and .temporal/"
+    action: "Update skill-package/SKILL.md to match install/manifold/SKILL.md"
+    satisfies: [B3, U1, U2]
+
+  - id: RT3
+    statement: "YAML schema uses 'user_experience' not 'ux'"
+    gap: "install/commands/m0-init.md uses 'ux' in schema"
+    action: "Update m0-init.md schema to use 'user_experience'"
+    satisfies: [T1, T3]
+
+  - id: RT4
+    statement: "Example file uses same schema as m0-init creates"
+    gap: "examples/payment-retry-v2.cms.yaml has different structure"
+    action: "Update example to match standard schema structure"
+    satisfies: [U3, T1]
+
+  - id: RT5
+    statement: "Hook handles both old and new schema"
+    gap: "Hook already handles both, but should log deprecation"
+    action: "Add deprecation warning when 'ux' key found"
+    satisfies: [T4]
+
+  - id: RT6
+    statement: "README.md is comprehensive entry point"
+    gap: "README.md is minimal, content scattered"
+    action: "Merge QUICK_REFERENCE.md content into README.md"
+    satisfies: [U1]
+
+solution_space:
+  must_include:
+    - "Archive commands/unified/ and commands/phase*/ to _archive/"
+    - "Update skill-package/SKILL.md to reference /m commands"
+    - "Standardize schema to use 'user_experience' everywhere"
+    - "Merge QUICK_REFERENCE.md into README.md"
+
+  must_exclude:
+    - "Deleting any files permanently"
+    - "Changing /m command syntax"
+    - "Breaking the install.sh script"
+
+recommendation: "Execute all RT actions in single commit"

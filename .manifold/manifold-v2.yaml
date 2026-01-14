@@ -1,0 +1,413 @@
+# manifold-v2.yaml
+# Constraint Manifold for Manifold Framework v2
+# Meta: Using Manifold to improve Manifold based on real-world learnings
+
+feature: manifold-v2
+outcome: "Manifold framework with iteration tracking, integration phase, and automatic dependency detection"
+phase: VERIFIED
+schema_version: 2
+created: "2026-01-14"
+
+# Context from learnings analysis
+context:
+  source_learnings:
+    - manifold: "graph-d-validation"
+      iterations: 4
+      constraints: 27
+      key_friction: "Manual iteration loop, missing integration phase"
+    - manifold: "framework-consolidation"
+      iterations: 1
+      constraints: 15
+      key_success: "Dogfooding revealed real friction points"
+
+  identified_improvements:
+    high_priority:
+      - "/m6-integrate command"
+      - "Automatic dependency analysis"
+      - "Iteration tracking schema"
+      - "Gap-to-action automation"
+    medium_priority:
+      - "Parallel track coordination"
+      - "Diff tracking between states"
+      - "Convergence detection"
+    lower_priority:
+      - "Rollback capability"
+      - "Constraint template library"
+      - "Cross-manifold learning"
+
+constraints:
+  business:
+    - id: B1
+      type: invariant
+      statement: "Backward compatibility with existing manifolds"
+      rationale: "graph-d-validation and framework-consolidation must continue to work"
+
+    - id: B2
+      type: goal
+      statement: "Reduce iteration friction by 50%"
+      rationale: "graph-d required 4 manual iterations; target 2 or automated"
+
+    - id: B3
+      type: goal
+      statement: "Enable automated CI/CD integration"
+      rationale: "Verification results should be programmatically consumable"
+
+  technical:
+    - id: T1
+      type: invariant
+      statement: "Schema must be YAML-compatible and human-readable"
+      rationale: "Existing tooling and hooks depend on YAML parsing"
+
+    - id: T2
+      type: invariant
+      statement: "All /m* command syntax preserved"
+      rationale: "Install script and existing users depend on current syntax"
+
+    - id: T3
+      type: boundary
+      statement: "New features must be additive, not breaking"
+      rationale: "Existing manifolds in .manifold/ must remain valid"
+
+    - id: T4
+      type: goal
+      statement: "Dependency detection should run in O(n) on constraint count"
+      rationale: "Performance should not degrade with large manifolds"
+
+    - id: T5
+      type: goal
+      statement: "Integration phase should auto-detect wiring points"
+      rationale: "Reduce manual artifact connection"
+
+  user_experience:
+    - id: U1
+      type: goal
+      statement: "/m-status should show iteration history and convergence"
+      rationale: "Visibility into multi-pass progress"
+
+    - id: U2
+      type: boundary
+      statement: "New commands should follow existing /m* naming pattern"
+      rationale: "Consistency with established mental model"
+
+    - id: U3
+      type: goal
+      statement: "Gap-to-action output should be copy-paste executable"
+      rationale: "Reduce interpretation overhead"
+
+  security:
+    - id: S1
+      type: invariant
+      statement: "No execution of arbitrary code in constraint analysis"
+      rationale: "Dependency detection must be static analysis only"
+
+  operational:
+    - id: O1
+      type: goal
+      statement: "PreCompact hook should preserve iteration state"
+      rationale: "Context compaction must not lose iteration history"
+
+    - id: O2
+      type: boundary
+      statement: "Documentation must be updated with each new feature"
+      rationale: "Self-documenting framework principle"
+
+    - id: O3
+      type: goal
+      statement: "Examples should demonstrate new features"
+      rationale: "Learn by example pattern"
+
+tensions:
+  # TRADE-OFF: New features vs Backward Compatibility
+  - id: TN1
+    type: trade_off
+    between: [B2, B1]
+    description: "Reducing iteration friction may require schema changes that affect existing manifolds"
+    status: resolved
+    resolution: "Version field in schema; new features in optional sections; existing sections unchanged"
+    priority: 1
+
+  # RESOURCE TENSION: Auto-detection vs Performance
+  - id: TN2
+    type: resource_tension
+    between: [T5, T4]
+    description: "Auto-detecting wiring points requires code analysis; could exceed O(n) constraint count"
+    status: resolved
+    resolution: "Scope auto-detection to generated artifacts only (known structure); fallback to hints"
+    priority: 2
+
+  # TRADE-OFF: Executable actions vs YAML readability
+  - id: TN3
+    type: trade_off
+    between: [U3, T1]
+    description: "Copy-paste executable actions may require shell syntax that clutters YAML"
+    status: resolved
+    resolution: "Actions stored in separate 'actions' section with YAML multiline strings; human-readable summary in main flow"
+    priority: 3
+
+  # HIDDEN DEPENDENCY: Integration phase requires iteration tracking
+  - id: TN4
+    type: hidden_dependency
+    between: [T5, U1]
+    description: "/m6-integrate needs iteration context to know what was generated when"
+    status: resolved
+    resolution: "Iteration tracking (U1) must be implemented BEFORE integration phase (T5)"
+    priority: 1
+
+  # TRADE-OFF: Auto-detection vs Security
+  - id: TN5
+    type: trade_off
+    between: [T5, S1]
+    description: "Auto-detecting wiring points could involve AST parsing or code execution"
+    status: resolved
+    resolution: "Static pattern matching only (grep/regex); no AST parsing or code execution; explicit opt-in for deeper analysis"
+    priority: 2
+
+tension_summary:
+  trade_offs: 3
+  resource_tensions: 1
+  hidden_dependencies: 1
+  total: 5
+  resolved: 5
+  unresolved: 0
+
+anchors:
+  required_truths:
+    - id: RT-1
+      statement: "Iteration state MUST be tracked in manifold schema"
+      status: SATISFIED
+      priority: 1
+      evidence: "iterations[] section in m0-init.md, example.yaml"
+    - id: RT-2
+      statement: "Integration points MUST be identifiable from generated artifacts"
+      status: SATISFIED
+      priority: 2
+      evidence: "m6-integrate.md detection patterns"
+    - id: RT-3
+      statement: "Constraint dependencies MUST be auto-detected"
+      status: SATISFIED
+      priority: 2
+      evidence: "m2-tension.md --auto-deps flag"
+    - id: RT-4
+      statement: "Gaps MUST convert to actionable tasks automatically"
+      status: SATISFIED
+      priority: 3
+      evidence: "m5-verify.md --actions flag"
+    - id: RT-5
+      statement: "Existing manifolds MUST remain valid"
+      status: SATISFIED
+      priority: 1
+      evidence: "framework-consolidation.yaml works, hook handles both schemas"
+    - id: RT-6
+      statement: "New commands MUST follow /m* pattern"
+      status: SATISFIED
+      priority: 2
+      evidence: "/m6-integrate follows pattern"
+
+  recommended_option: "C - Phased Enhancement"
+
+  implementation_phases:
+    - phase_a: "Schema Evolution - iterations tracking + version field"
+    - phase_b: "Intelligence Layer - dependency detection + convergence"
+    - phase_c: "Automation Layer - /m6-integrate + gap-to-action"
+
+  anchor_document: ".manifold/manifold-v2.anchor.yaml"
+
+# v2: Iteration Tracking
+iterations:
+  - number: 1
+    phase: generate
+    timestamp: "2026-01-14T22:40:00Z"
+    artifacts_created: 8
+    gaps_found: 0
+    gaps_resolved: 0
+    result: "artifacts"
+
+  - number: 2
+    phase: verify
+    timestamp: "2026-01-14T22:45:00Z"
+    artifacts_verified: 8
+    gaps_found: 0
+    gaps_resolved: 0
+    result: "PASS"
+
+  - number: 3
+    phase: integrate
+    timestamp: "2026-01-14T23:18:00Z"
+    integration_points: 8
+    completed: 8
+    pending: 0
+    result: "INTEGRATED"
+
+  - number: 4
+    phase: verify
+    timestamp: "2026-01-14T23:20:00Z"
+    mode: strict
+    constraints_verified: 14
+    required_truths_verified: 6
+    gaps_found: 0
+    result: "PASS"
+
+# v2: Convergence Status
+convergence:
+  status: CONVERGED
+  criteria:
+    all_invariants_satisfied: true
+    all_required_truths_satisfied: true
+    no_blocking_gaps: true
+    all_integrations_complete: true
+    strict_verification_passed: true
+  iterations_to_convergence: 4
+  timestamp: "2026-01-14T23:20:00Z"
+
+# Generation tracking
+generation:
+  option: C
+  timestamp: "2026-01-14T22:40:00Z"
+  iteration: 1
+
+  artifacts:
+    # Phase A: Schema Evolution
+    - path: "install/commands/m0-init.md"
+      type: documentation
+      satisfies: [RT-1, RT-5]
+      status: generated
+      phase: A
+      description: "Updated with schema_version and iterations[] section"
+
+    - path: "install/commands/m-status.md"
+      type: documentation
+      satisfies: [RT-1, U1]
+      status: generated
+      phase: A
+      description: "Added --history flag and convergence display"
+
+    # Phase B: Intelligence Layer
+    - path: "install/commands/m2-tension.md"
+      type: documentation
+      satisfies: [RT-3]
+      status: generated
+      phase: B
+      description: "Added --auto-deps for dependency detection"
+
+    # Phase C: Automation Layer
+    - path: "install/commands/m6-integrate.md"
+      type: documentation
+      satisfies: [RT-2, RT-6]
+      status: generated
+      phase: C
+      description: "New command for artifact integration"
+
+    - path: "install/commands/m5-verify.md"
+      type: documentation
+      satisfies: [RT-4]
+      status: generated
+      phase: C
+      description: "Added --actions for gap-to-action automation"
+
+    - path: "install/install.sh"
+      type: infrastructure
+      satisfies: [RT-6]
+      status: generated
+      phase: C
+      description: "Updated to v2.0.0 with m6-integrate"
+
+    - path: "install/manifold/SKILL.md"
+      type: documentation
+      satisfies: [RT-5, RT-6]
+      status: generated
+      phase: C
+      description: "Updated with v2 features and /m6-integrate"
+
+    - path: "examples/manifold-v2-example.yaml"
+      type: example
+      satisfies: [RT-5]
+      status: generated
+      phase: C
+      description: "Example manifold demonstrating v2 schema"
+
+  coverage:
+    constraints_addressed: 12
+    constraints_total: 14
+    required_truths_addressed: 6
+    required_truths_total: 6
+    percentage: 86
+
+  by_phase:
+    phase_a:
+      constraints: [RT-1, RT-5, U1]
+      artifacts: 2
+      status: generated
+    phase_b:
+      constraints: [RT-3]
+      artifacts: 1
+      status: generated
+    phase_c:
+      constraints: [RT-2, RT-4, RT-6]
+      artifacts: 5
+      status: generated
+
+# v2: Integration Tracking
+integration:
+  timestamp: "2026-01-14T23:18:00Z"
+  iteration: 3
+  checklist:
+    - id: INT-1
+      source: "install/commands/m6-integrate.md"
+      target: "install/install.sh"
+      action: "Add to COMMAND_FILES array"
+      status: completed
+      satisfies: [RT-6]
+
+    - id: INT-2
+      source: "install/commands/m6-integrate.md"
+      target: "install/manifold/SKILL.md"
+      action: "Document in overview"
+      status: completed
+      satisfies: [RT-6, U2]
+
+    - id: INT-3
+      source: "v2 workflow sequence"
+      target: "install/install.sh"
+      action: "Update quick start"
+      status: completed
+      satisfies: [U2, O2]
+
+    - id: INT-4
+      source: "Iteration tracking feature"
+      target: "install/manifold/SKILL.md"
+      action: "Document --history flag"
+      status: completed
+      satisfies: [U1, RT-1]
+
+    - id: INT-5
+      source: "Dependency detection feature"
+      target: "install/manifold/SKILL.md"
+      action: "Document --auto-deps flag"
+      status: completed
+      satisfies: [RT-3]
+
+    - id: INT-6
+      source: "Gap-to-action automation"
+      target: "install/manifold/SKILL.md"
+      action: "Document --actions flag"
+      status: completed
+      satisfies: [RT-4]
+
+    - id: INT-7
+      source: "examples/manifold-v2-example.yaml"
+      target: "examples/"
+      action: "Create v2 example"
+      status: completed
+      satisfies: [RT-5, O3]
+
+    - id: INT-8
+      source: "Context preservation hook"
+      target: "install/install.sh, install/manifold/SKILL.md"
+      action: "Document hook setup"
+      status: completed
+      satisfies: [O1]
+
+  summary:
+    total_points: 8
+    completed: 8
+    pending: 0

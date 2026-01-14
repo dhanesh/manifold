@@ -50,6 +50,6 @@ build/
 *.log
 
 # ===========================================
-# Runtime data (per-project, not in repo)
+# Note: .manifold/ is NOT ignored - it should be tracked
+# for team collaboration and cross-machine continuity
 # ===========================================
-.manifold/

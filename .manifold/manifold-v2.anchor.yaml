@@ -1,0 +1,226 @@
+# manifold-v2.anchor.yaml
+# Backward Reasoning from Desired Outcome
+# Created: 2026-01-14
+
+feature: manifold-v2
+anchor_type: outcome_derivation
+
+# Refined outcome statement
+outcome:
+  original: "Manifold framework with iteration tracking, integration phase, and automatic dependency detection"
+  anchored: "Manifold v2 enables single-pass or automated multi-pass constraint satisfaction through iteration awareness, integrated artifact wiring, and proactive dependency surfacing"
+
+# Required Truths - What MUST be TRUE for outcome
+required_truths:
+  - id: RT-1
+    statement: "Iteration state MUST be tracked in manifold schema"
+    requires:
+      - "iterations[] section in YAML schema"
+      - "Phase, gaps_found, gaps_resolved per iteration"
+      - "Convergence status derivable from iteration history"
+    current_gap: "No iteration tracking exists; iterations were manual in graph-d"
+    maps_to_constraint: [U1, B2]
+    status: NOT_SATISFIED
+    priority: 1
+
+  - id: RT-2
+    statement: "Integration points MUST be identifiable from generated artifacts"
+    requires:
+      - "Generated artifacts annotated with satisfies[] and integration_hints[]"
+      - "Wiring detection via pattern matching"
+      - "Integration checklist generation"
+    current_gap: "Artifacts generated but not wired; integration was manual GAP-1,2,3 in graph-d"
+    maps_to_constraint: [T5, TN2, TN5]
+    depends_on: [RT-1]
+    status: NOT_SATISFIED
+    priority: 2
+
+  - id: RT-3
+    statement: "Constraint dependencies MUST be auto-detected"
+    requires:
+      - "Keyword extraction from constraint statements"
+      - "Mapping keywords to other constraint IDs"
+      - "Hidden dependency surfacing in /m2-tension"
+    current_gap: "TN5 in graph-d (T3 blocks B4) was manually discovered"
+    maps_to_constraint: [T4, B2]
+    status: NOT_SATISFIED
+    priority: 2
+
+  - id: RT-4
+    statement: "Gaps MUST convert to actionable tasks automatically"
+    requires:
+      - "Gap → action mapping rules"
+      - "File paths and change descriptions"
+      - "Copy-paste ready commands where applicable"
+    current_gap: "GAP-11 'WAL not wired' required manual interpretation"
+    maps_to_constraint: [U3, TN3]
+    depends_on: [RT-1, RT-2]
+    status: NOT_SATISFIED
+    priority: 3
+
+  - id: RT-5
+    statement: "Existing manifolds MUST remain valid"
+    requires:
+      - "Schema version field"
+      - "New sections optional"
+      - "Validation accepts v1 and v2 schemas"
+    current_gap: "No version field; schema is implicit v1"
+    maps_to_constraint: [B1, T3]
+    status: PARTIAL
+    priority: 1
+
+  - id: RT-6
+    statement: "New commands MUST follow /m* pattern"
+    requires:
+      - "/m6-integrate command"
+      - "Optional flags for existing commands"
+      - "Install script updated"
+    current_gap: "No /m6-integrate exists; install script only has m0-m5"
+    maps_to_constraint: [U2, T2]
+    status: NOT_SATISFIED
+    priority: 2
+
+# Dependency graph
+dependency_chain:
+  parallel_tracks:
+    - track_a: [RT-1, RT-4]  # Iteration tracking → Gap automation
+    - track_b: [RT-5, RT-6]  # Compatibility → New commands
+  sequential:
+    - RT-1 -> RT-2  # Iteration tracking before integration phase
+    - RT-2 -> RT-4  # Integration awareness before gap automation
+    - RT-3 -> RT-2  # Dependency detection informs integration
+  satisfied: []
+
+# Solution options evaluated
+options:
+  - id: A
+    name: "Minimal Enhancement (Iteration Only)"
+    description: "Add iteration tracking to schema; manual integration continues"
+    satisfies: [RT-1, RT-5]
+    trade_offs:
+      - "Lowest effort"
+      - "Doesn't address integration friction"
+    risk: low
+    effort: small
+
+  - id: B
+    name: "Full v2 Suite"
+    description: "All 4 high-priority features: iteration, integration, dependencies, gap-to-action"
+    satisfies: [RT-1, RT-2, RT-3, RT-4, RT-5, RT-6]
+    trade_offs:
+      - "Highest effort"
+      - "Maximum friction reduction"
+    risk: medium
+    effort: large
+
+  - id: C
+    name: "Phased Enhancement"
+    description: "Three phases: Schema evolution → Iteration+Dependencies → Integration+Actions"
+    phases:
+      - phase_a: "Schema v2 with iteration tracking + version field"
+      - phase_b: "Dependency detection in /m2-tension + /m-status enhancements"
+      - phase_c: "/m6-integrate command + gap-to-action automation"
+    satisfies: [RT-1, RT-2, RT-3, RT-4, RT-5, RT-6]
+    trade_offs:
+      - "Incremental value delivery"
+      - "Validation at each phase"
+    risk: lowest
+    effort: phased
+
+# Recommended solution
+recommendation:
+  selected_option: C
+  name: "Phased Enhancement"
+
+  rationale:
+    - "Risk Mitigation: Each phase independently valuable and testable"
+    - "Backward Compatibility: Phase A ensures RT-5 before adding features"
+    - "Dependency Chain: Respects TN4 (iteration before integration)"
+    - "Dogfooding Opportunity: Use Manifold v2-in-progress on itself"
+
+  implementation_phases:
+    - phase: A
+      name: "Schema Evolution"
+      truths: [RT-1, RT-5]
+      deliverables:
+        - "Schema v2 with 'schema_version' field"
+        - "iterations[] section with state tracking"
+        - "Convergence detection logic"
+        - "Updated SKILL.md documentation"
+      success_criteria:
+        - "Existing manifolds parse without error"
+        - "New manifolds track iteration state"
+        - "/m-status shows iteration history"
+      files:
+        - "install/commands/m0-init.md (schema template)"
+        - "install/commands/m-status.md (iteration display)"
+        - "install/manifold/SKILL.md (documentation)"
+
+    - phase: B
+      name: "Intelligence Layer"
+      truths: [RT-3, U1_enhanced]
+      deliverables:
+        - "Dependency detection in /m2-tension"
+        - "Auto-surfacing hidden dependencies"
+        - "Parallel track identification in /m3-anchor"
+        - "/m-status with diff and convergence"
+      success_criteria:
+        - "TN5-type dependencies auto-detected"
+        - "Parallel opportunities surfaced"
+        - "Convergence status calculated"
+      files:
+        - "install/commands/m2-tension.md (dependency detection)"
+        - "install/commands/m3-anchor.md (parallel tracks)"
+        - "install/commands/m-status.md (convergence)"
+
+    - phase: C
+      name: "Automation Layer"
+      truths: [RT-2, RT-4, RT-6]
+      deliverables:
+        - "/m6-integrate command"
+        - "Integration hints in generated artifacts"
+        - "Gap-to-action automation"
+        - "Install script update"
+      success_criteria:
+        - "Generated artifacts include wiring hints"
+        - "Gaps produce executable actions"
+        - "/m6-integrate wires artifacts"
+      files:
+        - "install/commands/m6-integrate.md (new command)"
+        - "install/commands/m4-generate.md (integration hints)"
+        - "install/commands/m5-verify.md (gap-to-action)"
+        - "install/install.sh (new command)"
+
+# Validation gates per phase
+validation_gates:
+  phase_a:
+    - "Existing manifolds (graph-d, framework-consolidation) still parse"
+    - "New manifold with iterations[] section works"
+    - "/m-status displays iteration history"
+  phase_b:
+    - "All Phase A gates"
+    - "/m2-tension auto-detects at least 1 hidden dependency"
+    - "/m-status shows convergence status"
+  phase_c:
+    - "All Phase B gates"
+    - "/m6-integrate produces wiring checklist"
+    - "Gap actions are copy-paste executable"
+
+# Critical path
+critical_path:
+  step_1:
+    action: "Add schema_version field and iterations[] section"
+    unblocks: [RT-2, RT-3, RT-4]
+    files: ["install/commands/m0-init.md"]
+  step_2:
+    action: "Implement dependency detection in /m2-tension"
+    requires: [step_1]
+    files: ["install/commands/m2-tension.md"]
+  step_3:
+    action: "Create /m6-integrate command"
+    requires: [step_1, step_2]
+    files: ["install/commands/m6-integrate.md", "install/install.sh"]
+  step_4:
+    action: "Add gap-to-action automation in /m5-verify"
+    requires: [step_1]
+    files: ["install/commands/m5-verify.md"]
