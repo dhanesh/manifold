@@ -1,0 +1,140 @@
+# manifold-v2-example.yaml
+# Example demonstrating Manifold Schema v2 features
+# This file shows the new iteration tracking and convergence detection
+
+# v2: Schema version field (required for v2 features)
+schema_version: 2
+
+feature: example-feature
+outcome: "Demonstrate Manifold v2 schema with iteration tracking"
+phase: VERIFIED
+created: "2026-01-14"
+
+constraints:
+  business:
+    - id: B1
+      type: invariant
+      statement: "Example business constraint"
+      rationale: "Demonstrates constraint structure"
+
+  technical:
+    - id: T1
+      type: goal
+      statement: "Example technical goal"
+      rationale: "Demonstrates goal type"
+
+  user_experience:
+    - id: U1
+      type: boundary
+      statement: "Example UX boundary"
+      rationale: "Demonstrates boundary type"
+
+  security:
+    - id: S1
+      type: invariant
+      statement: "Example security invariant"
+      rationale: "Demonstrates security category"
+
+  operational:
+    - id: O1
+      type: goal
+      statement: "Example operational goal"
+      rationale: "Demonstrates operational category"
+
+tensions:
+  - id: TN1
+    type: trade_off
+    between: [T1, U1]
+    description: "Example tension between technical goal and UX boundary"
+    status: resolved
+    resolution: "Example resolution demonstrating tension structure"
+
+anchors:
+  required_truths:
+    - id: RT-1
+      statement: "Example required truth"
+      status: SATISFIED
+      priority: 1
+
+  recommended_option: "A"
+  anchor_document: ".manifold/example-feature.anchor.yaml"
+
+# v2: Iteration Tracking
+# This section records the history of generate/verify cycles
+iterations:
+  - number: 1
+    phase: generate
+    timestamp: "2026-01-14T10:00:00Z"
+    artifacts_created: 5
+    gaps_found: 0
+    gaps_resolved: 0
+    result: "artifacts"
+
+  - number: 2
+    phase: verify
+    timestamp: "2026-01-14T10:30:00Z"
+    artifacts_created: 0
+    gaps_found: 3
+    gaps_resolved: 0
+    result: "gaps found"
+
+  - number: 3
+    phase: generate
+    timestamp: "2026-01-14T11:00:00Z"
+    artifacts_created: 2
+    gaps_found: 0
+    gaps_resolved: 3
+    result: "fixes"
+
+  - number: 4
+    phase: verify
+    timestamp: "2026-01-14T11:30:00Z"
+    artifacts_created: 0
+    gaps_found: 0
+    gaps_resolved: 0
+    result: "PASS"
+
+# v2: Convergence Status
+# Calculated from iterations and constraint coverage
+convergence:
+  status: CONVERGED
+  criteria:
+    all_invariants_satisfied: true
+    test_pass_rate: 100
+    no_blocking_gaps: true
+  iterations_to_convergence: 4
+  timestamp: "2026-01-14T11:30:00Z"
+
+# Generation tracking (standard in v1, enhanced in v2)
+generation:
+  option: A
+  timestamp: "2026-01-14T11:00:00Z"
+  iteration: 3
+
+  artifacts:
+    - path: "src/example.ts"
+      type: code
+      satisfies: [RT-1]
+      status: generated
+
+  coverage:
+    constraints_addressed: 5
+    constraints_total: 5
+    percentage: 100
+
+# Integration tracking (v2)
+# Populated by /m6-integrate command
+integration:
+  timestamp: "2026-01-14T11:15:00Z"
+  iteration: 3
+  checklist:
+    - id: INT-1
+      source: "src/example.ts"
+      target: "src/index.ts"
+      action: "Add export"
+      status: completed
+      satisfies: [RT-1]
+  summary:
+    total_points: 1
+    completed: 1
+    pending: 0

@@ -9,10 +9,14 @@ Show current Manifold state and next recommended action.
 ## Usage
 
 ```
-/m-status [<feature-name>]
+/m-status [<feature-name>] [--history] [--diff]
 ```
 
 If no feature specified, shows all active manifolds.
+
+**Flags (v2):**
+- `--history` - Show full iteration history
+- `--diff` - Show changes since last iteration
 
 ## Phases
 
@@ -75,6 +79,46 @@ FILES:
 NEXT ACTION:
 /m4-generate payment-retry --option=C
 ```
+
+## Example: With Iteration History (v2)
+
+```
+/m-status payment-retry --history
+
+MANIFOLD STATUS: payment-retry
+
+Phase: VERIFIED (5/5)
+Schema Version: 2
+
+[...constraint summary...]
+
+ITERATION HISTORY:
+┌───────────┬───────────┬────────────────┬───────────────┬─────────────┐
+│ Iteration │ Phase     │ Gaps Found     │ Gaps Resolved │ Result      │
+├───────────┼───────────┼────────────────┼───────────────┼─────────────┤
+│ 1         │ generate  │ 3              │ 0             │ artifacts   │
+├───────────┼───────────┼────────────────┼───────────────┼─────────────┤
+│ 2         │ verify    │ 14             │ 0             │ gaps found  │
+├───────────┼───────────┼────────────────┼───────────────┼─────────────┤
+│ 3         │ generate  │ 0              │ 10            │ fixes       │
+├───────────┼───────────┼────────────────┼───────────────┼─────────────┤
+│ 4         │ verify    │ 0              │ 4             │ PASS        │
+└───────────┴───────────┴────────────────┴───────────────┴─────────────┘
+
+CONVERGENCE STATUS: ✓ CONVERGED
+├── All invariants satisfied: 6/6
+├── Test pass rate: 100%
+├── Blocking gaps: 0
+└── Iterations to convergence: 4
+```
+
+## Convergence Detection (v2)
+
+A manifold is considered **CONVERGED** when:
+1. All INVARIANT constraints are SATISFIED
+2. Test pass rate ≥ 95%
+3. No blocking gaps remain
+4. At least one full generate→verify cycle completed
 
 ## Example: All Features
 

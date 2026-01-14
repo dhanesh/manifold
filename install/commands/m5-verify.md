@@ -9,8 +9,12 @@ Verify ALL artifacts against ALL constraints.
 ## Usage
 
 ```
-/m5-verify <feature-name> [--strict]
+/m5-verify <feature-name> [--strict] [--actions]
 ```
+
+**Flags (v2):**
+- `--strict` - Fail on any gaps
+- `--actions` - Generate copy-paste executable actions for gaps (v2)
 
 ## Verification Matrix
 
@@ -131,6 +135,71 @@ This enables:
 - **Gap tracking** - Each gap has an action item
 - **Progress monitoring** - Coverage improves as gaps are addressed
 
+## Gap-to-Action Automation (v2)
+
+With `--actions`, gaps are converted to executable tasks:
+
+### Action Generation Rules
+
+| Gap Type | Generated Action |
+|----------|------------------|
+| Missing test | Test file path + test function skeleton |
+| Missing integration | Wiring command (see /m6-integrate) |
+| Missing docs | Documentation section template |
+| Missing feature flag | Cargo.toml edit command |
+| Missing import | Import statement to add |
+
+### Example: Gap Actions
+
+```
+/m5-verify graph-d-validation --actions
+
+GAPS WITH EXECUTABLE ACTIONS:
+
+Gap G1: GAP-11 - WAL not wired into storage layer
+├── Type: integration
+├── Constraint: RT-1
+├── Severity: blocking
+└── ACTION (copy-paste ready):
+
+    # In src/storage/mod.rs, add:
+    pub mod wal;
+
+    # In MmapStorage::open(), add:
+    let wal = Wal::open(&config.wal_path)?;
+
+    # In MmapStorage struct, add field:
+    wal: Option<Wal>,
+
+Gap G2: GAP-7 - No unit tests for mvcc.rs
+├── Type: test_coverage
+├── Constraint: RT-2
+├── Severity: non-blocking
+└── ACTION (copy-paste ready):
+
+    # Create tests/mvcc_tests.rs with:
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn test_mvcc_read_your_own_writes() {
+            // TODO: Implement
+        }
+
+        #[test]
+        fn test_mvcc_isolation_levels() {
+            // TODO: Implement
+        }
+    }
+
+ACTIONS SUMMARY:
+├── Blocking actions: 3
+├── Non-blocking actions: 4
+├── Total estimated lines: ~120
+└── Next: Fix blocking actions, then re-run /m5-verify
+```
+
 ## Execution Instructions
 
 1. Read manifold from `.manifold/<feature>.yaml`
@@ -140,6 +209,9 @@ This enables:
 5. Build verification matrix comparing declared vs actual coverage
 6. Calculate coverage percentages by type and artifact
 7. Identify specific gaps with actionable items
-8. If `--strict` mode, fail verification on any gaps
-9. **Update `.manifold/<feature>.verify.yaml`** with full results
-10. Set phase to VERIFIED (or keep GENERATED if gaps exist)
+8. **If `--actions` (v2)**, generate executable actions for each gap
+9. If `--strict` mode, fail verification on any gaps
+10. **Record iteration** in `iterations[]` (v2)
+11. **Calculate convergence status** (v2)
+12. **Update `.manifold/<feature>.verify.yaml`** with full results
+13. Set phase to VERIFIED (or keep GENERATED if gaps exist)

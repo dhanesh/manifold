@@ -24,11 +24,12 @@ Each command is a separate skill. Use them directly:
 **Available Skills:**
 - `/m0-init` - Initialize a constraint manifold
 - `/m1-constrain` - Interview-driven constraint discovery
-- `/m2-tension` - Surface and resolve conflicts
+- `/m2-tension` - Surface and resolve conflicts (`--auto-deps` for v2 dependency detection)
 - `/m3-anchor` - Backward reasoning from outcome
 - `/m4-generate` - Generate all artifacts
-- `/m5-verify` - Verify constraints coverage
-- `/m-status` - Show current state
+- `/m6-integrate` - Wire artifacts together (v2)
+- `/m5-verify` - Verify constraints coverage (`--actions` for v2 gap automation)
+- `/m-status` - Show current state (`--history` for v2 iteration tracking)
 
 ## Commands
 
@@ -205,11 +206,47 @@ Gaps: Add test for ErrorClassifier.classify()
 
 ---
 
+### /m6-integrate (v2)
+
+Wire generated artifacts together.
+
+**Usage:** `/m6-integrate <feature-name> [--check-only] [--auto-wire]`
+
+**Flags:**
+- `--check-only` - Show integration checklist without making changes
+- `--auto-wire` - Attempt automatic integration where safe
+
+**Why this exists:** `/m4-generate` creates artifacts in isolation. Integration (wiring modules together, adding feature flags, updating imports) was manual and error-prone. This command identifies integration points and produces actionable checklists.
+
+**Example:**
+```
+/m6-integrate graph-d-validation
+
+INTEGRATION CHECKLIST:
+
+[1] Wire WAL into Storage
+    ├── Source: src/storage/wal.rs
+    ├── Target: src/storage/mod.rs
+    ├── Action: Add `pub mod wal;`
+    └── Satisfies: RT-1, T3
+
+[2] Add WAL feature flag
+    ├── Target: Cargo.toml
+    ├── Action: Add `wal = []` to [features]
+    └── Satisfies: T3
+```
+
+---
+
 ### /m-status
 
 Show current Manifold state and next recommended action.
 
-**Usage:** `/m-status [<feature-name>]`
+**Usage:** `/m-status [<feature-name>] [--history] [--diff]`
+
+**Flags (v2):**
+- `--history` - Show full iteration history
+- `--diff` - Show changes since last iteration
 
 **Example:**
 ```

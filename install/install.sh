@@ -18,7 +18,7 @@ NC='\033[0m' # No Color
 BOLD='\033[1m'
 
 # Manifold info
-VERSION="1.0.0"
+VERSION="2.0.0"
 REPO="https://raw.githubusercontent.com/dhanesh/manifold/main"
 
 print_banner() {
@@ -72,6 +72,7 @@ COMMAND_FILES=(
     "m3-anchor.md"
     "m4-generate.md"
     "m5-verify.md"
+    "m6-integrate.md"
     "m-status.md"
 )
 
@@ -178,11 +179,12 @@ main() {
     echo ""
     echo "  /m0-init my-feature        # Initialize manifold"
     echo "  /m1-constrain my-feature   # Discover constraints"
-    echo "  /m2-tension my-feature     # Surface conflicts"
+    echo "  /m2-tension my-feature     # Surface conflicts (--auto-deps for v2)"
     echo "  /m3-anchor my-feature      # Backward reasoning"
     echo "  /m4-generate my-feature    # Create all artifacts"
-    echo "  /m5-verify my-feature      # Validate constraints"
-    echo "  /m-status                  # Show current state"
+    echo "  /m6-integrate my-feature   # Wire artifacts together (v2)"
+    echo "  /m5-verify my-feature      # Validate constraints (--actions for v2)"
+    echo "  /m-status                  # Show current state (--history for v2)"
     echo ""
     echo -e "${BOLD}Overview:${NC}"
     echo "  /manifold                  # Show framework overview"

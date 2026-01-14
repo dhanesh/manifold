@@ -9,15 +9,19 @@ Surface and resolve constraint conflicts.
 ## Usage
 
 ```
-/m2-tension <feature-name> [--resolve]
+/m2-tension <feature-name> [--resolve] [--auto-deps]
 ```
+
+**Flags (v2):**
+- `--resolve` - Interactively resolve tensions
+- `--auto-deps` - Enable automatic dependency detection (v2)
 
 ## Tension Types
 
 1. **Direct Conflicts** - Contradictory constraints that cannot both be satisfied
 2. **Resource Tensions** - Constraints competing for the same resources
 3. **Trade-off Pairs** - Goals that require balancing (improving one degrades the other)
-4. **Hidden Dependencies** - Implicit relationships between constraints
+4. **Hidden Dependencies** - Implicit relationships between constraints (v2: auto-detected)
 
 ## Common Tension Patterns
 
@@ -69,15 +73,62 @@ Updated: .manifold/payment-retry.yaml
 Next: /m3-anchor payment-retry
 ```
 
+## Automatic Dependency Detection (v2)
+
+With `--auto-deps`, the framework scans constraint statements for implicit dependencies:
+
+### Dependency Keywords
+
+| Keyword in Constraint | Likely Depends On |
+|----------------------|-------------------|
+| "ACID", "durable", "persistent" | Crash recovery, WAL |
+| "secure", "authenticated" | Session management, encryption |
+| "fast", "performant" | Caching, optimization |
+| "reliable", "available" | Redundancy, failover |
+| "consistent" | Transaction isolation |
+
+### Example: Auto-Detected Hidden Dependency
+
+```
+/m2-tension graph-db --auto-deps
+
+DEPENDENCY ANALYSIS (v2):
+
+Scanning constraint statements for implicit relationships...
+
+HIDDEN DEPENDENCY DETECTED:
+├── B4: "ACID compliance for all transactions"
+│   └── Keywords: "ACID", "transactions"
+├── T3: "Persistence must survive crash and recover"
+│   └── Keywords: "crash", "recover", "persistence"
+└── Relationship: B4 REQUIRES T3
+
+    Rationale: ACID 'D' (Durability) cannot be satisfied
+    without crash recovery capability.
+
+    Resolution: T3 must be implemented BEFORE B4.
+    Priority: T3 elevated to blocking dependency.
+
+AUTO-DETECTED DEPENDENCIES:
+- T3 → B4 (blocking)
+- O3 → B2 (verification requires CI)
+```
+
 ## Execution Instructions
 
 1. Read manifold from `.manifold/<feature>.yaml`
 2. For each pair of constraints, check for conflicts
-3. For each tension found:
+3. **If `--auto-deps` (v2):**
+   - Extract keywords from constraint statements
+   - Map keywords to dependency patterns
+   - Identify hidden dependencies automatically
+   - Flag blocking dependencies with elevated priority
+4. For each tension found:
    - Describe the conflict
    - Generate resolution options (A, B, C)
    - Recommend based on constraint types (INVARIANT > BOUNDARY > GOAL)
-4. If `--resolve` flag, prompt user to choose resolutions
-5. Update manifold with tensions and resolutions
-6. Set phase to TENSIONED
-7. Display summary and next step
+5. If `--resolve` flag, prompt user to choose resolutions
+6. Update manifold with tensions and resolutions
+7. **Record iteration** in `iterations[]` (v2)
+8. Set phase to TENSIONED
+9. Display summary and next step
