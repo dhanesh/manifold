@@ -1,0 +1,151 @@
+# Manifold Verify GitHub Action
+# Validates constraint manifolds in CI/CD pipelines
+#
+# Usage in your workflow:
+#   - uses: dhanesh/manifold/.github/workflows/manifold-verify.yml@main
+#     with:
+#       feature: my-feature  # optional, defaults to all manifolds
+
+name: Manifold Verify
+
+on:
+  workflow_call:
+    inputs:
+      feature:
+        description: 'Feature name to verify (optional, verifies all if not specified)'
+        required: false
+        type: string
+      fail-on-gaps:
+        description: 'Fail if non-blocking gaps are found'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  verify:
+    name: Verify Manifold Constraints
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Manifold CLI
+        run: |
+          # Download pre-built binary or build from source
+          MANIFOLD_VERSION="2.0.0"
+          PLATFORM="linux-x64"
+          BINARY_URL="https://github.com/dhanesh/manifold/releases/download/v${MANIFOLD_VERSION}/manifold-${PLATFORM}"
+
+          if curl -fsSL "$BINARY_URL" -o /tmp/manifold 2>/dev/null; then
+            chmod +x /tmp/manifold
+            sudo mv /tmp/manifold /usr/local/bin/manifold
+            echo "Installed Manifold CLI v${MANIFOLD_VERSION}"
+          else
+            echo "Binary not available, building from source..."
+            cd cli
+            bun install
+            bun run compile
+            sudo mv ./manifold /usr/local/bin/manifold
+            echo "Built Manifold CLI from source"
+          fi
+
+          manifold --version
+
+      - name: Check for manifold directory
+        id: check-manifold
+        run: |
+          if [ -d ".manifold" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "Manifold directory found"
+            ls -la .manifold/
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+            echo "No .manifold directory found - skipping verification"
+          fi
+
+      - name: Validate manifold schemas
+        if: steps.check-manifold.outputs.found == 'true'
+        run: |
+          if [ -n "${{ inputs.feature }}" ]; then
+            manifold validate "${{ inputs.feature }}" --json
+          else
+            # Validate all manifolds
+            for f in .manifold/*.yaml; do
+              if [ -f "$f" ]; then
+                feature=$(basename "$f" .yaml)
+                # Skip verify files
+                if [[ "$feature" != *.verify ]]; then
+                  echo "Validating: $feature"
+                  manifold validate "$feature" --json || exit 1
+                fi
+              fi
+            done
+          fi
+
+      - name: Verify artifact coverage
+        if: steps.check-manifold.outputs.found == 'true'
+        run: |
+          EXIT_CODE=0
+
+          if [ -n "${{ inputs.feature }}" ]; then
+            manifold verify "${{ inputs.feature }}" --json
+            RESULT=$?
+            if [ $RESULT -eq 2 ]; then
+              echo "::warning::Verification found gaps for ${{ inputs.feature }}"
+              if [ "${{ inputs.fail-on-gaps }}" == "true" ]; then
+                EXIT_CODE=1
+              fi
+            elif [ $RESULT -ne 0 ]; then
+              EXIT_CODE=1
+            fi
+          else
+            # Verify all manifolds
+            for f in .manifold/*.yaml; do
+              if [ -f "$f" ]; then
+                feature=$(basename "$f" .yaml)
+                # Skip verify files
+                if [[ "$feature" != *.verify ]]; then
+                  echo "Verifying: $feature"
+                  manifold verify "$feature" --json
+                  RESULT=$?
+                  if [ $RESULT -eq 2 ]; then
+                    echo "::warning::Verification found gaps for $feature"
+                    if [ "${{ inputs.fail-on-gaps }}" == "true" ]; then
+                      EXIT_CODE=1
+                    fi
+                  elif [ $RESULT -ne 0 ]; then
+                    EXIT_CODE=1
+                  fi
+                fi
+              fi
+            done
+          fi
+
+          exit $EXIT_CODE
+
+      - name: Generate status summary
+        if: steps.check-manifold.outputs.found == 'true'
+        run: |
+          echo "## Manifold Verification Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -n "${{ inputs.feature }}" ]; then
+            manifold status "${{ inputs.feature }}" >> $GITHUB_STEP_SUMMARY
+          else
+            for f in .manifold/*.yaml; do
+              if [ -f "$f" ]; then
+                feature=$(basename "$f" .yaml)
+                if [[ "$feature" != *.verify ]]; then
+                  echo "### $feature" >> $GITHUB_STEP_SUMMARY
+                  manifold status "$feature" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                fi
+              fi
+            done
+          fi

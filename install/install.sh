@@ -19,7 +19,9 @@ BOLD='\033[1m'
 
 # Manifold info
 VERSION="2.0.0"
+CLI_VERSION="2.0.0"
 REPO="https://raw.githubusercontent.com/dhanesh/manifold/main"
+RELEASES="https://github.com/dhanesh/manifold/releases/download"
 
 print_banner() {
     echo ""
@@ -44,6 +46,72 @@ print_warning() {
 
 print_error() {
     echo -e "${RED}✗${NC} $1"
+}
+
+# Detect OS and architecture
+detect_platform() {
+    local os=""
+    local arch=""
+
+    case "$(uname -s)" in
+        Darwin) os="darwin" ;;
+        Linux) os="linux" ;;
+        *) os="unsupported" ;;
+    esac
+
+    case "$(uname -m)" in
+        x86_64|amd64) arch="x64" ;;
+        arm64|aarch64) arch="arm64" ;;
+        *) arch="unsupported" ;;
+    esac
+
+    echo "${os}-${arch}"
+}
+
+# Download and install CLI binary
+install_cli() {
+    local platform="$1"
+    local install_dir="${2:-/usr/local/bin}"
+
+    if [[ "$platform" == *"unsupported"* ]]; then
+        print_warning "CLI binary not available for this platform: $platform"
+        print_warning "You can build from source: cd cli && bun run compile"
+        return 1
+    fi
+
+    local binary_name="manifold-${platform}"
+    local download_url="${RELEASES}/v${CLI_VERSION}/${binary_name}"
+    local tmp_file="/tmp/manifold-cli-$$"
+
+    print_step "Downloading CLI binary for ${platform}..."
+
+    if curl -fsSL "$download_url" -o "$tmp_file" 2>/dev/null; then
+        chmod +x "$tmp_file"
+
+        # Try to install to system path, fall back to local
+        if [[ -w "$install_dir" ]] || sudo -n true 2>/dev/null; then
+            if [[ -w "$install_dir" ]]; then
+                mv "$tmp_file" "$install_dir/manifold"
+            else
+                sudo mv "$tmp_file" "$install_dir/manifold"
+            fi
+            print_success "CLI installed to $install_dir/manifold"
+            return 0
+        else
+            # Fall back to ~/.local/bin
+            local local_bin="$HOME/.local/bin"
+            mkdir -p "$local_bin"
+            mv "$tmp_file" "$local_bin/manifold"
+            print_success "CLI installed to $local_bin/manifold"
+            print_warning "Add $local_bin to your PATH if not already present"
+            return 0
+        fi
+    else
+        print_warning "CLI binary not yet available (release pending)"
+        print_warning "You can build from source: cd cli && bun run compile"
+        rm -f "$tmp_file"
+        return 1
+    fi
 }
 
 # Detect Claude Code
@@ -171,11 +239,28 @@ main() {
     fi
 
     echo ""
+
+    # Install CLI binary (optional but recommended)
+    print_step "Installing CLI binary..."
+    local platform
+    platform=$(detect_platform)
+    print_success "Detected platform: $platform"
+
+    local cli_installed=0
+    if install_cli "$platform"; then
+        cli_installed=1
+    fi
+
+    echo ""
     echo -e "${GREEN}════════════════════════════════════════════════════════${NC}"
-    echo -e "${GREEN}  Manifold installed successfully to $installed agent(s)!${NC}"
+    if [[ $cli_installed -eq 1 ]]; then
+        echo -e "${GREEN}  Manifold installed: $installed agent(s) + CLI binary${NC}"
+    else
+        echo -e "${GREEN}  Manifold installed successfully to $installed agent(s)!${NC}"
+    fi
     echo -e "${GREEN}════════════════════════════════════════════════════════${NC}"
     echo ""
-    echo -e "${BOLD}Quick Start:${NC}"
+    echo -e "${BOLD}AI Agent Commands (Claude Code / AMP):${NC}"
     echo ""
     echo "  /m0-init my-feature        # Initialize manifold"
     echo "  /m1-constrain my-feature   # Discover constraints"
@@ -188,6 +273,17 @@ main() {
     echo ""
     echo -e "${BOLD}Overview:${NC}"
     echo "  /manifold                  # Show framework overview"
+    echo ""
+    if [[ $cli_installed -eq 1 ]]; then
+        echo -e "${BOLD}CLI Commands (fast, deterministic, no AI):${NC}"
+        echo ""
+        echo "  manifold status [feature]     # Show manifold state (<100ms)"
+        echo "  manifold validate [feature]   # Validate schema"
+        echo "  manifold init <feature>       # Initialize new manifold"
+        echo "  manifold verify [feature]     # Verify artifacts exist"
+        echo ""
+        echo "  Add --json for machine-readable output (CI/CD)"
+    fi
     echo ""
     echo -e "${BOLD}Optional: Enable Context Preservation${NC}"
     echo ""

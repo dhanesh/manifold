@@ -1,0 +1,25 @@
+# Example CI workflow using Manifold verification
+# Copy this to your repository's .github/workflows/ directory
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # Run Manifold verification on push/PR
+  manifold:
+    name: Verify Manifolds
+    uses: dhanesh/manifold/.github/workflows/manifold-verify.yml@main
+    with:
+      fail-on-gaps: false  # Set to true to fail on non-blocking gaps
+
+  # Your other CI jobs...
+  # test:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - run: npm test

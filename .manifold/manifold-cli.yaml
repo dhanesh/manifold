@@ -5,7 +5,7 @@
 schema_version: 2
 feature: manifold-cli
 outcome: "Native CLI tool for deterministic Manifold operations (status, validate, verify) with sub-100ms response times"
-phase: GENERATED
+phase: CONVERGED
 created: "2026-01-14"
 
 # Context: Why this feature?
@@ -254,9 +254,9 @@ anchors:
       evidence: "All commands return 0/1/2 per Unix conventions"
     - id: RT-4
       statement: "Distribution must be zero-friction"
-      status: PARTIAL
+      status: SATISFIED
       priority: 2
-      evidence: "bun compile scripts ready; installer and GitHub Action pending"
+      evidence: "install.sh downloads CLI binary, GitHub Action for CI/CD"
     - id: RT-5
       statement: "Commands must handle edge cases gracefully"
       status: SATISFIED
@@ -359,15 +359,32 @@ iterations:
     tests_passing: 39
     result: "PASS"
 
+  - number: 6
+    phase: integrate
+    timestamp: "2026-01-15T00:22:00Z"
+    integration_points:
+      - "install.sh → CLI binary download"
+      - "GitHub Action → CI/CD workflow"
+    artifacts_added:
+      - ".github/workflows/manifold-verify.yml"
+      - ".github/workflows/ci.yml"
+    gaps_closed:
+      - "O1: Install via curl"
+      - "O3: GitHub Action"
+    required_truths_satisfied:
+      - "RT-4: Distribution must be zero-friction"
+    result: "CONVERGED"
+
 convergence:
-  status: IN_PROGRESS
+  status: CONVERGED
   criteria:
     all_invariants_satisfied: true
-    all_required_truths_satisfied: false
+    all_required_truths_satisfied: true
     no_blocking_gaps: true
     verification_passed: true
-  progress: "5/6 RT satisfied, 2 non-blocking gaps (O1, O3)"
-  next: "Distribution phase - add CLI to install.sh, create GitHub Action"
+    all_integrations_complete: true
+  progress: "6/6 RT satisfied, all gaps closed"
+  converged_at: "2026-01-15T00:22:00Z"
 
 # Generation tracking
 generation:
