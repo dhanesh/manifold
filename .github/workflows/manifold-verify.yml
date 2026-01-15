@@ -79,8 +79,8 @@ jobs:
             for f in .manifold/*.yaml; do
               if [ -f "$f" ]; then
                 feature=$(basename "$f" .yaml)
-                # Skip verify files
-                if [[ "$feature" != *.verify ]]; then
+                # Skip anchor and verify files (they have different schemas)
+                if [[ "$feature" != *.anchor && "$feature" != *.verify ]]; then
                   echo "Validating: $feature"
                   manifold validate "$feature" --json || exit 1
                 fi
@@ -109,8 +109,8 @@ jobs:
             for f in .manifold/*.yaml; do
               if [ -f "$f" ]; then
                 feature=$(basename "$f" .yaml)
-                # Skip verify files
-                if [[ "$feature" != *.verify ]]; then
+                # Skip anchor and verify files (they have different schemas)
+                if [[ "$feature" != *.anchor && "$feature" != *.verify ]]; then
                   echo "Verifying: $feature"
                   manifold verify "$feature" --json
                   RESULT=$?
@@ -141,7 +141,8 @@ jobs:
             for f in .manifold/*.yaml; do
               if [ -f "$f" ]; then
                 feature=$(basename "$f" .yaml)
-                if [[ "$feature" != *.verify ]]; then
+                # Skip anchor and verify files (they have different schemas)
+                if [[ "$feature" != *.anchor && "$feature" != *.verify ]]; then
                   echo "### $feature" >> $GITHUB_STEP_SUMMARY
                   manifold status "$feature" >> $GITHUB_STEP_SUMMARY
                   echo "" >> $GITHUB_STEP_SUMMARY
