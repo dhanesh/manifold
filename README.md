@@ -204,6 +204,38 @@ Manifold: All artifacts derive from the SAME constraint source:
 3. **Reason backward from outcomes** — if outcome X is true, what must be true?
 4. **Generate all artifacts at once** — all artifacts derive from same manifold, no drift
 
+## Quality Gates
+
+Always validate manifolds before committing changes:
+
+```bash
+# Validate all manifolds (run after any /m* command)
+manifold validate
+
+# Exit codes:
+# 0 = valid
+# 1 = error (file not found, etc)
+# 2 = validation failure (schema violations)
+```
+
+### Valid Values Reference
+
+| Field | Valid Values |
+|-------|--------------|
+| `phase` | INITIALIZED, CONSTRAINED, TENSIONED, ANCHORED, GENERATED, VERIFIED |
+| `constraint.type` | invariant, goal, boundary |
+| `tension.type` | trade_off, resource_tension, hidden_dependency |
+| `tension.status` | detected, resolved, accepted |
+| `required_truth.status` | SATISFIED, PARTIAL, NOT_SATISFIED, SPECIFICATION_READY |
+| `convergence.status` | NOT_STARTED, IN_PROGRESS, CONVERGED |
+
+### Pre-Commit Checklist
+
+Before committing manifold changes:
+1. Run `manifold validate` — all manifolds must pass
+2. Run `manifold status <feature>` — verify phase progression makes sense
+3. Check `convergence.status` vs `phase` — they track different things
+
 ## CI/CD Integration
 
 ### GitHub Action

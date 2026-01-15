@@ -87,14 +87,14 @@ tensions:
     status: resolved
 
   - id: TN2
-    type: resource
+    type: resource_tension
     between: [B3, O1]
     description: "Single naming scheme vs preserving old files"
     resolution: "Move deprecated files to _archive/ directory with README explaining status"
     status: resolved
 
   - id: TN3
-    type: dependency
+    type: hidden_dependency
     between: [U3, T3]
     description: "Example must match schema, schema uses snake_case"
     resolution: "Update example to use snake_case 'user_experience' instead of 'ux'"

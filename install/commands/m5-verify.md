@@ -215,3 +215,24 @@ ACTIONS SUMMARY:
 11. **Calculate convergence status** (v2)
 12. **Update `.manifold/<feature>.verify.yaml`** with full results
 13. Set phase to VERIFIED (or keep GENERATED if gaps exist)
+
+## Quality Gate: Schema Validation
+
+**Before running /m5-verify**, always validate the manifold schema:
+
+```bash
+# CLI validation (instant, no AI required)
+manifold validate <feature>
+
+# This catches:
+# - Invalid phase values (e.g., CONVERGED instead of VERIFIED)
+# - Invalid constraint types
+# - Invalid tension types
+# - Invalid required_truth statuses
+```
+
+**Why?** Schema validation and constraint verification are different:
+- `manifold validate` = "Is the YAML structure correct?"
+- `/m5-verify` = "Do artifacts satisfy constraints?"
+
+Run `manifold validate` after every manifold modification to catch schema errors immediately
