@@ -360,6 +360,7 @@ export function findManifoldDir(cwd: string = process.cwd()): string | null {
 
 /**
  * List all manifold features in the .manifold directory
+ * Only returns features that have a main manifold file (not just anchor/verify files)
  */
 export function listFeatures(manifoldDir: string): string[] {
   if (!existsSync(manifoldDir)) return [];
@@ -370,16 +371,13 @@ export function listFeatures(manifoldDir: string): string[] {
   for (const file of files) {
     if (!file.endsWith('.yaml')) continue;
 
-    // Extract feature name from filename
-    let featureName: string;
-    if (file.endsWith('.anchor.yaml')) {
-      featureName = file.replace('.anchor.yaml', '');
-    } else if (file.endsWith('.verify.yaml')) {
-      featureName = file.replace('.verify.yaml', '');
-    } else {
-      featureName = file.replace('.yaml', '');
+    // Skip anchor and verify files - only count main manifold files
+    if (file.endsWith('.anchor.yaml') || file.endsWith('.verify.yaml')) {
+      continue;
     }
 
+    // Extract feature name from main manifold filename
+    const featureName = file.replace('.yaml', '');
     features.add(featureName);
   }
 
