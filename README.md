@@ -19,9 +19,15 @@ Forward reasoning                    Backward from outcome
 curl -fsSL https://raw.githubusercontent.com/dhanesh/manifold/main/install/install.sh | bash
 ```
 
+This installs:
+- **Slash commands** (`/m0-init`, `/m1-constrain`, etc.) for Claude Code and AMP
+- **Native CLI** (`manifold`) for fast, deterministic operations
+
 Supports: **Claude Code** and **AMP**
 
 ## Commands
+
+### AI Agent Commands (Claude Code / AMP)
 
 | Command | Purpose |
 |---------|---------|
@@ -31,7 +37,27 @@ Supports: **Claude Code** and **AMP**
 | `/m3-anchor` | Backward reasoning from outcome |
 | `/m4-generate` | Create all artifacts |
 | `/m5-verify` | Validate against constraints |
+| `/m6-integrate` | Wire artifacts together (v2) |
 | `/m-status` | Show current state |
+
+### Native CLI (Fast, Deterministic)
+
+The CLI provides instant operations without AI round-trips (<100ms):
+
+```bash
+manifold status [feature]      # Show manifold state
+manifold validate [feature]    # Validate schema (exit code 2 = invalid)
+manifold init <feature>        # Initialize new manifold
+manifold verify [feature]      # Verify artifacts exist
+
+# Options
+--json                         # Machine-readable output for CI/CD
+--no-color                     # Disable colored output
+```
+
+**When to use CLI vs AI commands:**
+- **CLI**: Status checks, CI/CD validation, quick verification
+- **AI**: Constraint discovery, tension analysis, code generation
 
 ## Quick Start
 
@@ -177,6 +203,40 @@ Manifold: All artifacts derive from the SAME constraint source:
 2. **Surface conflicts early** — what fails in tension analysis won't surprise you in production
 3. **Reason backward from outcomes** — if outcome X is true, what must be true?
 4. **Generate all artifacts at once** — all artifacts derive from same manifold, no drift
+
+## CI/CD Integration
+
+### GitHub Action
+
+Add Manifold verification to your CI pipeline:
+
+```yaml
+# .github/workflows/ci.yml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  manifold:
+    uses: dhanesh/manifold/.github/workflows/manifold-verify.yml@main
+    with:
+      fail-on-gaps: false  # Set true to fail on non-blocking gaps
+```
+
+The action will:
+1. Validate all manifold schemas in `.manifold/`
+2. Verify artifact coverage
+3. Report status in PR checks
+
+### Manual CI Integration
+
+```bash
+# Validate manifolds (exit 2 = validation failure)
+manifold validate --json
+
+# Verify artifacts exist
+manifold verify --json
+```
 
 ## Context Preservation
 

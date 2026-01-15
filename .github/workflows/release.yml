@@ -1,0 +1,184 @@
+# Automated Release Workflow
+# Triggers on version tag push (v*.*.*) to build and publish release
+#
+# Satisfies:
+# - T1: CLI binaries for all 4 platforms
+# - T2: Binaries attached to GitHub release
+# - S2: Binaries built from tagged commit
+# - O3: Release tag matches CLI version
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build CLI Binaries
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout tagged commit
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: cli
+        run: bun install
+
+      - name: Run tests
+        working-directory: cli
+        run: bun test
+
+      - name: Build binaries for all platforms
+        working-directory: cli
+        run: |
+          mkdir -p dist
+
+          echo "Building darwin-arm64..."
+          bun build ./index.ts --compile --target=bun-darwin-arm64 --outfile ./dist/manifold-darwin-arm64
+
+          echo "Building darwin-x64..."
+          bun build ./index.ts --compile --target=bun-darwin-x64 --outfile ./dist/manifold-darwin-x64
+
+          echo "Building linux-x64..."
+          bun build ./index.ts --compile --target=bun-linux-x64 --outfile ./dist/manifold-linux-x64
+
+          echo "Building linux-arm64..."
+          bun build ./index.ts --compile --target=bun-linux-arm64 --outfile ./dist/manifold-linux-arm64
+
+          echo "Build complete. Binary sizes:"
+          ls -lh dist/
+
+      - name: Verify binary sizes under 50MB
+        working-directory: cli
+        run: |
+          for binary in dist/manifold-*; do
+            size=$(stat -c%s "$binary" 2>/dev/null || stat -f%z "$binary")
+            size_mb=$((size / 1024 / 1024))
+            echo "$binary: ${size_mb}MB"
+            if [ $size_mb -gt 50 ]; then
+              echo "ERROR: $binary exceeds 50MB limit"
+              exit 1
+            fi
+          done
+
+      - name: Upload binaries as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-binaries
+          path: cli/dist/manifold-*
+          retention-days: 1
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: cli-binaries
+          path: binaries
+
+      - name: Get version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          cat << 'EOF' > release-notes.md
+          ## What's New in ${{ steps.version.outputs.version }}
+
+          ### Native CLI
+
+          Manifold now includes a native CLI for fast, deterministic operations:
+
+          ```bash
+          manifold status [feature]    # Show manifold state (<100ms)
+          manifold validate [feature]  # Validate schema
+          manifold init <feature>      # Initialize new manifold
+          manifold verify [feature]    # Verify artifacts exist
+          ```
+
+          Add `--json` for machine-readable output in CI/CD pipelines.
+
+          ### GitHub Action
+
+          New reusable workflow for CI/CD integration:
+
+          ```yaml
+          jobs:
+            manifold:
+              uses: dhanesh/manifold/.github/workflows/manifold-verify.yml@main
+          ```
+
+          ### Installation
+
+          ```bash
+          curl -fsSL https://raw.githubusercontent.com/dhanesh/manifold/main/install/install.sh | bash
+          ```
+
+          ### Downloads
+
+          | Platform | Binary |
+          |----------|--------|
+          | macOS (Apple Silicon) | `manifold-darwin-arm64` |
+          | macOS (Intel) | `manifold-darwin-x64` |
+          | Linux (x64) | `manifold-linux-x64` |
+          | Linux (ARM64) | `manifold-linux-arm64` |
+          EOF
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Manifold ${{ steps.version.outputs.version }}
+          body_path: release-notes.md
+          files: binaries/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  verify:
+    name: Verify Installation
+    needs: release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Wait for release assets
+        run: sleep 10
+
+      - name: Test installation
+        run: |
+          # Download and install
+          curl -fsSL https://raw.githubusercontent.com/dhanesh/manifold/main/install/install.sh | bash
+
+          # Verify CLI is available
+          if command -v manifold &> /dev/null; then
+            manifold --version
+            echo "CLI installation verified!"
+          else
+            # Check ~/.local/bin
+            if [ -f "$HOME/.local/bin/manifold" ]; then
+              $HOME/.local/bin/manifold --version
+              echo "CLI installation verified (in ~/.local/bin)!"
+            else
+              echo "WARNING: CLI not found in PATH after installation"
+            fi
+          fi

@@ -1,0 +1,191 @@
+# v2-release.anchor.yaml
+# Outcome Anchoring for Manifold v2.0.0 Release
+# Generated: 2026-01-15
+
+outcome: "Ship Manifold v2.0.0: GitHub release with CLI binaries, updated README, validated installation"
+
+# Backward Reasoning: What MUST be true for this outcome?
+
+required_truths:
+  - id: RT-1
+    statement: "All version numbers are synchronized at 2.0.0"
+    requires:
+      - "cli/package.json version: 2.0.0"
+      - "install/install.sh VERSION: 2.0.0"
+      - "install/install.sh CLI_VERSION: 2.0.0"
+    current_state: SATISFIED
+    evidence: "Verified in codebase - all show 2.0.0"
+    priority: 1
+
+  - id: RT-2
+    statement: "All tests pass"
+    requires:
+      - "bun test in cli/ passes"
+      - "No TypeScript errors"
+    current_state: SATISFIED
+    evidence: "39 tests passing, typecheck clean"
+    priority: 1
+
+  - id: RT-3
+    statement: "CLI binaries can be built for all platforms"
+    requires:
+      - "bun build --compile works for darwin-arm64"
+      - "bun build --compile works for darwin-x64"
+      - "bun build --compile works for linux-x64"
+      - "bun build --compile works for linux-arm64"
+    current_state: NOT_VERIFIED
+    evidence: "Build scripts exist but not yet executed for all platforms"
+    priority: 1
+
+  - id: RT-4
+    statement: "README documents CLI commands and GitHub Action"
+    requires:
+      - "CLI Commands section with status, validate, init, verify"
+      - "GitHub Action usage example"
+      - "Installation includes CLI mention"
+    current_state: NOT_SATISFIED
+    evidence: "Current README has no CLI documentation"
+    priority: 2
+
+  - id: RT-5
+    statement: "Release notes document what's new"
+    requires:
+      - "Changelog or release body with v2.0.0 features"
+      - "CLI introduction highlighted"
+      - "Breaking changes noted (if any)"
+    current_state: NOT_SATISFIED
+    evidence: "No release notes drafted"
+    priority: 2
+
+  - id: RT-6
+    statement: "Installation works end-to-end"
+    requires:
+      - "install.sh downloads CLI binary successfully"
+      - "manifold command available after install"
+      - "Works on darwin-arm64 (current machine)"
+    current_state: NOT_VERIFIED
+    evidence: "Cannot verify until binaries are published"
+    priority: 1
+
+# Gap Analysis
+gaps:
+  blocking:
+    - id: GAP-1
+      truth: RT-3
+      issue: "Binaries not yet built"
+      action: "Run bun run compile:all in cli/"
+
+    - id: GAP-2
+      truth: RT-4
+      issue: "README lacks CLI documentation"
+      action: "Add CLI Commands and GitHub Action sections"
+
+    - id: GAP-3
+      truth: RT-5
+      issue: "No release notes"
+      action: "Draft release notes for v2.0.0"
+
+  non_blocking:
+    - id: GAP-4
+      truth: RT-6
+      issue: "E2E installation not tested"
+      action: "Test after binaries published, before announcing"
+
+# Solution Space
+solution_options:
+  - option: A
+    name: "Manual Release"
+    description: "Build binaries locally, create release via GitHub web UI"
+    steps:
+      - "Update README with CLI docs"
+      - "Commit and push"
+      - "Create v2.0.0 tag"
+      - "Build binaries locally (bun run compile:all)"
+      - "Create GitHub release via web UI"
+      - "Upload 4 binary assets manually"
+    satisfies: [RT-1, RT-2, RT-3, RT-4, RT-5, RT-6]
+    complexity: Low
+    time: "~15 minutes"
+    pros:
+      - "Simple, no CI setup needed"
+      - "Full control over process"
+    cons:
+      - "Manual upload tedious"
+      - "No automation for future releases"
+
+  - option: B
+    name: "GitHub CLI Release"
+    description: "Use gh CLI for streamlined release creation"
+    steps:
+      - "Update README with CLI docs"
+      - "Commit and push"
+      - "Create v2.0.0 tag"
+      - "Build binaries locally"
+      - "gh release create v2.0.0 --title 'v2.0.0' --notes-file RELEASE.md"
+      - "gh release upload v2.0.0 ./cli/dist/*"
+    satisfies: [RT-1, RT-2, RT-3, RT-4, RT-5, RT-6]
+    complexity: Low
+    time: "~10 minutes"
+    pros:
+      - "Scriptable and reproducible"
+      - "Faster than web UI"
+    cons:
+      - "Still manual builds"
+
+  - option: C
+    name: "GitHub Actions Automation"
+    description: "Create release workflow that builds and publishes on tag push"
+    steps:
+      - "Create .github/workflows/release.yml"
+      - "Update README with CLI docs"
+      - "Commit and push"
+      - "Push v2.0.0 tag → triggers automated build and release"
+    satisfies: [RT-1, RT-2, RT-3, RT-4, RT-5, RT-6]
+    complexity: Medium
+    time: "~30 minutes setup, then instant releases"
+    pros:
+      - "Fully automated future releases"
+      - "Reproducible builds"
+      - "Cross-platform builds in CI"
+    cons:
+      - "More setup time for first release"
+      - "Overkill for infrequent releases"
+
+recommendation:
+  option: B
+  name: "GitHub CLI Release"
+  rationale: |
+    Option B (GitHub CLI) is optimal because:
+    1. Faster than manual web UI (satisfies B1 - enable adoption quickly)
+    2. Simple enough for a one-time release
+    3. Scriptable for documentation
+    4. We can add automation (Option C) later if releases become frequent
+
+    Option C is over-engineering for a project that may release infrequently.
+    Option A works but is slower and more error-prone.
+
+execution_order:
+  - phase: "Pre-Release"
+    steps:
+      - "1. Verify version consistency (RT-1)"
+      - "2. Run tests (RT-2)"
+      - "3. Update README with CLI docs (RT-4)"
+      - "4. Draft release notes (RT-5)"
+      - "5. Commit and push changes"
+
+  - phase: "Build"
+    steps:
+      - "6. Create and push v2.0.0 tag"
+      - "7. Build binaries: cd cli && bun run compile:all (RT-3)"
+      - "8. Verify binary sizes < 50MB (T3)"
+
+  - phase: "Release"
+    steps:
+      - "9. Create release with gh CLI"
+      - "10. Upload binary assets"
+      - "11. Test installation in fresh env (RT-6)"
+
+  - phase: "Post-Release"
+    steps:
+      - "12. Verify install.sh downloads work"
+      - "13. Update manifold state to CONVERGED"
