@@ -204,12 +204,24 @@ function printFeatureStatus(data: FeatureData, includeHistory?: boolean): void {
     println(formatKeyValue('Tensions', formatTensionSummary(resolved, manifold.tensions.length)));
   }
 
-  // Anchors
+  // Anchors - check verification section first (post-verification), then fall back to anchors (planning-time)
   if (manifold.anchors?.required_truths?.length) {
-    const satisfied = manifold.anchors.required_truths.filter(
-      rt => rt.status === 'SATISFIED'
-    ).length;
-    println(formatKeyValue('Required Truths', `${satisfied}/${manifold.anchors.required_truths.length} satisfied`));
+    const total = manifold.anchors.required_truths.length;
+    let satisfied: number;
+
+    // Check if verification has the satisfied count (post-verification is more accurate)
+    if (manifold.verification?.required_truths_satisfied) {
+      // Parse from string like "6/6 (100%)" or just use the number
+      const rtStr = String(manifold.verification.required_truths_satisfied);
+      const match = rtStr.match(/^(\d+)/);
+      satisfied = match ? parseInt(match[1], 10) : 0;
+    } else {
+      // Fall back to counting from anchors
+      satisfied = manifold.anchors.required_truths.filter(
+        rt => rt.status === 'SATISFIED'
+      ).length;
+    }
+    println(formatKeyValue('Required Truths', `${satisfied}/${total} satisfied`));
   }
 
   if (manifold.anchors?.recommended_option) {

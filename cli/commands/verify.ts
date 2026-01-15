@@ -265,12 +265,19 @@ function calculateCoverage(manifold: Manifold): NonNullable<VerificationResult['
   const constraintCounts = countConstraints(manifold);
   const totalConstraints = constraintCounts.total;
 
-  // Count satisfied from generation coverage or estimate from phase
+  // Count satisfied from verification, generation coverage, or estimate from phase
   let satisfiedConstraints = 0;
-  if (manifold.generation?.coverage) {
+
+  // Priority 1: Check verification section (most accurate, post-verification)
+  if (manifold.verification?.constraints_satisfied !== undefined) {
+    satisfiedConstraints = manifold.verification.constraints_satisfied;
+  }
+  // Priority 2: Check generation coverage
+  else if (manifold.generation?.coverage?.constraints_addressed !== undefined) {
     satisfiedConstraints = manifold.generation.coverage.constraints_addressed;
-  } else {
-    // Estimate based on phase
+  }
+  // Priority 3: Estimate based on phase
+  else {
     const phaseProgress: Record<string, number> = {
       'INITIALIZED': 0,
       'CONSTRAINED': 0.2,
@@ -282,9 +289,18 @@ function calculateCoverage(manifold: Manifold): NonNullable<VerificationResult['
     satisfiedConstraints = Math.floor(totalConstraints * (phaseProgress[manifold.phase] ?? 0));
   }
 
-  // Count required truths
+  // Count required truths - check verification first, then anchors
   const requiredTruths = manifold.anchors?.required_truths ?? [];
-  const satisfiedTruths = requiredTruths.filter(rt => rt.status === 'SATISFIED').length;
+  let satisfiedTruths = 0;
+
+  // Check if verification has the satisfied count
+  if (manifold.verification?.required_truths_satisfied) {
+    const rtStr = String(manifold.verification.required_truths_satisfied);
+    const match = rtStr.match(/^(\d+)/);
+    satisfiedTruths = match ? parseInt(match[1], 10) : 0;
+  } else {
+    satisfiedTruths = requiredTruths.filter(rt => rt.status === 'SATISFIED').length;
+  }
 
   const percentage = totalConstraints > 0
     ? Math.round((satisfiedConstraints / totalConstraints) * 100)

@@ -53,3 +53,4 @@ build/
 # Note: .manifold/ is NOT ignored - it should be tracked
 # for team collaboration and cross-machine continuity
 # ===========================================
+*.bun-build

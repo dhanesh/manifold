@@ -57,6 +57,20 @@ export interface Manifold {
 
   generation?: Generation;
   integration?: Integration;
+
+  // Inline verification data (alternative to separate .verify.yaml)
+  verification?: {
+    timestamp?: string;
+    result?: string;
+    constraints_verified?: number;
+    constraints_satisfied?: number;
+    gaps_found?: number;
+    gaps_blocking?: number;
+    gaps_nonblocking?: number;
+    required_truths_satisfied?: string | number;
+    coverage?: Record<string, string | number>;
+    verify_document?: string;
+  };
 }
 
 export interface Constraint {
