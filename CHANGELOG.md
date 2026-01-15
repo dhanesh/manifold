@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.2](https://github.com/dhanesh/manifold/compare/v2.1.1...v2.1.2) (2026-01-15)
+
+### Bug Fixes
+
+* skip anchor files in ci workflow validation ([0a6d0c7](https://github.com/dhanesh/manifold/commit/0a6d0c758e7af10411ec9c29299e2d7796d1c81c))
+
 ## [2.1.1](https://github.com/dhanesh/manifold/compare/v2.1.0...v2.1.1) (2026-01-15)
 
 ### Bug Fixes
