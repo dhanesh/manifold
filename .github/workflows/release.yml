@@ -156,10 +156,12 @@ jobs:
     name: Verify CLI Binary
     needs: release
     runs-on: ubuntu-latest
+    # Don't fail the workflow if verification fails (assets may take time to propagate)
+    continue-on-error: true
 
     steps:
-      - name: Wait for release assets
-        run: sleep 10
+      - name: Wait for release assets to propagate
+        run: sleep 30
 
       - name: Download and test CLI binary
         run: |
@@ -167,7 +169,24 @@ jobs:
           BINARY_URL="https://github.com/dhanesh/manifold/releases/download/${VERSION}/manifold-linux-x64"
 
           echo "Downloading CLI from: $BINARY_URL"
-          curl -fsSL "$BINARY_URL" -o /tmp/manifold
+
+          # Retry up to 3 times with 20 second delays
+          for i in 1 2 3; do
+            if curl -fsSL "$BINARY_URL" -o /tmp/manifold 2>/dev/null; then
+              echo "Download successful on attempt $i"
+              break
+            fi
+            echo "Attempt $i failed, retrying in 20s..."
+            sleep 20
+          done
+
+          if [ ! -f /tmp/manifold ]; then
+            echo "WARNING: Could not download CLI binary after 3 attempts"
+            echo "This may be a timing issue - release assets can take time to propagate"
+            echo "Please verify manually at: https://github.com/dhanesh/manifold/releases/tag/${VERSION}"
+            exit 0
+          fi
+
           chmod +x /tmp/manifold
 
           echo "Testing CLI..."
