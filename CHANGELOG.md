@@ -23,11 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * add automated release pipeline with conventional commits ([8da089f](https://github.com/dhanesh/manifold/commit/8da089f9041a5406dba6f0cb085f9c1b05d26a9f))
 
-# Changelog
-
-All notable changes to Manifold will be documented in this file.
-
-## [2.0.0] - 2026-01-15
+## [2.0.0](https://github.com/dhanesh/manifold/releases/tag/v2.0.0) (2026-01-15)
 
 ### Added
 
@@ -79,7 +75,7 @@ All notable changes to Manifold will be documented in this file.
 - 39 tests covering parser, schema validation, and output formatting
 - Supports darwin-arm64, darwin-x64, linux-x64, linux-arm64
 
-## [1.0.0] - 2026-01-10
+## [1.0.0](https://github.com/dhanesh/manifold/releases/tag/v1.0.0) (2026-01-10)
 
 ### Added
 
