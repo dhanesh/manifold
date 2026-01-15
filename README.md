@@ -293,6 +293,25 @@ Manifold's constraint-first approach extends beyond software engineering to any 
 
 See [Non-Programming Guide](docs/non-programming/guide.md) for detailed documentation and example scenarios.
 
+## Contributing
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/) and automated releases.
+
+```bash
+# Install dependencies (includes commit validation)
+bun install
+
+# Your commits will be validated automatically
+git commit -m "feat: add new feature"   # Creates MINOR release
+git commit -m "fix: resolve bug"        # Creates PATCH release
+```
+
+See [Release Automation Guide](docs/release-automation/README.md) for details on:
+- Commit message format
+- Version bump rules
+- Changelog generation
+- Manual release triggers
+
 ## Context Preservation
 
 To preserve manifold state across context compaction, add to `~/.claude/settings.json`:

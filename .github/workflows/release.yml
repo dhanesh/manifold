@@ -1,7 +1,21 @@
 # Automated Release Workflow
-# Triggers on version tag push (v*.*.*) to build and publish release
+# Uses semantic-release for automated versioning and changelog generation
 #
-# Satisfies:
+# Satisfies (release-automation manifold):
+# - B1: Version numbers follow semantic versioning
+# - B2: Every release has a changelog
+# - B3: Breaking changes increment MAJOR version
+# - B4: Releases traceable to commits
+# - T2: Version bump from commit types (fix→PATCH, feat→MINOR, BREAKING→MAJOR)
+# - T4: Release artifacts match tagged version
+# - T5: GitHub Action handles full release pipeline
+# - S1: Secrets not exposed in logs
+# - S2: Only GitHub Actions can create releases
+# - O1: Fully automated release process
+# - O2: Releases triggered on push to main only
+# - O4: Manual trigger available via workflow_dispatch
+#
+# Satisfies (original constraints):
 # - T1: CLI binaries for all 4 platforms
 # - T2: Binaries attached to GitHub release
 # - S2: Binaries built from tagged commit
@@ -11,20 +25,74 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run semantic-release in dry-run mode'
+        required: false
+        default: 'false'
+        type: boolean
 
 permissions:
   contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
+  # Satisfies: RT-2, RT-3, RT-4 (version calculation, changelog, release)
+  semantic-release:
+    name: Semantic Release
+    runs-on: ubuntu-latest
+    outputs:
+      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
+      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
+      new_release_git_tag: ${{ steps.semantic.outputs.new_release_git_tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install semantic-release
+        run: |
+          npm install -g semantic-release \
+            @semantic-release/changelog \
+            @semantic-release/git \
+            @semantic-release/github \
+            conventional-changelog-conventionalcommits
+
+      - name: Run semantic-release
+        id: semantic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "Running in dry-run mode..."
+            npx semantic-release --dry-run
+          else
+            npx semantic-release
+          fi
+
   build:
     name: Build CLI Binaries
+    needs: semantic-release
+    if: needs.semantic-release.outputs.new_release_published == 'true'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout tagged commit
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.semantic-release.outputs.new_release_git_tag }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -77,84 +145,28 @@ jobs:
           retention-days: 1
 
   release:
-    name: Create GitHub Release
-    needs: build
+    name: Upload Release Assets
+    needs: [semantic-release, build]
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Download binaries
         uses: actions/download-artifact@v4
         with:
           name: cli-binaries
           path: binaries
 
-      - name: Get version from tag
-        id: version
-        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-
-      - name: Generate release notes
-        id: notes
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          cat << 'EOF' > release-notes.md
-          ## What's New in ${{ steps.version.outputs.version }}
-
-          ### Native CLI
-
-          Manifold now includes a native CLI for fast, deterministic operations:
-
-          ```bash
-          manifold status [feature]    # Show manifold state (<100ms)
-          manifold validate [feature]  # Validate schema
-          manifold init <feature>      # Initialize new manifold
-          manifold verify [feature]    # Verify artifacts exist
-          ```
-
-          Add `--json` for machine-readable output in CI/CD pipelines.
-
-          ### GitHub Action
-
-          New reusable workflow for CI/CD integration:
-
-          ```yaml
-          jobs:
-            manifold:
-              uses: dhanesh/manifold/.github/workflows/manifold-verify.yml@main
-          ```
-
-          ### Installation
-
-          ```bash
-          curl -fsSL https://raw.githubusercontent.com/dhanesh/manifold/main/install/install.sh | bash
-          ```
-
-          ### Downloads
-
-          | Platform | Binary |
-          |----------|--------|
-          | macOS (Apple Silicon) | `manifold-darwin-arm64` |
-          | macOS (Intel) | `manifold-darwin-x64` |
-          | Linux (x64) | `manifold-linux-x64` |
-          | Linux (ARM64) | `manifold-linux-arm64` |
-          EOF
-
-      - name: Create release
+      - name: Upload binaries to GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          name: Manifold ${{ steps.version.outputs.version }}
-          body_path: release-notes.md
+          tag_name: ${{ needs.semantic-release.outputs.new_release_git_tag }}
           files: binaries/*
-          draft: false
-          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   verify:
     name: Verify CLI Binary
-    needs: release
+    needs: [semantic-release, release]
     runs-on: ubuntu-latest
     # Don't fail the workflow if verification fails (assets may take time to propagate)
     continue-on-error: true
@@ -165,7 +177,7 @@ jobs:
 
       - name: Download and test CLI binary
         run: |
-          VERSION="${GITHUB_REF#refs/tags/}"
+          VERSION="${{ needs.semantic-release.outputs.new_release_git_tag }}"
           BINARY_URL="https://github.com/dhanesh/manifold/releases/download/${VERSION}/manifold-linux-x64"
 
           echo "Downloading CLI from: $BINARY_URL"

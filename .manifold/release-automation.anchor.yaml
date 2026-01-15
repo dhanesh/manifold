@@ -1,0 +1,203 @@
+# release-automation.anchor.yaml
+# Outcome Anchoring via Backward Reasoning
+# Generated: 2026-01-16
+
+feature: "release-automation"
+anchor_type: "outcome_anchoring"
+
+outcome:
+  original: "Automated versioning and releases using conventional commits, semantic versioning, and GitHub releases"
+  anchored: "Every push to main with conventional commits triggers automatic version bump, changelog generation, and GitHub release creation"
+
+required_truths:
+  - id: RT-1
+    statement: "Commits are parseable for version determination"
+    requires:
+      - "Conventional Commits format enforced on all commits"
+      - "Validation happens before commit is accepted"
+    maps_to_constraints: [T1, T2, U1]
+    current_state: "No enforcement mechanism exists"
+    status: "NOT_SATISFIED"
+    priority: 1
+
+  - id: RT-2
+    statement: "Version can be automatically calculated from commit history"
+    requires:
+      - "Tool reads git log and applies SemVer rules"
+      - "fix→PATCH, feat→MINOR, BREAKING CHANGE→MAJOR"
+    maps_to_constraints: [B1, B3, T2]
+    current_state: "Manual versioning in package.json"
+    status: "NOT_SATISFIED"
+    priority: 1
+
+  - id: RT-3
+    statement: "Changelog is generated automatically from commits"
+    requires:
+      - "Commits grouped by type (Features, Fixes, Breaking)"
+      - "Human-readable format, not raw commit dump"
+    maps_to_constraints: [B2, U2, U3]
+    current_state: "No CHANGELOG.md exists"
+    status: "NOT_SATISFIED"
+    priority: 2
+
+  - id: RT-4
+    statement: "GitHub release created on version bump"
+    requires:
+      - "CI/CD pipeline triggers on push to main"
+      - "Release includes version tag and changelog as release notes"
+    maps_to_constraints: [T4, T5, O2]
+    current_state: "No release workflow exists"
+    status: "NOT_SATISFIED"
+    priority: 2
+
+  - id: RT-5
+    statement: "Release pipeline is secure"
+    requires:
+      - "Secrets not exposed in logs"
+      - "Only GitHub Actions can create releases"
+      - "NPM_TOKEN and GITHUB_TOKEN properly scoped"
+    maps_to_constraints: [S1, S2]
+    current_state: "No pipeline to secure yet"
+    status: "NOT_SATISFIED"
+    priority: 1
+
+  - id: RT-6
+    statement: "Manual release override available"
+    requires:
+      - "workflow_dispatch trigger in GitHub Actions"
+      - "Can specify version override if needed"
+    maps_to_constraints: [O4]
+    current_state: "No workflow exists"
+    status: "NOT_SATISFIED"
+    priority: 3
+
+dependency_chain:
+  parallel_tracks:
+    local_validation: [RT-1]
+    ci_pipeline: [RT-4, RT-5, RT-6]
+  sequential:
+    - "RT-1 (commit validation) → RT-2 (version calc) → RT-3 (changelog)"
+  blocking:
+    - "RT-1 blocks RT-2: Cannot calculate version without parseable commits"
+    - "RT-5 blocks RT-4: Pipeline must be secure before creating releases"
+
+options:
+  - id: A
+    name: "semantic-release (Full Automation)"
+    description: "Use semantic-release as single tool for version, changelog, and release"
+    tech_stack: "semantic-release, @semantic-release/changelog, @semantic-release/git"
+    satisfies: [RT-2, RT-3, RT-4, RT-5, RT-6]
+    gaps: ["RT-1 needs separate commitlint for local validation"]
+    effort: "Low"
+    risk: "Low - widely used, well-documented"
+
+  - id: B
+    name: "release-please (Google's Approach)"
+    description: "Creates release PRs with changelog, human approves to trigger release"
+    tech_stack: "release-please GitHub Action"
+    satisfies: [RT-2, RT-3, RT-4, RT-5]
+    gaps: ["RT-1 needs separate validation", "RT-6 less flexible", "Not fully automated (O1)"]
+    effort: "Low"
+    risk: "Low - Google-maintained"
+
+  - id: C
+    name: "Custom Pipeline (Modular)"
+    description: "Build from individual tools: commitlint, standard-version, custom action"
+    tech_stack: "commitlint, husky, standard-version, custom GitHub Action"
+    satisfies: [RT-1, RT-2, RT-3, RT-4, RT-5, RT-6]
+    gaps: []
+    effort: "High"
+    risk: "Medium - maintenance burden, integration complexity"
+
+  - id: D
+    name: "Hybrid semantic-release + commitlint"
+    description: "commitlint+husky for local validation, semantic-release for CI automation"
+    tech_stack: "commitlint, husky, semantic-release, @semantic-release/changelog, @semantic-release/github"
+    satisfies: [RT-1, RT-2, RT-3, RT-4, RT-5, RT-6]
+    gaps: []
+    effort: "Medium"
+    risk: "Low - industry standard combination"
+
+recommendation:
+  selected_option: "D"
+  name: "Hybrid semantic-release + commitlint"
+  rationale:
+    - "Satisfies ALL 6 Required Truths with no gaps"
+    - "Industry standard tooling with active maintenance"
+    - "Best developer experience (local feedback via commitlint)"
+    - "Full automation in CI (semantic-release)"
+    - "Aligns with TN3 resolution (commitlint before version automation)"
+    - "Aligns with TN4 resolution (husky for immediate feedback)"
+
+  implementation_structure:
+    phase_1_local_validation:
+      files:
+        - "commitlint.config.js"
+        - ".husky/commit-msg"
+      commands:
+        - "bun add -d @commitlint/cli @commitlint/config-conventional husky"
+        - "bunx husky init"
+
+    phase_2_semantic_release:
+      files:
+        - ".releaserc.json"
+      commands:
+        - "bun add -d semantic-release @semantic-release/changelog @semantic-release/git"
+
+    phase_3_github_actions:
+      files:
+        - ".github/workflows/release.yml"
+      secrets:
+        - "NPM_TOKEN (if publishing to npm)"
+        - "GITHUB_TOKEN (automatic)"
+
+  deliverables:
+    - "commitlint.config.js - Conventional Commits configuration"
+    - ".husky/commit-msg - Git hook for commit validation"
+    - ".releaserc.json - semantic-release configuration"
+    - ".github/workflows/release.yml - Release automation workflow"
+    - "CHANGELOG.md - Auto-generated on first release"
+
+  build_artifacts:
+    - "Git tags (v1.0.0, v1.1.0, etc.)"
+    - "GitHub Releases with changelog as release notes"
+    - "npm package (if T3 is implemented)"
+
+critical_path:
+  phase_1:
+    name: "Local Validation"
+    tasks:
+      - "Install commitlint and husky"
+      - "Configure conventional commits rules"
+      - "Set up commit-msg hook"
+    unblocks: ["RT-1"]
+
+  phase_2:
+    name: "Release Configuration"
+    tasks:
+      - "Install semantic-release and plugins"
+      - "Configure release branches and plugins"
+      - "Test locally with --dry-run"
+    unblocks: ["RT-2", "RT-3"]
+
+  phase_3:
+    name: "CI/CD Pipeline"
+    tasks:
+      - "Create GitHub Actions workflow"
+      - "Configure secrets and permissions"
+      - "Add workflow_dispatch trigger"
+      - "Test with first release"
+    unblocks: ["RT-4", "RT-5", "RT-6"]
+
+validation_gates:
+  phase_1:
+    - "Malformed commit is rejected locally"
+    - "Valid conventional commit passes"
+  phase_2:
+    - "semantic-release --dry-run shows correct version bump"
+    - "CHANGELOG preview is human-readable"
+  phase_3:
+    - "Push to main triggers workflow"
+    - "GitHub release created with correct version"
+    - "CHANGELOG.md updated in repo"
+    - "workflow_dispatch allows manual trigger"

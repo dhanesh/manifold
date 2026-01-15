@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+# Husky commit-msg hook
+# Satisfies: T1 (Conventional Commits), U1 (immediate feedback)
+#
+# Validates commit messages against Conventional Commits format
+# before allowing the commit to proceed.
+
+# Run commitlint on the commit message
+bunx --no -- commitlint --edit "$1"
