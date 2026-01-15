@@ -270,6 +270,29 @@ manifold validate --json
 manifold verify --json
 ```
 
+## Non-Programming Use Cases
+
+Manifold's constraint-first approach extends beyond software engineering to any complex decision:
+
+| Domain | Applicability | Best For |
+|--------|--------------|----------|
+| **Research/Analysis** | HIGH | Methodology design, study planning |
+| **Business** | HIGH | Strategic decisions, expansion planning |
+| **Personal** | HIGH | Major life decisions, career choices |
+| **Creative** | MODERATE | Project planning (not creative direction) |
+
+### Adapted Categories for Non-Programmers
+
+| Original | Adapted | Focus Question |
+|----------|---------|----------------|
+| Business | **Goals** | What outcomes matter? |
+| Technical | **Feasibility** | What's practically achievable? |
+| User Experience | **Experience** | How should this feel? |
+| Security | **Risks** | What could go wrong? |
+| Operational | **Logistics** | How will this work day-to-day? |
+
+See [Non-Programming Guide](docs/non-programming/guide.md) for detailed documentation and example scenarios.
+
 ## Context Preservation
 
 To preserve manifold state across context compaction, add to `~/.claude/settings.json`:
