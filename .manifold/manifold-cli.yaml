@@ -5,7 +5,7 @@
 schema_version: 2
 feature: manifold-cli
 outcome: "Native CLI tool for deterministic Manifold operations (status, validate, verify) with sub-100ms response times"
-phase: CONVERGED
+phase: VERIFIED
 created: "2026-01-14"
 
 # Context: Why this feature?
