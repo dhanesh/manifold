@@ -8,7 +8,91 @@ import { join, basename } from 'path';
 import * as yaml from 'yaml';
 
 // Schema version detection
-export type SchemaVersion = 1 | 2;
+export type SchemaVersion = 1 | 2 | 3;
+
+// ============================================================
+// v3: Evidence System - Reality Grounding
+// ============================================================
+
+export type EvidenceType = 'file_exists' | 'content_match' | 'test_passes' | 'metric_value' | 'manual_review';
+
+export type EvidenceStatus = 'VERIFIED' | 'PENDING' | 'FAILED' | 'STALE';
+
+export interface Evidence {
+  type: EvidenceType;
+  path: string;                    // File path for file-based evidence
+  pattern?: string;                // Regex for content_match
+  test_name?: string;              // Test identifier for test_passes
+  metric_name?: string;            // Metric name for metric_value
+  threshold?: number | string;     // Expected value/threshold
+  verified_at?: string;            // ISO timestamp of last verification
+  verified_by?: 'cli' | 'ci' | 'human'; // Who/what verified
+  status: EvidenceStatus;
+  message?: string;                // Verification result message
+}
+
+// ============================================================
+// v3: Constraint Graph - Temporal Non-Linearity
+// ============================================================
+
+export type ConstraintNodeType = 'constraint' | 'tension' | 'required_truth' | 'artifact';
+export type ConstraintNodeStatus = 'UNKNOWN' | 'REQUIRED' | 'SATISFIED' | 'BLOCKED' | 'CONFLICTED';
+
+export interface ConstraintNode {
+  id: string;
+  type: ConstraintNodeType;
+  label: string;                   // Human-readable label
+
+  // Graph edges
+  depends_on: string[];            // What must be true for this to be satisfied
+  blocks: string[];                // What this blocks until satisfied
+  conflicts_with: string[];        // Tension edges (bidirectional)
+
+  // Temporal state
+  status: ConstraintNodeStatus;
+  critical_path: boolean;
+  wave_number?: number;            // Which wave this executes in
+}
+
+export interface ConstraintGraph {
+  version: 1;
+  generated_at: string;
+  feature: string;
+
+  nodes: Record<string, ConstraintNode>;
+
+  edges: {
+    dependencies: [string, string][];     // [from, to] = from depends on to
+    conflicts: [string, string][];        // Bidirectional conflict pairs
+    satisfies: [string, string][];        // [artifact, constraint]
+  };
+
+  execution_plan?: ExecutionPlan;
+}
+
+export interface ExecutionPlan {
+  generated_at: string;
+  strategy: 'forward' | 'backward' | 'hybrid';
+
+  waves: Wave[];
+  critical_path: string[];
+  parallelization_factor: number;
+}
+
+export interface Wave {
+  number: number;
+  phase: ManifoldPhase;            // Conceptual phase for human comprehension
+  parallel_tasks: ParallelTask[];
+  blocking_dependencies: string[];
+}
+
+export interface ParallelTask {
+  id: string;
+  node_ids: string[];
+  action: string;
+  description?: string;
+  artifact_paths?: string[];
+}
 
 // Manifold phases
 export type ManifoldPhase =
@@ -71,6 +155,9 @@ export interface Manifold {
     coverage?: Record<string, string | number>;
     verify_document?: string;
   };
+
+  // v3: Constraint graph (computed from constraints, tensions, required truths)
+  constraint_graph?: ConstraintGraph;
 }
 
 export interface Constraint {
@@ -78,6 +165,10 @@ export interface Constraint {
   type: 'invariant' | 'goal' | 'boundary';
   statement: string;
   rationale?: string;
+  // v3: Implementation linking
+  implemented_by?: string[];       // Paths to implementation files
+  verified_by?: Evidence[];        // How this is verified
+  depends_on?: string[];           // Constraint dependencies
 }
 
 export interface Tension {
@@ -104,7 +195,11 @@ export interface RequiredTruth {
   statement: string;
   status: 'SATISFIED' | 'PARTIAL' | 'NOT_SATISFIED' | 'SPECIFICATION_READY';
   priority?: number;
-  evidence?: string;
+  // v1/v2: Simple evidence string
+  evidence?: string | Evidence[];  // Support both string (v1/v2) and Evidence[] (v3)
+  // v3: Enhanced tracking
+  maps_to_constraints?: string[];  // Constraint IDs this RT satisfies
+  last_verified?: string;          // ISO timestamp of last verification
 }
 
 export interface Iteration {
@@ -288,12 +383,16 @@ export function parseYamlSafe<T = unknown>(content: string): T | null {
 
 /**
  * Detect schema version from manifold data
- * Satisfies: T2 (Schema v1/v2 detection)
+ * Satisfies: T2 (Schema v1/v2/v3 detection)
  */
 export function detectSchemaVersion(manifold: Manifold): SchemaVersion {
   // Explicit schema_version field is authoritative
+  if (manifold.schema_version === 3) return 3;
   if (manifold.schema_version === 2) return 2;
   if (manifold.schema_version === 1) return 1;
+
+  // v3 detection: presence of constraint_graph
+  if (manifold.constraint_graph) return 3;
 
   // v2 detection: presence of iterations[] or convergence{}
   if (manifold.iterations?.length || manifold.convergence) return 2;

@@ -155,6 +155,7 @@ COMMAND_FILES=(
     "m5-verify.md"
     "m6-integrate.md"
     "m-status.md"
+    "m-solve.md"
     "parallel.md"
     "SCHEMA_REFERENCE.md"
 )

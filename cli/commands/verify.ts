@@ -12,7 +12,8 @@ import {
   listFeatures,
   type FeatureData,
   type Manifold,
-  type Constraint
+  type Constraint,
+  type Evidence
 } from '../lib/parser.js';
 import { countConstraints, countConstraintsByType } from '../lib/schema.js';
 import {
@@ -23,11 +24,19 @@ import {
   style,
   toJSON
 } from '../lib/output.js';
+import {
+  verifyAllEvidence,
+  normalizeEvidence,
+  formatVerificationReport,
+  type VerificationReport
+} from '../lib/evidence.js';
 
 interface VerifyOptions {
   json?: boolean;
   artifacts?: boolean;
   strict?: boolean;
+  verifyEvidence?: boolean;
+  runTests?: boolean;
 }
 
 interface ArtifactVerification {
@@ -53,6 +62,7 @@ interface VerificationResult {
     requiredTruthsSatisfied: number;
     percentage: number;
   };
+  evidence?: VerificationReport;
   issues: string[];
 }
 
@@ -66,6 +76,8 @@ export function registerVerifyCommand(program: Command): void {
     .option('--json', 'Output as JSON')
     .option('--artifacts', 'Verify generated artifacts exist')
     .option('--strict', 'Require all artifacts and coverage')
+    .option('--verify-evidence', 'Verify concrete evidence for required truths (v3)')
+    .option('--run-tests', 'Execute test evidence verification (requires --verify-evidence)')
     .action(async (feature: string | undefined, options: VerifyOptions) => {
       const exitCode = await verifyCommand(feature, options);
       process.exit(exitCode);
@@ -217,6 +229,23 @@ async function verifyFeature(
     }
   }
 
+  // Verify concrete evidence (v3 feature)
+  if (options.verifyEvidence) {
+    const projectRoot = dirname(manifoldDir);
+    const evidenceReport = await verifyEvidenceForFeature(manifold, projectRoot, options);
+    result.evidence = evidenceReport;
+
+    if (evidenceReport.failed > 0) {
+      issues.push(`${evidenceReport.failed} evidence item(s) failed verification`);
+      result.result = options.strict ? 'FAIL' : 'PARTIAL';
+    }
+
+    if (evidenceReport.pending > 0 && options.strict) {
+      issues.push(`${evidenceReport.pending} evidence item(s) pending`);
+      result.result = 'PARTIAL';
+    }
+  }
+
   // Phase check for strict mode
   if (options.strict && manifold.phase !== 'VERIFIED') {
     issues.push(`Phase is ${manifold.phase}, expected VERIFIED`);
@@ -316,6 +345,42 @@ function calculateCoverage(manifold: Manifold): NonNullable<VerificationResult['
 }
 
 /**
+ * Verify concrete evidence for required truths (v3 feature)
+ * Satisfies: Phase A - Reality Grounding
+ */
+async function verifyEvidenceForFeature(
+  manifold: Manifold,
+  projectRoot: string,
+  options: VerifyOptions
+): Promise<VerificationReport> {
+  // Collect all evidence from required truths
+  const allEvidence: Evidence[] = [];
+
+  const requiredTruths = manifold.anchors?.required_truths ?? [];
+  for (const rt of requiredTruths) {
+    const evidence = normalizeEvidence(rt.evidence);
+    allEvidence.push(...evidence);
+  }
+
+  // Also collect evidence from constraints (v3)
+  const constraintCategories = ['business', 'technical', 'user_experience', 'security', 'operational'] as const;
+  for (const category of constraintCategories) {
+    const constraints = manifold.constraints?.[category] ?? [];
+    for (const constraint of constraints) {
+      if (constraint.verified_by) {
+        allEvidence.push(...constraint.verified_by);
+      }
+    }
+  }
+
+  // Verify all evidence
+  return verifyAllEvidence(allEvidence, {
+    runTests: options.runTests,
+    projectRoot
+  });
+}
+
+/**
  * Print verification output to console
  */
 function printVerificationOutput(result: VerificationResult, options: VerifyOptions): void {
@@ -359,6 +424,26 @@ function printVerificationOutput(result: VerificationResult, options: VerifyOpti
       println(`  ${style.warning('Missing:')}`);
       for (const path of a.missing) {
         println(`    ${style.cross()} ${path}`);
+      }
+    }
+  }
+
+  // Evidence (v3)
+  if (result.evidence) {
+    const e = result.evidence;
+    const evidenceStatus = e.failed === 0
+      ? style.success(`${e.verified}/${e.total} verified`)
+      : style.warning(`${e.verified}/${e.total} verified, ${e.failed} failed`);
+
+    println(formatKeyValue('Evidence', evidenceStatus));
+
+    // Show detailed evidence results
+    if ((e.failed > 0 || e.pending > 0) && !options.json) {
+      println();
+      for (const r of e.results) {
+        const icon = r.passed ? '✓' : r.evidence.status === 'PENDING' ? '⏳' : '✗';
+        const colorFn = r.passed ? style.success : r.evidence.status === 'PENDING' ? style.dim : style.error;
+        println(`    ${colorFn(icon)} [${r.evidence.type}] ${r.message}`);
       }
     }
   }
