@@ -6,6 +6,18 @@ description: "Show current Manifold state, constraint summary, workflow progress
 
 Show current Manifold state and next recommended action.
 
+## Schema Compliance
+
+| Field | Valid Values |
+|-------|--------------|
+| **Valid Phases** | `INITIALIZED`, `CONSTRAINED`, `TENSIONED`, `ANCHORED`, `GENERATED`, `VERIFIED` |
+| **Convergence Statuses** | `NOT_STARTED`, `IN_PROGRESS`, `CONVERGED` |
+| **Constraint Types** | `invariant`, `goal`, `boundary` |
+| **Tension Statuses** | `resolved`, `unresolved` |
+
+> **CRITICAL**: When displaying phase information, use ONLY the phases listed above.
+> See SCHEMA_REFERENCE.md for all valid values. Do NOT invent or display invalid phases.
+
 ## Usage
 
 ```

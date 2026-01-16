@@ -6,6 +6,16 @@ description: "Generate ALL artifacts simultaneously from the constraint manifold
 
 Generate ALL artifacts simultaneously from the constraint manifold.
 
+## Schema Compliance
+
+| Field | Valid Values |
+|-------|--------------|
+| **Sets Phase** | `GENERATED` |
+| **Next Phase** | `VERIFIED` (via /m5-verify) |
+| **Artifact Statuses** | `generated`, `pending`, `failed` |
+
+> See SCHEMA_REFERENCE.md for all valid values. Do NOT invent new phases.
+
 ## Usage
 
 ```

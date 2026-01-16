@@ -6,6 +6,17 @@ description: "Verify ALL artifacts against ALL constraints. Produces a verificat
 
 Verify ALL artifacts against ALL constraints.
 
+## Schema Compliance
+
+| Field | Valid Values |
+|-------|--------------|
+| **Sets Phase** | `VERIFIED` |
+| **Next Phase** | Return to `INITIALIZED` for iteration, or workflow complete |
+| **Convergence Statuses** | `NOT_STARTED`, `IN_PROGRESS`, `CONVERGED` |
+| **Verification Symbols** | `✓` (SATISFIED), `◐` (PARTIAL), `✗` (MISSING), `-` (N/A) |
+
+> See SCHEMA_REFERENCE.md for all valid values. Do NOT invent new phases or statuses.
+
 ## Usage
 
 ```

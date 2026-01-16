@@ -156,6 +156,7 @@ COMMAND_FILES=(
     "m6-integrate.md"
     "m-status.md"
     "parallel.md"
+    "SCHEMA_REFERENCE.md"
 )
 
 # Parallel library files to install

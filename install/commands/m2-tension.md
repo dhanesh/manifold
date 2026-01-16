@@ -6,6 +6,18 @@ description: "Surface and resolve constraint conflicts. Identifies direct confli
 
 Surface and resolve constraint conflicts.
 
+## Schema Compliance
+
+| Field | Valid Values |
+|-------|--------------|
+| **Sets Phase** | `TENSIONED` |
+| **Next Phase** | `ANCHORED` (via /m3-anchor) |
+| **Tension Types** | `trade_off`, `resource_tension`, `hidden_dependency` |
+| **Tension Statuses** | `resolved`, `unresolved` |
+| **Tension ID Prefix** | TN1, TN2, TN3... |
+
+> See SCHEMA_REFERENCE.md for all valid values. Do NOT invent new tension types or statuses.
+
 ## Usage
 
 ```

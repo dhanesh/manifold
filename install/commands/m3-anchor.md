@@ -6,6 +6,17 @@ description: "Backward reasoning from desired outcome. Derives required conditio
 
 Backward reasoning from desired outcome to required conditions.
 
+## Schema Compliance
+
+| Field | Valid Values |
+|-------|--------------|
+| **Sets Phase** | `ANCHORED` |
+| **Next Phase** | `GENERATED` (via /m4-generate) |
+| **Required Truth Statuses** | `SATISFIED`, `PARTIAL`, `NOT_SATISFIED`, `SPECIFICATION_READY` |
+| **Required Truth ID Prefix** | RT-1, RT-2, RT-3... |
+
+> See SCHEMA_REFERENCE.md for all valid values. Do NOT invent new statuses.
+
 ## Usage
 
 ```

@@ -6,6 +6,18 @@ description: "Interview-driven constraint discovery across 5 categories (busines
 
 Interview-driven constraint discovery across 5 categories.
 
+## Schema Compliance
+
+| Field | Valid Values |
+|-------|--------------|
+| **Sets Phase** | `CONSTRAINED` |
+| **Next Phase** | `TENSIONED` (via /m2-tension) |
+| **Constraint Types** | `invariant`, `goal`, `boundary` |
+| **Constraint Categories** | `business`, `technical`, `user_experience`, `security`, `operational` |
+| **Constraint ID Prefixes** | B1, B2... (business), T1, T2... (technical), U1, U2... (UX), S1, S2... (security), O1, O2... (operational) |
+
+> See SCHEMA_REFERENCE.md for all valid values. Do NOT invent new types or categories.
+
 ## Usage
 
 ```

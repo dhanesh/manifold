@@ -6,6 +6,15 @@ description: "Initialize a constraint manifold for a feature. Creates .manifold/
 
 Initialize a new constraint manifold for a feature.
 
+## Schema Compliance
+
+| Field | Valid Values |
+|-------|--------------|
+| **Sets Phase** | `INITIALIZED` |
+| **Next Phase** | `CONSTRAINED` (via /m1-constrain) |
+
+> See SCHEMA_REFERENCE.md for all valid values. Do NOT invent new phases.
+
 ## Usage
 
 ```
