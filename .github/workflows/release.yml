@@ -62,25 +62,19 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install semantic-release
-        run: |
-          npm install -g semantic-release \
-            @semantic-release/changelog \
-            @semantic-release/git \
-            @semantic-release/github \
-            conventional-changelog-conventionalcommits
-
       - name: Run semantic-release
         id: semantic
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          semantic_version: 24
+          extra_plugins: |
+            @semantic-release/changelog
+            @semantic-release/git
+            @semantic-release/github
+            conventional-changelog-conventionalcommits
+          dry_run: ${{ inputs.dry_run == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            echo "Running in dry-run mode..."
-            npx semantic-release --dry-run
-          else
-            npx semantic-release
-          fi
 
   build:
     name: Build CLI Binaries
