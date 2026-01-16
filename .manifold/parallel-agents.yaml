@@ -559,11 +559,11 @@ generation:
       status: generated
 
     # Distribution (iteration 8)
-    - path: install/lib/parallel/*.ts
+    - path: install/lib/parallel/index.ts
       type: distribution
       satisfies: [U1]
       status: generated
-      description: "Distributable parallel library (11 modules)"
+      description: "Distributable parallel library entry point (11 modules)"
     - path: install/hooks/auto-suggester.ts
       type: distribution
       satisfies: [B3, B4, U1, U4]

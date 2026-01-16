@@ -90,6 +90,7 @@ jobs:
 
       - name: Verify artifact coverage
         if: steps.check-manifold.outputs.found == 'true'
+        shell: bash {0}
         run: |
           EXIT_CODE=0
 
