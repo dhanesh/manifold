@@ -18,9 +18,10 @@ import { registerVerifyCommand } from './commands/verify.js';
 import { registerGraphCommand } from './commands/graph.js';
 import { registerSolveCommand } from './commands/solve.js';
 import { setColorMode } from './lib/output.js';
+import pkg from './package.json';
 
 // Version from package.json
-const VERSION = '2.0.0';
+const VERSION = pkg.version;
 
 // Create program
 const program = new Command();
