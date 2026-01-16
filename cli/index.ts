@@ -15,6 +15,8 @@ import { registerStatusCommand } from './commands/status.js';
 import { registerValidateCommand } from './commands/validate.js';
 import { registerInitCommand } from './commands/init.js';
 import { registerVerifyCommand } from './commands/verify.js';
+import { registerGraphCommand } from './commands/graph.js';
+import { registerSolveCommand } from './commands/solve.js';
 import { setColorMode } from './lib/output.js';
 
 // Version from package.json
@@ -46,6 +48,8 @@ registerStatusCommand(program);
 registerValidateCommand(program);
 registerInitCommand(program);
 registerVerifyCommand(program);
+registerGraphCommand(program);
+registerSolveCommand(program);
 
 // Parse arguments
 program.parse();

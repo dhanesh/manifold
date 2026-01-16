@@ -20,12 +20,14 @@ Verify ALL artifacts against ALL constraints.
 ## Usage
 
 ```
-/m5-verify <feature-name> [--strict] [--actions]
+/m5-verify <feature-name> [--strict] [--actions] [--verify-evidence] [--run-tests]
 ```
 
-**Flags (v2):**
+**Flags:**
 - `--strict` - Fail on any gaps
 - `--actions` - Generate copy-paste executable actions for gaps (v2)
+- `--verify-evidence` - Verify concrete evidence for required truths (v3)
+- `--run-tests` - Execute test evidence verification (requires --verify-evidence) (v3)
 
 ## Verification Matrix
 
@@ -211,6 +213,98 @@ ACTIONS SUMMARY:
 └── Next: Fix blocking actions, then re-run /m5-verify
 ```
 
+## Evidence Auto-Verification (v3)
+
+With `--verify-evidence`, each required truth's evidence is automatically verified:
+
+### Evidence Types
+
+| Type | Verification Method |
+|------|---------------------|
+| `file_exists` | Check file exists on disk |
+| `content_match` | Grep for pattern in file content |
+| `test_passes` | Run test and check exit code (requires `--run-tests`) |
+| `metric_value` | Check runtime metric meets threshold |
+| `manual_review` | Skip (requires human verification) |
+
+### Example: Evidence Verification
+
+```
+/m5-verify payment-retry --verify-evidence
+
+EVIDENCE VERIFICATION: payment-retry
+
+REQUIRED TRUTH EVIDENCE:
+
+RT-1: Idempotency key preserved across retries
+├── ✓ [file_exists] src/idempotency.ts
+│   └── Verified: File exists (2.4KB, modified 2h ago)
+├── ✓ [content_match] src/idempotency.ts
+│   └── Verified: Pattern "idempotency_key.*uuid" found (3 matches)
+└── ⏳ [test_passes] tests/idempotency.test.ts
+    └── Pending: Use --run-tests to execute
+
+RT-2: Error classification distinguishes transient from permanent
+├── ✓ [file_exists] src/error-classifier.ts
+│   └── Verified: File exists (1.8KB)
+├── ✓ [content_match] src/error-classifier.ts
+│   └── Verified: Pattern "TransientError|PermanentError" found (12 matches)
+└── ✓ [content_match] src/error-classifier.ts
+    └── Verified: Pattern "isRetryable.*boolean" found (2 matches)
+
+RT-3: Retry budget configured via environment
+├── ✓ [file_exists] .env.example
+│   └── Verified: File exists
+├── ✓ [content_match] .env.example
+│   └── Verified: Pattern "MAX_RETRY_ATTEMPTS" found
+└── ✗ [content_match] src/config.ts
+    └── Failed: Pattern "RETRY_BUDGET" not found
+
+EVIDENCE SUMMARY:
+├── Verified: 8/10 evidence items
+├── Pending: 1 (test_passes - use --run-tests)
+├── Failed: 1 (see details above)
+└── Coverage: 80%
+
+FAILED EVIDENCE:
+├── RT-3: [content_match] src/config.ts - "RETRY_BUDGET" not found
+└── Action: Add RETRY_BUDGET configuration to src/config.ts
+```
+
+### With Test Execution
+
+```
+/m5-verify payment-retry --verify-evidence --run-tests
+
+EVIDENCE VERIFICATION: payment-retry (with test execution)
+
+RT-1: Idempotency key preserved across retries
+├── ✓ [file_exists] src/idempotency.ts
+├── ✓ [content_match] src/idempotency.ts
+└── ✓ [test_passes] tests/idempotency.test.ts
+    └── Verified: Test "preserves_key_across_retries" passed (0.8s)
+
+EVIDENCE SUMMARY:
+├── Verified: 10/10 evidence items
+├── Tests run: 3 (all passed)
+└── Coverage: 100% ✓
+```
+
+### CLI Integration
+
+The evidence verification is also available via the CLI:
+
+```bash
+# Verify evidence without running tests
+manifold verify payment-retry --verify-evidence
+
+# Verify evidence and run tests
+manifold verify payment-retry --verify-evidence --run-tests
+
+# JSON output for CI/CD
+manifold verify payment-retry --verify-evidence --json
+```
+
 ## Execution Instructions
 
 1. Read manifold from `.manifold/<feature>.yaml`
@@ -220,12 +314,18 @@ ACTIONS SUMMARY:
 5. Build verification matrix comparing declared vs actual coverage
 6. Calculate coverage percentages by type and artifact
 7. Identify specific gaps with actionable items
-8. **If `--actions` (v2)**, generate executable actions for each gap
-9. If `--strict` mode, fail verification on any gaps
-10. **Record iteration** in `iterations[]` (v2)
-11. **Calculate convergence status** (v2)
-12. **Update `.manifold/<feature>.verify.yaml`** with full results
-13. Set phase to VERIFIED (or keep GENERATED if gaps exist)
+8. **If `--verify-evidence` (v3)**, verify concrete evidence for each required truth:
+   - `file_exists`: Check file exists on disk
+   - `content_match`: Grep for pattern in file content
+   - `test_passes`: Run test if `--run-tests` flag is set
+   - `metric_value`: Check runtime metric threshold
+   - `manual_review`: Skip, mark as pending
+9. **If `--actions` (v2)**, generate executable actions for each gap
+10. If `--strict` mode, fail verification on any gaps or failed evidence
+11. **Record iteration** in `iterations[]` (v2)
+12. **Calculate convergence status** (v2)
+13. **Update `.manifold/<feature>.verify.yaml`** with full results including evidence status
+14. Set phase to VERIFIED (or keep GENERATED if gaps exist)
 
 ## Quality Gate: Schema Validation
 

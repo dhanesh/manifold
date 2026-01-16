@@ -22,6 +22,88 @@ import {
   AnchorDocument,
 } from './parser';
 
+// Re-export types for command modules
+export type { ConstraintGraph, ConstraintNode, ExecutionPlan, Wave, ParallelTask };
+
+// ============================================================
+// Graph Cache
+// ============================================================
+
+interface CachedGraph {
+  graph: ConstraintGraph;
+  plan?: ExecutionPlan;
+  createdAt: number;
+  manifestHash: string;
+}
+
+// In-memory cache for constraint graphs (session-scoped)
+const graphCache = new Map<string, CachedGraph>();
+
+/**
+ * Generate a hash for cache invalidation
+ * Uses feature name + constraint count + phase as a simple change detector
+ */
+function generateManifestHash(manifold: Manifold): string {
+  const constraintCount =
+    (manifold.constraints?.business?.length ?? 0) +
+    (manifold.constraints?.technical?.length ?? 0) +
+    (manifold.constraints?.user_experience?.length ?? 0) +
+    (manifold.constraints?.security?.length ?? 0) +
+    (manifold.constraints?.operational?.length ?? 0);
+
+  const tensionCount = manifold.tensions?.length ?? 0;
+  const rtCount = manifold.anchors?.required_truths?.length ?? 0;
+  const artifactCount = manifold.generation?.artifacts?.length ?? 0;
+
+  return `${manifold.feature}:${manifold.phase}:${constraintCount}:${tensionCount}:${rtCount}:${artifactCount}`;
+}
+
+/**
+ * Get cached graph if valid, or null if cache miss/stale
+ */
+export function getCachedGraph(feature: string, manifold: Manifold): CachedGraph | null {
+  const cached = graphCache.get(feature);
+  if (!cached) return null;
+
+  const currentHash = generateManifestHash(manifold);
+  if (cached.manifestHash !== currentHash) {
+    // Cache is stale, remove it
+    graphCache.delete(feature);
+    return null;
+  }
+
+  return cached;
+}
+
+/**
+ * Store graph in cache
+ */
+export function cacheGraph(feature: string, manifold: Manifold, graph: ConstraintGraph, plan?: ExecutionPlan): void {
+  graphCache.set(feature, {
+    graph,
+    plan,
+    createdAt: Date.now(),
+    manifestHash: generateManifestHash(manifold)
+  });
+}
+
+/**
+ * Clear all cached graphs
+ */
+export function clearGraphCache(): void {
+  graphCache.clear();
+}
+
+/**
+ * Get cache statistics
+ */
+export function getGraphCacheStats(): { size: number; features: string[] } {
+  return {
+    size: graphCache.size,
+    features: [...graphCache.keys()]
+  };
+}
+
 // ============================================================
 // Constraint Solver
 // ============================================================
@@ -30,11 +112,30 @@ export class ConstraintSolver {
   private manifold: Manifold;
   private anchor?: AnchorDocument;
   private graph: ConstraintGraph;
+  private cachedPlan?: ExecutionPlan;
 
   constructor(manifold: Manifold, anchor?: AnchorDocument) {
     this.manifold = manifold;
     this.anchor = anchor;
-    this.graph = this.buildGraph();
+
+    // Try to use cached graph
+    const cached = getCachedGraph(manifold.feature, manifold);
+    if (cached) {
+      this.graph = cached.graph;
+      this.cachedPlan = cached.plan;
+    } else {
+      // Build fresh graph and cache it
+      this.graph = this.buildGraphInternal();
+      cacheGraph(manifold.feature, manifold, this.graph);
+    }
+  }
+
+  /**
+   * Create solver with cache bypass (for fresh analysis)
+   */
+  static createWithoutCache(manifold: Manifold, anchor?: AnchorDocument): ConstraintSolver {
+    graphCache.delete(manifold.feature);
+    return new ConstraintSolver(manifold, anchor);
   }
 
   /**
@@ -45,9 +146,9 @@ export class ConstraintSolver {
   }
 
   /**
-   * Build constraint graph from manifold data
+   * Build constraint graph from manifold data (internal implementation)
    */
-  private buildGraph(): ConstraintGraph {
+  private buildGraphInternal(): ConstraintGraph {
     const nodes = new Map<string, ConstraintNode>();
     const dependencies: [string, string][] = [];
     const conflicts: [string, string][] = [];
@@ -294,6 +395,11 @@ export class ConstraintSolver {
    * Generate execution plan with parallel waves
    */
   generateExecutionPlan(strategy: 'forward' | 'backward' | 'hybrid' = 'hybrid'): ExecutionPlan {
+    // Return cached plan if available
+    if (this.cachedPlan && this.cachedPlan.strategy === strategy) {
+      return this.cachedPlan;
+    }
+
     const waves: Wave[] = [];
     const satisfied = new Set<string>();
     const remaining = new Set(Object.keys(this.graph.nodes));
@@ -341,13 +447,19 @@ export class ConstraintSolver {
     const totalNodes = Object.keys(this.graph.nodes).length;
     const parallelizationFactor = totalNodes / waves.length;
 
-    return {
+    const plan: ExecutionPlan = {
       generated_at: new Date().toISOString(),
       strategy,
       waves,
       critical_path: criticalPath,
       parallelization_factor: Math.round(parallelizationFactor * 10) / 10,
     };
+
+    // Cache the plan
+    this.cachedPlan = plan;
+    cacheGraph(this.manifold.feature, this.manifold, this.graph, plan);
+
+    return plan;
   }
 
   /**
@@ -411,7 +523,7 @@ export class ConstraintSolver {
   /**
    * Find critical path (longest dependency chain)
    */
-  private findCriticalPath(): string[] {
+  findCriticalPath(): string[] {
     const distances = new Map<string, number>();
     const predecessors = new Map<string, string | null>();
 
@@ -543,6 +655,187 @@ export class ConstraintSolver {
   getConflicts(targetId: string): string[] {
     const node = this.graph.nodes[targetId];
     return node?.conflicts_with ?? [];
+  }
+
+  // ============================================================
+  // Real-Time Updates
+  // ============================================================
+
+  /**
+   * Mark a node as satisfied and recalculate affected portions
+   * Returns the updated status and what nodes are now unblocked
+   */
+  markSatisfied(nodeId: string): {
+    success: boolean;
+    unblocked: string[];
+    newlyReady: string[];
+    progress: { satisfied: number; total: number; percentage: number };
+  } {
+    const node = this.graph.nodes[nodeId];
+    if (!node) {
+      return { success: false, unblocked: [], newlyReady: [], progress: this.getProgress() };
+    }
+
+    // Update status
+    node.status = 'SATISFIED';
+
+    // Find newly unblocked nodes (nodes that were waiting on this one)
+    const unblocked = node.blocks.filter(blockedId => {
+      const blocked = this.graph.nodes[blockedId];
+      if (!blocked || blocked.status === 'SATISFIED') return false;
+
+      // Check if all dependencies are now satisfied
+      return blocked.depends_on.every(depId => {
+        const dep = this.graph.nodes[depId];
+        return dep?.status === 'SATISFIED';
+      });
+    });
+
+    // Update unblocked nodes to REQUIRED (ready to work on)
+    for (const id of unblocked) {
+      const blocked = this.graph.nodes[id];
+      if (blocked && blocked.status === 'BLOCKED') {
+        blocked.status = 'REQUIRED';
+      }
+    }
+
+    // Find all nodes that are now ready (no unsatisfied dependencies)
+    const newlyReady = Object.keys(this.graph.nodes).filter(id => {
+      const n = this.graph.nodes[id];
+      if (!n || n.status === 'SATISFIED') return false;
+
+      return n.depends_on.every(depId => {
+        const dep = this.graph.nodes[depId];
+        return dep?.status === 'SATISFIED';
+      });
+    });
+
+    // Invalidate cached plan since graph state changed
+    this.cachedPlan = undefined;
+
+    // Update cache
+    cacheGraph(this.manifold.feature, this.manifold, this.graph);
+
+    return {
+      success: true,
+      unblocked,
+      newlyReady,
+      progress: this.getProgress()
+    };
+  }
+
+  /**
+   * Mark multiple nodes as satisfied at once
+   */
+  markManySatisfied(nodeIds: string[]): {
+    unblocked: string[];
+    newlyReady: string[];
+    progress: { satisfied: number; total: number; percentage: number };
+  } {
+    const allUnblocked = new Set<string>();
+
+    for (const nodeId of nodeIds) {
+      const result = this.markSatisfied(nodeId);
+      result.unblocked.forEach(id => allUnblocked.add(id));
+    }
+
+    // Find all nodes that are now ready
+    const newlyReady = Object.keys(this.graph.nodes).filter(id => {
+      const n = this.graph.nodes[id];
+      if (!n || n.status === 'SATISFIED') return false;
+
+      return n.depends_on.every(depId => {
+        const dep = this.graph.nodes[depId];
+        return dep?.status === 'SATISFIED';
+      });
+    });
+
+    return {
+      unblocked: [...allUnblocked],
+      newlyReady,
+      progress: this.getProgress()
+    };
+  }
+
+  /**
+   * Get current progress statistics
+   */
+  getProgress(): { satisfied: number; total: number; percentage: number } {
+    const nodes = Object.values(this.graph.nodes);
+    const total = nodes.length;
+    const satisfied = nodes.filter(n => n.status === 'SATISFIED').length;
+    const percentage = total > 0 ? Math.round((satisfied / total) * 100) : 0;
+
+    return { satisfied, total, percentage };
+  }
+
+  /**
+   * Get nodes that are ready to work on (all dependencies satisfied)
+   */
+  getReadyNodes(): string[] {
+    return Object.keys(this.graph.nodes).filter(id => {
+      const node = this.graph.nodes[id];
+      if (!node || node.status === 'SATISFIED') return false;
+
+      return node.depends_on.every(depId => {
+        const dep = this.graph.nodes[depId];
+        return dep?.status === 'SATISFIED';
+      });
+    });
+  }
+
+  /**
+   * Get nodes that are blocked (waiting on unsatisfied dependencies)
+   */
+  getBlockedNodes(): string[] {
+    return Object.keys(this.graph.nodes).filter(id => {
+      const node = this.graph.nodes[id];
+      if (!node || node.status === 'SATISFIED') return false;
+
+      return node.depends_on.some(depId => {
+        const dep = this.graph.nodes[depId];
+        return dep?.status !== 'SATISFIED';
+      });
+    });
+  }
+
+  /**
+   * Get remaining work summary
+   */
+  getRemainingWork(): {
+    ready: string[];
+    blocked: string[];
+    byType: Record<string, number>;
+    estimatedWaves: number;
+  } {
+    const ready = this.getReadyNodes();
+    const blocked = this.getBlockedNodes();
+
+    const byType: Record<string, number> = {
+      constraint: 0,
+      tension: 0,
+      required_truth: 0,
+      artifact: 0
+    };
+
+    for (const id of [...ready, ...blocked]) {
+      const node = this.graph.nodes[id];
+      if (node && byType[node.type] !== undefined) {
+        byType[node.type]++;
+      }
+    }
+
+    // Estimate waves remaining
+    const remainingPlan = this.generateExecutionPlan();
+    const estimatedWaves = remainingPlan.waves.filter(w =>
+      w.parallel_tasks.some(t => {
+        const nodeId = t.node_ids[0];
+        const node = this.graph.nodes[nodeId];
+        return node?.status !== 'SATISFIED';
+      })
+    ).length;
+
+    return { ready, blocked, byType, estimatedWaves };
   }
 }
 
