@@ -1,0 +1,302 @@
+{
+  "title": "Parallel Agents Dashboard",
+  "description": "Monitoring for parallel task execution system",
+  "tags": ["parallel-agents", "manifold"],
+  "refresh": "30s",
+  "panels": [
+    {
+      "title": "Resource Overview",
+      "type": "row",
+      "panels": [
+        {
+          "title": "Disk Usage",
+          "type": "gauge",
+          "targets": [
+            {
+              "expr": "100 - disk_free_percent",
+              "legendFormat": "Used %"
+            }
+          ],
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 70 },
+              { "color": "red", "value": 90 }
+            ]
+          }
+        },
+        {
+          "title": "Memory Usage",
+          "type": "gauge",
+          "targets": [
+            {
+              "expr": "memory_used_percent",
+              "legendFormat": "Used %"
+            }
+          ],
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 70 },
+              { "color": "red", "value": 85 }
+            ]
+          }
+        },
+        {
+          "title": "CPU Load",
+          "type": "gauge",
+          "targets": [
+            {
+              "expr": "cpu_load_percent",
+              "legendFormat": "Load %"
+            }
+          ],
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 60 },
+              { "color": "red", "value": 80 }
+            ]
+          }
+        },
+        {
+          "title": "Recommended Concurrency",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "parallel_recommended_concurrency",
+              "legendFormat": "Max Tasks"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Execution Status",
+      "type": "row",
+      "panels": [
+        {
+          "title": "Active Worktrees",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "parallel_worktree_count",
+              "legendFormat": "Active"
+            }
+          ],
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 3 },
+              { "color": "red", "value": 5 }
+            ]
+          }
+        },
+        {
+          "title": "Tasks Running",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "parallel_tasks_running",
+              "legendFormat": "Running"
+            }
+          ]
+        },
+        {
+          "title": "Tasks Completed",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "increase(parallel_tasks_completed_total[24h])",
+              "legendFormat": "Last 24h"
+            }
+          ]
+        },
+        {
+          "title": "Task Failures",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "increase(parallel_task_failures_total[24h])",
+              "legendFormat": "Last 24h"
+            }
+          ],
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "title": "Task Execution Timeline",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "parallel_tasks_running",
+          "legendFormat": "Running"
+        },
+        {
+          "expr": "rate(parallel_tasks_completed_total[5m]) * 60",
+          "legendFormat": "Completed/min"
+        },
+        {
+          "expr": "rate(parallel_task_failures_total[5m]) * 60",
+          "legendFormat": "Failed/min"
+        }
+      ],
+      "yAxes": [
+        { "label": "Count", "min": 0 }
+      ]
+    },
+    {
+      "title": "File Prediction Quality",
+      "type": "row",
+      "panels": [
+        {
+          "title": "Average Confidence",
+          "type": "gauge",
+          "targets": [
+            {
+              "expr": "parallel_prediction_confidence_avg * 100",
+              "legendFormat": "Confidence %"
+            }
+          ],
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "yellow", "value": 50 },
+              { "color": "green", "value": 70 }
+            ]
+          }
+        },
+        {
+          "title": "Prediction Methods",
+          "type": "piechart",
+          "targets": [
+            {
+              "expr": "sum by (method) (parallel_predictions_by_method)",
+              "legendFormat": "{{ method }}"
+            }
+          ]
+        },
+        {
+          "title": "Merge Conflicts",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "increase(parallel_merge_conflicts_total[7d])",
+              "legendFormat": "Last 7 days"
+            }
+          ],
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "title": "Parallelization Effectiveness",
+      "type": "row",
+      "panels": [
+        {
+          "title": "Speedup Achieved",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "parallel_estimated_speedup",
+              "legendFormat": "Estimated"
+            },
+            {
+              "expr": "parallel_actual_speedup",
+              "legendFormat": "Actual"
+            }
+          ],
+          "yAxes": [
+            { "label": "Speedup Factor", "min": 1 }
+          ]
+        },
+        {
+          "title": "Tasks Parallelized vs Sequential",
+          "type": "piechart",
+          "targets": [
+            {
+              "expr": "sum(parallel_tasks_parallelized_total)",
+              "legendFormat": "Parallelized"
+            },
+            {
+              "expr": "sum(parallel_tasks_sequential_total)",
+              "legendFormat": "Sequential"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Task Duration Distribution",
+      "type": "heatmap",
+      "targets": [
+        {
+          "expr": "sum by (le) (rate(parallel_task_duration_seconds_bucket[5m]))",
+          "legendFormat": "{{ le }}"
+        }
+      ]
+    },
+    {
+      "title": "Worktree Lifecycle",
+      "type": "row",
+      "panels": [
+        {
+          "title": "Worktree Age",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "parallel_worktree_age_seconds / 60",
+              "legendFormat": "{{ task_id }}"
+            }
+          ],
+          "yAxes": [
+            { "label": "Age (minutes)", "min": 0 }
+          ]
+        },
+        {
+          "title": "Cleanup Operations",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "increase(parallel_worktree_cleanup_total[24h])",
+              "legendFormat": "Last 24h"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "name": "Merge Conflicts",
+        "datasource": "prometheus",
+        "enable": true,
+        "expr": "increase(parallel_merge_conflicts_total[1m]) > 0",
+        "tagKeys": "task_id",
+        "titleFormat": "Merge Conflict",
+        "textFormat": "Conflict in {{ $labels.task_id }}"
+      },
+      {
+        "name": "Task Failures",
+        "datasource": "prometheus",
+        "enable": true,
+        "expr": "increase(parallel_task_failures_total[1m]) > 0",
+        "tagKeys": "task_id",
+        "titleFormat": "Task Failed",
+        "textFormat": "{{ $labels.task_id }} failed"
+      }
+    ]
+  }
+}

@@ -142,6 +142,22 @@ COMMAND_FILES=(
     "m5-verify.md"
     "m6-integrate.md"
     "m-status.md"
+    "parallel.md"
+)
+
+# Parallel library files to install
+PARALLEL_LIB_FILES=(
+    "task-analyzer.ts"
+    "file-predictor.ts"
+    "overlap-detector.ts"
+    "parallel-config.ts"
+    "worktree-manager.ts"
+    "resource-monitor.ts"
+    "merge-orchestrator.ts"
+    "parallel-executor.ts"
+    "progress-reporter.ts"
+    "command.ts"
+    "index.ts"
 )
 
 # Install Manifold
@@ -154,11 +170,13 @@ install_manifold() {
     local skills_dir="$base_dir/skills"
     local commands_dir="$base_dir/commands"
     local hooks_dir="$base_dir/hooks"
+    local lib_dir="$base_dir/lib"
 
     # Create directories
     mkdir -p "$skills_dir/manifold"
     mkdir -p "$commands_dir"
     mkdir -p "$hooks_dir"
+    mkdir -p "$lib_dir/parallel"
 
     # Install skill (for /manifold overview command)
     if [[ -n "$LOCAL_INSTALL" ]]; then
@@ -178,13 +196,25 @@ install_manifold() {
     done
     print_success "Installed ${#COMMAND_FILES[@]} commands to $commands_dir/"
 
-    # Install hook (for context preservation)
+    # Install parallel library (for /parallel command)
+    for lib_file in "${PARALLEL_LIB_FILES[@]}"; do
+        if [[ -n "$LOCAL_INSTALL" ]]; then
+            cp "$SCRIPT_DIR/lib/parallel/$lib_file" "$lib_dir/parallel/$lib_file"
+        else
+            curl -fsSL "$REPO/install/lib/parallel/$lib_file" -o "$lib_dir/parallel/$lib_file"
+        fi
+    done
+    print_success "Installed parallel library to $lib_dir/parallel/"
+
+    # Install hooks (for context preservation and auto-suggest)
     if [[ -n "$LOCAL_INSTALL" ]]; then
         cp "$SCRIPT_DIR/hooks/manifold-context.ts" "$hooks_dir/manifold-context.ts"
+        cp "$SCRIPT_DIR/hooks/auto-suggester.ts" "$hooks_dir/auto-suggester.ts"
     else
         curl -fsSL "$REPO/install/hooks/manifold-context.ts" -o "$hooks_dir/manifold-context.ts"
+        curl -fsSL "$REPO/install/hooks/auto-suggester.ts" -o "$hooks_dir/auto-suggester.ts"
     fi
-    print_success "Installed context hook to $hooks_dir/"
+    print_success "Installed hooks to $hooks_dir/"
 }
 
 # Main installation
@@ -270,6 +300,9 @@ main() {
     echo "  /m6-integrate my-feature   # Wire artifacts together (v2)"
     echo "  /m5-verify my-feature      # Validate constraints (--actions for v2)"
     echo "  /m-status                  # Show current state (--history for v2)"
+    echo ""
+    echo -e "${BOLD}Parallel Execution:${NC}"
+    echo "  /parallel \"task1\" \"task2\"  # Execute tasks in parallel worktrees"
     echo ""
     echo -e "${BOLD}Overview:${NC}"
     echo "  /manifold                  # Show framework overview"

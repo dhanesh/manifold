@@ -1,0 +1,229 @@
+# parallel-agents.anchor.yaml
+# Outcome Anchoring Document
+# Generated: 2026-01-16
+
+feature: "parallel-agents"
+anchor_type: "backward_reasoning"
+
+outcome:
+  original: "Parallelise tasks that can be completed simultaneously using agents and git worktrees, let the framework identify and decide when and how"
+  anchored: "Framework automatically detects parallelization opportunities, executes independent tasks in isolated git worktrees, and merges results without conflicts"
+
+required_truths:
+  - id: RT-1
+    statement: "Task graph can be analyzed for parallelization opportunities"
+    requires:
+      - "Task decomposition into discrete units"
+      - "Dependency detection between tasks"
+    maps_to_constraints: [B3, T4]
+    current_state: "No task analysis capability exists"
+    status: NOT_SATISFIED
+    priority: 1
+
+  - id: RT-2
+    statement: "Independent tasks can be identified (no file overlap)"
+    requires:
+      - "File-level change prediction for each task"
+      - "Overlap detection between predicted file sets"
+    maps_to_constraints: [T3, B1]
+    current_state: "No file prediction or overlap detection"
+    status: NOT_SATISFIED
+    priority: 1
+
+  - id: RT-3
+    statement: "Isolated execution environments can be created"
+    requires:
+      - "Git worktree creation from clean state"
+      - "Per-agent worktree management"
+    maps_to_constraints: [T1, T2, T7]
+    current_state: "Git worktrees available but not integrated"
+    status: PARTIAL
+    priority: 1
+
+  - id: RT-4
+    statement: "Results from parallel agents can be merged automatically"
+    requires:
+      - "Conflict-free changes guaranteed by RT-2"
+      - "Git merge orchestration"
+    maps_to_constraints: [U3, B1]
+    current_state: "Git merge exists, no orchestration layer"
+    status: PARTIAL
+    priority: 2
+
+  - id: RT-5
+    statement: "Resource limits are monitored and respected"
+    requires:
+      - "Disk/memory/CPU monitoring"
+      - "Dynamic concurrency adjustment"
+    maps_to_constraints: [O1, O2, O4]
+    current_state: "No resource monitoring for parallelization"
+    status: NOT_SATISFIED
+    priority: 2
+
+  - id: RT-6
+    statement: "User has visibility and control over parallelization"
+    requires:
+      - "Parallelization suggestions shown to user"
+      - "Opt-in confirmation or auto mode"
+    maps_to_constraints: [B4, U1, U2, U4]
+    current_state: "No parallel UI exists"
+    status: NOT_SATISFIED
+    priority: 2
+
+dependency_chain:
+  parallel_tracks:
+    analysis: ["RT-1", "RT-2"]
+    infrastructure: ["RT-3", "RT-5"]
+    user_facing: ["RT-6"]
+  sequential:
+    - "RT-1 + RT-2 must complete before RT-4"
+    - "RT-3 must complete before agents can run"
+  blocking:
+    - "RT-2 blocks RT-4 (cannot merge without conflict guarantee)"
+
+options:
+  - id: A
+    name: "Hook-based Integration"
+    description: "Integrate into existing Task tool - when multiple sub-tasks detected, analyze and parallelize behind the scenes"
+    tech_stack: "Claude Code Task tool extension"
+    commands:
+      - "Task tool automatically parallelizes when possible"
+    satisfies: [RT-3, RT-4]
+    gaps: [RT-1, RT-2, RT-5, RT-6]
+    effort: "Low"
+    risk: "Medium - limited analysis capability"
+
+  - id: B
+    name: "Dedicated Parallel Command"
+    description: "New /parallel command that takes explicit task list and runs them in parallel worktrees"
+    tech_stack: "New slash command + worktree manager"
+    commands:
+      - "/parallel \"task1\" \"task2\" \"task3\""
+      - "/parallel --file tasks.yaml"
+    satisfies: [RT-3, RT-4, RT-6]
+    gaps: [RT-1, RT-2, RT-5]
+    effort: "Medium"
+    risk: "Low - explicit user control"
+
+  - id: C
+    name: "Framework Auto-detection"
+    description: "Analyze all incoming work for parallelization, suggest opportunities, user confirms"
+    tech_stack: "Task analyzer + worktree orchestrator + UI"
+    commands:
+      - "Automatic detection and suggestion"
+      - "--auto-parallel for hands-free mode"
+    satisfies: [RT-1, RT-2, RT-3, RT-4, RT-6]
+    gaps: [RT-5]
+    effort: "High"
+    risk: "Medium - complex analysis"
+
+  - id: D
+    name: "Hybrid Orchestrator"
+    description: "Combine auto-detection with explicit commands. Framework suggests parallelization, provides /parallel command for explicit use, handles resources dynamically"
+    tech_stack: "Task analyzer + worktree manager + resource monitor + parallel command"
+    commands:
+      - "Auto-suggestion with confirmation"
+      - "/parallel for explicit parallel execution"
+      - "--auto-parallel flag for automatic mode"
+      - "--max-parallel N for resource control"
+    satisfies: [RT-1, RT-2, RT-3, RT-4, RT-5, RT-6]
+    gaps: []
+    effort: "High"
+    risk: "Low - comprehensive solution"
+
+recommendation:
+  selected_option: "D"
+  name: "Hybrid Orchestrator"
+  rationale:
+    - "Only option that satisfies all 6 Required Truths"
+    - "Provides both automatic and explicit parallelization"
+    - "Resource monitoring prevents system overload"
+    - "User control via confirmation and --auto-parallel"
+    - "Higher effort justified by comprehensive solution"
+  implementation_structure:
+    phase_1:
+      name: "Foundation"
+      components:
+        - "Worktree Manager: create, track, cleanup worktrees"
+        - "Resource Monitor: disk/memory/CPU checks"
+      deliverables: ["worktree-manager.ts", "resource-monitor.ts"]
+    phase_2:
+      name: "Analysis"
+      components:
+        - "Task Analyzer: break tasks into units"
+        - "File Predictor: predict files each task will modify"
+        - "Overlap Detector: identify conflicts"
+      deliverables: ["task-analyzer.ts", "file-predictor.ts", "overlap-detector.ts"]
+    phase_3:
+      name: "Orchestration"
+      components:
+        - "Parallel Executor: spawn agents in worktrees"
+        - "Merge Orchestrator: collect and merge results"
+        - "Progress Reporter: show parallel progress"
+      deliverables: ["parallel-executor.ts", "merge-orchestrator.ts", "progress-reporter.ts"]
+    phase_4:
+      name: "Integration"
+      components:
+        - "/parallel command implementation"
+        - "Auto-suggestion hooks"
+        - "Configuration and flags"
+      deliverables: ["parallel-command.ts", "auto-suggester.ts", "parallel-config.ts"]
+  build_artifacts:
+    - "lib/parallel/worktree-manager.ts"
+    - "lib/parallel/resource-monitor.ts"
+    - "lib/parallel/task-analyzer.ts"
+    - "lib/parallel/file-predictor.ts"
+    - "lib/parallel/overlap-detector.ts"
+    - "lib/parallel/parallel-executor.ts"
+    - "lib/parallel/merge-orchestrator.ts"
+    - "lib/parallel/progress-reporter.ts"
+    - "commands/parallel.ts"
+    - "hooks/auto-suggester.ts"
+    - "tests/parallel/*.test.ts"
+    - "docs/parallel-agents/README.md"
+
+critical_path:
+  phase_1:
+    name: "Foundation"
+    tasks:
+      - "Implement worktree create/remove/list"
+      - "Add resource checks (disk, memory)"
+    unblocks: ["phase_2", "phase_3"]
+  phase_2:
+    name: "Analysis"
+    tasks:
+      - "Build task decomposition logic"
+      - "Implement file prediction heuristics"
+      - "Create overlap detection"
+    unblocks: ["phase_3"]
+  phase_3:
+    name: "Orchestration"
+    tasks:
+      - "Build parallel executor with Task tool"
+      - "Implement merge orchestration"
+      - "Add progress reporting"
+    unblocks: ["phase_4"]
+  phase_4:
+    name: "Integration"
+    tasks:
+      - "Create /parallel command"
+      - "Add auto-suggestion hooks"
+      - "Write documentation"
+    unblocks: []
+
+validation_gates:
+  phase_1:
+    - "Worktrees can be created and removed without errors"
+    - "Resource monitor accurately reports available capacity"
+  phase_2:
+    - "Task analyzer correctly identifies independent tasks"
+    - "File predictor accuracy >80% on test cases"
+    - "No false negatives in overlap detection (safety critical)"
+  phase_3:
+    - "Parallel execution completes faster than sequential"
+    - "Merge produces correct combined result"
+    - "Failed agent doesn't affect main worktree"
+  phase_4:
+    - "/parallel command works end-to-end"
+    - "Auto-suggestion triggers appropriately"
+    - "User can opt-out easily"

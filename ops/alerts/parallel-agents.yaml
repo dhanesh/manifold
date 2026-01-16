@@ -1,0 +1,119 @@
+# Parallel Agents Alerts
+# Monitors key metrics for parallel execution system
+# Satisfies: O3 (monitorable operations)
+
+groups:
+  - name: parallel-agents
+    rules:
+      # Resource alerts
+      - alert: ParallelDiskSpaceLow
+        expr: disk_free_percent < 15
+        for: 5m
+        labels:
+          severity: warning
+          component: parallel-agents
+        annotations:
+          summary: "Low disk space may prevent parallelization"
+          description: "Disk free space is {{ $value }}%, below 15% threshold"
+          runbook: "ops/runbooks/parallel-resource-exhaustion.md"
+
+      - alert: ParallelDiskSpaceCritical
+        expr: disk_free_percent < 5
+        for: 1m
+        labels:
+          severity: critical
+          component: parallel-agents
+        annotations:
+          summary: "Critical disk space - parallel execution blocked"
+          description: "Disk free space is {{ $value }}%, immediate action required"
+          runbook: "ops/runbooks/parallel-resource-exhaustion.md"
+
+      - alert: ParallelMemoryHigh
+        expr: memory_used_percent > 85
+        for: 5m
+        labels:
+          severity: warning
+          component: parallel-agents
+        annotations:
+          summary: "High memory usage may affect parallelization"
+          description: "Memory usage is {{ $value }}%, approaching limit"
+          runbook: "ops/runbooks/parallel-resource-exhaustion.md"
+
+      - alert: ParallelCpuHigh
+        expr: cpu_load_percent > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: parallel-agents
+        annotations:
+          summary: "High CPU load may reduce parallelization"
+          description: "CPU load is {{ $value }}%, parallelism may be reduced"
+          runbook: "ops/runbooks/parallel-resource-exhaustion.md"
+
+      # Execution alerts
+      - alert: ParallelWorktreeStale
+        expr: parallel_worktree_age_hours > 24
+        for: 1h
+        labels:
+          severity: warning
+          component: parallel-agents
+        annotations:
+          summary: "Stale parallel worktree detected"
+          description: "Worktree {{ $labels.task_id }} is {{ $value }} hours old"
+          runbook: "ops/runbooks/parallel-worktree-cleanup.md"
+
+      - alert: ParallelWorktreeExcess
+        expr: parallel_worktree_count > 6
+        for: 5m
+        labels:
+          severity: warning
+          component: parallel-agents
+        annotations:
+          summary: "Excessive parallel worktrees"
+          description: "{{ $value }} worktrees active, consider cleanup"
+          runbook: "ops/runbooks/parallel-worktree-cleanup.md"
+
+      - alert: ParallelTaskTimeout
+        expr: parallel_task_duration_seconds > 300
+        for: 1m
+        labels:
+          severity: warning
+          component: parallel-agents
+        annotations:
+          summary: "Parallel task running long"
+          description: "Task {{ $labels.task_id }} running for {{ $value }}s"
+          runbook: "ops/runbooks/parallel-resource-exhaustion.md"
+
+      # Quality alerts
+      - alert: ParallelMergeConflict
+        expr: increase(parallel_merge_conflicts_total[1h]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          component: parallel-agents
+        annotations:
+          summary: "Parallel merge conflict detected"
+          description: "Merge conflict occurred despite overlap detection"
+          runbook: "ops/runbooks/parallel-merge-conflicts.md"
+
+      - alert: ParallelPredictionLowConfidence
+        expr: parallel_prediction_confidence_avg < 0.5
+        for: 30m
+        labels:
+          severity: warning
+          component: parallel-agents
+        annotations:
+          summary: "Low file prediction confidence"
+          description: "Average prediction confidence is {{ $value }}, risk of conflicts"
+          runbook: "ops/runbooks/parallel-merge-conflicts.md"
+
+      - alert: ParallelFailureRate
+        expr: rate(parallel_task_failures_total[1h]) > 0.2
+        for: 15m
+        labels:
+          severity: warning
+          component: parallel-agents
+        annotations:
+          summary: "High parallel task failure rate"
+          description: "{{ $value | humanizePercentage }} of tasks failing"
+          runbook: "ops/runbooks/parallel-resource-exhaustion.md"
