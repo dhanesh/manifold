@@ -343,10 +343,118 @@ main() {
     echo ""
 }
 
+# Validate installation
+validate_installation() {
+    local base_dir="$1"
+    local agent_name="$2"
+    local errors=0
+
+    echo ""
+    print_step "Validating $agent_name installation..."
+
+    # Check skill file
+    if [[ ! -f "$base_dir/skills/manifold/SKILL.md" ]]; then
+        print_error "Missing: skills/manifold/SKILL.md"
+        ((errors++))
+    else
+        print_success "Found: skills/manifold/SKILL.md"
+    fi
+
+    # Check command files
+    for cmd_file in "${COMMAND_FILES[@]}"; do
+        if [[ ! -f "$base_dir/commands/$cmd_file" ]]; then
+            print_error "Missing: commands/$cmd_file"
+            ((errors++))
+        else
+            print_success "Found: commands/$cmd_file"
+        fi
+    done
+
+    # Check parallel library files
+    for lib_file in "${PARALLEL_LIB_FILES[@]}"; do
+        if [[ ! -f "$base_dir/lib/parallel/$lib_file" ]]; then
+            print_error "Missing: lib/parallel/$lib_file"
+            ((errors++))
+        else
+            print_success "Found: lib/parallel/$lib_file"
+        fi
+    done
+
+    # Check hooks
+    local hooks=("manifold-context.ts" "auto-suggester.ts")
+    for hook_file in "${hooks[@]}"; do
+        if [[ ! -f "$base_dir/hooks/$hook_file" ]]; then
+            print_error "Missing: hooks/$hook_file"
+            ((errors++))
+        else
+            print_success "Found: hooks/$hook_file"
+        fi
+    done
+
+    # Summary
+    echo ""
+    if [[ $errors -eq 0 ]]; then
+        print_success "$agent_name installation validated: All files present"
+        return 0
+    else
+        print_error "$agent_name installation has $errors missing file(s)"
+        return 1
+    fi
+}
+
+# Run validation for all detected agents
+run_validation() {
+    local validated=0
+    local failed=0
+
+    echo ""
+    echo -e "${CYAN}╔════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║${NC}  ${BOLD}Manifold Installation Validation${NC}                      ${CYAN}║${NC}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+
+    # Validate Claude Code
+    if [[ -d "$HOME/.claude" ]]; then
+        if validate_installation "$HOME/.claude" "Claude Code"; then
+            ((validated++))
+        else
+            ((failed++))
+        fi
+    fi
+
+    # Validate AMP
+    if [[ -d "$HOME/.amp" ]]; then
+        if validate_installation "$HOME/.amp" "AMP"; then
+            ((validated++))
+        else
+            ((failed++))
+        fi
+    fi
+
+    echo ""
+    echo -e "${GREEN}════════════════════════════════════════════════════════${NC}"
+    if [[ $failed -eq 0 ]]; then
+        echo -e "${GREEN}  Validation complete: $validated agent(s) verified${NC}"
+    else
+        echo -e "${YELLOW}  Validation complete: $validated passed, $failed failed${NC}"
+    fi
+    echo -e "${GREEN}════════════════════════════════════════════════════════${NC}"
+    echo ""
+}
+
 # Handle local install mode
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ -f "$SCRIPT_DIR/manifold/SKILL.md" && -d "$SCRIPT_DIR/commands" ]]; then
     LOCAL_INSTALL=1
 fi
 
+# Check for validation flag
+if [[ "$1" == "--validate" || "$1" == "-v" ]]; then
+    run_validation
+    exit 0
+fi
+
 main "$@"
+
+# Run validation after installation
+run_validation

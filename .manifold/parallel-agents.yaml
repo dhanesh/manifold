@@ -414,6 +414,23 @@ iterations:
       file_count: 13
     result: "distributable"
 
+  - number: 9
+    phase: "hook-integration"
+    timestamp: "2026-01-16T12:00:00Z"
+    issue: "Parallel execution hooks not being invoked during /m4-generate"
+    changes:
+      - "Added 'Parallel Execution Integration' section to m4-generate.md"
+      - "Added parallelization check as step 5 in execution instructions"
+      - "Added user approval prompt template for parallel generation"
+      - "Added validation function to install.sh (--validate flag)"
+      - "Validation checks: skill file, 9 commands, 11 library files, 2 hooks"
+    validation_added:
+      - "validate_installation() function for per-agent validation"
+      - "run_validation() function for all-agents validation"
+      - "install.sh --validate flag for standalone validation"
+      - "Auto-validation after installation completes"
+    result: "integrated"
+
 generation:
   option: "D"
   timestamp: "2026-01-16T10:15:00Z"

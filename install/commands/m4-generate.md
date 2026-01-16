@@ -165,18 +165,110 @@ After generation, verify:
 - [ ] Install script includes new command files
 - [ ] Hooks are in `install/hooks/` if they need distribution
 
+## Parallel Execution Integration
+
+**IMPORTANT**: Before generating artifacts, check for parallelization opportunities.
+
+### Parallelization Check
+
+When the generation plan includes **3+ independent artifact groups**, invoke the parallel execution system:
+
+1. **Analyze Artifact Groups**
+   - Code files (can be generated in parallel across modules)
+   - Test files (depend on code, but tests for different modules can parallelize)
+   - Documentation (independent, can parallelize)
+   - Operational artifacts (runbooks, dashboards, alerts - independent)
+
+2. **Invoke Auto-Suggester**
+   ```typescript
+   // The auto-suggester at ~/.claude/hooks/auto-suggester.ts analyzes tasks
+   // Import and use when parallelization is beneficial:
+   import { AutoSuggester } from '~/.claude/lib/parallel/index';
+
+   const suggester = new AutoSuggester(process.cwd());
+   const tasks = [
+     "Generate PaymentRetryClient.ts with error classification",
+     "Generate PaymentRetryQueue.ts with durable queue logic",
+     "Generate IdempotencyService.ts with duplicate prevention",
+     "Generate all test files for retry module",
+     "Generate documentation for payment-retry feature"
+   ];
+
+   const suggestion = await suggester.suggest(tasks);
+   if (suggestion.shouldParallelize) {
+     // Display suggestion to user
+     console.log(suggester.formatSuggestion(suggestion));
+   }
+   ```
+
+3. **User Approval Prompt**
+   When parallelization is suggested, display:
+   ```
+   PARALLEL EXECUTION OPPORTUNITY DETECTED
+
+   The following artifact groups can be generated in parallel:
+
+   Group 1: Code Implementation
+   - PaymentRetryClient.ts
+   - PaymentRetryQueue.ts
+   - IdempotencyService.ts
+   - CircuitBreaker.ts
+
+   Group 2: Test Files
+   - PaymentRetryClient.test.ts
+   - IdempotencyService.test.ts
+   - integration.test.ts
+
+   Group 3: Documentation & Ops
+   - README.md, API.md, DECISIONS.md
+   - Runbooks, Dashboards, Alerts
+
+   Estimated speedup: 2.5x
+   Confidence: 85%
+
+   Would you like to generate artifacts in parallel using git worktrees?
+   [Y]es / [N]o / [D]etails
+   ```
+
+4. **If Approved**: Use `/parallel` command to execute generation in isolated worktrees
+5. **If Declined**: Proceed with sequential generation
+
+### Parallel Generation Flow
+
+```
+User runs: /m4-generate payment-retry --option=C
+
+1. Parse manifold and anchoring
+2. Build artifact generation plan
+3. Analyze for parallelization (≥3 independent groups?)
+   └── YES: Invoke auto-suggester
+       └── Suggestion positive?
+           └── YES: Prompt user for approval
+               └── Approved: Use /parallel for generation
+               └── Declined: Sequential generation
+           └── NO: Sequential generation
+   └── NO: Sequential generation
+4. Generate artifacts (parallel or sequential)
+5. Merge results and update manifold
+```
+
 ## Execution Instructions
 
 1. Read manifold from `.manifold/<feature>.yaml`
 2. Read anchoring from `.manifold/<feature>.anchor.yaml`
 3. Select solution option (from `--option` or prompt user)
 4. **CHECK PROJECT PATTERNS** - Examine existing structure before placing files
-5. For each artifact type:
+5. **PARALLELIZATION CHECK** - Analyze artifacts for parallel generation opportunity
+   - If ≥3 independent artifact groups detected
+   - Run auto-suggester analysis
+   - Prompt user: "Parallel generation detected (Xfiles, Yx speedup). Enable? [Y/N]"
+   - If approved, use `/parallel` command with artifact tasks
+6. For each artifact type:
    - Generate artifact with constraint traceability
    - Add comments linking to constraint IDs: `// Satisfies: B1, T2`
    - **Place in correct directory per Artifact Placement Rules**
-6. Create all files in appropriate directories
-7. **Update install script** if adding new distributable commands
-8. **Update manifold YAML** with generation tracking (artifacts, coverage)
-9. Set phase to GENERATED
-10. Display summary with constraint coverage
+7. Create all files in appropriate directories
+8. **Update install script** if adding new distributable commands
+9. **Update manifold YAML** with generation tracking (artifacts, coverage)
+10. Set phase to GENERATED
+11. Display summary with constraint coverage
