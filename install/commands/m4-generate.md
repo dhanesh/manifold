@@ -165,13 +165,16 @@ After generation, verify:
 - [ ] Install script includes new command files
 - [ ] Hooks are in `install/hooks/` if they need distribution
 
-## Parallel Execution Integration
+## STEP 0: Parallel Execution Check (MANDATORY)
 
-**IMPORTANT**: Before generating artifacts, check for parallelization opportunities.
+> **STOP! Complete this check BEFORE writing ANY files.**
+>
+> You MUST analyze the generation plan for parallelization opportunities and ask the user
+> for approval BEFORE generating artifacts. This is not optional.
 
-### Parallelization Check
+### Parallelization Analysis
 
-When the generation plan includes **3+ independent artifact groups**, invoke the parallel execution system:
+When the generation plan includes **3+ files across different modules/directories**, you MUST:
 
 1. **Analyze Artifact Groups**
    - Code files (can be generated in parallel across modules)
@@ -254,21 +257,44 @@ User runs: /m4-generate payment-retry --option=C
 
 ## Execution Instructions
 
+### Phase 1: Planning (BEFORE any file writes)
+
 1. Read manifold from `.manifold/<feature>.yaml`
 2. Read anchoring from `.manifold/<feature>.anchor.yaml`
 3. Select solution option (from `--option` or prompt user)
-4. **CHECK PROJECT PATTERNS** - Examine existing structure before placing files
-5. **PARALLELIZATION CHECK** - Analyze artifacts for parallel generation opportunity
-   - If ≥3 independent artifact groups detected
-   - Run auto-suggester analysis
-   - Prompt user: "Parallel generation detected (Xfiles, Yx speedup). Enable? [Y/N]"
-   - If approved, use `/parallel` command with artifact tasks
-6. For each artifact type:
+4. **BUILD ARTIFACT LIST** - List ALL files that will be generated
+5. **⚠️ MANDATORY PARALLELIZATION CHECK** (See "STEP 0" above)
+   - Count the artifact groups (code, tests, docs, ops)
+   - If ≥3 files across different directories:
+     ```
+     🔀 PARALLEL GENERATION OPPORTUNITY
+
+     I've identified [N] artifacts that could be generated in parallel:
+
+     Group 1 - [Type]: [file1, file2, ...]
+     Group 2 - [Type]: [file1, file2, ...]
+     Group 3 - [Type]: [file1, file2, ...]
+
+     Estimated speedup: ~Xx faster
+
+     Would you like to enable parallel generation? [Y/N]
+     ```
+   - **WAIT for user response before proceeding**
+   - If Y: Use `/parallel` command with generation tasks
+   - If N: Continue with sequential generation
+
+### Phase 2: Generation (AFTER user approval)
+
+6. **CHECK PROJECT PATTERNS** - Examine existing structure before placing files
+7. For each artifact type:
    - Generate artifact with constraint traceability
    - Add comments linking to constraint IDs: `// Satisfies: B1, T2`
    - **Place in correct directory per Artifact Placement Rules**
-7. Create all files in appropriate directories
-8. **Update install script** if adding new distributable commands
-9. **Update manifold YAML** with generation tracking (artifacts, coverage)
-10. Set phase to GENERATED
-11. Display summary with constraint coverage
+8. Create all files in appropriate directories
+9. **Update install script** if adding new distributable commands
+
+### Phase 3: Finalization
+
+10. **Update manifold YAML** with generation tracking (artifacts, coverage)
+11. Set phase to GENERATED
+12. Display summary with constraint coverage
