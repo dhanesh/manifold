@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.1](https://github.com/dhanesh/manifold/compare/v2.5.0...v2.5.1) (2026-01-16)
+
+### Bug Fixes
+
+* **release:** use semantic-release-action to properly expose outputs ([b84db18](https://github.com/dhanesh/manifold/commit/b84db18408dafdf41485e93df996606663e0eade))
+
 ## [2.5.0](https://github.com/dhanesh/manifold/compare/v2.4.0...v2.5.0) (2026-01-16)
 
 ### Features
