@@ -18,10 +18,23 @@ NC='\033[0m' # No Color
 BOLD='\033[1m'
 
 # Manifold info
-VERSION="2.2.1"
-CLI_VERSION="2.2.1"
 REPO="https://raw.githubusercontent.com/dhanesh/manifold/main"
 RELEASES="https://github.com/dhanesh/manifold/releases/download"
+FALLBACK_VERSION="2.2.1"
+
+# Fetch latest version from GitHub API (falls back to hardcoded if API unavailable)
+get_latest_version() {
+    local version
+    version=$(curl -fsSL "https://api.github.com/repos/dhanesh/manifold/releases/latest" 2>/dev/null | grep '"tag_name"' | sed -E 's/.*"v?([^"]+)".*/\1/')
+    if [ -z "$version" ]; then
+        echo "$FALLBACK_VERSION"
+    else
+        echo "$version"
+    fi
+}
+
+VERSION=$(get_latest_version)
+CLI_VERSION="$VERSION"
 
 print_banner() {
     echo ""
