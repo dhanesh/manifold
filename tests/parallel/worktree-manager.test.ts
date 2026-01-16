@@ -26,6 +26,8 @@ describe('WorktreeManager', () => {
     execSync('git init', { cwd: TEST_DIR });
     execSync('git config user.email "test@test.com"', { cwd: TEST_DIR });
     execSync('git config user.name "Test"', { cwd: TEST_DIR });
+    // Add .parallel-worktrees to gitignore so worktree creation doesn't cause "dirty" state
+    execSync('echo ".parallel-worktrees" > .gitignore', { cwd: TEST_DIR });
     execSync('touch README.md && git add . && git commit -m "init"', { cwd: TEST_DIR });
 
     manager = new WorktreeManager({

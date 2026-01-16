@@ -260,7 +260,8 @@ export class TaskAnalyzer {
       };
 
       // Try to extract file mentions
-      const fileMatches = desc.match(/[\w\-./]+\.(ts|js|tsx|jsx|json|yaml|yml|md)/gi);
+      // Note: tsx/jsx must come before ts/js in alternation to match correctly
+      const fileMatches = desc.match(/[\w\-./]+\.(tsx|jsx|ts|js|css|scss|less|json|yaml|yml|md|html)/gi);
       if (fileMatches) {
         task.estimatedFiles = fileMatches;
       }

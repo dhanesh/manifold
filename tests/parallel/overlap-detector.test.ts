@@ -3,7 +3,7 @@
  * Validates: T3, B1, RT-2
  */
 
-import { describe, it, expect } from 'bun:test';
+import { describe, it, expect, beforeEach } from 'bun:test';
 import { OverlapDetector } from '../../lib/parallel/overlap-detector';
 import { FilePrediction } from '../../lib/parallel/file-predictor';
 

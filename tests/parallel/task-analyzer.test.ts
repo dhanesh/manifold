@@ -3,7 +3,7 @@
  * Validates: B3, T4, T6, RT-1
  */
 
-import { describe, it, expect } from 'bun:test';
+import { describe, it, expect, beforeEach } from 'bun:test';
 import { TaskAnalyzer, Task } from '../../lib/parallel/task-analyzer';
 
 describe('TaskAnalyzer', () => {
