@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0](https://github.com/dhanesh/manifold/compare/v2.4.0...v2.5.0) (2026-01-16)
+
+### Features
+
+* add v3 schema with temporal non-linearity and reality grounding ([92ed795](https://github.com/dhanesh/manifold/commit/92ed7953ad9d32d333c81c6e2f48c846dbcd13fa))
+
 ## [2.4.0](https://github.com/dhanesh/manifold/compare/v2.3.0...v2.4.0) (2026-01-16)
 
 ### Features
