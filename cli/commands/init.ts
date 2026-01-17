@@ -111,7 +111,7 @@ async function initCommand(feature: string, options: InitOptions): Promise<numbe
     const header = `# ${feature}.yaml
 # Constraint Manifold for ${feature}
 # Created: ${new Date().toISOString().split('T')[0]}
-# Schema: v2
+# Schema: v3
 
 `;
 
@@ -154,13 +154,13 @@ function isValidFeatureName(name: string): boolean {
 
 /**
  * Generate manifold template
- * Satisfies: Schema v2 with iterations[] section
+ * Satisfies: Schema v3 with evidence[], constraint_graph
  */
 function generateManifoldTemplate(feature: string, outcome?: string): Record<string, unknown> {
   const now = new Date().toISOString();
 
   return {
-    schema_version: 2,
+    schema_version: 3,
     feature,
     outcome: outcome || `[Describe the desired outcome for ${feature}]`,
     phase: 'INITIALIZED',
@@ -208,7 +208,7 @@ function generateManifoldTemplate(feature: string, outcome?: string): Record<str
       anchor_document: null
     },
 
-    // v2: Iteration tracking
+    // v2+: Iteration tracking
     iterations: [
       {
         number: 0,
@@ -218,9 +218,25 @@ function generateManifoldTemplate(feature: string, outcome?: string): Record<str
       }
     ],
 
-    // v2: Convergence tracking
+    // v2+: Convergence tracking
     convergence: {
       status: 'NOT_STARTED'
+    },
+
+    // v3: Evidence system (reality grounding)
+    evidence: [],
+
+    // v3: Constraint graph (temporal non-linearity)
+    constraint_graph: {
+      version: 1,
+      generated_at: now,
+      feature,
+      nodes: {},
+      edges: {
+        dependencies: [],
+        conflicts: [],
+        satisfies: []
+      }
     }
   };
 }

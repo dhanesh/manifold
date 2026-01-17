@@ -391,8 +391,9 @@ export function detectSchemaVersion(manifold: Manifold): SchemaVersion {
   if (manifold.schema_version === 2) return 2;
   if (manifold.schema_version === 1) return 1;
 
-  // v3 detection: presence of constraint_graph
+  // v3 detection: presence of constraint_graph or evidence[]
   if (manifold.constraint_graph) return 3;
+  if (Array.isArray(manifold.evidence)) return 3;
 
   // v2 detection: presence of iterations[] or convergence{}
   if (manifold.iterations?.length || manifold.convergence) return 2;

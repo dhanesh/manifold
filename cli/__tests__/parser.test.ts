@@ -1,6 +1,6 @@
 /**
  * Tests for parser.ts
- * Validates: RT-1 (Fast/safe YAML parsing), T2 (Schema v1/v2 detection)
+ * Validates: RT-1 (Fast/safe YAML parsing), T2 (Schema v1/v2/v3 detection)
  */
 
 import { describe, test, expect } from 'bun:test';
@@ -94,5 +94,36 @@ describe('detectSchemaVersion', () => {
       constraints: { business: [] }
     };
     expect(detectSchemaVersion(manifold)).toBe(1);
+  });
+
+  test('returns 3 for explicit schema_version: 3', () => {
+    const manifold: Manifold = {
+      schema_version: 3,
+      feature: 'test',
+      phase: 'INITIALIZED'
+    };
+    expect(detectSchemaVersion(manifold)).toBe(3);
+  });
+
+  test('returns 3 when constraint_graph present', () => {
+    const manifold: Manifold = {
+      feature: 'test',
+      phase: 'INITIALIZED',
+      constraint_graph: {
+        version: 1,
+        nodes: {},
+        edges: { dependencies: [], conflicts: [], satisfies: [] }
+      }
+    };
+    expect(detectSchemaVersion(manifold)).toBe(3);
+  });
+
+  test('returns 3 when evidence[] present (auto-detection)', () => {
+    const manifold: Manifold = {
+      feature: 'test',
+      phase: 'INITIALIZED',
+      evidence: [{ type: 'file_exists', path: 'test.ts', status: 'VERIFIED' }]
+    };
+    expect(detectSchemaVersion(manifold)).toBe(3);
   });
 });

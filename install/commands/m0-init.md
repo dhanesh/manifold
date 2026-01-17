@@ -35,8 +35,8 @@ Initialize a new constraint manifold for a feature.
 ## Manifold File Structure
 
 ```yaml
-# Manifold Schema v2
-schema_version: 2
+# Manifold Schema v3
+schema_version: 3
 feature: <feature-name>
 outcome: <desired outcome or "TBD">
 phase: INITIALIZED
@@ -50,10 +50,28 @@ constraints:
   operational: []
 
 tensions: []
-anchors: []
 
-# v2: Iteration Tracking
+anchors:
+  required_truths: []
+
+# v2+: Iteration Tracking
 iterations: []
+
+# v2+: Convergence Tracking
+convergence:
+  status: NOT_STARTED
+
+# v3: Evidence System (reality grounding)
+evidence: []
+
+# v3: Constraint Graph (temporal non-linearity)
+constraint_graph:
+  version: 1
+  nodes: {}
+  edges:
+    dependencies: []
+    conflicts: []
+    satisfies: []
 ```
 
 ## Schema Version Compatibility
@@ -61,9 +79,12 @@ iterations: []
 | Version | Features | Status |
 |---------|----------|--------|
 | 1 (implicit) | Original schema, no version field | Supported |
-| 2 | Adds `schema_version`, `iterations[]` | Current |
+| 2 | Adds `schema_version`, `iterations[]`, `convergence` | Supported |
+| 3 | Adds `evidence[]`, `constraint_graph`, temporal non-linearity | Current |
 
 **Backward Compatibility**: Manifolds without `schema_version` are treated as v1 and remain fully functional.
+
+> **See**: `install/commands/SCHEMA_REFERENCE.md` for complete schema reference including Evidence types, Constraint Graph node types, and all valid field values.
 
 ## Example
 
@@ -73,7 +94,7 @@ User: /m0-init payment-retry --outcome="95% retry success for transient failures
 Response:
 MANIFOLD INITIALIZED: payment-retry
 
-Schema Version: 2
+Schema Version: 3
 Outcome: 95% retry success for transient failures
 
 Created: .manifold/payment-retry.yaml
@@ -85,7 +106,11 @@ Constraint Categories Ready:
 - [ ] Security
 - [ ] Operational
 
-Iteration Tracking: Enabled (v2)
+v3 Features Enabled:
+- Iteration Tracking
+- Convergence Tracking
+- Evidence System (reality grounding)
+- Constraint Graph (temporal non-linearity)
 
 Next: /m1-constrain payment-retry
 ```
