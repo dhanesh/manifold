@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0](https://github.com/dhanesh/manifold/compare/v2.6.1...v2.7.0) (2026-01-17)
+
+### Features
+
+* **schema:** upgrade default manifold schema to v3 ([d552ef9](https://github.com/dhanesh/manifold/commit/d552ef96fecc306454562042afe6cf26928ed1db))
+
 ## [2.6.1](https://github.com/dhanesh/manifold/compare/v2.6.0...v2.6.1) (2026-01-16)
 
 ### Bug Fixes
