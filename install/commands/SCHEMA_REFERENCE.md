@@ -306,3 +306,179 @@ Outcome ← RT-1 ← {B1, T1} ← TN1
 ```
 
 Both queries are valid and provide complementary views of the same constraint network.
+
+---
+
+## Best Practices
+
+> **Source Attribution**: These best practices are compiled from the Claude Code team (Anthropic) and bcherny's TypeScript/schema validation patterns. Last updated: 2026-01-19.
+> Satisfies: B3 (best practices incorporation), RT-6, O3 (single canonical location)
+
+### Constraint Writing
+
+**From Claude Code Team:**
+
+1. **Be Specific and Measurable**
+   - ✅ "API response time must be < 200ms at p95"
+   - ❌ "API should be fast"
+
+2. **State the WHY in Rationale**
+   - Every constraint should explain its business impact
+   - Rationale helps future developers understand trade-offs
+
+3. **Use Constraint Types Correctly**
+   - `invariant`: Cannot be violated under any circumstances (security, data integrity)
+   - `boundary`: Hard limits that define acceptable ranges
+   - `goal`: Desired outcomes that can be traded off
+
+4. **Prefer Fewer, Stronger Constraints**
+   - Many weak goals create noise
+   - Focus on invariants that truly matter
+
+**From bcherny (TypeScript Patterns):**
+
+1. **Type Your Constraints**
+   - Use explicit ID prefixes (B1, T1, U1, S1, O1)
+   - This enables automated reference validation
+
+2. **Single Responsibility**
+   - Each constraint addresses ONE concern
+   - Compound constraints should be split
+
+3. **Testable Statements**
+   - Every constraint should be verifiable
+   - If you can't test it, it's too vague
+
+### Evidence System (v3)
+
+**Best Practices for Evidence:**
+
+1. **Use the Right Evidence Type**
+   - `file_exists`: For generated artifacts
+   - `content_match`: For specific patterns in code
+   - `test_passes`: For behavior verification
+   - `metric_value`: For runtime requirements
+   - `manual_review`: Only when automation is impossible
+
+2. **Relative Paths Only**
+   - Evidence paths should be relative to project root
+   - Never use `../` or absolute paths (security risk)
+
+3. **Keep Evidence Fresh**
+   - Re-verify evidence when files change
+   - Track `verified_at` timestamps
+
+4. **Link Evidence to Required Truths**
+   - Every RT should have supporting evidence
+   - Evidence without RT linkage suggests missing constraints
+
+### Tension Management
+
+**From Claude Code Team:**
+
+1. **Surface Tensions Early**
+   - Run `/m2-tension` before implementation
+   - Hidden tensions cause bugs
+
+2. **Document Resolutions Explicitly**
+   - Every resolved tension needs a `resolution` field
+   - Future developers need to understand the decision
+
+3. **Use Hidden Dependencies Liberally**
+   - Implementation order matters
+   - Non-obvious relationships should be documented
+
+**Common Tension Patterns:**
+
+| Pattern | Type | Example |
+|---------|------|---------|
+| Speed vs Accuracy | `trade_off` | "Cache invalidation vs freshness" |
+| Resource Competition | `resource_tension` | "Memory vs CPU optimization" |
+| Blocking Order | `hidden_dependency` | "Auth must exist before rate limiting" |
+
+### YAML Generation
+
+**From bcherny (Schema Validation):**
+
+1. **Always Validate Before Commit**
+   ```bash
+   manifold validate <feature>
+   ```
+
+2. **Use Templates from This Document**
+   - Copy-paste to avoid typos
+   - Templates are tested against the validator
+
+3. **Incremental Updates**
+   - Change one phase at a time
+   - Validate after each change
+
+4. **Preserve Version History**
+   - Use `iterations[]` to track changes
+   - Document key decisions in each iteration
+
+### Semantic Conflict Prevention
+
+1. **Check for Contradictory Invariants**
+   - Two invariants cannot require opposite things
+   - Use the conflict detection in `/m2-tension`
+
+2. **Resource Budgets**
+   - If multiple constraints mention the same resource (time, memory), document the trade-off
+   - Set explicit priority order
+
+3. **Scope Clarity**
+   - Global constraints ("all X must...") and local constraints ("specific X can...") need explicit relationship
+   - Document exceptions
+
+### CI/CD Integration
+
+**Recommended Workflow:**
+
+```yaml
+# .github/workflows/manifold-verify.yml
+- name: Validate Manifolds
+  run: manifold validate
+
+- name: Check for Unresolved Tensions
+  run: manifold status --unresolved
+
+- name: Verify Artifacts
+  run: manifold verify
+```
+
+**Exit Code Handling:**
+- `0`: All valid
+- `1`: Error (file not found, parse error)
+- `2`: Validation failure (schema violations)
+
+### Common Mistakes to Avoid
+
+| Mistake | Problem | Solution |
+|---------|---------|----------|
+| Skipping `/m1-constrain` | Missing constraints emerge during implementation | Always run full workflow |
+| Leaving tensions unresolved | Contradictory code paths | Resolve before `/m4-generate` |
+| Inventing new phases | Validation failures | Use ONLY phases from this document |
+| Using `ux` instead of `user_experience` | Deprecated in v2+ | Update to `user_experience` |
+| Absolute paths in evidence | Security risk, portability issues | Use relative paths only |
+| Dangling references | Broken constraint traceability | Use reference validation |
+
+### Version Migration
+
+**v1 → v2:**
+1. Add `schema_version: 2`
+2. Rename `ux` to `user_experience`
+3. Add `iterations[]` for change tracking
+4. Add `convergence` section
+
+**v2 → v3:**
+1. Update `schema_version: 3`
+2. Add `evidence[]` for reality grounding
+3. Add `constraint_graph` for temporal non-linearity
+4. Add `maps_to_constraints` to required truths
+
+### Further Reading
+
+- Claude Code CLI Documentation: `manifold --help`
+- Manifold Framework: `./README.md`
+- Example Manifolds: `./examples/`

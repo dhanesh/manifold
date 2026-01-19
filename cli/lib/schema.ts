@@ -58,6 +58,19 @@ const VALID_REQUIRED_TRUTH_STATUSES = ['SATISFIED', 'PARTIAL', 'NOT_SATISFIED', 
 // Valid convergence statuses
 const VALID_CONVERGENCE_STATUSES = ['NOT_STARTED', 'IN_PROGRESS', 'CONVERGED'] as const;
 
+// v3: Valid evidence types
+// Satisfies: T1 (v3 evidence validation), RT-2
+const VALID_EVIDENCE_TYPES = ['file_exists', 'content_match', 'test_passes', 'metric_value', 'manual_review'] as const;
+
+// v3: Valid evidence statuses
+const VALID_EVIDENCE_STATUSES = ['VERIFIED', 'PENDING', 'FAILED', 'STALE'] as const;
+
+// v3: Valid constraint node types
+const VALID_NODE_TYPES = ['constraint', 'tension', 'required_truth', 'artifact'] as const;
+
+// v3: Valid constraint node statuses
+const VALID_NODE_STATUSES = ['UNKNOWN', 'REQUIRED', 'SATISFIED', 'BLOCKED', 'CONFLICTED'] as const;
+
 /**
  * Validate a manifold against schema rules
  * Supports both v1 and v2 schemas
@@ -129,8 +142,8 @@ export function validateManifold(manifold: unknown, strict: boolean = false): Va
     );
   }
 
-  // Schema v2 specific validations
-  if (schemaVersion === 2) {
+  // Schema v2+ specific validations
+  if (schemaVersion >= 2) {
     // Iterations validation
     if (m.iterations) {
       validateIterations(m.iterations, errors, warnings);
@@ -140,6 +153,27 @@ export function validateManifold(manifold: unknown, strict: boolean = false): Va
     if (m.convergence) {
       validateConvergence(m.convergence as Record<string, unknown>, errors, warnings);
     }
+  }
+
+  // Schema v3 specific validations
+  // Satisfies: T1 (v3 support), RT-2
+  if (schemaVersion === 3) {
+    // Evidence validation
+    if (m.evidence) {
+      validateEvidence(m.evidence, errors, warnings);
+    }
+
+    // Constraint graph validation
+    if (m.constraint_graph) {
+      validateConstraintGraph(m.constraint_graph as Record<string, unknown>, errors, warnings);
+    }
+
+    // Collect all constraint IDs for reference validation
+    const constraintIds = collectConstraintIds(m);
+
+    // Validate references across the manifold
+    // Satisfies: T3 (dangling reference detection), RT-3
+    validateReferences(m, constraintIds, errors, warnings);
   }
 
   // Anchors validation
@@ -167,11 +201,17 @@ export function validateManifold(manifold: unknown, strict: boolean = false): Va
 
 /**
  * Detect schema version from manifold data
+ * Satisfies: T1 (v3 support), B4 (version migration path)
  */
 function detectVersion(m: Record<string, unknown>): SchemaVersion {
   // Explicit version takes precedence
+  if (m.schema_version === 3) return 3;
   if (m.schema_version === 2) return 2;
   if (m.schema_version === 1) return 1;
+
+  // Implicit v3 detection (evidence[] or constraint_graph)
+  if (Array.isArray(m.evidence) && m.evidence.length > 0) return 3;
+  if (m.constraint_graph && typeof m.constraint_graph === 'object') return 3;
 
   // Implicit v2 detection
   if (Array.isArray(m.iterations) && m.iterations.length > 0) return 2;
@@ -546,4 +586,410 @@ export function countConstraintsByType(manifold: Manifold): Record<string, numbe
   }
 
   return counts;
+}
+
+// ============================================================
+// v3: Evidence Validation
+// Satisfies: T1, RT-2, RT-8
+// ============================================================
+
+/**
+ * Sanitize file path to prevent path traversal attacks
+ * Satisfies: S2 (path traversal protection), RT-8
+ */
+export function sanitizePath(path: string, projectRoot?: string): { valid: boolean; error?: string } {
+  // Reject paths with ../ traversal
+  if (path.includes('../') || path.includes('..\\')) {
+    return { valid: false, error: 'Path contains directory traversal (../)' };
+  }
+
+  // Reject absolute paths that don't start with project root
+  if (path.startsWith('/') || /^[A-Za-z]:/.test(path)) {
+    if (projectRoot && !path.startsWith(projectRoot)) {
+      return { valid: false, error: 'Absolute path outside project root' };
+    }
+    // If no project root provided, reject all absolute paths for safety
+    if (!projectRoot) {
+      return { valid: false, error: 'Absolute paths not allowed without project root context' };
+    }
+  }
+
+  // Reject paths with null bytes (common injection technique)
+  if (path.includes('\0')) {
+    return { valid: false, error: 'Path contains null byte' };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Validate evidence array (v3)
+ * Satisfies: T1, RT-2
+ */
+function validateEvidence(
+  evidence: unknown,
+  errors: ValidationError[],
+  warnings: ValidationWarning[]
+): void {
+  if (!Array.isArray(evidence)) {
+    errors.push({ field: 'evidence', message: 'Evidence must be an array' });
+    return;
+  }
+
+  for (let i = 0; i < evidence.length; i++) {
+    const item = evidence[i] as Record<string, unknown>;
+    const fieldPrefix = `evidence[${i}]`;
+
+    // Type required
+    if (!item.type) {
+      errors.push({ field: `${fieldPrefix}.type`, message: 'Evidence must have a "type"' });
+    } else if (!VALID_EVIDENCE_TYPES.includes(item.type as any)) {
+      errors.push({
+        field: `${fieldPrefix}.type`,
+        message: `Invalid evidence type "${item.type}". Must be: ${VALID_EVIDENCE_TYPES.join(', ')}`,
+        value: item.type
+      });
+    }
+
+    // Status validation
+    if (item.status && !VALID_EVIDENCE_STATUSES.includes(item.status as any)) {
+      errors.push({
+        field: `${fieldPrefix}.status`,
+        message: `Invalid evidence status "${item.status}". Must be: ${VALID_EVIDENCE_STATUSES.join(', ')}`,
+        value: item.status
+      });
+    }
+
+    // Type-specific validation
+    const evidenceType = item.type as string;
+    if (evidenceType === 'file_exists' || evidenceType === 'content_match' || evidenceType === 'test_passes') {
+      if (!item.path || typeof item.path !== 'string') {
+        errors.push({ field: `${fieldPrefix}.path`, message: `Evidence type "${evidenceType}" requires a "path"` });
+      } else {
+        // Path traversal check - Satisfies: S2, RT-8
+        const pathCheck = sanitizePath(item.path as string);
+        if (!pathCheck.valid) {
+          errors.push({
+            field: `${fieldPrefix}.path`,
+            message: pathCheck.error || 'Invalid path',
+            value: item.path
+          });
+        }
+      }
+    }
+
+    if (evidenceType === 'content_match' && !item.pattern) {
+      errors.push({ field: `${fieldPrefix}.pattern`, message: 'Evidence type "content_match" requires a "pattern"' });
+    }
+
+    if (evidenceType === 'test_passes' && !item.test_name) {
+      warnings.push({
+        field: `${fieldPrefix}.test_name`,
+        message: 'Evidence type "test_passes" should have a "test_name"',
+        suggestion: 'Add test_name for clearer test identification'
+      });
+    }
+
+    if (evidenceType === 'metric_value') {
+      if (!item.metric_name) {
+        errors.push({ field: `${fieldPrefix}.metric_name`, message: 'Evidence type "metric_value" requires a "metric_name"' });
+      }
+      if (item.threshold === undefined) {
+        errors.push({ field: `${fieldPrefix}.threshold`, message: 'Evidence type "metric_value" requires a "threshold"' });
+      }
+    }
+
+    if (evidenceType === 'manual_review' && !item.verified_by) {
+      warnings.push({
+        field: `${fieldPrefix}.verified_by`,
+        message: 'Evidence type "manual_review" should have a "verified_by"',
+        suggestion: 'Add verified_by for audit trail'
+      });
+    }
+  }
+}
+
+// ============================================================
+// v3: Constraint Graph Validation
+// Satisfies: T1, RT-2
+// ============================================================
+
+/**
+ * Validate constraint graph (v3)
+ * Satisfies: T1
+ */
+function validateConstraintGraph(
+  graph: Record<string, unknown>,
+  errors: ValidationError[],
+  warnings: ValidationWarning[]
+): void {
+  // Version required
+  if (graph.version === undefined) {
+    warnings.push({
+      field: 'constraint_graph.version',
+      message: 'Constraint graph should have a "version"',
+      suggestion: 'Add version: 1'
+    });
+  }
+
+  // Feature should match
+  if (!graph.feature) {
+    warnings.push({
+      field: 'constraint_graph.feature',
+      message: 'Constraint graph should specify "feature"'
+    });
+  }
+
+  // Nodes validation
+  if (graph.nodes) {
+    validateConstraintNodes(graph.nodes as Record<string, unknown>, errors, warnings);
+  }
+
+  // Edges validation
+  if (graph.edges) {
+    const edges = graph.edges as Record<string, unknown>;
+    const nodeIds = graph.nodes ? Object.keys(graph.nodes as object) : [];
+
+    validateEdgeArray(edges.dependencies, 'constraint_graph.edges.dependencies', nodeIds, errors, warnings);
+    validateEdgeArray(edges.conflicts, 'constraint_graph.edges.conflicts', nodeIds, errors, warnings);
+    validateEdgeArray(edges.satisfies, 'constraint_graph.edges.satisfies', nodeIds, errors, warnings);
+  }
+}
+
+/**
+ * Validate constraint nodes
+ */
+function validateConstraintNodes(
+  nodes: Record<string, unknown>,
+  errors: ValidationError[],
+  warnings: ValidationWarning[]
+): void {
+  for (const [nodeId, nodeData] of Object.entries(nodes)) {
+    const node = nodeData as Record<string, unknown>;
+    const fieldPrefix = `constraint_graph.nodes.${nodeId}`;
+
+    // ID must match key
+    if (node.id && node.id !== nodeId) {
+      warnings.push({
+        field: `${fieldPrefix}.id`,
+        message: `Node ID "${node.id}" doesn't match key "${nodeId}"`,
+        suggestion: 'Ensure node ID matches its key in the nodes object'
+      });
+    }
+
+    // Type validation
+    if (node.type && !VALID_NODE_TYPES.includes(node.type as any)) {
+      errors.push({
+        field: `${fieldPrefix}.type`,
+        message: `Invalid node type "${node.type}". Must be: ${VALID_NODE_TYPES.join(', ')}`,
+        value: node.type
+      });
+    }
+
+    // Status validation
+    if (node.status && !VALID_NODE_STATUSES.includes(node.status as any)) {
+      errors.push({
+        field: `${fieldPrefix}.status`,
+        message: `Invalid node status "${node.status}". Must be: ${VALID_NODE_STATUSES.join(', ')}`,
+        value: node.status
+      });
+    }
+
+    // depends_on and blocks should be arrays
+    if (node.depends_on && !Array.isArray(node.depends_on)) {
+      errors.push({ field: `${fieldPrefix}.depends_on`, message: 'depends_on must be an array' });
+    }
+    if (node.blocks && !Array.isArray(node.blocks)) {
+      errors.push({ field: `${fieldPrefix}.blocks`, message: 'blocks must be an array' });
+    }
+    if (node.conflicts_with && !Array.isArray(node.conflicts_with)) {
+      errors.push({ field: `${fieldPrefix}.conflicts_with`, message: 'conflicts_with must be an array' });
+    }
+  }
+}
+
+/**
+ * Validate edge array
+ */
+function validateEdgeArray(
+  edges: unknown,
+  fieldPath: string,
+  validNodeIds: string[],
+  errors: ValidationError[],
+  warnings: ValidationWarning[]
+): void {
+  if (!edges) return;
+
+  if (!Array.isArray(edges)) {
+    errors.push({ field: fieldPath, message: 'Edges must be an array' });
+    return;
+  }
+
+  for (let i = 0; i < edges.length; i++) {
+    const edge = edges[i];
+    if (!Array.isArray(edge) || edge.length < 2) {
+      errors.push({ field: `${fieldPath}[${i}]`, message: 'Each edge must be an array of at least 2 node IDs' });
+      continue;
+    }
+
+    // Check if referenced nodes exist (if we have node IDs to check against)
+    if (validNodeIds.length > 0) {
+      for (const nodeId of edge) {
+        if (!validNodeIds.includes(nodeId)) {
+          warnings.push({
+            field: `${fieldPath}[${i}]`,
+            message: `Edge references unknown node "${nodeId}"`,
+            suggestion: `Ensure "${nodeId}" exists in constraint_graph.nodes`
+          });
+        }
+      }
+    }
+  }
+}
+
+// ============================================================
+// v3: Reference Validation (Dangling ID Detection)
+// Satisfies: T3, RT-3
+// ============================================================
+
+/**
+ * Collect all constraint IDs from the manifold
+ * Returns a set of valid IDs that can be referenced
+ */
+function collectConstraintIds(m: Record<string, unknown>): Set<string> {
+  const ids = new Set<string>();
+
+  // Collect from constraints
+  const constraints = m.constraints as Record<string, unknown[]> | undefined;
+  if (constraints) {
+    for (const category of ['business', 'technical', 'user_experience', 'ux', 'security', 'operational']) {
+      const list = constraints[category];
+      if (Array.isArray(list)) {
+        for (const c of list) {
+          const constraint = c as Record<string, unknown>;
+          if (constraint.id) ids.add(constraint.id as string);
+        }
+      }
+    }
+  }
+
+  // Collect from tensions
+  const tensions = m.tensions as unknown[];
+  if (Array.isArray(tensions)) {
+    for (const t of tensions) {
+      const tension = t as Record<string, unknown>;
+      if (tension.id) ids.add(tension.id as string);
+    }
+  }
+
+  // Collect from required truths
+  const anchors = m.anchors as Record<string, unknown> | undefined;
+  if (anchors?.required_truths) {
+    const rts = anchors.required_truths as unknown[];
+    if (Array.isArray(rts)) {
+      for (const rt of rts) {
+        const requiredTruth = rt as Record<string, unknown>;
+        if (requiredTruth.id) ids.add(requiredTruth.id as string);
+      }
+    }
+  }
+
+  return ids;
+}
+
+/**
+ * Validate all references in the manifold
+ * Satisfies: T3 (dangling reference detection), RT-3
+ */
+function validateReferences(
+  m: Record<string, unknown>,
+  validIds: Set<string>,
+  errors: ValidationError[],
+  warnings: ValidationWarning[]
+): void {
+  // Check tension.between[] references
+  const tensions = m.tensions as unknown[];
+  if (Array.isArray(tensions)) {
+    for (let i = 0; i < tensions.length; i++) {
+      const tension = tensions[i] as Record<string, unknown>;
+      const between = tension.between as string[];
+      if (Array.isArray(between)) {
+        for (const ref of between) {
+          if (!validIds.has(ref)) {
+            errors.push({
+              field: `tensions[${i}].between`,
+              message: `References unknown constraint "${ref}"`,
+              value: ref
+            });
+          }
+        }
+      }
+    }
+  }
+
+  // Check required_truth.maps_to_constraints[] references
+  const anchors = m.anchors as Record<string, unknown> | undefined;
+  if (anchors?.required_truths) {
+    const rts = anchors.required_truths as unknown[];
+    if (Array.isArray(rts)) {
+      for (let i = 0; i < rts.length; i++) {
+        const rt = rts[i] as Record<string, unknown>;
+        const mapsTo = rt.maps_to_constraints as string[];
+        if (Array.isArray(mapsTo)) {
+          for (const ref of mapsTo) {
+            if (!validIds.has(ref)) {
+              warnings.push({
+                field: `anchors.required_truths[${i}].maps_to_constraints`,
+                message: `References unknown constraint "${ref}"`,
+                suggestion: `Ensure constraint "${ref}" exists in the constraints section`
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Check constraint_graph edge references (if graph nodes exist)
+  const graph = m.constraint_graph as Record<string, unknown> | undefined;
+  if (graph?.edges) {
+    const edges = graph.edges as Record<string, unknown>;
+    const graphNodes = graph.nodes as Record<string, unknown> | undefined;
+    const graphNodeIds = graphNodes ? new Set(Object.keys(graphNodes)) : new Set<string>();
+
+    // Merge constraint IDs with graph node IDs for comprehensive checking
+    const allValidIds = new Set([...validIds, ...graphNodeIds]);
+
+    // Check dependency edges
+    checkEdgeReferences(edges.dependencies, 'constraint_graph.edges.dependencies', allValidIds, warnings);
+    checkEdgeReferences(edges.conflicts, 'constraint_graph.edges.conflicts', allValidIds, warnings);
+    checkEdgeReferences(edges.satisfies, 'constraint_graph.edges.satisfies', allValidIds, warnings);
+  }
+}
+
+/**
+ * Check edge references against valid IDs
+ */
+function checkEdgeReferences(
+  edges: unknown,
+  fieldPath: string,
+  validIds: Set<string>,
+  warnings: ValidationWarning[]
+): void {
+  if (!Array.isArray(edges)) return;
+
+  for (let i = 0; i < edges.length; i++) {
+    const edge = edges[i];
+    if (!Array.isArray(edge)) continue;
+
+    for (const nodeId of edge) {
+      if (typeof nodeId === 'string' && !validIds.has(nodeId)) {
+        warnings.push({
+          field: `${fieldPath}[${i}]`,
+          message: `References unknown node "${nodeId}"`,
+          suggestion: `Ensure "${nodeId}" exists in constraints or constraint_graph.nodes`
+        });
+      }
+    }
+  }
 }

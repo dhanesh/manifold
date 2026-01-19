@@ -13,6 +13,7 @@ import {
   type Manifold
 } from '../lib/parser.js';
 import { validateManifold, type ValidationResult } from '../lib/schema.js';
+import { detectSemanticConflicts, formatConflictResults } from '../lib/solver.js';
 import {
   println,
   printError,
@@ -26,17 +27,25 @@ import {
 interface ValidateOptions {
   json?: boolean;
   strict?: boolean;
+  all?: boolean;  // Show all errors instead of truncating at 20 (TN4 resolution)
+  conflicts?: boolean;  // Run semantic conflict detection (INT-1, B2, RT-4)
 }
+
+// Maximum errors to display before truncation (per U3)
+const MAX_ERRORS_DISPLAY = 20;
 
 /**
  * Register the validate command
+ * Satisfies: T1 (v3 support), TN4 (--all flag for error display)
  */
 export function registerValidateCommand(program: Command): void {
   program
     .command('validate [feature]')
-    .description('Validate manifold YAML against schema v1/v2')
+    .description('Validate manifold YAML against schema v1/v2/v3')
     .option('--json', 'Output as JSON')
     .option('--strict', 'Enable strict validation (additional warnings)')
+    .option('--all', 'Show all errors (by default, truncates at 20)')
+    .option('--conflicts', 'Run semantic conflict detection on constraints')
     .action(async (feature: string | undefined, options: ValidateOptions) => {
       const exitCode = await validateCommand(feature, options);
       process.exit(exitCode);
@@ -86,7 +95,7 @@ async function validateCommand(feature: string | undefined, options: ValidateOpt
       }
 
       if (!options.json) {
-        printValidationOutput(f, result);
+        printValidationOutput(f, result, { showAll: options.all, conflicts: options.conflicts });
         println();
       }
     }
@@ -107,7 +116,7 @@ async function validateCommand(feature: string | undefined, options: ValidateOpt
   if (options.json) {
     println(toJSON(result.json));
   } else {
-    printValidationOutput(feature, result);
+    printValidationOutput(feature, result, { showAll: options.all, conflicts: options.conflicts });
   }
 
   return result.valid ? 0 : 2;
@@ -118,6 +127,7 @@ interface FeatureValidationResult {
   json: Record<string, unknown>;
   result?: ValidationResult;
   parseError?: string;
+  manifold?: Manifold;  // For conflict detection (INT-1)
 }
 
 /**
@@ -182,6 +192,7 @@ async function validateFeature(
   return {
     valid: result.valid,
     result,
+    manifold: parsed,  // Include for conflict detection (INT-1)
     json: {
       feature,
       valid: result.valid,
@@ -195,8 +206,10 @@ async function validateFeature(
 
 /**
  * Print validation output to console
+ * Satisfies: U3 (error truncation), TN4 (--all flag), INT-1 (conflict detection)
  */
-function printValidationOutput(feature: string, result: FeatureValidationResult): void {
+function printValidationOutput(feature: string, result: FeatureValidationResult, options: { showAll?: boolean; conflicts?: boolean } = {}): void {
+  const { showAll = false, conflicts = false } = options;
   println(formatHeader(`Validating: ${style.feature(feature)}`));
 
   // Parse error
@@ -219,27 +232,54 @@ function printValidationOutput(feature: string, result: FeatureValidationResult)
   // Overall result
   println(`  Result: ${formatValidationResult(valid, errors.length, warnings.length)}`);
 
-  // Errors
+  // Errors with truncation (per U3, TN4)
   if (errors.length > 0) {
     println();
     println(`  ${style.error('Errors:')}`);
-    for (const err of errors) {
+
+    const errorsToShow = showAll ? errors : errors.slice(0, MAX_ERRORS_DISPLAY);
+
+    for (const err of errorsToShow) {
       println(`    ${style.cross()} ${style.dim(err.field)}: ${err.message}`);
       if (err.value !== undefined) {
         println(`      ${style.dim('Value:')} ${JSON.stringify(err.value)}`);
       }
     }
+
+    // Show truncation message if applicable
+    if (!showAll && errors.length > MAX_ERRORS_DISPLAY) {
+      const hidden = errors.length - MAX_ERRORS_DISPLAY;
+      println();
+      println(`  ${style.dim(`... and ${hidden} more error${hidden > 1 ? 's' : ''}. Run with --all to see all ${errors.length} errors.`)}`);
+    }
   }
 
-  // Warnings
+  // Warnings with truncation
   if (warnings.length > 0) {
     println();
     println(`  ${style.warning('Warnings:')}`);
-    for (const warn of warnings) {
+
+    const warningsToShow = showAll ? warnings : warnings.slice(0, MAX_ERRORS_DISPLAY);
+
+    for (const warn of warningsToShow) {
       println(`    ${style.warn()} ${style.dim(warn.field)}: ${warn.message}`);
       if (warn.suggestion) {
         println(`      ${style.dim('Suggestion:')} ${warn.suggestion}`);
       }
     }
+
+    // Show truncation message if applicable
+    if (!showAll && warnings.length > MAX_ERRORS_DISPLAY) {
+      const hidden = warnings.length - MAX_ERRORS_DISPLAY;
+      println();
+      println(`  ${style.dim(`... and ${hidden} more warning${hidden > 1 ? 's' : ''}. Run with --all to see all ${warnings.length} warnings.`)}`);
+    }
+  }
+
+  // Semantic conflict detection (INT-1, B2, RT-4)
+  if (conflicts && result.manifold) {
+    println();
+    const conflictResult = detectSemanticConflicts(result.manifold);
+    println(formatConflictResults(conflictResult));
   }
 }

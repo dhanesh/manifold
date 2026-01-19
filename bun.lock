@@ -4,6 +4,9 @@
   "workspaces": {
     "": {
       "name": "manifold",
+      "dependencies": {
+        "yaml": "^2.8.2",
+      },
       "devDependencies": {
         "@commitlint/cli": "^19.0.0",
         "@commitlint/config-conventional": "^19.0.0",
@@ -12,7 +15,7 @@
     },
     "cli": {
       "name": "@manifold/cli",
-      "version": "2.0.0",
+      "version": "2.6.1",
       "bin": {
         "manifold": "./dist/index.js",
       },

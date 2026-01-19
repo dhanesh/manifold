@@ -1,0 +1,193 @@
+# Anchor Document: schema-enforcement
+# Backward reasoning from outcome to required conditions
+
+schema_version: 3
+feature: schema-enforcement
+created: "2026-01-19T01:30:00Z"
+
+outcome: "All YAML manifold generation follows v3 schema templates with automatic validation, conflict detection between features/prompts, and incorporation of Claude Code team + bcherny best practices"
+
+# Required Truths - conditions that MUST be true for outcome
+required_truths:
+  - id: RT-1
+    statement: "v3 schema must be fully specified with all evidence types, statuses, and constraint graph structures"
+    status: SPECIFICATION_READY
+    priority: 1
+    maps_to_constraints: [T1, T5, O3]
+    gap: "Templates exist in SCHEMA_REFERENCE.md"
+    evidence:
+      - type: file_exists
+        path: "install/commands/SCHEMA_REFERENCE.md"
+        status: VERIFIED
+
+  - id: RT-2
+    statement: "CLI validator must support v3 features (evidence[], constraint_graph)"
+    status: NOT_SATISFIED
+    priority: 1
+    maps_to_constraints: [T1, T6, U1, U2]
+    gap: "cli/lib/schema.ts only validates v1/v2"
+    implementation_notes:
+      - "Add validateEvidence() function"
+      - "Add validateConstraintGraph() function"
+      - "Add v3-specific error messages with field paths"
+
+  - id: RT-3
+    statement: "Constraint ID references must be validated (no dangling references)"
+    status: NOT_SATISFIED
+    priority: 1
+    maps_to_constraints: [T3, T6]
+    gap: "No reference validation in schema.ts"
+    implementation_notes:
+      - "Collect all constraint IDs during validation"
+      - "Check tension.between[] references"
+      - "Check required_truth.maps_to_constraints[] references"
+      - "Check constraint_graph edge references"
+
+  - id: RT-4
+    statement: "Within-feature conflict detection must identify contradictory constraints"
+    status: PARTIAL
+    priority: 2
+    maps_to_constraints: [B2, U4]
+    gap: "Structure exists in solver.ts, semantic logic missing"
+    implementation_notes:
+      - "Detect contradictory invariants"
+      - "Detect resource conflicts"
+      - "Generate explanatory conflict messages per U4"
+
+  - id: RT-5
+    statement: "AI commands (/m0-m6) must generate valid v3 YAML"
+    status: NOT_SATISFIED
+    priority: 2
+    maps_to_constraints: [B1, U5]
+    gap: "Circular - this feature enables validation"
+    implementation_notes:
+      - "Commands are markdown prompts"
+      - "Enforcement depends on RT-2 (validator)"
+      - "CI catches violations per RT-7"
+
+  - id: RT-6
+    statement: "Best practices must be documented with source attribution"
+    status: NOT_SATISFIED
+    priority: 2
+    maps_to_constraints: [B3, O3, S3]
+    gap: "No external practices section in SCHEMA_REFERENCE.md"
+    implementation_notes:
+      - "Add 'Best Practices' section to SCHEMA_REFERENCE.md"
+      - "Include Claude Code team patterns with attribution"
+      - "Include bcherny TypeScript patterns with attribution"
+      - "Track changes in version control"
+
+  - id: RT-7
+    statement: "CI must validate all manifolds on every PR"
+    status: SATISFIED
+    priority: 1
+    maps_to_constraints: [O1]
+    gap: "None - already implemented"
+    evidence:
+      - type: file_exists
+        path: ".github/workflows/manifold-verify.yml"
+        status: VERIFIED
+
+  - id: RT-8
+    statement: "Evidence file paths must be protected against path traversal"
+    status: NOT_SATISFIED
+    priority: 1
+    maps_to_constraints: [S2]
+    gap: "No path sanitization exists"
+    implementation_notes:
+      - "Reject paths containing ../"
+      - "Reject absolute paths outside project root"
+      - "Implement as part of evidence verification (TN7 resolution)"
+
+# Solution Options
+solution_options:
+  - id: A
+    name: "Validator-First (CLI Enhancement)"
+    description: "Enhance CLI validator to fully support v3, add reference validation and path security"
+    complexity: MEDIUM
+    files_changed: ["cli/lib/schema.ts", "cli/lib/parser.ts", "install/commands/SCHEMA_REFERENCE.md"]
+    satisfies: [RT-1, RT-2, RT-3, RT-6, RT-7, RT-8]
+    partial: [RT-4, RT-5]
+    dependencies: []
+    risk: LOW
+    rationale: "Additive changes, backward compatible, no new dependencies"
+
+  - id: B
+    name: "Schema-as-Code (TypeScript Types + Zod)"
+    description: "Define v3 schema using Zod, auto-generate validators and types"
+    complexity: HIGH
+    files_changed: ["cli/lib/schema-v3.ts", "cli/lib/parser.ts", "cli/lib/types.ts", "package.json"]
+    satisfies: [RT-1, RT-2, RT-3, RT-5, RT-8]
+    partial: [RT-4, RT-6]
+    dependencies: ["zod"]
+    risk: MEDIUM
+    rationale: "Single source of truth for schema, but requires significant refactor"
+
+  - id: C
+    name: "Hybrid (Enhanced Validator + Conflict Detection)"
+    description: "Extend validator with v3 support, add semantic conflict detection, document best practices"
+    complexity: MEDIUM_HIGH
+    files_changed: ["cli/lib/schema.ts", "cli/lib/solver.ts", "cli/commands/validate.ts", "install/commands/SCHEMA_REFERENCE.md"]
+    satisfies: [RT-1, RT-2, RT-3, RT-4, RT-6, RT-7, RT-8]
+    partial: [RT-5]
+    dependencies: []
+    risk: LOW_MEDIUM
+    rationale: "Highest coverage, extends existing patterns, implements conflict detection"
+
+# Recommendation
+recommended_option: C
+recommendation_rationale: |
+  Option C provides the highest Required Truth coverage (7/8) while maintaining
+  backward compatibility and avoiding new dependencies.
+
+  Key advantages:
+  1. Satisfies all key invariants (T1, T3, T5, B2)
+  2. Implements conflict detection (addresses TN6 Phase 1)
+  3. Extends proven schema.ts and solver.ts patterns
+  4. No Zod dependency keeps bundle size minimal
+  5. Implements all 7 tension resolutions from /m2-tension
+
+  The only partial coverage (RT-5: AI command enforcement) is acceptable because:
+  - AI commands are markdown prompts, not code
+  - Enforcement happens through validation (RT-2) and CI (RT-7)
+  - This is the expected boundary between CLI and AI behavior
+
+# Implementation Plan for Option C
+implementation_plan:
+  phase_1_foundations:
+    description: "v3 validator support (blocks RT-2, RT-3, RT-8)"
+    tasks:
+      - "Add validateEvidence() to schema.ts"
+      - "Add validateConstraintGraph() to schema.ts"
+      - "Add validateReferences() for dangling ID detection"
+      - "Add sanitizePath() for path traversal protection"
+      - "Add --all flag to validate command"
+    files: ["cli/lib/schema.ts", "cli/commands/validate.ts"]
+    satisfies: [RT-2, RT-3, RT-8]
+
+  phase_2_conflict_detection:
+    description: "Semantic conflict detection (addresses RT-4)"
+    tasks:
+      - "Add detectSemanticConflicts() to solver.ts"
+      - "Generate explanatory conflict messages"
+      - "Integrate with /m2-tension analysis"
+    files: ["cli/lib/solver.ts"]
+    satisfies: [RT-4]
+
+  phase_3_best_practices:
+    description: "Best practices documentation (addresses RT-6)"
+    tasks:
+      - "Add Best Practices section to SCHEMA_REFERENCE.md"
+      - "Document Claude Code team patterns with attribution"
+      - "Document bcherny TypeScript patterns with attribution"
+    files: ["install/commands/SCHEMA_REFERENCE.md"]
+    satisfies: [RT-6]
+
+# Constraint Coverage Analysis
+constraint_coverage:
+  invariants_covered: [B1, B2, T1, T3, T5, U1, U5, S1, S2, O1]
+  boundaries_covered: [B4, T2, T6, U3, O3]
+  goals_covered: [B3, B5, T4, T7, U2, U4, S3, O2, O4]
+  total_constraints: 24
+  constraints_addressed: 24
+  coverage_percentage: 100
