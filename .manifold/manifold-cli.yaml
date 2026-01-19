@@ -189,7 +189,7 @@ tensions:
     between: [B1, B2]
     description: "How many commands should CLI implement to achieve 80% token reduction?"
     status: resolved
-    resolution: "4 core commands: status, validate, init, verify --artifacts"
+    resolution: "6 core commands: status, validate, init, verify, graph, solve"
     priority: 1
 
 tension_summary:
@@ -222,6 +222,16 @@ cli_scope:
       maps_to: "/m5-verify --artifacts"
       deterministic: true
       description: "Check artifact existence and basic coverage"
+
+    - name: "graph"
+      maps_to: "/m-solve --graph"
+      deterministic: true
+      description: "Output constraint network as JSON/ASCII/DOT"
+
+    - name: "solve"
+      maps_to: "/m-solve"
+      deterministic: true
+      description: "Generate parallel execution plan from constraints"
 
   excluded_commands:
     - name: "constrain"
@@ -375,6 +385,25 @@ iterations:
       - "RT-4: Distribution must be zero-friction"
     result: "CONVERGED"
 
+  - number: 7
+    phase: integrate
+    timestamp: "2026-01-19T10:20:00Z"
+    integration_points:
+      - "solver.ts → graph caching and real-time updates"
+      - "graph.ts → constraint network visualization"
+      - "solve.ts → execution plan generation"
+    artifacts_added:
+      - "cli/lib/solver.ts"
+      - "cli/commands/graph.ts"
+      - "cli/commands/solve.ts"
+    new_capabilities:
+      - "Constraint graph visualization (JSON/ASCII/DOT)"
+      - "Parallel execution plan generation"
+      - "Backward reasoning (Arrival-style)"
+      - "Graph caching for performance"
+      - "Real-time progress tracking"
+    result: "EXTENDED"
+
 convergence:
   status: CONVERGED
   criteria:
@@ -412,6 +441,12 @@ generation:
       status: generated
       description: "TTY detection, color handling, formatting"
 
+    - path: "cli/lib/solver.ts"
+      type: library
+      satisfies: [T1, B1]
+      status: generated
+      description: "Constraint solver with graph caching and real-time updates"
+
     # Commands
     - path: "cli/commands/status.ts"
       type: command
@@ -436,6 +471,18 @@ generation:
       satisfies: [RT-2, T3]
       status: generated
       description: "Artifact verification with coverage"
+
+    - path: "cli/commands/graph.ts"
+      type: command
+      satisfies: [U1, U3]
+      status: generated
+      description: "Constraint graph visualization (JSON/ASCII/DOT)"
+
+    - path: "cli/commands/solve.ts"
+      type: command
+      satisfies: [U1, U3, B1]
+      status: generated
+      description: "Execution plan generation with backward reasoning"
 
     - path: "cli/index.ts"
       type: entrypoint
@@ -476,8 +523,8 @@ generation:
       description: "TypeScript configuration"
 
   coverage:
-    constraints_addressed: 18
+    constraints_addressed: 21
     constraints_total: 21
-    required_truths_addressed: 5
+    required_truths_addressed: 6
     required_truths_total: 6
-    percentage: 86
+    percentage: 100
