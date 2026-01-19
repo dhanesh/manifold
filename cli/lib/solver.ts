@@ -1517,6 +1517,18 @@ function extractDomainKeywords(statement: string): string[] {
 /**
  * Detect logical contradiction between two invariants
  * Returns conflict details if found, null otherwise
+ *
+ * Key insight: For two invariants to truly contradict, they must:
+ * 1. Be about the SAME specific property/attribute
+ * 2. Have INCOMPATIBLE requirements for that property
+ *
+ * Example contradictions:
+ * - "API responses must use JSON format" vs "API responses must use XML format"
+ * - "All operations must be synchronous" vs "All operations must be asynchronous"
+ *
+ * NOT contradictions (different properties):
+ * - "All YAML files must use consistent schema" vs "Schema must be YAML-compatible"
+ *   (one is about consistency, other is about compatibility)
  */
 function detectCrossFeatureContradiction(
   c1: CrossFeatureConstraint,
@@ -1533,54 +1545,88 @@ function detectCrossFeatureContradiction(
   const sharedDomain = domain1.filter(d => domain2.includes(d));
   if (sharedDomain.length < 2) return null;
 
-  // Patterns that indicate contradictory requirements
-  const contradictionPatterns = [
-    // Format/type requirements
-    { a: /must (?:be|use|return) (\w+)/, b: /must (?:be|use|return) (\w+)/, check: (m1: RegExpMatchArray, m2: RegExpMatchArray) => m1[1] !== m2[1] },
+  // 1. Check for explicit negation patterns (highest confidence)
+  // "must X" vs "must not X" or "must never X"
+  const mustPattern = /must\s+(\w+)/g;
+  const mustNotPattern = /must\s+(?:not|never)\s+(\w+)/g;
 
-    // Must vs must not
-    { a: /must (\w+)/, b: /must not (\w+)/, check: (m1: RegExpMatchArray, m2: RegExpMatchArray) => m1[1] === m2[1] },
+  const mustMatches1 = [...s1.matchAll(mustPattern)].map(m => m[1]);
+  const mustNotMatches1 = [...s1.matchAll(mustNotPattern)].map(m => m[1]);
+  const mustMatches2 = [...s2.matchAll(mustPattern)].map(m => m[1]);
+  const mustNotMatches2 = [...s2.matchAll(mustNotPattern)].map(m => m[1]);
 
-    // Always vs never
-    { a: /always (\w+)/, b: /never (\w+)/, check: (m1: RegExpMatchArray, m2: RegExpMatchArray) => m1[1] === m2[1] },
+  // Check if s1 says "must X" and s2 says "must not X" (or vice versa)
+  for (const verb of mustMatches1) {
+    if (mustNotMatches2.includes(verb)) {
+      return {
+        sharedDomain,
+        conflictReason: `One requires "${verb}" while the other prohibits it`
+      };
+    }
+  }
+  for (const verb of mustMatches2) {
+    if (mustNotMatches1.includes(verb)) {
+      return {
+        sharedDomain,
+        conflictReason: `One requires "${verb}" while the other prohibits it`
+      };
+    }
+  }
 
-    // Required vs prohibited/optional
-    { a: /required|mandatory/, b: /prohibited|forbidden|optional/, check: () => true },
-
-    // Numeric limits that conflict (< X vs > Y where X < Y)
-    { a: /(?:must be |response time |latency )<?[=]?\s*(\d+)\s*(ms|seconds?|s\b|minutes?|m\b)/, b: /(?:must be |response time |latency )>?[=]?\s*(\d+)\s*(ms|seconds?|s\b|minutes?|m\b)/, check: (m1: RegExpMatchArray, m2: RegExpMatchArray) => {
-      const v1 = normalizeTimeToMs(parseInt(m1[1]), m1[2]);
-      const v2 = normalizeTimeToMs(parseInt(m2[1]), m2[2]);
-      // Conflict if the "less than" value is less than the "greater than" value
-      return v1 < v2;
-    }},
-
-    // Enable vs disable
-    { a: /\b(enable|allow|permit)\b/, b: /\b(disable|block|deny|prohibit)\b/, check: () => true },
-
-    // Synchronous vs asynchronous
-    { a: /\bsynchronous\b/, b: /\basynchronous\b/, check: () => true },
+  // 2. Check for mutually exclusive format/type specifications
+  // Only trigger when BOTH statements specify a format AND the formats differ
+  const formatPatterns = [
+    /(?:must|should|shall)\s+(?:use|be|return|output)\s+(json|xml|csv|yaml|html|text|binary)\s*(?:format)?/,
+    /(?:format|type)\s+(?:must|should|shall)\s+be\s+(json|xml|csv|yaml|html|text|binary)/,
+    /(?:response|output|data)\s+(?:must|should|shall)\s+be\s+(?:in\s+)?(json|xml|csv|yaml|html|text|binary)/,
   ];
 
-  for (const pattern of contradictionPatterns) {
-    const match1 = s1.match(pattern.a);
-    const match2 = s2.match(pattern.b);
-    if (match1 && match2 && pattern.check(match1, match2)) {
+  for (const pattern of formatPatterns) {
+    const format1 = s1.match(pattern);
+    const format2 = s2.match(pattern);
+    if (format1 && format2 && format1[1] !== format2[1]) {
       return {
-        sharedDomain,
-        conflictReason: `Both constrain ${sharedDomain.slice(0, 3).join('/')} but with incompatible requirements`
+        sharedDomain: [...sharedDomain, 'format'],
+        conflictReason: `Incompatible format requirements: "${format1[1]}" vs "${format2[1]}"`
       };
     }
+  }
 
-    // Also check the reverse (s1 matches b, s2 matches a)
-    const match1r = s1.match(pattern.b);
-    const match2r = s2.match(pattern.a);
-    if (match1r && match2r && pattern.check(match2r, match1r)) {
+  // 3. Check for boolean opposites with high-confidence patterns
+  const booleanOpposites = [
+    { positive: /\bsynchronous\b/, negative: /\basynchronous\b/, desc: 'sync vs async' },
+    { positive: /\benabled?\b/, negative: /\bdisabled?\b/, desc: 'enabled vs disabled' },
+    { positive: /\ballowed?\b/, negative: /\b(?:disallowed?|forbidden|prohibited)\b/, desc: 'allowed vs forbidden' },
+    { positive: /\brequired\b/, negative: /\b(?:prohibited|forbidden)\b/, desc: 'required vs prohibited' },
+    { positive: /\bpublic\b/, negative: /\bprivate\b/, desc: 'public vs private' },
+    { positive: /\bencrypted\b/, negative: /\bunencrypted\b/, desc: 'encrypted vs unencrypted' },
+    { positive: /\bmutable\b/, negative: /\bimmutable\b/, desc: 'mutable vs immutable' },
+    { positive: /\bstateful\b/, negative: /\bstateless\b/, desc: 'stateful vs stateless' },
+  ];
+
+  for (const { positive, negative, desc } of booleanOpposites) {
+    const s1Positive = positive.test(s1);
+    const s1Negative = negative.test(s1);
+    const s2Positive = positive.test(s2);
+    const s2Negative = negative.test(s2);
+
+    if ((s1Positive && s2Negative) || (s1Negative && s2Positive)) {
       return {
         sharedDomain,
-        conflictReason: `Both constrain ${sharedDomain.slice(0, 3).join('/')} but with incompatible requirements`
+        conflictReason: `Mutually exclusive requirements: ${desc}`
       };
     }
+  }
+
+  // 4. Check "always" vs "never" with same verb
+  const alwaysMatch = s1.match(/\balways\s+(\w+)/) || s2.match(/\balways\s+(\w+)/);
+  const neverMatch = s1.match(/\bnever\s+(\w+)/) || s2.match(/\bnever\s+(\w+)/);
+
+  if (alwaysMatch && neverMatch && alwaysMatch[1] === neverMatch[1]) {
+    return {
+      sharedDomain,
+      conflictReason: `One says "always ${alwaysMatch[1]}" while the other says "never ${neverMatch[1]}"`
+    };
   }
 
   return null;
