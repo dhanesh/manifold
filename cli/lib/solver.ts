@@ -1384,3 +1384,220 @@ export function formatConflictResults(result: ConflictDetectionResult): string {
 
   return lines.join('\n');
 }
+
+// ============================================================
+// Cross-Feature Conflict Detection
+// Satisfies: T4 (cross-feature constraint ID overlap detection)
+// ============================================================
+
+/**
+ * Cross-feature conflict types
+ */
+export interface CrossFeatureConflict {
+  id: string;
+  type: 'duplicate_id' | 'semantic_overlap' | 'incompatible_invariants';
+  constraintId: string;
+  features: string[];
+  severity: 'critical' | 'high' | 'medium';
+  explanation: string;
+  suggestion: string;
+}
+
+/**
+ * Cross-feature detection result
+ */
+export interface CrossFeatureConflictResult {
+  hasConflicts: boolean;
+  conflicts: CrossFeatureConflict[];
+  summary: {
+    total: number;
+    featuresAnalyzed: number;
+    bySeverity: Record<string, number>;
+    byType: Record<string, number>;
+  };
+}
+
+/**
+ * Detect conflicts across multiple features
+ * Satisfies: T4 (cross-feature constraint ID overlap detection)
+ *
+ * Detects:
+ * 1. Duplicate constraint IDs across features (e.g., two features using "B1")
+ * 2. Semantic overlap between constraints
+ * 3. Incompatible invariants across features
+ */
+export function detectCrossFeatureConflicts(manifolds: Manifold[]): CrossFeatureConflictResult {
+  const conflicts: CrossFeatureConflict[] = [];
+  let conflictId = 0;
+
+  // Build index of constraint IDs -> features
+  const constraintIndex = new Map<string, { feature: string; constraint: Constraint; category: string }[]>();
+
+  for (const manifold of manifolds) {
+    const categories = ['business', 'technical', 'user_experience', 'security', 'operational'] as const;
+
+    for (const cat of categories) {
+      const constraints = manifold.constraints?.[cat] ||
+                         (cat === 'user_experience' ? (manifold.constraints as any)?.ux : undefined);
+      if (!constraints) continue;
+
+      for (const c of constraints) {
+        if (!constraintIndex.has(c.id)) {
+          constraintIndex.set(c.id, []);
+        }
+        constraintIndex.get(c.id)!.push({
+          feature: manifold.feature,
+          constraint: c,
+          category: cat
+        });
+      }
+    }
+  }
+
+  // Detect duplicate constraint IDs across features
+  for (const [constraintId, usages] of constraintIndex) {
+    const uniqueFeatures = [...new Set(usages.map(u => u.feature))];
+
+    if (uniqueFeatures.length > 1) {
+      // Same ID used in multiple features
+      const statements = usages.map(u => `${u.feature}: "${u.constraint.statement}"`).join('; ');
+      const sameStatement = usages.every(u => u.constraint.statement === usages[0].constraint.statement);
+
+      conflicts.push({
+        id: `XF-${++conflictId}`,
+        type: 'duplicate_id',
+        constraintId,
+        features: uniqueFeatures,
+        severity: sameStatement ? 'medium' : 'critical',
+        explanation: sameStatement
+          ? `Constraint ${constraintId} is duplicated across features: ${uniqueFeatures.join(', ')} (identical statements)`
+          : `Constraint ${constraintId} has DIFFERENT meanings across features: ${statements}`,
+        suggestion: sameStatement
+          ? `Consider extracting "${constraintId}" to a shared constraint library or using unique prefixes per feature.`
+          : `CRITICAL: Rename constraint ID in one feature to avoid confusion. Use feature-specific prefixes like "${uniqueFeatures[0].substring(0, 3).toUpperCase()}-${constraintId}".`
+      });
+    }
+  }
+
+  // Detect incompatible invariants across features
+  const invariants: { feature: string; constraint: Constraint; category: string }[] = [];
+  for (const [, usages] of constraintIndex) {
+    for (const usage of usages) {
+      if (usage.constraint.type === 'invariant') {
+        invariants.push(usage);
+      }
+    }
+  }
+
+  // Check for semantic contradictions between invariants of different features
+  for (let i = 0; i < invariants.length; i++) {
+    for (let j = i + 1; j < invariants.length; j++) {
+      const inv1 = invariants[i];
+      const inv2 = invariants[j];
+
+      // Skip if same feature
+      if (inv1.feature === inv2.feature) continue;
+
+      // Simple semantic conflict detection via keyword analysis
+      const s1 = inv1.constraint.statement.toLowerCase();
+      const s2 = inv2.constraint.statement.toLowerCase();
+
+      // Check for negation patterns
+      const negationPatterns = [
+        { pattern: /\bmust\b/, negation: /\bmust not\b|\bshould not\b|\bnever\b/ },
+        { pattern: /\balways\b/, negation: /\bnever\b|\bno\b/ },
+        { pattern: /\brequired\b/, negation: /\boptional\b|\bprohibited\b/ }
+      ];
+
+      for (const { pattern, negation } of negationPatterns) {
+        if ((pattern.test(s1) && negation.test(s2)) || (pattern.test(s2) && negation.test(s1))) {
+          // Check for topic overlap
+          const words1 = s1.split(/\W+/).filter(w => w.length > 3);
+          const words2 = s2.split(/\W+/).filter(w => w.length > 3);
+          const overlap = words1.filter(w => words2.includes(w));
+
+          if (overlap.length >= 2) {
+            conflicts.push({
+              id: `XF-${++conflictId}`,
+              type: 'incompatible_invariants',
+              constraintId: `${inv1.constraint.id} vs ${inv2.constraint.id}`,
+              features: [inv1.feature, inv2.feature],
+              severity: 'high',
+              explanation: `Potentially conflicting invariants between ${inv1.feature} (${inv1.constraint.id}) and ${inv2.feature} (${inv2.constraint.id}): shared topics "${overlap.slice(0, 3).join(', ')}" with opposing requirements.`,
+              suggestion: `Review these invariants for compatibility. If both features will be used together, one invariant may need to be relaxed or scoped.`
+            });
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  // Build summary
+  const summary = {
+    total: conflicts.length,
+    featuresAnalyzed: manifolds.length,
+    bySeverity: {
+      critical: conflicts.filter(c => c.severity === 'critical').length,
+      high: conflicts.filter(c => c.severity === 'high').length,
+      medium: conflicts.filter(c => c.severity === 'medium').length,
+    },
+    byType: {
+      duplicate_id: conflicts.filter(c => c.type === 'duplicate_id').length,
+      semantic_overlap: conflicts.filter(c => c.type === 'semantic_overlap').length,
+      incompatible_invariants: conflicts.filter(c => c.type === 'incompatible_invariants').length,
+    }
+  };
+
+  return {
+    hasConflicts: conflicts.length > 0,
+    conflicts,
+    summary
+  };
+}
+
+/**
+ * Format cross-feature conflict detection results for display
+ */
+export function formatCrossFeatureResults(result: CrossFeatureConflictResult): string {
+  const lines: string[] = [];
+
+  lines.push('CROSS-FEATURE CONFLICT ANALYSIS');
+  lines.push('════════════════════════════════');
+  lines.push('');
+  lines.push(`Features analyzed: ${result.summary.featuresAnalyzed}`);
+  lines.push('');
+
+  if (!result.hasConflicts) {
+    lines.push('✓ No cross-feature conflicts detected');
+    return lines.join('\n');
+  }
+
+  lines.push(`Found ${result.summary.total} cross-feature conflict${result.summary.total > 1 ? 's' : ''}:`);
+  lines.push('');
+
+  // Group by severity
+  const severityOrder = ['critical', 'high', 'medium'] as const;
+
+  for (const severity of severityOrder) {
+    const severityConflicts = result.conflicts.filter(c => c.severity === severity);
+    if (severityConflicts.length === 0) continue;
+
+    const icon = severity === 'critical' ? '🚨' :
+                 severity === 'high' ? '⚠️' : '📊';
+
+    lines.push(`${icon} ${severity.toUpperCase()} (${severityConflicts.length}):`);
+    lines.push('');
+
+    for (const conflict of severityConflicts) {
+      lines.push(`  [${conflict.id}] ${conflict.type}`);
+      lines.push(`    Constraint: ${conflict.constraintId}`);
+      lines.push(`    Features: ${conflict.features.join(', ')}`);
+      lines.push(`    ${conflict.explanation}`);
+      lines.push(`    💡 ${conflict.suggestion}`);
+      lines.push('');
+    }
+  }
+
+  return lines.join('\n');
+}

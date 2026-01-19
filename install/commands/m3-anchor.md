@@ -17,6 +17,49 @@ Backward reasoning from desired outcome to required conditions.
 
 > See SCHEMA_REFERENCE.md for all valid values. Do NOT invent new statuses.
 
+## v3 Schema Compliance
+
+When recording required truths, maintain v3 schema structure:
+
+```yaml
+anchors:
+  required_truths:
+    - id: RT-1
+      statement: "Description of what must be true"
+      status: NOT_SATISFIED    # Valid: SATISFIED, PARTIAL, NOT_SATISFIED, SPECIFICATION_READY
+      gap: "What's missing"
+      evidence:                # v3: Reality grounding
+        - type: file_exists
+          path: "path/to/implementation"
+        - type: content_match
+          path: "path/to/file"
+          pattern: "expected pattern"
+        - type: test_passes
+          path: "path/to/test"
+          test_name: "test name"
+
+# Record iteration when phase changes
+iterations:
+  - number: 3
+    phase: anchor
+    timestamp: "<ISO timestamp>"
+    required_truths: <count>
+    by_status:
+      SATISFIED: <count>
+      PARTIAL: <count>
+      NOT_SATISFIED: <count>
+      SPECIFICATION_READY: <count>
+    solution_options: <count>
+    selected_option: "Option description"
+```
+
+**Evidence Types** (v3):
+- `file_exists` - Verify file exists on disk
+- `content_match` - Grep for pattern in file
+- `test_passes` - Run test and check exit code
+- `metric_value` - Check runtime metric threshold
+- `manual_review` - Requires human verification
+
 ## Usage
 
 ```

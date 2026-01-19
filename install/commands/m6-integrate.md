@@ -16,6 +16,31 @@ Wire generated artifacts together by identifying integration points and producin
 - `--check-only` - Show integration checklist without making changes
 - `--auto-wire` - Attempt automatic integration where safe
 
+## v3 Schema Compliance
+
+When recording integration, maintain v3 schema structure:
+
+```yaml
+# Record iteration for integration phase
+iterations:
+  - number: 6
+    phase: integrate
+    timestamp: "<ISO timestamp>"
+    integration_points: <count>
+    completed: <count>
+    pending: <count>
+    auto_wireable: <count>
+    manual_required: <count>
+
+# Update convergence status based on integration completion
+convergence:
+  status: IN_PROGRESS    # Valid: NOT_STARTED, IN_PROGRESS, CONVERGED
+  criteria:
+    all_invariants_satisfied: true
+    all_required_truths_satisfied: false
+    no_blocking_gaps: true
+```
+
 ## Why Integration?
 
 **Problem observed**: `/m4-generate` creates artifacts in isolation. Integration was manual and error-prone.

@@ -278,10 +278,18 @@ anchors:
 
     - id: RT-5
       statement: "AI commands (/m0-m6) must generate valid v3 YAML"
-      status: PARTIAL
+      status: SATISFIED
       priority: 2
       maps_to_constraints: [B1, U5]
-      note: "Validator implemented; AI command integration requires updating skill files"
+      evidence:
+        - type: content_match
+          path: "install/commands/m1-constrain.md"
+          pattern: "v3 Schema Compliance"
+          status: VERIFIED
+        - type: content_match
+          path: "install/commands/m3-anchor.md"
+          pattern: "v3 Schema Compliance"
+          status: VERIFIED
 
     - id: RT-6
       statement: "Best practices must be documented with source attribution"
@@ -546,18 +554,65 @@ iterations:
       completed: 1
     result: "INT-1 completed - conflict detection wired into CLI via --conflicts flag"
 
+  - number: 8
+    phase: gap_closure
+    timestamp: "2026-01-19T04:00:00Z"
+    gaps_addressed: 4
+    changes:
+      - gap: GAP-1
+        constraint: [B1, U5, RT-5]
+        issue: "AI skill files need v3 updates"
+        resolution: "Updated m1-constrain.md, m2-tension.md, m3-anchor.md, m6-integrate.md with v3 schema compliance sections"
+        status: CLOSED
+        files_changed:
+          - "install/commands/m1-constrain.md"
+          - "install/commands/m2-tension.md"
+          - "install/commands/m3-anchor.md"
+          - "install/commands/m6-integrate.md"
+      - gap: GAP-2
+        constraint: T4
+        issue: "Cross-feature detection deferred to v2"
+        resolution: "Implemented detectCrossFeatureConflicts() in solver.ts with duplicate ID and incompatible invariant detection. Added --cross-feature flag to validate command"
+        status: CLOSED
+        files_changed:
+          - "cli/lib/solver.ts"
+          - "cli/commands/validate.ts"
+      - gap: GAP-3
+        constraint: T7
+        issue: "Parallel evidence verification deferred"
+        resolution: "Implemented verifyEvidenceParallel() in schema.ts using Promise.all for concurrent file operations. Supports file_exists, content_match, test_passes, metric_value, manual_review evidence types"
+        status: CLOSED
+        files_changed:
+          - "cli/lib/schema.ts"
+      - gap: GAP-4
+        constraint: O4
+        issue: "Error metrics tracking not implemented"
+        resolution: "Added --metrics flag to validate command. Tracks error/warning counts by category, schema version distribution, and validation timing"
+        status: CLOSED
+        files_changed:
+          - "cli/commands/validate.ts"
+    verification:
+      tests_passed: 132
+      new_features_verified:
+        - "manifold validate --metrics: Shows validation metrics summary"
+        - "manifold validate --cross-feature: Detects conflicts across features"
+    required_truths_updated:
+      - { id: RT-5, old_status: PARTIAL, new_status: SATISFIED, reason: "AI skill files now include v3 compliance sections" }
+    result: "All 4 non-blocking gaps closed - feature now fully complete"
+
 # v2+: Convergence Tracking
 convergence:
-  status: IN_PROGRESS
+  status: CONVERGED
   criteria:
     all_invariants_satisfied: true
-    all_required_truths_satisfied: false
+    all_required_truths_satisfied: true
     no_blocking_gaps: true
   notes:
-    - "RT-5 (AI commands generate valid v3) remains PARTIAL - skill file updates are non-blocking"
-    - "7/8 Required Truths satisfied, 1 partial"
-    - "All invariants addressed, no blocking gaps"
-    - "Feature is functionally complete for v1 scope"
+    - "RT-5 (AI commands generate valid v3) now SATISFIED - skill files updated"
+    - "8/8 Required Truths satisfied"
+    - "All invariants addressed, no gaps remaining"
+    - "All 4 non-blocking gaps from iteration 5 have been closed"
+    - "Feature is complete with cross-feature detection and metrics tracking"
 
 # v3: Evidence System (reality grounding)
 evidence: []

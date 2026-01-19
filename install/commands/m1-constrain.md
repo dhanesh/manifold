@@ -18,6 +18,41 @@ Interview-driven constraint discovery across 5 categories.
 
 > See SCHEMA_REFERENCE.md for all valid values. Do NOT invent new types or categories.
 
+## v3 Schema Compliance
+
+When adding constraints, ensure the manifold maintains v3 schema structure:
+
+```yaml
+# v3 requires these fields (created by /m0-init)
+schema_version: 3
+iterations: []      # Track each phase change
+convergence:
+  status: NOT_STARTED
+evidence: []        # For reality grounding
+constraint_graph:   # For temporal non-linearity
+  version: 1
+  nodes: {}
+  edges:
+    dependencies: []
+    conflicts: []
+    satisfies: []
+```
+
+**Record iteration** when updating constraints:
+```yaml
+iterations:
+  - number: 1
+    phase: constrain
+    timestamp: "<ISO timestamp>"
+    constraints_added: <count>
+    by_category:
+      business: <count>
+      technical: <count>
+      user_experience: <count>
+      security: <count>
+      operational: <count>
+```
+
 ## Usage
 
 ```

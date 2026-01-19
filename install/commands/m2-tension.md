@@ -18,6 +18,47 @@ Surface and resolve constraint conflicts.
 
 > See SCHEMA_REFERENCE.md for all valid values. Do NOT invent new tension types or statuses.
 
+## v3 Schema Compliance
+
+When recording tensions, maintain v3 schema structure and record iterations:
+
+```yaml
+tensions:
+  - id: TN1
+    type: trade_off           # Valid: trade_off, resource_tension, hidden_dependency
+    status: resolved          # Valid: resolved, unresolved
+    between: [T1, B1]         # Constraint IDs in conflict
+    resolution: "Description of how tension was resolved"
+    decision: "A"             # Selected option (A/B/C)
+
+# Record iteration when phase changes
+iterations:
+  - number: 2
+    phase: tension
+    timestamp: "<ISO timestamp>"
+    tensions_found: <count>
+    tensions_resolved: <count>
+    by_type:
+      trade_offs: <count>
+      resource_tensions: <count>
+      hidden_dependencies: <count>
+```
+
+## CLI Conflict Detection
+
+Use the CLI to detect semantic conflicts programmatically:
+
+```bash
+# Run semantic conflict detection on constraints
+manifold validate <feature> --conflicts
+
+# This detects:
+# - Contradictory invariants (critical severity)
+# - Resource conflicts (high severity)
+# - Temporal conflicts (medium severity)
+# - Scope conflicts (low severity)
+```
+
 ## Usage
 
 ```
