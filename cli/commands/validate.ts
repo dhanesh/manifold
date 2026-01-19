@@ -270,12 +270,11 @@ async function validateCommand(feature: string | undefined, options: ValidateOpt
     }
 
     // Cross-feature conflict detection (T4)
+    let crossFeatureResult = null;
     if (options.crossFeature && manifolds.length > 1) {
-      const crossFeatureResult = detectCrossFeatureConflicts(manifolds);
+      crossFeatureResult = detectCrossFeatureConflicts(manifolds);
 
-      if (options.json) {
-        (results as any).crossFeatureConflicts = crossFeatureResult;
-      } else {
+      if (!options.json) {
         println();
         println(formatCrossFeatureResults(crossFeatureResult));
       }
@@ -297,6 +296,10 @@ async function validateCommand(feature: string | undefined, options: ValidateOpt
         valid: !hasErrors,
         features: results
       };
+      // Include cross-feature conflicts in JSON output
+      if (crossFeatureResult) {
+        jsonResult.crossFeatureConflicts = crossFeatureResult;
+      }
       // Include metrics in JSON output
       if (metrics) {
         metrics.endTime = Date.now();

@@ -1386,21 +1386,59 @@ export function formatConflictResults(result: ConflictDetectionResult): string {
 }
 
 // ============================================================
-// Cross-Feature Conflict Detection
-// Satisfies: T4 (cross-feature constraint ID overlap detection)
+// Cross-Feature Semantic Conflict Detection
+// Satisfies: T4 (semantic conflict detection across features)
+//
+// Key insight: ID reuse is NOT a conflict. B1 in feature A and B1 in
+// feature B are independent - they're just IDs within namespaces.
+// The real problem: Can constraint X in feature A coexist with
+// constraint Y in feature B?
 // ============================================================
 
 /**
- * Cross-feature conflict types
+ * Constraint with metadata for cross-feature analysis
  */
-export interface CrossFeatureConflict {
+interface CrossFeatureConstraint {
+  feature: string;
   id: string;
-  type: 'duplicate_id' | 'semantic_overlap' | 'incompatible_invariants';
-  constraintId: string;
-  features: string[];
-  severity: 'critical' | 'high' | 'medium';
-  explanation: string;
-  suggestion: string;
+  category: string;
+  type: 'invariant' | 'goal' | 'boundary';
+  statement: string;
+}
+
+/**
+ * Semantic conflict between constraints in different features
+ */
+export interface CrossFeatureSemanticConflict {
+  id: string;
+  type: 'logical_contradiction' | 'resource_tension' | 'scope_conflict';
+  severity: 'blocking' | 'requires_acceptance' | 'review_needed';
+
+  constraintA: {
+    feature: string;
+    id: string;
+    category: string;
+    type: 'invariant' | 'goal' | 'boundary';
+    statement: string;
+  };
+
+  constraintB: {
+    feature: string;
+    id: string;
+    category: string;
+    type: 'invariant' | 'goal' | 'boundary';
+    statement: string;
+  };
+
+  // Why this is a conflict
+  conflictReason: string;
+  sharedDomain: string[];
+
+  // What AI/user should do
+  resolution: {
+    options: string[];
+    requiresUserAcceptance: boolean;
+  };
 }
 
 /**
@@ -1408,127 +1446,357 @@ export interface CrossFeatureConflict {
  */
 export interface CrossFeatureConflictResult {
   hasConflicts: boolean;
-  conflicts: CrossFeatureConflict[];
+  conflicts: CrossFeatureSemanticConflict[];
   summary: {
     total: number;
     featuresAnalyzed: number;
+    constraintsAnalyzed: number;
     bySeverity: Record<string, number>;
     byType: Record<string, number>;
   };
 }
 
 /**
- * Detect conflicts across multiple features
- * Satisfies: T4 (cross-feature constraint ID overlap detection)
- *
- * Detects:
- * 1. Duplicate constraint IDs across features (e.g., two features using "B1")
- * 2. Semantic overlap between constraints
- * 3. Incompatible invariants across features
+ * Extract all constraints from manifolds with full metadata
  */
-export function detectCrossFeatureConflicts(manifolds: Manifold[]): CrossFeatureConflictResult {
-  const conflicts: CrossFeatureConflict[] = [];
-  let conflictId = 0;
-
-  // Build index of constraint IDs -> features
-  const constraintIndex = new Map<string, { feature: string; constraint: Constraint; category: string }[]>();
+function extractAllCrossFeatureConstraints(manifolds: Manifold[]): CrossFeatureConstraint[] {
+  const result: CrossFeatureConstraint[] = [];
+  const categories = ['business', 'technical', 'user_experience', 'security', 'operational'] as const;
 
   for (const manifold of manifolds) {
-    const categories = ['business', 'technical', 'user_experience', 'security', 'operational'] as const;
-
     for (const cat of categories) {
       const constraints = manifold.constraints?.[cat] ||
                          (cat === 'user_experience' ? (manifold.constraints as any)?.ux : undefined);
       if (!constraints) continue;
 
       for (const c of constraints) {
-        if (!constraintIndex.has(c.id)) {
-          constraintIndex.set(c.id, []);
-        }
-        constraintIndex.get(c.id)!.push({
+        result.push({
           feature: manifold.feature,
-          constraint: c,
-          category: cat
+          id: c.id,
+          category: cat,
+          type: c.type as 'invariant' | 'goal' | 'boundary',
+          statement: c.statement
         });
       }
     }
   }
 
-  // Detect duplicate constraint IDs across features
-  for (const [constraintId, usages] of constraintIndex) {
-    const uniqueFeatures = [...new Set(usages.map(u => u.feature))];
+  return result;
+}
 
-    if (uniqueFeatures.length > 1) {
-      // Same ID used in multiple features
-      const statements = usages.map(u => `${u.feature}: "${u.constraint.statement}"`).join('; ');
-      const sameStatement = usages.every(u => u.constraint.statement === usages[0].constraint.statement);
+/**
+ * Extract domain keywords from a statement
+ * Used to identify if two constraints are about the same topic
+ */
+function extractDomainKeywords(statement: string): string[] {
+  const s = statement.toLowerCase();
 
-      conflicts.push({
-        id: `XF-${++conflictId}`,
-        type: 'duplicate_id',
-        constraintId,
-        features: uniqueFeatures,
-        severity: sameStatement ? 'medium' : 'critical',
-        explanation: sameStatement
-          ? `Constraint ${constraintId} is duplicated across features: ${uniqueFeatures.join(', ')} (identical statements)`
-          : `Constraint ${constraintId} has DIFFERENT meanings across features: ${statements}`,
-        suggestion: sameStatement
-          ? `Consider extracting "${constraintId}" to a shared constraint library or using unique prefixes per feature.`
-          : `CRITICAL: Rename constraint ID in one feature to avoid confusion. Use feature-specific prefixes like "${uniqueFeatures[0].substring(0, 3).toUpperCase()}-${constraintId}".`
-      });
+  // Remove common stop words and short words
+  const stopWords = new Set([
+    'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'it', 'for',
+    'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at', 'this', 'but', 'his',
+    'by', 'from', 'they', 'we', 'say', 'her', 'she', 'or', 'an', 'will', 'my',
+    'one', 'all', 'would', 'there', 'their', 'what', 'so', 'up', 'out', 'if',
+    'about', 'who', 'get', 'which', 'go', 'me', 'must', 'should', 'shall',
+    'may', 'can', 'could', 'would', 'might', 'need', 'want', 'only', 'just',
+    'also', 'any', 'each', 'every', 'both', 'few', 'more', 'most', 'other',
+    'some', 'such', 'than', 'too', 'very', 'same', 'different', 'able', 'back',
+    'being', 'been', 'case', 'come', 'does', 'done', 'else', 'even', 'going',
+    'good', 'keep', 'know', 'last', 'long', 'made', 'make', 'much', 'never',
+    'over', 'part', 'take', 'them', 'then', 'these', 'time', 'upon', 'used',
+    'well', 'were', 'when', 'where', 'while', 'work', 'year', 'your'
+  ]);
+
+  const words = s.split(/\W+/).filter(w =>
+    w.length > 3 && !stopWords.has(w) && !/^\d+$/.test(w)
+  );
+
+  return [...new Set(words)];
+}
+
+/**
+ * Detect logical contradiction between two invariants
+ * Returns conflict details if found, null otherwise
+ */
+function detectCrossFeatureContradiction(
+  c1: CrossFeatureConstraint,
+  c2: CrossFeatureConstraint
+): { sharedDomain: string[]; conflictReason: string } | null {
+  const s1 = c1.statement.toLowerCase();
+  const s2 = c2.statement.toLowerCase();
+
+  // Extract domain keywords
+  const domain1 = extractDomainKeywords(s1);
+  const domain2 = extractDomainKeywords(s2);
+
+  // Check domain overlap - need at least 2 shared keywords to be about the same topic
+  const sharedDomain = domain1.filter(d => domain2.includes(d));
+  if (sharedDomain.length < 2) return null;
+
+  // Patterns that indicate contradictory requirements
+  const contradictionPatterns = [
+    // Format/type requirements
+    { a: /must (?:be|use|return) (\w+)/, b: /must (?:be|use|return) (\w+)/, check: (m1: RegExpMatchArray, m2: RegExpMatchArray) => m1[1] !== m2[1] },
+
+    // Must vs must not
+    { a: /must (\w+)/, b: /must not (\w+)/, check: (m1: RegExpMatchArray, m2: RegExpMatchArray) => m1[1] === m2[1] },
+
+    // Always vs never
+    { a: /always (\w+)/, b: /never (\w+)/, check: (m1: RegExpMatchArray, m2: RegExpMatchArray) => m1[1] === m2[1] },
+
+    // Required vs prohibited/optional
+    { a: /required|mandatory/, b: /prohibited|forbidden|optional/, check: () => true },
+
+    // Numeric limits that conflict (< X vs > Y where X < Y)
+    { a: /(?:must be |response time |latency )<?[=]?\s*(\d+)\s*(ms|seconds?|s\b|minutes?|m\b)/, b: /(?:must be |response time |latency )>?[=]?\s*(\d+)\s*(ms|seconds?|s\b|minutes?|m\b)/, check: (m1: RegExpMatchArray, m2: RegExpMatchArray) => {
+      const v1 = normalizeTimeToMs(parseInt(m1[1]), m1[2]);
+      const v2 = normalizeTimeToMs(parseInt(m2[1]), m2[2]);
+      // Conflict if the "less than" value is less than the "greater than" value
+      return v1 < v2;
+    }},
+
+    // Enable vs disable
+    { a: /\b(enable|allow|permit)\b/, b: /\b(disable|block|deny|prohibit)\b/, check: () => true },
+
+    // Synchronous vs asynchronous
+    { a: /\bsynchronous\b/, b: /\basynchronous\b/, check: () => true },
+  ];
+
+  for (const pattern of contradictionPatterns) {
+    const match1 = s1.match(pattern.a);
+    const match2 = s2.match(pattern.b);
+    if (match1 && match2 && pattern.check(match1, match2)) {
+      return {
+        sharedDomain,
+        conflictReason: `Both constrain ${sharedDomain.slice(0, 3).join('/')} but with incompatible requirements`
+      };
+    }
+
+    // Also check the reverse (s1 matches b, s2 matches a)
+    const match1r = s1.match(pattern.b);
+    const match2r = s2.match(pattern.a);
+    if (match1r && match2r && pattern.check(match2r, match1r)) {
+      return {
+        sharedDomain,
+        conflictReason: `Both constrain ${sharedDomain.slice(0, 3).join('/')} but with incompatible requirements`
+      };
     }
   }
 
-  // Detect incompatible invariants across features
-  const invariants: { feature: string; constraint: Constraint; category: string }[] = [];
-  for (const [, usages] of constraintIndex) {
-    for (const usage of usages) {
-      if (usage.constraint.type === 'invariant') {
-        invariants.push(usage);
-      }
-    }
+  return null;
+}
+
+/**
+ * Normalize time values to milliseconds for comparison
+ */
+function normalizeTimeToMs(value: number, unit: string): number {
+  const u = unit.toLowerCase();
+  if (u.startsWith('ms')) return value;
+  if (u.startsWith('s')) return value * 1000;
+  if (u.startsWith('m')) return value * 60000;
+  return value;
+}
+
+/**
+ * Detect resource tension between a boundary and a goal
+ * A boundary in one feature may constrain a goal in another
+ */
+function detectCrossFeatureResourceTension(
+  c1: CrossFeatureConstraint,
+  c2: CrossFeatureConstraint
+): { sharedDomain: string[]; conflictReason: string } | null {
+  // One must be boundary, one must be goal
+  if (!((c1.type === 'boundary' && c2.type === 'goal') ||
+        (c1.type === 'goal' && c2.type === 'boundary'))) {
+    return null;
   }
 
-  // Check for semantic contradictions between invariants of different features
-  for (let i = 0; i < invariants.length; i++) {
-    for (let j = i + 1; j < invariants.length; j++) {
-      const inv1 = invariants[i];
-      const inv2 = invariants[j];
+  const boundary = c1.type === 'boundary' ? c1 : c2;
+  const goal = c1.type === 'goal' ? c1 : c2;
 
-      // Skip if same feature
-      if (inv1.feature === inv2.feature) continue;
+  const s1 = boundary.statement.toLowerCase();
+  const s2 = goal.statement.toLowerCase();
 
-      // Simple semantic conflict detection via keyword analysis
-      const s1 = inv1.constraint.statement.toLowerCase();
-      const s2 = inv2.constraint.statement.toLowerCase();
+  // Extract domain keywords
+  const domain1 = extractDomainKeywords(s1);
+  const domain2 = extractDomainKeywords(s2);
+  const sharedDomain = domain1.filter(d => domain2.includes(d));
 
-      // Check for negation patterns
-      const negationPatterns = [
-        { pattern: /\bmust\b/, negation: /\bmust not\b|\bshould not\b|\bnever\b/ },
-        { pattern: /\balways\b/, negation: /\bnever\b|\bno\b/ },
-        { pattern: /\brequired\b/, negation: /\boptional\b|\bprohibited\b/ }
-      ];
+  // Need some overlap to be related
+  if (sharedDomain.length < 1) return null;
 
-      for (const { pattern, negation } of negationPatterns) {
-        if ((pattern.test(s1) && negation.test(s2)) || (pattern.test(s2) && negation.test(s1))) {
-          // Check for topic overlap
-          const words1 = s1.split(/\W+/).filter(w => w.length > 3);
-          const words2 = s2.split(/\W+/).filter(w => w.length > 3);
-          const overlap = words1.filter(w => words2.includes(w));
+  // Resource keywords that indicate potential tension
+  const resourceKeywords = [
+    'memory', 'cpu', 'disk', 'bandwidth', 'storage',
+    'time', 'latency', 'timeout', 'duration', 'performance',
+    'budget', 'cost', 'price', 'token', 'tokens',
+    'connections', 'threads', 'workers', 'instances',
+    'limit', 'quota', 'capacity', 'throughput', 'rate',
+    'size', 'length', 'count', 'complexity'
+  ];
 
-          if (overlap.length >= 2) {
-            conflicts.push({
-              id: `XF-${++conflictId}`,
-              type: 'incompatible_invariants',
-              constraintId: `${inv1.constraint.id} vs ${inv2.constraint.id}`,
-              features: [inv1.feature, inv2.feature],
-              severity: 'high',
-              explanation: `Potentially conflicting invariants between ${inv1.feature} (${inv1.constraint.id}) and ${inv2.feature} (${inv2.constraint.id}): shared topics "${overlap.slice(0, 3).join(', ')}" with opposing requirements.`,
-              suggestion: `Review these invariants for compatibility. If both features will be used together, one invariant may need to be relaxed or scoped.`
-            });
-            break;
-          }
+  const s1HasResource = resourceKeywords.some(kw => s1.includes(kw));
+  const s2HasResource = resourceKeywords.some(kw => s2.includes(kw));
+
+  // Tension keywords that indicate competing requirements
+  const boundaryIndicators = ['must', 'limit', 'maximum', 'minimum', 'within', 'under', 'below', 'above', '<', '>', '≤', '≥'];
+  const goalIndicators = ['unlimited', 'flexible', 'support', 'enable', 'allow', 'maximize', 'optimize'];
+
+  const boundaryHasLimit = boundaryIndicators.some(kw => s1.includes(kw));
+  const goalHasFlexibility = goalIndicators.some(kw => s2.includes(kw));
+
+  if (s1HasResource && s2HasResource && boundaryHasLimit && goalHasFlexibility) {
+    const resourceMentioned = resourceKeywords.find(kw => s1.includes(kw) || s2.includes(kw)) || 'resources';
+    return {
+      sharedDomain: [resourceMentioned, ...sharedDomain.filter(d => d !== resourceMentioned)].slice(0, 4),
+      conflictReason: `Boundary "${boundary.id}" limits ${resourceMentioned} which may constrain goal "${goal.id}"`
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Detect scope conflict where constraints apply to overlapping domains with different rules
+ */
+function detectCrossFeatureScopeConflict(
+  c1: CrossFeatureConstraint,
+  c2: CrossFeatureConstraint
+): { sharedDomain: string[]; conflictReason: string } | null {
+  const s1 = c1.statement.toLowerCase();
+  const s2 = c2.statement.toLowerCase();
+
+  // Extract domain keywords
+  const domain1 = extractDomainKeywords(s1);
+  const domain2 = extractDomainKeywords(s2);
+  const sharedDomain = domain1.filter(d => domain2.includes(d));
+
+  // Need significant overlap
+  if (sharedDomain.length < 2) return null;
+
+  // Scope indicators
+  const globalScope = ['all', 'every', 'any', 'global', 'system-wide', 'always', 'everywhere'];
+  const localScope = ['specific', 'only', 'certain', 'some', 'limited', 'conditional', 'except', 'unless'];
+
+  const s1Global = globalScope.some(kw => s1.includes(kw));
+  const s2Global = globalScope.some(kw => s2.includes(kw));
+  const s1Local = localScope.some(kw => s1.includes(kw));
+  const s2Local = localScope.some(kw => s2.includes(kw));
+
+  // Check for global vs local scope mismatch
+  if ((s1Global && s2Local) || (s1Local && s2Global)) {
+    const globalConstraint = s1Global ? c1 : c2;
+    const localConstraint = s1Local ? c1 : c2;
+    return {
+      sharedDomain,
+      conflictReason: `"${globalConstraint.id}" has global scope while "${localConstraint.id}" has local scope for overlapping domain: ${sharedDomain.slice(0, 3).join(', ')}`
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Detect semantic conflicts across multiple features
+ * Satisfies: T4 (semantic conflict detection across features)
+ *
+ * Key insight: ID reuse (e.g., B1 in feature A and B1 in feature B) is NOT a conflict.
+ * Features are independent namespaces. The real question: Can constraint X in feature A
+ * coexist with constraint Y in feature B?
+ *
+ * Detects three types of semantic conflicts:
+ * 1. Logical contradictions (BLOCKING) - Two invariants that cannot both be true
+ * 2. Resource tensions (REQUIRES ACCEPTANCE) - A boundary constrains a goal
+ * 3. Scope conflicts (REVIEW NEEDED) - Overlapping domains with different rules
+ */
+export function detectCrossFeatureConflicts(manifolds: Manifold[]): CrossFeatureConflictResult {
+  const conflicts: CrossFeatureSemanticConflict[] = [];
+  let conflictId = 0;
+
+  // Extract all constraints with metadata
+  const allConstraints = extractAllCrossFeatureConstraints(manifolds);
+
+  // Compare each pair of constraints from DIFFERENT features
+  for (let i = 0; i < allConstraints.length; i++) {
+    for (let j = i + 1; j < allConstraints.length; j++) {
+      const c1 = allConstraints[i];
+      const c2 = allConstraints[j];
+
+      // Skip same-feature comparisons - those are handled by single-feature detection
+      if (c1.feature === c2.feature) continue;
+
+      // 1. Check for logical contradiction (invariant vs invariant)
+      if (c1.type === 'invariant' && c2.type === 'invariant') {
+        const contradiction = detectCrossFeatureContradiction(c1, c2);
+        if (contradiction) {
+          conflicts.push({
+            id: `CONFLICT-${++conflictId}`,
+            type: 'logical_contradiction',
+            severity: 'blocking',
+            constraintA: c1,
+            constraintB: c2,
+            sharedDomain: contradiction.sharedDomain,
+            conflictReason: contradiction.conflictReason,
+            resolution: {
+              options: [
+                `Scope ${c1.feature}/${c1.id} to exclude ${c2.feature}'s domain`,
+                `Scope ${c2.feature}/${c2.id} to exclude ${c1.feature}'s domain`,
+                `Relax one constraint from invariant to goal`,
+                `Remove one constraint entirely`
+              ],
+              requiresUserAcceptance: true
+            }
+          });
         }
+      }
+
+      // 2. Check for resource tension (boundary vs goal)
+      if ((c1.type === 'boundary' && c2.type === 'goal') ||
+          (c1.type === 'goal' && c2.type === 'boundary')) {
+        const tension = detectCrossFeatureResourceTension(c1, c2);
+        if (tension) {
+          const boundary = c1.type === 'boundary' ? c1 : c2;
+          const goal = c1.type === 'goal' ? c1 : c2;
+          conflicts.push({
+            id: `TENSION-${++conflictId}`,
+            type: 'resource_tension',
+            severity: 'requires_acceptance',
+            constraintA: boundary,
+            constraintB: goal,
+            sharedDomain: tension.sharedDomain,
+            conflictReason: tension.conflictReason,
+            resolution: {
+              options: [
+                `Accept this tension and document in both features' tensions section`,
+                `Relax the boundary constraint ${boundary.id}`,
+                `Constrain the goal ${goal.id} to work within the boundary`
+              ],
+              requiresUserAcceptance: true
+            }
+          });
+        }
+      }
+
+      // 3. Check for scope conflicts
+      const scopeConflict = detectCrossFeatureScopeConflict(c1, c2);
+      if (scopeConflict) {
+        conflicts.push({
+          id: `REVIEW-${++conflictId}`,
+          type: 'scope_conflict',
+          severity: 'review_needed',
+          constraintA: c1,
+          constraintB: c2,
+          sharedDomain: scopeConflict.sharedDomain,
+          conflictReason: scopeConflict.conflictReason,
+          resolution: {
+            options: [
+              `Clarify if the local constraint is an exception to the global one`,
+              `Add explicit scoping rules to both constraints`,
+              `Document as an accepted tension if intentional`
+            ],
+            requiresUserAcceptance: false
+          }
+        });
       }
     }
   }
@@ -1537,15 +1805,16 @@ export function detectCrossFeatureConflicts(manifolds: Manifold[]): CrossFeature
   const summary = {
     total: conflicts.length,
     featuresAnalyzed: manifolds.length,
+    constraintsAnalyzed: allConstraints.length,
     bySeverity: {
-      critical: conflicts.filter(c => c.severity === 'critical').length,
-      high: conflicts.filter(c => c.severity === 'high').length,
-      medium: conflicts.filter(c => c.severity === 'medium').length,
+      blocking: conflicts.filter(c => c.severity === 'blocking').length,
+      requires_acceptance: conflicts.filter(c => c.severity === 'requires_acceptance').length,
+      review_needed: conflicts.filter(c => c.severity === 'review_needed').length,
     },
     byType: {
-      duplicate_id: conflicts.filter(c => c.type === 'duplicate_id').length,
-      semantic_overlap: conflicts.filter(c => c.type === 'semantic_overlap').length,
-      incompatible_invariants: conflicts.filter(c => c.type === 'incompatible_invariants').length,
+      logical_contradiction: conflicts.filter(c => c.type === 'logical_contradiction').length,
+      resource_tension: conflicts.filter(c => c.type === 'resource_tension').length,
+      scope_conflict: conflicts.filter(c => c.type === 'scope_conflict').length,
     }
   };
 
@@ -1557,47 +1826,109 @@ export function detectCrossFeatureConflicts(manifolds: Manifold[]): CrossFeature
 }
 
 /**
- * Format cross-feature conflict detection results for display
+ * Format cross-feature semantic conflict detection results for display
  */
 export function formatCrossFeatureResults(result: CrossFeatureConflictResult): string {
   const lines: string[] = [];
 
-  lines.push('CROSS-FEATURE CONFLICT ANALYSIS');
-  lines.push('════════════════════════════════');
+  lines.push('SEMANTIC CONFLICT ANALYSIS');
+  lines.push('══════════════════════════');
   lines.push('');
-  lines.push(`Features analyzed: ${result.summary.featuresAnalyzed}`);
+  lines.push(`Analyzed: ${result.summary.featuresAnalyzed} features, ${result.summary.constraintsAnalyzed} constraints`);
   lines.push('');
 
   if (!result.hasConflicts) {
-    lines.push('✓ No cross-feature conflicts detected');
+    lines.push('✓ No semantic conflicts detected between features');
     return lines.join('\n');
   }
 
-  lines.push(`Found ${result.summary.total} cross-feature conflict${result.summary.total > 1 ? 's' : ''}:`);
-  lines.push('');
+  // Group by severity and display
 
-  // Group by severity
-  const severityOrder = ['critical', 'high', 'medium'] as const;
-
-  for (const severity of severityOrder) {
-    const severityConflicts = result.conflicts.filter(c => c.severity === severity);
-    if (severityConflicts.length === 0) continue;
-
-    const icon = severity === 'critical' ? '🚨' :
-                 severity === 'high' ? '⚠️' : '📊';
-
-    lines.push(`${icon} ${severity.toUpperCase()} (${severityConflicts.length}):`);
+  // 1. BLOCKING conflicts (logical contradictions)
+  const blockingConflicts = result.conflicts.filter(c => c.severity === 'blocking');
+  if (blockingConflicts.length > 0) {
+    lines.push(`🚫 BLOCKING CONFLICTS (${blockingConflicts.length}) - Cannot proceed without resolution`);
+    lines.push('─'.repeat(60));
     lines.push('');
 
-    for (const conflict of severityConflicts) {
-      lines.push(`  [${conflict.id}] ${conflict.type}`);
-      lines.push(`    Constraint: ${conflict.constraintId}`);
-      lines.push(`    Features: ${conflict.features.join(', ')}`);
-      lines.push(`    ${conflict.explanation}`);
-      lines.push(`    💡 ${conflict.suggestion}`);
+    for (const conflict of blockingConflicts) {
+      lines.push(`[${conflict.id}] ${conflict.type.replace('_', ' ')}`);
+      lines.push(`  Feature: ${conflict.constraintA.feature} (${conflict.constraintA.id}) vs Feature: ${conflict.constraintB.feature} (${conflict.constraintB.id})`);
+      lines.push('');
+      lines.push(`  ${conflict.constraintA.feature}/${conflict.constraintA.id} (${conflict.constraintA.type}):`);
+      lines.push(`    "${conflict.constraintA.statement}"`);
+      lines.push('');
+      lines.push(`  ${conflict.constraintB.feature}/${conflict.constraintB.id} (${conflict.constraintB.type}):`);
+      lines.push(`    "${conflict.constraintB.statement}"`);
+      lines.push('');
+      lines.push(`  Shared Domain: [${conflict.sharedDomain.join(', ')}]`);
+      lines.push(`  Conflict: ${conflict.conflictReason}`);
+      lines.push('');
+      lines.push('  Resolution Options:');
+      for (let i = 0; i < conflict.resolution.options.length; i++) {
+        lines.push(`    ${i + 1}. ${conflict.resolution.options[i]}`);
+      }
+      lines.push('');
+      lines.push('  ⚠️  REQUIRES USER DECISION before features can coexist');
       lines.push('');
     }
   }
+
+  // 2. REQUIRES ACCEPTANCE (resource tensions)
+  const tensionConflicts = result.conflicts.filter(c => c.severity === 'requires_acceptance');
+  if (tensionConflicts.length > 0) {
+    lines.push(`⚡ RESOURCE TENSIONS (${tensionConflicts.length}) - Require explicit acceptance`);
+    lines.push('─'.repeat(60));
+    lines.push('');
+
+    for (const conflict of tensionConflicts) {
+      lines.push(`[${conflict.id}] ${conflict.type.replace('_', ' ')}`);
+      lines.push(`  Feature: ${conflict.constraintA.feature} (${conflict.constraintA.id}) vs Feature: ${conflict.constraintB.feature} (${conflict.constraintB.id})`);
+      lines.push('');
+      lines.push(`  ${conflict.constraintA.feature}/${conflict.constraintA.id} (${conflict.constraintA.type}):`);
+      lines.push(`    "${conflict.constraintA.statement}"`);
+      lines.push('');
+      lines.push(`  ${conflict.constraintB.feature}/${conflict.constraintB.id} (${conflict.constraintB.type}):`);
+      lines.push(`    "${conflict.constraintB.statement}"`);
+      lines.push('');
+      lines.push(`  Shared Domain: [${conflict.sharedDomain.join(', ')}]`);
+      lines.push(`  Tension: ${conflict.conflictReason}`);
+      lines.push('');
+      lines.push('  Accept this tension? If yes, document in tensions section of both features.');
+      lines.push('');
+    }
+  }
+
+  // 3. REVIEW NEEDED (scope conflicts)
+  const reviewConflicts = result.conflicts.filter(c => c.severity === 'review_needed');
+  if (reviewConflicts.length > 0) {
+    lines.push(`📋 REVIEW NEEDED (${reviewConflicts.length}) - Potential conflicts requiring human judgment`);
+    lines.push('─'.repeat(60));
+    lines.push('');
+
+    for (const conflict of reviewConflicts) {
+      lines.push(`[${conflict.id}] ${conflict.type.replace('_', ' ')}`);
+      lines.push(`  ${conflict.constraintA.feature}/${conflict.constraintA.id} vs ${conflict.constraintB.feature}/${conflict.constraintB.id}`);
+      lines.push(`  Shared Domain: [${conflict.sharedDomain.join(', ')}]`);
+      lines.push(`  Issue: ${conflict.conflictReason}`);
+      lines.push('');
+    }
+  }
+
+  // Summary
+  lines.push('SUMMARY');
+  lines.push('───────');
+  lines.push(`- Blocking: ${result.summary.bySeverity.blocking} (must resolve before proceeding)`);
+  lines.push(`- Requires Acceptance: ${result.summary.bySeverity.requires_acceptance} (document as accepted trade-offs)`);
+  lines.push(`- Review Needed: ${result.summary.bySeverity.review_needed} (may or may not be actual conflicts)`);
+  lines.push('');
+  lines.push('To accept tensions, add to each feature\'s manifold:');
+  lines.push('  accepted_tensions:');
+  lines.push('    - cross_feature: "feature-name"');
+  lines.push('      constraint: "T2"');
+  lines.push(`      accepted_by: "username"`);
+  lines.push(`      date: "${new Date().toISOString().split('T')[0]}"`);
+  lines.push('      rationale: "Why this tension is acceptable"');
 
   return lines.join('\n');
 }
