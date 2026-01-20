@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.11.0](https://github.com/dhanesh/manifold/compare/v2.10.1...v2.11.0) (2026-01-20)
+
+### Features
+
+* **install:** inject schema reference into user claude.md ([c520b2a](https://github.com/dhanesh/manifold/commit/c520b2a844a9697d4ba3d372ac566efab2bbc843))
+
 ## [2.10.1](https://github.com/dhanesh/manifold/compare/v2.10.0...v2.10.1) (2026-01-19)
 
 ### Bug Fixes
