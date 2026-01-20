@@ -41,6 +41,8 @@ convergence:
     no_blocking_gaps: true
 ```
 
+> See `SCHEMA_REFERENCE.md` for valid convergence statuses, iteration fields, and integration checklist structure.
+
 ## Why Integration?
 
 **Problem observed**: `/m4-generate` creates artifacts in isolation. Integration was manual and error-prone.

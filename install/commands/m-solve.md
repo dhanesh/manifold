@@ -15,6 +15,8 @@ Generate parallel execution plan from constraint network.
 | **Graph Version** | `1` |
 
 > This command performs **read-only analysis**. It does not modify manifold files.
+>
+> See `SCHEMA_REFERENCE.md` for valid constraint_graph node types, edge definitions, and execution plan structure.
 
 ## Usage
 

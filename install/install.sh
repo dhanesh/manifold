@@ -175,6 +175,76 @@ PARALLEL_LIB_FILES=(
     "index.ts"
 )
 
+# Inject schema reference into CLAUDE.md
+# This ensures schema values are retained across context compaction
+# Version-aware: updates if schema version changes
+inject_schema_reference() {
+    local base_dir="$1"
+    local claude_md="$base_dir/CLAUDE.md"
+    local marker="# Manifold Schema Quick Reference"
+    local version_pattern="MANIFOLD_SCHEMA_VERSION:"
+
+    # Get schema snippet
+    local snippet=""
+    if [[ -n "$LOCAL_INSTALL" ]]; then
+        snippet=$(cat "$SCRIPT_DIR/SCHEMA_SNIPPET.md")
+    else
+        snippet=$(curl -fsSL "$REPO/install/SCHEMA_SNIPPET.md" 2>/dev/null)
+    fi
+
+    if [[ -z "$snippet" ]]; then
+        print_warning "Could not fetch schema snippet"
+        return 1
+    fi
+
+    # Extract new version from snippet
+    local new_version
+    new_version=$(echo "$snippet" | grep -o "${version_pattern}[0-9]*" | grep -o '[0-9]*')
+    if [[ -z "$new_version" ]]; then
+        new_version="0"
+    fi
+
+    # Check if already injected and compare versions
+    if [[ -f "$claude_md" ]] && grep -q "$marker" "$claude_md" 2>/dev/null; then
+        local existing_version
+        existing_version=$(grep -o "${version_pattern}[0-9]*" "$claude_md" 2>/dev/null | grep -o '[0-9]*' | head -1)
+        if [[ -z "$existing_version" ]]; then
+            existing_version="0"
+        fi
+
+        if [[ "$existing_version" -ge "$new_version" ]]; then
+            print_success "Schema reference v$existing_version already in CLAUDE.md (up to date)"
+            return 0
+        fi
+
+        # Remove old schema section before adding new one
+        print_step "Updating schema reference v$existing_version -> v$new_version..."
+
+        # Create temp file without old schema section
+        # Pattern: from "# Manifold Schema Quick Reference" to next "# " heading or EOF
+        local tmp_file="/tmp/claude_md_$$"
+        awk -v marker="$marker" '
+            BEGIN { skip = 0 }
+            $0 ~ marker { skip = 1; next }
+            skip && /^# [^M]/ { skip = 0 }
+            skip && /^# Manifold/ { next }
+            !skip { print }
+        ' "$claude_md" > "$tmp_file"
+        mv "$tmp_file" "$claude_md"
+    fi
+
+    # Create or append to CLAUDE.md
+    if [[ ! -f "$claude_md" ]]; then
+        echo "$snippet" > "$claude_md"
+        print_success "Created CLAUDE.md with Manifold schema reference v$new_version"
+    else
+        # Append with separator
+        echo "" >> "$claude_md"
+        echo "$snippet" >> "$claude_md"
+        print_success "Added Manifold schema reference v$new_version to CLAUDE.md"
+    fi
+}
+
 # Install Manifold
 install_manifold() {
     local base_dir="$1"
@@ -230,6 +300,9 @@ install_manifold() {
         curl -fsSL "$REPO/install/hooks/auto-suggester.ts" -o "$hooks_dir/auto-suggester.ts"
     fi
     print_success "Installed hooks to $hooks_dir/"
+
+    # Inject schema reference into CLAUDE.md for context retention
+    inject_schema_reference "$base_dir"
 }
 
 # Main installation
