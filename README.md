@@ -22,6 +22,9 @@ Forward reasoning                    Backward from outcome
 - **Backward Reasoning** - Reason from desired outcomes to required truths
 - **Tension Detection** - Find conflicts between constraints early
 - **All-at-Once Generation** - Generate code, tests, docs, runbooks, and alerts from a single source
+- **Constraint Templates** - Pre-built patterns for auth, CRUD, API, and payment flows
+- **Light Mode** - Simplified 3-phase workflow for quick changes
+- **PM Workflows** - Generate PRDs and user stories with constraint traceability
 - **Parallel Execution** - Run independent tasks concurrently using git worktrees
 - **Native CLI** - Fast, deterministic operations (<100ms) for CI/CD
 - **Multi-Agent Support** - Works with Claude Code and AMP
@@ -73,6 +76,7 @@ chmod +x manifold
 | `/m6-integrate` | Wire artifacts together | - |
 | `/m-status` | Show current state | - |
 | `/m-solve` | Generate parallel execution plan | - |
+| `/m-quick` | Light mode: 3-phase workflow for simple changes | - |
 | `/parallel` | Execute tasks in parallel worktrees | - |
 
 ### Native CLI
@@ -104,6 +108,29 @@ manifold verify [feature]      # Verify artifacts exist
 /m4-generate payment-retry         # Creates code, tests, docs, runbooks, alerts
 /m5-verify payment-retry           # Validates all artifacts against constraints
 ```
+
+### Using Templates
+
+Pre-built constraint patterns for common scenarios:
+
+```bash
+/m0-init user-auth --template=auth        # Authentication flows
+/m0-init user-crud --template=crud        # CRUD operations
+/m0-init payment-flow --template=payment  # Payment processing
+/m0-init api-endpoint --template=api      # API endpoints
+```
+
+See [Constraint Templates](install/templates/README.md) for all available templates.
+
+### Light Mode (Quick Changes)
+
+For simple changes that don't need full constraint analysis:
+
+```bash
+/m-quick fix-login-bug --outcome="Fix 504 timeout on login"
+```
+
+Light mode uses 3 phases: Constrain → Generate → Verify. See [When NOT to Use Manifold](docs/WHEN_NOT_TO_USE.md) for guidance on when simpler approaches work better.
 
 ## Command Flow
 
@@ -382,6 +409,39 @@ Manifold's constraint-first approach extends beyond software engineering:
 | Operational | **Logistics** | How will this work day-to-day? |
 
 See [Non-Programming Guide](docs/non-programming/guide.md) for detailed documentation.
+
+## Product Manager Workflow
+
+Manifold can generate PRDs and user stories with constraint traceability:
+
+```bash
+/m0-init mobile-checkout --template=pm/feature-launch
+/m1-constrain mobile-checkout
+/m2-tension mobile-checkout
+/m3-anchor mobile-checkout
+/m4-generate mobile-checkout --prd --stories
+```
+
+**Outputs:**
+- `docs/mobile-checkout/PRD.md` — Structured PRD with constraint traceability
+- `docs/mobile-checkout/STORIES.md` — User stories with acceptance criteria
+
+**PM Templates:**
+- `pm/feature-launch` — New feature launches
+- `pm/experiment` — A/B tests and experiments
+- `pm/deprecation` — Feature deprecation planning
+
+See [PM Adaptation Guide](docs/pm/guide.md) for detailed workflows.
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Glossary](docs/GLOSSARY.md) | Plain-language terminology explanations |
+| [When NOT to Use](docs/WHEN_NOT_TO_USE.md) | Know when simpler approaches work better |
+| [Scientific Foundations](docs/research/phase-scientific-foundations.md) | Research supporting each phase |
+| [Constraint Templates](install/templates/README.md) | Pre-built patterns (auth, CRUD, API, payment) |
+| [PM Guide](docs/pm/guide.md) | Product Manager workflows |
 
 ## Contributing
 
