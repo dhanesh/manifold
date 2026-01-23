@@ -4,12 +4,24 @@ Pre-built constraint patterns for common development scenarios. These templates 
 
 ## Available Templates
 
+### Technical Templates
+
 | Template | Use Case | Constraints | Typical Time Saved |
 |----------|----------|-------------|-------------------|
 | `auth.yaml` | User authentication | 15 | 30-60 min |
 | `crud.yaml` | Data CRUD operations | 12 | 20-40 min |
 | `api.yaml` | REST/GraphQL APIs | 14 | 25-50 min |
 | `payment.yaml` | Payment processing | 18 | 45-90 min |
+
+### Product Management Templates
+
+| Template | Use Case | Constraints | Typical Time Saved |
+|----------|----------|-------------|-------------------|
+| `pm/feature-launch.yaml` | New feature or product launch | 15-18 | 45-90 min |
+| `pm/experiment.yaml` | A/B test or experiment design | 12-14 | 30-60 min |
+| `pm/deprecation.yaml` | Feature sunset or migration | 14-16 | 40-75 min |
+
+PM templates use the same constraint categories (business, technical, user_experience, security, operational) but with PM-focused language. See [PM Templates README](pm/README.md) for details.
 
 ## Usage
 

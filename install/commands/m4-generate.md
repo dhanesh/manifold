@@ -19,8 +19,18 @@ Generate ALL artifacts simultaneously from the constraint manifold.
 ## Usage
 
 ```
-/m4-generate <feature-name> [--option=<A|B|C>] [--artifacts=<list>]
+/m4-generate <feature-name> [--option=<A|B|C>] [--artifacts=<list>] [--prd] [--stories]
 ```
+
+### PM-Focused Flags
+
+| Flag | Output | Description |
+|------|--------|-------------|
+| `--prd` | `docs/<feature>/PRD.md` | Generate structured PRD from constraints |
+| `--stories` | `docs/<feature>/STORIES.md` | Generate user stories with acceptance criteria |
+| `--prd --stories` | Both files | Generate complete PM documentation |
+
+These flags can be combined with standard artifact generation or used standalone for PM workflows.
 
 ## Why All At Once?
 
@@ -308,3 +318,315 @@ User runs: /m4-generate payment-retry --option=C
 10. **Update manifold YAML** with generation tracking (artifacts, coverage)
 11. Set phase to GENERATED
 12. Display summary with constraint coverage
+
+---
+
+## PRD Generation (`--prd` flag)
+
+When `--prd` is specified, generate a structured Product Requirements Document from the manifold.
+
+### PRD Output Location
+
+```
+docs/<feature>/PRD.md
+```
+
+### PRD Structure
+
+```markdown
+# PRD: [Feature Name]
+
+## Problem Statement
+[Generated from: outcome statement + business constraints rationale]
+
+## Success Metrics
+[Generated from: GOAL type constraints with measurable criteria]
+
+| Metric | Target | Constraint |
+|--------|--------|------------|
+| [metric name] | [threshold] | [ID] |
+
+## Requirements
+
+### Must Have (Invariants)
+[All constraints with type: invariant]
+- **[statement]** ([ID]) — [rationale]
+  - _Traces to: [related constraint IDs]_
+
+### Should Have (Boundaries)
+[All constraints with type: boundary]
+- **[statement]** ([ID]) — [rationale]
+
+### Nice to Have (Goals)
+[All constraints with type: goal, excluding success metrics]
+- **[statement]** ([ID]) — [rationale]
+
+## Out of Scope
+[Generated from: _customization.common_removals if present, or explicitly excluded items]
+
+## Risks & Mitigations
+[Generated from: tensions + security constraints]
+
+| Risk | Source | Mitigation |
+|------|--------|------------|
+| [description] | [tension/constraint ID] | [resolution] |
+
+## Dependencies
+[Generated from: technical constraints mentioning "depends on", "requires", "integrates with"]
+
+## Open Questions
+[Generated from: unresolved tensions + anchors.open_questions if present]
+
+## Timeline & Phases
+[Generated from: boundary constraints with timeline + operational constraints]
+
+---
+_Generated from `.manifold/<feature>.yaml`_
+_Constraint coverage: [X]/[Y] constraints addressed_
+_Traces: [list of all constraint IDs referenced]_
+```
+
+### Constraint-to-PRD Mapping Rules
+
+| Constraint Source | PRD Section | Logic |
+|-------------------|-------------|-------|
+| `outcome` | Problem Statement | Direct inclusion |
+| `constraints.*.type: goal` with metric | Success Metrics | Extract measurable targets |
+| `constraints.*.type: invariant` | Must Have | All invariants are non-negotiable |
+| `constraints.*.type: boundary` | Should Have | Boundaries define limits |
+| `constraints.*.type: goal` (non-metric) | Nice to Have | Goals are optimization targets |
+| `tensions.status: unresolved` | Open Questions | Unresolved = needs decision |
+| `tensions.status: resolved` | Risks & Mitigations | Resolved = documented decision |
+| `constraints.security.*` | Risks & Mitigations | Security = risk considerations |
+| `constraints.technical` with dependencies | Dependencies | Extract dependency statements |
+| `_customization.common_removals` | Out of Scope | Explicitly excluded |
+
+### PRD Generation Example
+
+Input manifold:
+```yaml
+outcome: "Increase checkout conversion by 15%"
+constraints:
+  business:
+    - id: B1
+      type: invariant
+      statement: "Must not disrupt existing checkout"
+    - id: B2
+      type: goal
+      statement: "Increase conversion by 15%"
+  user_experience:
+    - id: U1
+      type: boundary
+      statement: "Maximum 3 clicks to complete"
+tensions:
+  - id: TN1
+    between: [B2, T1]
+    status: resolved
+    resolution: "Phased rollout"
+```
+
+Generated PRD excerpt:
+```markdown
+## Problem Statement
+Increase checkout conversion by 15% while maintaining existing checkout stability.
+
+## Success Metrics
+| Metric | Target | Constraint |
+|--------|--------|------------|
+| Checkout conversion | +15% | B2 |
+
+## Requirements
+
+### Must Have (Invariants)
+- **Must not disrupt existing checkout** (B1)
+  - _Traces to: B1_
+
+### Should Have (Boundaries)
+- **Maximum 3 clicks to complete** (U1)
+  - _Traces to: U1_
+
+## Risks & Mitigations
+| Risk | Source | Mitigation |
+|------|--------|------------|
+| Conversion goal vs capacity | TN1 | Phased rollout |
+```
+
+### PRD Artifact Tracking
+
+After PRD generation, update `.manifold/<feature>.yaml`:
+
+```yaml
+generation:
+  artifacts:
+    - path: docs/<feature>/PRD.md
+      type: prd
+      satisfies: [B1, B2, T1, U1, S1, O1]  # All referenced constraints
+      status: generated
+```
+
+---
+
+## User Story Generation (`--stories` flag)
+
+When `--stories` is specified, generate user stories with acceptance criteria from the manifold.
+
+### Stories Output Location
+
+```
+docs/<feature>/STORIES.md
+```
+
+### Stories Structure
+
+```markdown
+# User Stories: [Feature Name]
+
+## Epic: [Outcome statement]
+
+### US-1: [Story title derived from U1 statement]
+**As a** [user type - extracted from constraint context or default "user"]
+**I want** [capability - action verb from constraint statement]
+**So that** [value - from constraint rationale]
+
+**Acceptance Criteria:**
+- [ ] [Derived from constraint statement]
+- [ ] [Derived from related boundary constraint]
+- [ ] [Derived from required truth if mapped]
+
+**Traces to:** [constraint IDs]
+
+---
+
+### US-2: [Story title derived from U2]
+...
+
+---
+
+## Story Map
+
+| Priority | Story | Constraints | Dependencies | Status |
+|----------|-------|-------------|--------------|--------|
+| P0 | US-1 | U1, B2 | - | Ready |
+| P1 | US-2 | U2, T3 | US-1 | Blocked |
+
+## Dependencies Graph
+
+```mermaid
+graph TD
+    US1[US-1: Title] --> US2[US-2: Title]
+    TN1{Tension: Description} -.-> US1
+```
+
+---
+_Generated from `.manifold/<feature>.yaml`_
+```
+
+### Constraint-to-Story Transformation Rules
+
+| Source | Story Field | Transformation |
+|--------|-------------|----------------|
+| `constraints.user_experience` | One story per UX constraint | Primary source |
+| Constraint statement | "I want" clause | Extract action verb, user-facing language |
+| Constraint rationale | "So that" clause | Focus on value/outcome |
+| Constraint context | "As a" clause | Look for user/customer/admin; default "user" |
+| Related constraints | Acceptance criteria | One criterion per related constraint |
+| `anchors.required_truths` | Acceptance criteria | If maps_to_constraints includes this story's source |
+| Boundary constraints | Acceptance criteria | Measurable thresholds |
+| `tensions` | Dependencies | Tensions between story constraints |
+
+### Story Priority Rules
+
+| Constraint Type | Default Priority |
+|-----------------|------------------|
+| Invariant-related | P0 (must have) |
+| Boundary-related | P1 (should have) |
+| Goal-related | P2 (nice to have) |
+
+### Story Dependencies from Tensions
+
+```yaml
+# If tension exists:
+tensions:
+  - id: TN1
+    between: [U1, U2]
+    description: "Feature A must complete before B"
+
+# Then in STORIES.md:
+| Priority | Story | Dependencies |
+|----------|-------|--------------|
+| P0 | US-1 (from U1) | - |
+| P1 | US-2 (from U2) | US-1 |
+```
+
+### Stories Generation Example
+
+Input manifold:
+```yaml
+constraints:
+  user_experience:
+    - id: U1
+      type: boundary
+      statement: "User can complete checkout in 3 steps or fewer"
+      rationale: "Simplicity drives conversion"
+    - id: U2
+      type: goal
+      statement: "First-time users succeed without help"
+      rationale: "Self-service reduces support burden"
+  business:
+    - id: B1
+      type: invariant
+      statement: "No conversion regression"
+anchors:
+  required_truths:
+    - id: RT-1
+      statement: "User completes purchase without errors"
+      maps_to_constraints: [U1, B1]
+```
+
+Generated stories:
+```markdown
+### US-1: Quick Checkout Flow
+**As a** mobile shopper
+**I want** to complete checkout in 3 steps or fewer
+**So that** I can purchase quickly (simplicity drives conversion)
+
+**Acceptance Criteria:**
+- [ ] Checkout completes in ≤3 steps (U1)
+- [ ] No conversion regression from baseline (B1)
+- [ ] User completes purchase without errors (RT-1)
+
+**Traces to:** U1, B1, RT-1
+```
+
+### Combined Flag Support
+
+When both `--prd` and `--stories` are specified:
+
+```
+/m4-generate payment-checkout --option=C --prd --stories
+```
+
+Generates:
+- `docs/payment-checkout/PRD.md`
+- `docs/payment-checkout/STORIES.md`
+
+Both files cross-reference each other:
+- PRD links to stories for detailed requirements
+- Stories link back to PRD for business context
+
+### Stories Artifact Tracking
+
+After stories generation, update `.manifold/<feature>.yaml`:
+
+```yaml
+generation:
+  artifacts:
+    - path: docs/<feature>/PRD.md
+      type: prd
+      satisfies: [B1, B2, T1, U1, S1, O1]
+      status: generated
+    - path: docs/<feature>/STORIES.md
+      type: stories
+      satisfies: [U1, U2, U3, U4]
+      status: generated
+```

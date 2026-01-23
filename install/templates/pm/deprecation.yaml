@@ -1,0 +1,215 @@
+# Deprecation Constraint Template
+# Use: /m0-init <feature> --template=pm/deprecation
+# Covers: Feature sunset, legacy migration, breaking changes, user migration
+
+schema_version: 3
+feature: "[CUSTOMIZE: feature-to-deprecate]"
+outcome: "[CUSTOMIZE: e.g., 'Safely sunset legacy checkout with <2% user complaints and zero data loss']"
+phase: INITIALIZED
+template: pm/deprecation
+template_version: 1
+
+# =============================================================================
+# CONSTRAINTS - Customize these for your specific deprecation
+# =============================================================================
+
+constraints:
+  business:
+    - id: B1
+      type: invariant
+      statement: "Deprecation must not result in net customer loss exceeding [CUSTOMIZE: 1%]"
+      rationale: "Customer retention is paramount even during transitions"
+
+    - id: B2
+      type: goal
+      statement: "Cost savings from deprecation: [CUSTOMIZE: $X/month] in infrastructure/maintenance"
+      rationale: "Quantify the business case for deprecation"
+
+    - id: B3
+      type: boundary
+      statement: "Complete deprecation by [CUSTOMIZE: Q4 2025] to align with EOL commitments"
+      rationale: "External commitments or technical debt deadlines"
+
+    - id: B4
+      type: goal
+      statement: "[CUSTOMIZE: 90%] of users migrated voluntarily before forced cutover"
+      rationale: "Smooth migration reduces support burden and complaints"
+
+  technical:
+    - id: T1
+      type: invariant
+      statement: "All user data must be preserved or migrated with zero loss"
+      rationale: "Data loss is unacceptable and may have legal implications"
+
+    - id: T2
+      type: boundary
+      statement: "Migration path must exist for [CUSTOMIZE: 100%] of current functionality"
+      rationale: "Users must not lose capabilities they depend on"
+
+    - id: T3
+      type: boundary
+      statement: "Legacy system must remain accessible for [CUSTOMIZE: 90 days] post-deprecation announcement"
+      rationale: "Grace period for stragglers and edge cases"
+
+    - id: T4
+      type: goal
+      statement: "Automated migration tool handles [CUSTOMIZE: 80%] of cases"
+      rationale: "Manual migration doesn't scale; automation reduces errors"
+
+  user_experience:
+    - id: U1
+      type: invariant
+      statement: "Users must receive [CUSTOMIZE: 60 days] advance notice before deprecation"
+      rationale: "Respect for users requires adequate warning"
+
+    - id: U2
+      type: boundary
+      statement: "Migration process must complete in under [CUSTOMIZE: 5 minutes] per user"
+      rationale: "Low friction encourages voluntary migration"
+
+    - id: U3
+      type: goal
+      statement: "In-app guidance for migration visible to [CUSTOMIZE: all affected users]"
+      rationale: "Proactive communication beats reactive support"
+
+    - id: U4
+      type: goal
+      statement: "Support ticket volume remains below [CUSTOMIZE: 2x baseline] during transition"
+      rationale: "Manageable support load indicates successful communication"
+
+  security:
+    - id: S1
+      type: invariant
+      statement: "Deprecated feature data must be handled per data retention policy"
+      rationale: "Compliance requirements don't end with feature sunset"
+
+    - id: S2
+      type: boundary
+      statement: "Access logs retained for [CUSTOMIZE: 1 year] post-deprecation for audit"
+      rationale: "Support investigations and compliance verification"
+
+    - id: S3
+      type: goal
+      statement: "No new security vulnerabilities introduced during migration"
+      rationale: "Transition periods are high-risk for security gaps"
+
+  operational:
+    - id: O1
+      type: invariant
+      statement: "Rollback capability must exist until [CUSTOMIZE: 30 days] post-cutover"
+      rationale: "Safety net for unforeseen migration issues"
+
+    - id: O2
+      type: boundary
+      statement: "Support team trained on migration FAQ before announcement"
+      rationale: "Frontline readiness prevents escalations"
+
+    - id: O3
+      type: goal
+      statement: "Deprecation status dashboard tracks migration progress in real-time"
+      rationale: "Visibility enables proactive intervention"
+
+    - id: O4
+      type: goal
+      statement: "Post-deprecation cleanup completes within [CUSTOMIZE: 30 days]"
+      rationale: "Realize cost savings promptly; don't maintain zombie infrastructure"
+
+# =============================================================================
+# COMMON TENSIONS - Typical conflicts in deprecation projects
+# =============================================================================
+
+tensions:
+  - id: TN1
+    type: trade_off
+    between: [B3, U1]
+    description: "Aggressive timeline (B3) vs adequate user notice (U1)"
+    status: unresolved
+    resolution: "[CUSTOMIZE: Balance external commitments with user respect]"
+    priority: 1
+
+  - id: TN2
+    type: resource_tension
+    between: [T4, T3]
+    description: "Automated migration (T4) development vs maintaining legacy (T3)"
+    status: unresolved
+    resolution: "[CUSTOMIZE: Prioritize automation to shorten legacy maintenance]"
+    priority: 2
+
+  - id: TN3
+    type: trade_off
+    between: [B2, T2]
+    description: "Cost savings (B2) vs feature parity (T2)"
+    status: unresolved
+    resolution: "[CUSTOMIZE: Identify features that can be dropped vs must migrate]"
+    priority: 2
+
+  - id: TN4
+    type: hidden_dependency
+    between: [O2, U1]
+    description: "Support training (O2) must complete before user notification (U1)"
+    status: unresolved
+    resolution: "[CUSTOMIZE: Build training into announcement timeline]"
+    priority: 3
+
+# =============================================================================
+# REQUIRED TRUTHS - What must be true for successful deprecation
+# =============================================================================
+
+anchors:
+  required_truths:
+    - id: RT-1
+      statement: "Migration path documented and tested for all user segments"
+      status: NOT_SATISFIED
+      priority: 1
+      maps_to_constraints: [T1, T2, T4]
+
+    - id: RT-2
+      statement: "Communication plan approved by legal/marketing"
+      status: NOT_SATISFIED
+      priority: 1
+      maps_to_constraints: [U1, U3]
+
+    - id: RT-3
+      statement: "Rollback tested and operations team trained"
+      status: NOT_SATISFIED
+      priority: 1
+      maps_to_constraints: [O1, O2]
+
+    - id: RT-4
+      statement: "Success metrics and monitoring in place"
+      status: NOT_SATISFIED
+      priority: 2
+      maps_to_constraints: [B4, O3, U4]
+
+# =============================================================================
+# CUSTOMIZATION NOTES
+# =============================================================================
+
+_customization:
+  required_changes:
+    - "Replace [CUSTOMIZE: ...] values with your specific requirements"
+    - "Define acceptable churn in B1"
+    - "Set realistic timeline in B3"
+    - "Determine notice period in U1 based on user dependency"
+    - "Plan data retention in S1"
+
+  optional_additions:
+    - "Add contractual constraints if enterprise customers affected"
+    - "Add API deprecation constraints if external integrations exist"
+    - "Add localization constraints for international communication"
+    - "Add legal review constraints if terms of service changes needed"
+
+  common_removals:
+    - "Remove B2 if deprecation is not cost-motivated"
+    - "Remove T4 if user count is small enough for manual migration"
+    - "Remove O4 if infrastructure is shared/not decommissionable"
+
+# =============================================================================
+# PHASE TRACKING
+# =============================================================================
+
+iterations: []
+
+convergence:
+  status: NOT_STARTED
+  criteria: []

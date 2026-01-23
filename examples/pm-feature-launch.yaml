@@ -1,0 +1,225 @@
+# pm-feature-launch.yaml
+# Product Management Example - Feature Launch Workflow
+# This example shows how PMs can use Manifold for PRD and user story generation
+# Template: pm/feature-launch
+
+schema_version: 3
+feature: mobile-checkout-redesign
+outcome: "Increase mobile checkout conversion by 15% while maintaining system stability"
+phase: ANCHORED
+created: "2026-01-15"
+template: pm/feature-launch
+template_version: 1
+
+constraints:
+  business:
+    - id: B1
+      type: invariant
+      statement: "Must not cause conversion regression exceeding 2%"
+      rationale: "Protect existing revenue while pursuing improvements"
+
+    - id: B2
+      type: goal
+      statement: "Increase mobile checkout conversion by 15%"
+      rationale: "Primary success metric; mobile is 60% of traffic"
+
+    - id: B3
+      type: boundary
+      statement: "Launch before September 15 for back-to-school traffic"
+      rationale: "Seasonal opportunity window; delays reduce ROI"
+
+    - id: B4
+      type: goal
+      statement: "Generate $500K incremental revenue in first 30 days"
+      rationale: "Financial justification for Q4 budget approval"
+
+  technical:
+    - id: T1
+      type: boundary
+      statement: "Engineering effort must not exceed 3 sprints"
+      rationale: "Team capacity constraint; competing priorities"
+
+    - id: T2
+      type: invariant
+      statement: "Must integrate with existing payment gateway"
+      rationale: "No infrastructure changes approved this quarter"
+
+    - id: T3
+      type: boundary
+      statement: "Page load time must remain under 3 seconds on 3G"
+      rationale: "Performance regression hurts mobile conversion"
+
+    - id: T4
+      type: goal
+      statement: "Feature flag infrastructure for gradual rollout"
+      rationale: "Risk mitigation through controlled release"
+
+  user_experience:
+    - id: U1
+      type: invariant
+      statement: "Must not break existing user checkout workflows"
+      rationale: "Returning users have learned current flow"
+
+    - id: U2
+      type: boundary
+      statement: "Checkout must complete in 3 steps or fewer"
+      rationale: "Each step adds abandonment risk"
+
+    - id: U3
+      type: goal
+      statement: "First-time user success rate above 90%"
+      rationale: "Self-service checkout reduces support burden"
+
+    - id: U4
+      type: goal
+      statement: "Reduce cart abandonment by 20% at payment step"
+      rationale: "Payment step has highest drop-off; primary opportunity"
+
+  security:
+    - id: S1
+      type: invariant
+      statement: "PCI-DSS compliance must be maintained"
+      rationale: "Payment processing requirement; non-negotiable"
+
+    - id: S2
+      type: boundary
+      statement: "Legal review must approve before GA rollout"
+      rationale: "Terms of service and privacy policy implications"
+
+    - id: S3
+      type: goal
+      statement: "No increase in chargeback rate"
+      rationale: "Fraud risk with new flow needs monitoring"
+
+  operational:
+    - id: O1
+      type: invariant
+      statement: "Support team trained before any user exposure"
+      rationale: "Untrained support damages launch success"
+
+    - id: O2
+      type: boundary
+      statement: "Rollback capability within 1 hour of issue detection"
+      rationale: "Safety net for production issues"
+
+    - id: O3
+      type: goal
+      statement: "Real-time dashboard for conversion and error monitoring"
+      rationale: "Data-driven decision making during rollout"
+
+    - id: O4
+      type: goal
+      statement: "Marketing campaign coordinated with rollout phases"
+      rationale: "Maximize impact of launch announcement"
+
+tensions:
+  - id: TN1
+    type: trade_off
+    between: [B3, T1]
+    description: "September deadline vs 3-sprint capacity"
+    resolution: "MVP scope for Sept 15; Phase 2 features in October"
+    status: resolved
+    priority: 1
+
+  - id: TN2
+    type: trade_off
+    between: [O4, T4]
+    description: "Big marketing push vs gradual rollout"
+    resolution: "Soft launch Aug 15; marketing campaign at 50% rollout"
+    status: resolved
+    priority: 2
+
+  - id: TN3
+    type: hidden_dependency
+    between: [S2, B3]
+    description: "Legal review (2 weeks) vs September deadline"
+    resolution: "Submit for review Aug 25; contingency plan if delayed"
+    status: resolved
+    priority: 1
+
+  - id: TN4
+    type: resource_tension
+    between: [O1, B3]
+    description: "Support training requires stable feature; feature finalizing late"
+    resolution: "Training Aug 28-Sept 5 on staging environment"
+    status: resolved
+    priority: 2
+
+anchors:
+  required_truths:
+    - id: RT-1
+      statement: "Success metrics are instrumented and dashboards operational"
+      status: SATISFIED
+      priority: 1
+      maps_to_constraints: [B2, O3]
+      evidence:
+        - "Analytics events deployed: checkout_started, payment_submitted, order_completed"
+        - "Grafana dashboard PR merged: #1234"
+
+    - id: RT-2
+      statement: "User can complete purchase without regression in conversion"
+      status: PARTIAL
+      priority: 1
+      maps_to_constraints: [U1, U2, B1]
+      evidence:
+        - "User testing: 8/10 completed successfully"
+        - "A/A test shows 0.5% variance (within tolerance)"
+      gaps:
+        - "Need larger sample A/B test before full rollout"
+
+    - id: RT-3
+      statement: "Rollback path tested and documented"
+      status: SATISFIED
+      priority: 1
+      maps_to_constraints: [O2, T4]
+      evidence:
+        - "Feature flag tested in staging"
+        - "Runbook reviewed by on-call team"
+
+    - id: RT-4
+      statement: "All stakeholders aligned on success criteria and timeline"
+      status: SATISFIED
+      priority: 2
+      maps_to_constraints: [B2, B3, B4]
+      evidence:
+        - "Stakeholder sign-off meeting Aug 10"
+        - "OKR alignment documented in confluence"
+
+# Customization applied from template
+_customization:
+  changes_made:
+    - "Set primary metric to 15% conversion improvement (B2)"
+    - "Set timeline to September 15 (B3)"
+    - "Set engineering capacity to 3 sprints (T1)"
+    - "Added PCI-DSS compliance (S1)"
+  additions:
+    - "Added marketing coordination constraint (O4)"
+    - "Added chargeback monitoring (S3)"
+  removals: []
+
+# Phase tracking
+iterations: []
+
+convergence:
+  status: IN_PROGRESS
+  criteria:
+    - "All required truths SATISFIED"
+    - "Phased rollout plan approved"
+    - "Support training complete"
+
+# Generation tracking (added after /m4-generate --prd --stories)
+generation:
+  timestamp: "2026-01-15T10:30:00Z"
+  artifacts:
+    - path: docs/mobile-checkout-redesign/PRD.md
+      type: prd
+      satisfies: [B1, B2, B3, B4, T1, T2, T3, U1, U2, S1, S2, O1, O2, O3]
+      status: generated
+    - path: docs/mobile-checkout-redesign/STORIES.md
+      type: stories
+      satisfies: [U1, U2, U3, U4]
+      status: generated
+  coverage:
+    constraints_addressed: 17
+    constraints_total: 17
+    percentage: 100

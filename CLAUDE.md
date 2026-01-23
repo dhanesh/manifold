@@ -286,6 +286,24 @@ Pre-built constraint patterns for common scenarios:
 /m0-init api-endpoint --template=api
 ```
 
+### PM Workflow (Product Managers)
+
+For PRD and user story generation:
+
+```bash
+/m0-init mobile-checkout --template=pm/feature-launch
+/m1-constrain mobile-checkout
+/m2-tension mobile-checkout
+/m3-anchor mobile-checkout
+/m4-generate mobile-checkout --prd --stories
+```
+
+Outputs:
+- `docs/mobile-checkout/PRD.md` — Structured PRD with constraint traceability
+- `docs/mobile-checkout/STORIES.md` — User stories with acceptance criteria
+
+PM templates available: `pm/feature-launch`, `pm/experiment`, `pm/deprecation`
+
 ### Check Status
 
 ```bash
@@ -318,3 +336,5 @@ manifold validate my-feature    # Exits 2 on failure
 - [Glossary](docs/GLOSSARY.md) — Plain-language terminology explanations
 - [When NOT to Use](docs/WHEN_NOT_TO_USE.md) — Know when simpler approaches are better
 - [Constraint Templates](install/templates/README.md) — Pre-built patterns (auth, CRUD, API, payment)
+- [PM Adaptation Guide](docs/pm/guide.md) — Product Manager workflows and PRD/story generation
+- [PM Templates](install/templates/pm/README.md) — Feature launch, experiment, deprecation templates

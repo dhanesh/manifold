@@ -29,6 +29,39 @@ Is this a...
    └─ USE Manifold → Shared constraint document prevents conflicts
 ```
 
+### Product Management Decision Tree
+
+```
+Is this a PM task...
+
+┌─ Simple enhancement request?
+│  └─ DON'T use Manifold → Write a ticket with clear AC
+│
+├─ Bug report or support escalation?
+│  └─ DON'T use Manifold → Standard bug triage process
+│
+├─ Quick A/B test (< 1 week)?
+│  └─ MAYBE use /m-quick → Or standard experiment doc
+│
+├─ New feature with multiple stakeholders?
+│  └─ USE Manifold → Alignment through shared constraints
+│  └─ Template: pm/feature-launch
+│
+├─ Feature deprecation or migration?
+│  └─ USE Manifold → Risk and communication planning
+│  └─ Template: pm/deprecation
+│
+├─ Major experiment or pricing change?
+│  └─ USE Manifold → Statistical rigor and risk assessment
+│  └─ Template: pm/experiment
+│
+├─ Cross-functional initiative (eng + design + legal)?
+│  └─ USE Manifold → Constraint discovery across domains
+│
+└─ PRD needed for stakeholder alignment?
+   └─ USE Manifold → /m4-generate --prd produces structured PRD
+```
+
 ---
 
 ## When NOT to Use Manifold

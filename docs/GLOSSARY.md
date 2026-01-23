@@ -149,13 +149,24 @@ Initialized implies the structure is set up and ready. NEW could mean anything. 
 
 When explaining Manifold to different audiences:
 
+### Quick Translation Table
+
+| Audience | constraints | tensions | required truths | outcome |
+|----------|-------------|----------|-----------------|---------|
+| **Developers** | requirements | trade-offs | preconditions | success criteria |
+| **Product Managers** | requirements | trade-offs | acceptance criteria | success metric |
+| **Executives** | rules | priorities | must-haves | business objective |
+| **Design** | specifications | competing goals | validation points | design target |
+
 ### For Developers
 Use: constraints, trade-offs, preconditions
 "The manifold tracks constraints and their trade-offs."
 
 ### For Product Managers
-Use: requirements, decisions, must-haves
-"The manifold captures all requirements and the decisions about competing priorities."
+Use: requirements, trade-offs, acceptance criteria, success metrics
+"The manifold captures all requirements, documents trade-off decisions, and generates acceptance criteria."
+
+See [PM Adaptation Guide](pm/guide.md) for detailed PM workflows.
 
 ### For Executives
 Use: rules, priorities, success criteria
