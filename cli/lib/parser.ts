@@ -111,6 +111,19 @@ export interface Manifold {
   phase: ManifoldPhase;
   created?: string;
 
+  // Light mode support
+  mode?: 'light' | 'full';
+  quick_summary?: {
+    started?: string;
+    completed?: string;
+    files_changed?: number;
+    tests_added?: number;
+  };
+
+  // Template support
+  template?: string;
+  template_version?: number;
+
   context?: {
     motivation?: string[];
     prior_art?: string[];

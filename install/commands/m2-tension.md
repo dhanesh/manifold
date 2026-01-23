@@ -1,10 +1,14 @@
 ---
-description: "Surface and resolve constraint conflicts. Identifies direct conflicts, resource tensions, and trade-offs"
+description: "Surface and resolve constraint conflicts (trade-offs). Identifies direct conflicts, resource tensions, and competing requirements"
 ---
 
-# /m2-tension - Conflict Resolution
+# /m2-tension - Conflict Resolution (Trade-offs)
 
-Surface and resolve constraint conflicts.
+Surface and resolve constraint conflicts. A "tension" is when two requirements compete—satisfying one makes satisfying the other harder.
+
+> **Plain Language**: This phase asks "Which requirements conflict, and how do we balance them?"
+>
+> See [GLOSSARY.md](../../docs/GLOSSARY.md) for terminology explanations.
 
 ## Schema Compliance
 

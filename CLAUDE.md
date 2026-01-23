@@ -25,13 +25,14 @@ Forward reasoning                    Backward from outcome
 |---------|-------|---------|
 | `/m0-init <feature>` | INITIALIZED | Create constraint manifold |
 | `/m1-constrain <feature>` | CONSTRAINED | Interview-driven constraint discovery |
-| `/m2-tension <feature>` | TENSIONED | Surface conflicts between constraints |
+| `/m2-tension <feature>` | TENSIONED | Surface conflicts (trade-offs) between constraints |
 | `/m3-anchor <feature>` | ANCHORED | Backward reasoning from outcome |
 | `/m4-generate <feature>` | GENERATED | Create ALL artifacts simultaneously |
 | `/m5-verify <feature>` | VERIFIED | Validate against constraints |
 | `/m6-integrate <feature>` | - | Wire artifacts together |
 | `/m-status` | - | Show current state and next action |
 | `/m-solve` | - | Generate parallel execution plan |
+| `/m-quick <feature>` | - | **Light mode**: 3-phase workflow for simple changes |
 | `/parallel` | - | Execute tasks in parallel worktrees |
 
 ### Phase Progression
@@ -253,7 +254,7 @@ The system:
 
 ## Quick Reference
 
-### Start New Feature
+### Start New Feature (Full Workflow)
 
 ```bash
 /m0-init my-feature --outcome="Success criteria here"
@@ -262,6 +263,27 @@ The system:
 /m3-anchor my-feature
 /m4-generate my-feature --option=A
 /m5-verify my-feature
+```
+
+### Quick Changes (Light Mode)
+
+For simple changes that don't need full constraint analysis:
+
+```bash
+/m-quick fix-login-bug --outcome="Fix 504 timeout on login"
+```
+
+Light mode uses 3 phases: Constrain → Generate → Verify. See [When NOT to Use](docs/WHEN_NOT_TO_USE.md) for guidance.
+
+### Use Templates
+
+Pre-built constraint patterns for common scenarios:
+
+```bash
+/m0-init user-auth --template=auth
+/m0-init user-crud --template=crud
+/m0-init payment-flow --template=payment
+/m0-init api-endpoint --template=api
 ```
 
 ### Check Status
@@ -292,3 +314,7 @@ manifold validate my-feature    # Exits 2 on failure
 - [AGENTS.md](AGENTS.md) — Agent specifications
 - [SCHEMA_REFERENCE.md](install/commands/SCHEMA_REFERENCE.md) — Valid values
 - [Parallel Agents](docs/parallel-agents/README.md) — Parallel execution guide
+- [Practical Walkthrough](docs/walkthrough/README.md) — End-to-end feature example
+- [Glossary](docs/GLOSSARY.md) — Plain-language terminology explanations
+- [When NOT to Use](docs/WHEN_NOT_TO_USE.md) — Know when simpler approaches are better
+- [Constraint Templates](install/templates/README.md) — Pre-built patterns (auth, CRUD, API, payment)

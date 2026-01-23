@@ -2,9 +2,13 @@
 description: "Backward reasoning from desired outcome. Derives required conditions by asking 'What must be TRUE?'"
 ---
 
-# /m3-anchor - Outcome Anchoring
+# /m3-anchor - Outcome Anchoring (Requirements Derivation)
 
 Backward reasoning from desired outcome to required conditions.
+
+> **Plain Language**: Instead of planning forward ("build X, then Y, then Z"), we work backward from the goal: "For our goal to be achieved, what MUST be true?" This surfaces hidden requirements early.
+>
+> See [GLOSSARY.md](../../docs/GLOSSARY.md) for terminology explanations.
 
 ## Schema Compliance
 
