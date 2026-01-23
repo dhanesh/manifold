@@ -338,3 +338,4 @@ manifold validate my-feature    # Exits 2 on failure
 - [Constraint Templates](install/templates/README.md) — Pre-built patterns (auth, CRUD, API, payment)
 - [PM Adaptation Guide](docs/pm/guide.md) — Product Manager workflows and PRD/story generation
 - [PM Templates](install/templates/pm/README.md) — Feature launch, experiment, deprecation templates
+- [Scientific Foundations](docs/research/phase-scientific-foundations.md) — Research supporting each phase
