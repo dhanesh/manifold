@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.12.0](https://github.com/dhanesh/manifold/compare/v2.11.0...v2.12.0) (2026-01-23)
+
+### Features
+
+* add light mode, templates, and usability improvements ([68255ca](https://github.com/dhanesh/manifold/commit/68255caa8f55a42d70a4701699169794538115b8))
+
 ## [2.11.0](https://github.com/dhanesh/manifold/compare/v2.10.1...v2.11.0) (2026-01-20)
 
 ### Features
