@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.14.0](https://github.com/dhanesh/manifold/compare/v2.13.0...v2.14.0) (2026-01-28)
+
+### Features
+
+* **security:** add defense-in-depth secret detection ([265ec28](https://github.com/dhanesh/manifold/commit/265ec28270ae6248d8b1bd9e3c8cf63507c2132b))
+
 ## [2.13.0](https://github.com/dhanesh/manifold/compare/v2.12.0...v2.13.0) (2026-01-23)
 
 ### Features
