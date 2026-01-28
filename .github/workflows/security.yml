@@ -15,6 +15,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Enable as reusable workflow for CI integration (RT-5)
+  workflow_call:
   schedule:
     # O1: Weekly historical scan - Sunday midnight UTC
     - cron: '0 0 * * 0'
