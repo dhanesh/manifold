@@ -22,7 +22,7 @@ jobs:
   manifold:
     name: Verify Manifolds
     needs: security  # Satisfies: RT-5 (CI integration)
-    uses: dhanesh/manifold/.github/workflows/manifold-verify.yml@main
+    uses: ./.github/workflows/manifold-verify.yml
     with:
       fail-on-gaps: false  # Set to true to fail on non-blocking gaps
 
