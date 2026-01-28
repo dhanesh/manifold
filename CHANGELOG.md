@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.14.2](https://github.com/dhanesh/manifold/compare/v2.14.1...v2.14.2) (2026-01-28)
+
+### Bug Fixes
+
+* **ci:** add workflow_call trigger to security workflow ([ed3ccc8](https://github.com/dhanesh/manifold/commit/ed3ccc8fc21465a3c1a6ba51a321a2d4bc9b6821))
+
 ## [2.14.1](https://github.com/dhanesh/manifold/compare/v2.14.0...v2.14.1) (2026-01-28)
 
 ### Bug Fixes
