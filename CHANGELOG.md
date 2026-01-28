@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.14.3](https://github.com/dhanesh/manifold/compare/v2.14.2...v2.14.3) (2026-01-28)
+
+### Bug Fixes
+
+* **ci:** use local path for manifold-verify workflow ([a155dde](https://github.com/dhanesh/manifold/commit/a155dde823e46a7df7aff4f33494a5f91a9fc2f1))
+
 ## [2.14.2](https://github.com/dhanesh/manifold/compare/v2.14.1...v2.14.2) (2026-01-28)
 
 ### Bug Fixes
