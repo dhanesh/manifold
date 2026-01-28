@@ -1,5 +1,7 @@
-# Example CI workflow using Manifold verification
-# Copy this to your repository's .github/workflows/ directory
+# CI workflow using Manifold verification with security scanning
+# Satisfies: B2 (release velocity - security as gate), RT-5 (CI integration)
+#
+# Security scanning runs first; other jobs depend on it passing.
 
 name: CI
 
@@ -10,16 +12,37 @@ on:
     branches: [main]
 
 jobs:
-  # Run Manifold verification on push/PR
+  # Security scanning must pass first (Satisfies: S1, B1)
+  security:
+    name: Security Checks
+    uses: ./.github/workflows/security.yml
+    secrets: inherit
+
+  # Run Manifold verification after security passes
   manifold:
     name: Verify Manifolds
+    needs: security  # Satisfies: RT-5 (CI integration)
     uses: dhanesh/manifold/.github/workflows/manifold-verify.yml@main
     with:
       fail-on-gaps: false  # Set to true to fail on non-blocking gaps
 
-  # Your other CI jobs...
-  # test:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - run: npm test
+  # Tests run after security passes
+  test:
+    name: Tests
+    needs: security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run tests
+        run: bun test

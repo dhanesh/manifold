@@ -1,0 +1,337 @@
+# Security Scanning Workflow for Manifold
+# Satisfies: S1 (PR blocking), S2 (history scan), S3 (SAST), S5 (100+ patterns)
+# Satisfies: T2 (< 3min), T3 (SARIF), O1 (weekly), O2 (manual), O3 (summary)
+#
+# Tools:
+# - Gitleaks: Secret detection with 100+ patterns (RT-2)
+# - Semgrep: SAST with security-audit, secrets, typescript rules (RT-3)
+# - TruffleHog: Deep historical scanning for scheduled/manual runs (RT-7)
+# - CodeQL SARIF upload for GitHub Security tab integration (RT-4)
+
+name: Security Scanning
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # O1: Weekly historical scan - Sunday midnight UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+    # O2: Manual workflow trigger for on-demand scanning
+    inputs:
+      scan_type:
+        description: 'Type of scan to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - gitleaks
+          - semgrep
+          - historical
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: read
+
+env:
+  # T2: Timeout settings to ensure < 3 minute completion
+  GITLEAKS_TIMEOUT: 120
+  SEMGREP_TIMEOUT: 120
+
+jobs:
+  # ============================================================================
+  # Gitleaks: Secret Detection
+  # Satisfies: S1 (block PR), S5 (100+ secret types), T3 (SARIF)
+  # ============================================================================
+  gitleaks:
+    name: Secret Scanning (Gitleaks)
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name != 'workflow_dispatch' ||
+      github.event.inputs.scan_type == 'all' ||
+      github.event.inputs.scan_type == 'gitleaks'
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        id: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # S1: Enable PR comments for detected secrets
+          GITLEAKS_ENABLE_COMMENTS: true
+          # S5: Use default config which includes 100+ patterns
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: true
+          GITLEAKS_ENABLE_SARIF: true
+
+      - name: Upload Gitleaks SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+          category: gitleaks
+        continue-on-error: true
+
+      - name: Generate Gitleaks summary
+        if: always()
+        run: |
+          echo "## Gitleaks Secret Scanning Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.gitleaks.outcome }}" == "failure" ]; then
+            echo ":x: **Secrets detected!** PR merge is blocked until resolved." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Check the Security tab or PR comments for details." >> $GITHUB_STEP_SUMMARY
+          else
+            echo ":white_check_mark: No secrets detected." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ============================================================================
+  # Semgrep: SAST Scanning
+  # Satisfies: S3 (security audit rules), T3 (SARIF)
+  # ============================================================================
+  semgrep:
+    name: SAST Scanning (Semgrep)
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name != 'workflow_dispatch' ||
+      github.event.inputs.scan_type == 'all' ||
+      github.event.inputs.scan_type == 'semgrep'
+    timeout-minutes: 5
+
+    container:
+      image: semgrep/semgrep:latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        id: semgrep
+        run: |
+          mkdir -p results
+
+          # S3: Run with multiple security-focused configs
+          # - auto: Auto-detect language and apply relevant rules
+          # - p/secrets: Additional secret detection patterns
+          # - p/security-audit: General security audit rules
+          # - p/typescript: TypeScript-specific security rules
+          semgrep scan \
+            --config auto \
+            --config p/secrets \
+            --config p/security-audit \
+            --config p/typescript \
+            --sarif \
+            --sarif-output results/semgrep.sarif \
+            --json \
+            --json-output results/semgrep.json \
+            --timeout ${{ env.SEMGREP_TIMEOUT }} \
+            . || echo "semgrep_exit_code=$?" >> $GITHUB_OUTPUT
+
+      - name: Upload Semgrep SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results/semgrep.sarif
+          category: semgrep
+        continue-on-error: true
+
+      - name: Upload Semgrep results artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-results
+          path: results/
+          retention-days: 30
+
+      - name: Generate Semgrep summary
+        if: always()
+        run: |
+          echo "## Semgrep SAST Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f results/semgrep.json ]; then
+            # Count findings by severity
+            CRITICAL=$(cat results/semgrep.json | grep -o '"severity":"ERROR"' | wc -l || echo 0)
+            HIGH=$(cat results/semgrep.json | grep -o '"severity":"WARNING"' | wc -l || echo 0)
+            INFO=$(cat results/semgrep.json | grep -o '"severity":"INFO"' | wc -l || echo 0)
+
+            echo "| Severity | Count |" >> $GITHUB_STEP_SUMMARY
+            echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Critical/Error | $CRITICAL |" >> $GITHUB_STEP_SUMMARY
+            echo "| High/Warning | $HIGH |" >> $GITHUB_STEP_SUMMARY
+            echo "| Info | $INFO |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            if [ "$CRITICAL" -gt 0 ]; then
+              echo ":warning: **Critical findings detected.** Review the Security tab." >> $GITHUB_STEP_SUMMARY
+            else
+              echo ":white_check_mark: No critical findings." >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo ":grey_question: Results file not found." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Configs used:** auto, p/secrets, p/security-audit, p/typescript" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # TruffleHog: Historical Scanning
+  # Satisfies: S2 (scan entire git history), O1 (weekly), O2 (manual trigger)
+  # ============================================================================
+  historical-scan:
+    name: Historical Scanning (TruffleHog)
+    runs-on: ubuntu-latest
+    # Only run on schedule or manual trigger with 'all' or 'historical'
+    if: >
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' &&
+       (github.event.inputs.scan_type == 'all' ||
+        github.event.inputs.scan_type == 'historical'))
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run TruffleHog
+        id: trufflehog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ""
+          head: HEAD
+          extra_args: --only-verified --json
+
+      - name: Process TruffleHog results
+        if: always()
+        run: |
+          echo "## TruffleHog Historical Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Scan Type:** Full git history" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.trufflehog.outcome }}" == "failure" ]; then
+            echo ":warning: **Verified secrets found in git history!**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "These secrets may have been exposed and should be rotated:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Rotate the affected credentials immediately" >> $GITHUB_STEP_SUMMARY
+            echo "2. Use git-filter-repo to remove from history if needed" >> $GITHUB_STEP_SUMMARY
+            echo "3. Document the incident per security policy" >> $GITHUB_STEP_SUMMARY
+          else
+            echo ":white_check_mark: No verified secrets found in git history." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Scheduled weekly on Sundays at midnight UTC*" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # Security Summary
+  # Satisfies: O3 (findings visible in GitHub Actions summary), S1 (PR blocking)
+  # ============================================================================
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [gitleaks, semgrep]
+    if: always() && (github.event_name != 'schedule')
+    timeout-minutes: 2
+
+    steps:
+      - name: Check job results
+        id: check
+        run: |
+          GITLEAKS_RESULT="${{ needs.gitleaks.result }}"
+          SEMGREP_RESULT="${{ needs.semgrep.result }}"
+
+          echo "gitleaks_result=$GITLEAKS_RESULT" >> $GITHUB_OUTPUT
+          echo "semgrep_result=$SEMGREP_RESULT" >> $GITHUB_OUTPUT
+
+          # Determine overall status
+          if [ "$GITLEAKS_RESULT" == "failure" ]; then
+            echo "overall=failure" >> $GITHUB_OUTPUT
+            echo "blocking=true" >> $GITHUB_OUTPUT
+          elif [ "$GITLEAKS_RESULT" == "skipped" ] && [ "$SEMGREP_RESULT" == "skipped" ]; then
+            echo "overall=skipped" >> $GITHUB_OUTPUT
+            echo "blocking=false" >> $GITHUB_OUTPUT
+          elif [ "$SEMGREP_RESULT" == "failure" ]; then
+            echo "overall=warning" >> $GITHUB_OUTPUT
+            echo "blocking=false" >> $GITHUB_OUTPUT
+          else
+            echo "overall=success" >> $GITHUB_OUTPUT
+            echo "blocking=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate consolidated summary
+        run: |
+          echo "# Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Scanner | Status | Blocking |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|----------|" >> $GITHUB_STEP_SUMMARY
+
+          # Gitleaks status
+          if [ "${{ steps.check.outputs.gitleaks_result }}" == "success" ]; then
+            echo "| Gitleaks (Secrets) | :white_check_mark: Passed | Yes |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.check.outputs.gitleaks_result }}" == "failure" ]; then
+            echo "| Gitleaks (Secrets) | :x: **Failed** | **Yes** |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.check.outputs.gitleaks_result }}" == "skipped" ]; then
+            echo "| Gitleaks (Secrets) | :fast_forward: Skipped | Yes |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Gitleaks (Secrets) | :grey_question: Unknown | Yes |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Semgrep status
+          if [ "${{ steps.check.outputs.semgrep_result }}" == "success" ]; then
+            echo "| Semgrep (SAST) | :white_check_mark: Passed | No |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.check.outputs.semgrep_result }}" == "failure" ]; then
+            echo "| Semgrep (SAST) | :warning: Findings | No |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.check.outputs.semgrep_result }}" == "skipped" ]; then
+            echo "| Semgrep (SAST) | :fast_forward: Skipped | No |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Semgrep (SAST) | :grey_question: Unknown | No |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Overall assessment
+          if [ "${{ steps.check.outputs.blocking }}" == "true" ]; then
+            echo "## :x: PR Merge Blocked" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Secrets detected!** This PR cannot be merged until secrets are removed." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Required Actions:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Remove the detected secrets from your code" >> $GITHUB_STEP_SUMMARY
+            echo "2. If already committed, rotate the exposed credentials" >> $GITHUB_STEP_SUMMARY
+            echo "3. Use environment variables or a secrets manager instead" >> $GITHUB_STEP_SUMMARY
+            echo "4. Push a new commit with the fixes" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.check.outputs.overall }}" == "warning" ]; then
+            echo "## :warning: Security Findings (Non-Blocking)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "SAST findings detected. Review the Security tab for details." >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.check.outputs.overall }}" == "success" ]; then
+            echo "## :white_check_mark: All Security Checks Passed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "No secrets or critical security issues detected." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*View detailed findings in the [Security tab](../../security/code-scanning)*" >> $GITHUB_STEP_SUMMARY
+
+      # S1: Fail the workflow if secrets are detected (blocks PR merge)
+      - name: Fail if secrets detected
+        if: steps.check.outputs.blocking == 'true'
+        run: |
+          echo "::error::Secrets detected! PR merge is blocked."
+          exit 1

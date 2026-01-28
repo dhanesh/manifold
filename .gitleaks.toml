@@ -1,0 +1,214 @@
+# Gitleaks Configuration for Manifold
+# Satisfies: S4 (allowlist mechanism), T5 (tool stack)
+# TN2 Resolution: All allowlist entries must have documented rationale
+#
+# This configuration enables secret detection while minimizing false positives
+# through carefully documented allowlists and path exclusions.
+
+# =============================================================================
+# GLOBAL SETTINGS
+# =============================================================================
+
+# Use gitleaks default rule set as baseline
+# This includes detection for AWS keys, GitHub tokens, private keys, etc.
+[extend]
+useDefault = true
+
+# =============================================================================
+# PATH EXCLUSIONS
+# =============================================================================
+# These paths are excluded from scanning entirely.
+# Rationale documented for each exclusion.
+
+[allowlist]
+  # Paths to exclude from secret scanning
+  paths = [
+    # Package manager artifacts - contain dependency metadata, not secrets
+    # Rationale: Lock files may contain registry URLs that trigger false positives
+    '''node_modules/''',
+    '''bun\.lock''',
+    '''package-lock\.json''',
+    '''yarn\.lock''',
+    '''pnpm-lock\.yaml''',
+
+    # Test fixtures - intentionally contain fake/mock credentials for testing
+    # Rationale: Test data requires fake credentials to validate secret detection
+    '''tests/fixtures/''',
+    '''__tests__/fixtures/''',
+
+    # Example files - contain placeholder credentials for documentation
+    # Rationale: Examples demonstrate usage patterns with obviously fake values
+    '''examples/''',
+
+    # Archived content - historical files not in active use
+    # Rationale: Archive may contain old examples; not part of active codebase
+    '''_archive/''',
+
+    # Test files - may contain fake credentials for testing purposes
+    # Rationale: Unit/integration tests often use mock API keys and tokens
+    '''.*\.test\.ts$''',
+    '''.*\.spec\.ts$''',
+    '''.*\.test\.js$''',
+    '''.*\.spec\.js$''',
+
+    # Build output directories
+    # Rationale: Generated files should not contain secrets; source is scanned
+    '''dist/''',
+    '''build/''',
+    '''\.next/''',
+
+    # IDE and editor directories
+    # Rationale: Editor config files don't contain application secrets
+    '''\.vscode/''',
+    '''\.idea/''',
+  ]
+
+# =============================================================================
+# ALLOWLIST PATTERNS - PLACEHOLDER CREDENTIALS
+# =============================================================================
+# These regex patterns match intentionally fake/placeholder credentials
+# that appear in documentation, examples, and configuration templates.
+
+  # Placeholder API keys - obviously fake values for documentation
+  # Rationale: These patterns are clearly placeholders, not real secrets
+  regexes = [
+    # Generic placeholder patterns
+    '''YOUR_API_KEY_HERE''',
+    '''YOUR_SECRET_HERE''',
+    '''YOUR_TOKEN_HERE''',
+    '''REPLACE_WITH_[A-Z_]+''',
+    '''<YOUR_[A-Z_]+>''',
+    '''<REPLACE_[A-Z_]+>''',
+
+    # Example/placeholder key patterns
+    '''example-[a-z]+-key''',
+    '''example-[a-z]+-secret''',
+    '''example-[a-z]+-token''',
+    '''test-[a-z]+-key''',
+    '''test-[a-z]+-secret''',
+    '''placeholder-[a-z]+-key''',
+
+    # Documentation placeholders
+    '''sk_test_[xX]+''',
+    '''pk_test_[xX]+''',
+    '''xxx+''',
+    '''yyy+''',
+    '''zzz+''',
+
+    # Common fake credential patterns
+    '''fake[-_]?api[-_]?key''',
+    '''fake[-_]?secret''',
+    '''fake[-_]?token''',
+    '''mock[-_]?api[-_]?key''',
+    '''mock[-_]?secret''',
+    '''mock[-_]?token''',
+    '''dummy[-_]?api[-_]?key''',
+    '''dummy[-_]?secret''',
+    '''dummy[-_]?token''',
+  ]
+
+  # Stop words - strings that indicate a value is not a real secret
+  # Rationale: These terms in context suggest example/placeholder values
+  stopwords = [
+    "example",
+    "placeholder",
+    "your-",
+    "replace",
+    "changeme",
+    "fixme",
+    "todo",
+    "xxx",
+    "yyy",
+    "fake",
+    "mock",
+    "dummy",
+    "test",
+    "sample",
+    "demo",
+    "template",
+  ]
+
+# =============================================================================
+# ALLOWLIST PATTERNS - GITHUB URLs
+# =============================================================================
+# GitHub URLs can trigger false positives because they contain path segments
+# that resemble tokens (40-character hex strings in commit SHAs, etc.)
+
+[[rules]]
+  id = "github-url-false-positive"
+  description = "GitHub URLs that look like tokens but are actually URLs"
+  regex = '''github\.com/[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+'''
+  [rules.allowlist]
+    description = "GitHub repository URLs are not secrets"
+    regexes = [
+      '''https?://github\.com/[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+''',
+      '''git@github\.com:[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+''',
+    ]
+
+# =============================================================================
+# ALLOWLIST PATTERNS - COMMON FALSE POSITIVES
+# =============================================================================
+
+[[rules]]
+  id = "high-entropy-base64-allowlist"
+  description = "High entropy base64 strings that are not secrets"
+  [rules.allowlist]
+    description = "Known safe high-entropy patterns"
+    regexes = [
+      # Package integrity hashes (SHA-512 in lock files)
+      '''sha512-[A-Za-z0-9+/=]{86,}''',
+      # Source map data URLs
+      '''data:application/json;base64,''',
+      # Font data URLs
+      '''data:font/[a-z]+;base64,''',
+      # Image data URLs in tests/examples
+      '''data:image/[a-z]+;base64,''',
+    ]
+
+# =============================================================================
+# CUSTOM RULES - PROJECT-SPECIFIC
+# =============================================================================
+# Add project-specific rules here as needed.
+# Each rule should have documented rationale.
+
+# Example: If Manifold uses specific API key formats in the future
+# [[rules]]
+#   id = "manifold-api-key"
+#   description = "Manifold API key format"
+#   regex = '''mfld_[a-zA-Z0-9]{32}'''
+#   tags = ["key", "manifold"]
+
+# =============================================================================
+# ENTROPY SETTINGS
+# =============================================================================
+# Adjust entropy thresholds to reduce false positives while maintaining security
+
+# Note: These settings use gitleaks defaults which are well-tuned.
+# Uncomment and adjust only if experiencing persistent false positives.
+
+# [rules.entropy]
+#   enabled = true
+#   min = 3.5
+#   max = 8.0
+#   group = 0
+
+# =============================================================================
+# DOCUMENTATION
+# =============================================================================
+#
+# ADDING NEW ALLOWLIST ENTRIES:
+# 1. Document the specific pattern being allowlisted
+# 2. Explain WHY it's a false positive (not a real secret)
+# 3. Be as specific as possible to avoid over-broad allowlisting
+# 4. Review allowlist entries quarterly for continued relevance
+#
+# HANDLING TRUE POSITIVES:
+# 1. Immediately rotate any exposed credentials
+# 2. Add the file to .gitignore if it should contain secrets
+# 3. Use environment variables or secret management instead
+# 4. Update documentation to prevent future occurrences
+#
+# REFERENCES:
+# - Gitleaks documentation: https://github.com/gitleaks/gitleaks
+# - Manifold security constraints: .manifold/security-tooling.yaml
+# - S4 constraint: Allowlist mechanism with documented justification

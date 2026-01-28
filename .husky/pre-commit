@@ -1,0 +1,42 @@
+#!/usr/bin/env sh
+# Husky pre-commit hook for secret detection
+# Satisfies: T1 (< 5s), U1 (clear errors), U2 (graceful skip)
+# TN1 Resolution: --staged flag for speed
+# TN3 Resolution: CI backstop is the real enforcement
+#
+# Scans staged files for secrets before allowing commit.
+# Uses gitleaks for detection with project-specific config.
+
+# Check if gitleaks is installed
+if ! command -v gitleaks >/dev/null 2>&1; then
+    echo "Warning: gitleaks not installed - skipping local secret detection"
+    echo "  Install: brew install gitleaks (macOS) or see https://github.com/gitleaks/gitleaks"
+    echo "  Note: CI will still enforce secret detection on push"
+    exit 0
+fi
+
+# Run gitleaks on staged files only (fast, satisfies T1)
+if ! gitleaks protect --staged --config .gitleaks.toml --verbose; then
+    echo ""
+    echo "=========================================="
+    echo "  SECRET DETECTED IN STAGED FILES"
+    echo "=========================================="
+    echo ""
+    echo "Options to resolve:"
+    echo ""
+    echo "  1. RECOMMENDED: Remove the secret and use environment variables"
+    echo "     - Move secrets to .env (already in .gitignore)"
+    echo "     - Reference via process.env.YOUR_SECRET"
+    echo ""
+    echo "  2. FALSE POSITIVE: Add pattern to .gitleaks.toml allowlist"
+    echo "     - Edit .gitleaks.toml and add to [allowlist] section"
+    echo "     - See docs/SECURITY.md for examples"
+    echo ""
+    echo "  3. EMERGENCY ONLY: git commit --no-verify"
+    echo "     - NOT RECOMMENDED - CI will still block on push"
+    echo "     - Only use if you need to commit work-in-progress locally"
+    echo ""
+    echo "See docs/SECURITY.md for detailed guidance."
+    echo ""
+    exit 1
+fi
