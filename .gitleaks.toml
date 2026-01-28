@@ -146,24 +146,15 @@ useDefault = true
     ]
 
 # =============================================================================
-# ALLOWLIST PATTERNS - COMMON FALSE POSITIVES
+# GLOBAL ALLOWLIST - COMMON FALSE POSITIVES
 # =============================================================================
+# These patterns are added to the global allowlist to prevent false positives
+# from high-entropy strings that are not secrets.
 
-[[rules]]
-  id = "high-entropy-base64-allowlist"
-  description = "High entropy base64 strings that are not secrets"
-  [rules.allowlist]
-    description = "Known safe high-entropy patterns"
-    regexes = [
-      # Package integrity hashes (SHA-512 in lock files)
-      '''sha512-[A-Za-z0-9+/=]{86,}''',
-      # Source map data URLs
-      '''data:application/json;base64,''',
-      # Font data URLs
-      '''data:font/[a-z]+;base64,''',
-      # Image data URLs in tests/examples
-      '''data:image/[a-z]+;base64,''',
-    ]
+# Note: The following patterns are already handled by path exclusions above:
+# - Package integrity hashes (in lock files - excluded by path)
+# - Source map data URLs (in dist/ - excluded by path)
+# - Base64 encoded fonts/images (typically in build output - excluded by path)
 
 # =============================================================================
 # CUSTOM RULES - PROJECT-SPECIFIC
