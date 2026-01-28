@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.14.5](https://github.com/dhanesh/manifold/compare/v2.14.4...v2.14.5) (2026-01-28)
+
+### Bug Fixes
+
+* **manifold:** add required schema fields to secret-detection ([cb0b0d0](https://github.com/dhanesh/manifold/commit/cb0b0d0ec7e42750ae01f7ef64b7ee21393bc731))
+
 ## [2.14.4](https://github.com/dhanesh/manifold/compare/v2.14.3...v2.14.4) (2026-01-28)
 
 ### Bug Fixes
