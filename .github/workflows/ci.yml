@@ -1,7 +1,9 @@
-# CI workflow using Manifold verification with security scanning
-# Satisfies: B2 (release velocity - security as gate), RT-5 (CI integration)
+# CI workflow for Manifold
+# Satisfies: B2 (release velocity), RT-5 (CI integration)
 #
-# Security scanning runs first; other jobs depend on it passing.
+# Security scanning runs as a separate workflow (security.yml) which
+# triggers on the same events. Use branch protection rules to require
+# security checks to pass before merging.
 
 name: CI
 
@@ -12,24 +14,16 @@ on:
     branches: [main]
 
 jobs:
-  # Security scanning must pass first (Satisfies: S1, B1)
-  security:
-    name: Security Checks
-    uses: ./.github/workflows/security.yml
-    secrets: inherit
-
-  # Run Manifold verification after security passes
+  # Run Manifold verification
   manifold:
     name: Verify Manifolds
-    needs: security  # Satisfies: RT-5 (CI integration)
     uses: ./.github/workflows/manifold-verify.yml
     with:
       fail-on-gaps: false  # Set to true to fail on non-blocking gaps
 
-  # Tests run after security passes
+  # Run tests
   test:
     name: Tests
-    needs: security
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
