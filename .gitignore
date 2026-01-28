@@ -54,3 +54,6 @@ build/
 # for team collaboration and cross-machine continuity
 # ===========================================
 *.bun-build
+
+# Serena MCP local config
+.serena/
