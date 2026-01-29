@@ -101,6 +101,44 @@ describe('validateManifold', () => {
     expect(result.valid).toBe(true);
   });
 
+  test('fails on missing tension description', () => {
+    const manifold = {
+      feature: 'test',
+      phase: 'TENSIONED',
+      tensions: [
+        {
+          id: 'TN1',
+          type: 'trade_off',
+          between: ['A', 'B'],
+          // Missing 'description' field - this is the critical validation
+          status: 'unresolved'
+        }
+      ]
+    };
+    const result = validateManifold(manifold);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.field.includes('description'))).toBe(true);
+  });
+
+  test('fails on wrong field name for tension (statement instead of description)', () => {
+    const manifold = {
+      feature: 'test',
+      phase: 'TENSIONED',
+      tensions: [
+        {
+          id: 'TN1',
+          type: 'trade_off',
+          between: ['A', 'B'],
+          statement: 'This is wrong - tensions use description, not statement',
+          status: 'unresolved'
+        }
+      ]
+    };
+    const result = validateManifold(manifold);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.field.includes('description'))).toBe(true);
+  });
+
   test('detects schema v2 from iterations', () => {
     const manifold = {
       feature: 'test',

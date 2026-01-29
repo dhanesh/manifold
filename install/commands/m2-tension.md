@@ -22,6 +22,44 @@ Surface and resolve constraint conflicts. A "tension" is when two requirements c
 
 > See SCHEMA_REFERENCE.md for all valid values. Do NOT invent new tension types or statuses.
 
+## ⚠️ CRITICAL: Tension Field Names
+
+**Tensions use `description`, NOT `statement`.**
+
+Each tension MUST have these fields:
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `id` | string | ✅ | Format: TN1, TN2, TN3... |
+| `type` | string | ✅ | `trade_off`, `resource_tension`, `hidden_dependency` |
+| `description` | string | ✅ | The tension text ← **NOT 'statement'** |
+| `between` | array | ✅ | Array of constraint IDs in conflict (min 2) |
+| `status` | string | ✅ | `resolved` or `unresolved` |
+| `resolution` | string | If resolved | How the tension was resolved |
+
+### Correct Example
+```yaml
+tensions:
+  - id: TN1
+    type: trade_off
+    description: "Performance vs Safety trade-off"  # ← CORRECT: 'description'
+    between: [T1, B1]
+    status: resolved
+    resolution: "Use caching to achieve both"
+```
+
+### WRONG (will fail validation)
+```yaml
+tensions:
+  - id: TN1
+    type: trade_off
+    statement: "Performance vs Safety"  # ← WRONG: 'statement' is for constraints
+    between: [T1, B1]
+    status: resolved
+```
+
+> **Memory Aid**: Tensions _describe_ conflicts → `description`
+
 ## v3 Schema Compliance
 
 When recording tensions, maintain v3 schema structure and record iterations:

@@ -18,6 +18,40 @@ Interview-driven constraint discovery across 5 categories.
 
 > See SCHEMA_REFERENCE.md for all valid values. Do NOT invent new types or categories.
 
+## ⚠️ CRITICAL: Constraint Field Names
+
+**Constraints use `statement`, NOT `description`.**
+
+Each constraint MUST have these fields:
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `id` | string | ✅ | Format: B1, T1, U1, S1, O1 |
+| `statement` | string | ✅ | The constraint text ← **NOT 'description'** |
+| `type` | string | ✅ | `invariant`, `goal`, or `boundary` |
+| `rationale` | string | ✅ | Why this constraint exists |
+
+### Correct Example
+```yaml
+constraints:
+  business:
+    - id: B1
+      statement: "No duplicate payments allowed"  # ← CORRECT: 'statement'
+      type: invariant
+      rationale: "Duplicate charges cause chargebacks"
+```
+
+### WRONG (will fail validation)
+```yaml
+constraints:
+  business:
+    - id: B1
+      description: "No duplicate payments"  # ← WRONG: 'description' is for tensions
+      type: invariant
+```
+
+> **Memory Aid**: Constraints _state_ what must be true → `statement`
+
 ## v3 Schema Compliance
 
 When adding constraints, ensure the manifold maintains v3 schema structure:

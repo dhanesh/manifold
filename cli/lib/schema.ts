@@ -330,6 +330,12 @@ function validateTensions(
       });
     }
 
+    // Description required
+    // Satisfies: Schema enforcement - tensions use 'description', not 'statement'
+    if (!tension.description || typeof tension.description !== 'string') {
+      errors.push({ field: `${fieldPrefix}.description`, message: 'Tension must have a string "description"' });
+    }
+
     // Resolution required if resolved
     if (tension.status === 'resolved' && !tension.resolution) {
       warnings.push({

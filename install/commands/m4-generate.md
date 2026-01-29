@@ -317,7 +317,17 @@ User runs: /m4-generate payment-retry --option=C
 
 10. **Update manifold YAML** with generation tracking (artifacts, coverage)
 11. Set phase to GENERATED
-12. Display summary with constraint coverage
+12. **⚠️ MANDATORY POST-GENERATION VALIDATION**
+    ```bash
+    bun run cli/index.ts validate <feature> --strict
+    ```
+    - If validation fails, fix the YAML errors BEFORE proceeding
+    - Common issues:
+      - Constraints missing `statement` field
+      - Tensions missing `description` field
+      - Required truths missing `statement` field
+    - See SCHEMA_QUICK_REFERENCE.md for field mappings
+13. Display summary with constraint coverage
 
 ---
 

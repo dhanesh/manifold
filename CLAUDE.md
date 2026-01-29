@@ -94,6 +94,8 @@ manifold verify [feature]      # Verify artifacts exist
 | `SPECIFICATION_READY` | Spec complete, ready for implementation |
 
 > **CRITICAL**: Use ONLY these exact values. See `install/commands/SCHEMA_REFERENCE.md` for complete reference.
+>
+> **Field Names**: Constraints use `statement`, Tensions use `description`. See `install/commands/SCHEMA_QUICK_REFERENCE.md` for quick lookup.
 
 ## File Organization
 

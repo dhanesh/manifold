@@ -1,42 +1,93 @@
 #!/usr/bin/env sh
-# Husky pre-commit hook for secret detection
+# Husky pre-commit hook for secret detection and manifold validation
 # Satisfies: T1 (< 5s), U1 (clear errors), U2 (graceful skip)
 # TN1 Resolution: --staged flag for speed
 # TN3 Resolution: CI backstop is the real enforcement
 #
 # Scans staged files for secrets before allowing commit.
-# Uses gitleaks for detection with project-specific config.
+# Validates manifold YAML schemas before allowing commit.
+
+# ============================================================
+# SECRET DETECTION (gitleaks)
+# ============================================================
 
 # Check if gitleaks is installed
 if ! command -v gitleaks >/dev/null 2>&1; then
     echo "Warning: gitleaks not installed - skipping local secret detection"
     echo "  Install: brew install gitleaks (macOS) or see https://github.com/gitleaks/gitleaks"
     echo "  Note: CI will still enforce secret detection on push"
-    exit 0
+else
+    # Run gitleaks on staged files only (fast, satisfies T1)
+    if ! gitleaks protect --staged --config .gitleaks.toml --verbose; then
+        echo ""
+        echo "=========================================="
+        echo "  SECRET DETECTED IN STAGED FILES"
+        echo "=========================================="
+        echo ""
+        echo "Options to resolve:"
+        echo ""
+        echo "  1. RECOMMENDED: Remove the secret and use environment variables"
+        echo "     - Move secrets to .env (already in .gitignore)"
+        echo "     - Reference via process.env.YOUR_SECRET"
+        echo ""
+        echo "  2. FALSE POSITIVE: Add pattern to .gitleaks.toml allowlist"
+        echo "     - Edit .gitleaks.toml and add to [allowlist] section"
+        echo "     - See docs/SECURITY.md for examples"
+        echo ""
+        echo "  3. EMERGENCY ONLY: git commit --no-verify"
+        echo "     - NOT RECOMMENDED - CI will still block on push"
+        echo "     - Only use if you need to commit work-in-progress locally"
+        echo ""
+        echo "See docs/SECURITY.md for detailed guidance."
+        echo ""
+        exit 1
+    fi
 fi
 
-# Run gitleaks on staged files only (fast, satisfies T1)
-if ! gitleaks protect --staged --config .gitleaks.toml --verbose; then
-    echo ""
-    echo "=========================================="
-    echo "  SECRET DETECTED IN STAGED FILES"
-    echo "=========================================="
-    echo ""
-    echo "Options to resolve:"
-    echo ""
-    echo "  1. RECOMMENDED: Remove the secret and use environment variables"
-    echo "     - Move secrets to .env (already in .gitignore)"
-    echo "     - Reference via process.env.YOUR_SECRET"
-    echo ""
-    echo "  2. FALSE POSITIVE: Add pattern to .gitleaks.toml allowlist"
-    echo "     - Edit .gitleaks.toml and add to [allowlist] section"
-    echo "     - See docs/SECURITY.md for examples"
-    echo ""
-    echo "  3. EMERGENCY ONLY: git commit --no-verify"
-    echo "     - NOT RECOMMENDED - CI will still block on push"
-    echo "     - Only use if you need to commit work-in-progress locally"
-    echo ""
-    echo "See docs/SECURITY.md for detailed guidance."
-    echo ""
-    exit 1
+# ============================================================
+# MANIFOLD SCHEMA VALIDATION
+# Satisfies: Schema enforcement at commit time
+# ============================================================
+
+# Get list of staged manifold files (main manifold YAML files only)
+MANIFOLD_FILES=$(git diff --cached --name-only | grep '^\.manifold/.*\.yaml$' | grep -v '\.\(anchor\|verify\|integrate\)\.' || true)
+
+if [ -n "$MANIFOLD_FILES" ]; then
+    echo "Validating manifold schemas..."
+
+    VALIDATION_FAILED=0
+
+    for file in $MANIFOLD_FILES; do
+        # Extract feature name from filename
+        feature=$(basename "$file" .yaml)
+
+        # Run validation (suppress non-error output for clean commits)
+        if ! bun run cli/index.ts validate "$feature" --strict 2>/dev/null; then
+            echo "❌ Manifold validation failed: $feature"
+            VALIDATION_FAILED=1
+        fi
+    done
+
+    if [ $VALIDATION_FAILED -eq 1 ]; then
+        echo ""
+        echo "=========================================="
+        echo "  MANIFOLD SCHEMA VALIDATION FAILED"
+        echo "=========================================="
+        echo ""
+        echo "Fix the schema errors above, then re-stage and commit."
+        echo ""
+        echo "To see detailed validation errors:"
+        echo "  bun run cli/index.ts validate <feature> --all"
+        echo ""
+        echo "Common issues:"
+        echo "  - Constraints use 'statement', not 'description'"
+        echo "  - Tensions use 'description', not 'statement'"
+        echo "  - Required truths use 'statement'"
+        echo ""
+        echo "See install/commands/SCHEMA_QUICK_REFERENCE.md for field reference."
+        echo ""
+        exit 1
+    fi
+
+    echo "✅ All manifold schemas valid"
 fi
