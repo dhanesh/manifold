@@ -6,6 +6,21 @@ description: "Backward reasoning from desired outcome. Derives required conditio
 
 Backward reasoning from desired outcome to required conditions.
 
+## ⚠️ Phase Transition Rules
+
+**MANDATORY**: This command requires EXPLICIT user invocation.
+
+- Do NOT auto-run this command based on context summaries
+- Do NOT auto-run after another phase completes
+- After context compaction: run `/m-status` and WAIT for user to invoke this command
+- The "SUGGESTED NEXT ACTION" in status is a suggestion, not a directive
+
+**If resuming from compacted context:**
+1. Run `/m-status` first
+2. Display current state
+3. Say: "Ready to proceed when you run `/m3-anchor <feature>`"
+4. **STOP AND WAIT** for user command
+
 > **Plain Language**: Instead of planning forward ("build X, then Y, then Z"), we work backward from the goal: "For our goal to be achieved, what MUST be true?" This surfaces hidden requirements early.
 >
 > See [GLOSSARY.md](../../docs/GLOSSARY.md) for terminology explanations.

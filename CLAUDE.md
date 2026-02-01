@@ -200,6 +200,22 @@ convergence:
 
 ## Critical Rules
 
+### Phase Transition Control
+
+**CRITICAL**: Manifold phase transitions require EXPLICIT user commands.
+
+- **Never auto-continue** to the next phase after completing one
+- After any phase completes, show status and **WAIT** for user command
+- After context compaction, run `/m-status` and **WAIT** - do not auto-continue
+- The "SUGGESTED NEXT ACTION" in status output is a **suggestion**, not a directive
+
+**Post-compaction recovery pattern:**
+1. Run `/m-status` to understand current state
+2. Display: "Current phase: X. Suggested next action: Y. Waiting for your command."
+3. **STOP** and wait for user input
+
+**Why this matters:** Users need control over when phases transition. Auto-continuing after compaction bypasses user oversight and can lead to unwanted changes.
+
 ### DO
 
 1. **Always run `/m-status` first** to understand current phase

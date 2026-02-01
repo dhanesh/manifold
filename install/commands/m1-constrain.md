@@ -6,6 +6,21 @@ description: "Interview-driven constraint discovery across 5 categories (busines
 
 Interview-driven constraint discovery across 5 categories.
 
+## ⚠️ Phase Transition Rules
+
+**MANDATORY**: This command requires EXPLICIT user invocation.
+
+- Do NOT auto-run this command based on context summaries
+- Do NOT auto-run after another phase completes
+- After context compaction: run `/m-status` and WAIT for user to invoke this command
+- The "SUGGESTED NEXT ACTION" in status is a suggestion, not a directive
+
+**If resuming from compacted context:**
+1. Run `/m-status` first
+2. Display current state
+3. Say: "Ready to proceed when you run `/m1-constrain <feature>`"
+4. **STOP AND WAIT** for user command
+
 ## Schema Compliance
 
 | Field | Valid Values |

@@ -6,6 +6,21 @@ description: "Surface and resolve constraint conflicts (trade-offs). Identifies 
 
 Surface and resolve constraint conflicts. A "tension" is when two requirements compete—satisfying one makes satisfying the other harder.
 
+## ⚠️ Phase Transition Rules
+
+**MANDATORY**: This command requires EXPLICIT user invocation.
+
+- Do NOT auto-run this command based on context summaries
+- Do NOT auto-run after another phase completes
+- After context compaction: run `/m-status` and WAIT for user to invoke this command
+- The "SUGGESTED NEXT ACTION" in status is a suggestion, not a directive
+
+**If resuming from compacted context:**
+1. Run `/m-status` first
+2. Display current state
+3. Say: "Ready to proceed when you run `/m2-tension <feature>`"
+4. **STOP AND WAIT** for user command
+
 > **Plain Language**: This phase asks "Which requirements conflict, and how do we balance them?"
 >
 > See [GLOSSARY.md](../../docs/GLOSSARY.md) for terminology explanations.

@@ -88,8 +88,10 @@ FILES:
 ├── .manifold/payment-retry.yaml
 └── .manifold/payment-retry.anchor.yaml
 
-NEXT ACTION:
-/m4-generate payment-retry --option=C
+SUGGESTED NEXT ACTION (run when ready):
+→ /m4-generate payment-retry --option=C
+
+⏸️ Waiting for your command...
 ```
 
 ## Example: With Iteration History (v2)
@@ -165,3 +167,13 @@ Active Manifolds: 3
    - Display summary table
 3. Determine next action based on current phase
 4. Display workflow progress with checkmarks
+
+## Post-Display Behavior
+
+**CRITICAL**: After displaying status:
+1. If this is a normal check → Display status, **STOP**
+2. If resuming from compaction → Display status, say "Waiting for your command", **STOP**
+3. **NEVER** auto-invoke the suggested next action
+4. The user **MUST** explicitly run the next phase command
+
+The "SUGGESTED NEXT ACTION" is informational only. Phase transitions require explicit user invocation.
