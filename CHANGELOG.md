@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.14.7](https://github.com/dhanesh/manifold/compare/v2.14.6...v2.14.7) (2026-02-01)
+
+### Bug Fixes
+
+* **security:** remove rule that caused 81 false positive leaks ([b4bcc03](https://github.com/dhanesh/manifold/commit/b4bcc039de8695dfd7abbcdf9c9a754d893d7acb))
+
 ## [2.14.6](https://github.com/dhanesh/manifold/compare/v2.14.5...v2.14.6) (2026-01-29)
 
 ### Bug Fixes
