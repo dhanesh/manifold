@@ -224,6 +224,101 @@ mergeStrategy: sequential  # sequential, squash, rebase
 
 The `/m4-generate` command automatically suggests parallel execution when generating 3+ artifacts across different modules.
 
+## Autonomous Development with Ralph
+
+Manifold integrates seamlessly with the [Ralph Wiggum technique](https://ghuntley.com/ralph/)—an autonomous loop methodology that runs AI agents for hours, not minutes.
+
+### Prerequisites
+
+Install the Ralph Wiggum plugin:
+```bash
+/plugin install ralph-wiggum@claude-plugins-official
+```
+
+### Why Manifold + Ralph?
+
+| Traditional Ralph | Manifold Ralph |
+|-------------------|----------------|
+| Vague "done" criteria | Constraint-defined completion |
+| Hope tests pass | Constraints derive tests |
+| Iteration finds requirements | Constraints known upfront |
+| Manual success checking | `manifold verify` automation |
+
+Manifold's constraint-first approach provides exactly what Ralph needs: **clear, verifiable, programmatic completion criteria**.
+
+### The Manifold Ralph Prompt
+
+```markdown
+# MANIFOLD_RALPH_PROMPT.md
+
+## Objective
+Build <FEATURE> with constraint satisfaction.
+
+## Constraint Source
+Study `.manifold/<FEATURE>.yaml` for all requirements.
+Every constraint must be SATISFIED before completion.
+
+## Workflow
+1. Run `/m-status <FEATURE>` to understand current phase
+2. Execute the next phase command based on status:
+   - INITIALIZED → `/m1-constrain <FEATURE>`
+   - CONSTRAINED → `/m2-tension <FEATURE> --resolve`
+   - TENSIONED → `/m3-anchor <FEATURE>`
+   - ANCHORED → `/m4-generate <FEATURE>`
+   - GENERATED → `/m5-verify <FEATURE>`
+3. After each phase, commit changes
+4. If VERIFIED phase with gaps, run `/m4-generate` to fix gaps, then re-verify
+
+## Completion Criteria
+Run: `manifold verify <FEATURE> --json`
+
+Complete when ALL of:
+- All INVARIANT constraints: SATISFIED
+- Test coverage ≥ 80%
+- Zero blocking gaps
+- convergence.status = CONVERGED
+
+Output: <promise>MANIFOLD_COMPLETE</promise>
+
+## If Stuck After 15 Iterations
+- Document blocking constraints in `.manifold/<FEATURE>.yaml`
+- List what was attempted
+- Output: <promise>MANIFOLD_BLOCKED</promise>
+```
+
+### Running It
+
+```bash
+# Initialize the feature first
+/m0-init payment-retry --outcome="95% retry success rate"
+
+# Then let Ralph handle the rest
+/ralph-loop "Build payment-retry following Manifold workflow.
+Study .manifold/payment-retry.yaml for constraints.
+Run /m-status payment-retry, execute next phase.
+Repeat until VERIFIED with CONVERGED status.
+Output <promise>MANIFOLD_COMPLETE</promise> when done." \
+  --max-iterations 50 \
+  --completion-promise "MANIFOLD_COMPLETE"
+```
+
+### What Happens
+
+1. **Phase 1-3**: Claude discovers constraints, surfaces tensions, anchors to outcome
+2. **Phase 4**: Generates ALL artifacts (code, tests, docs, runbooks)
+3. **Phase 5**: Verifies against constraints, finds gaps
+4. **Iteration**: Fixes gaps, re-verifies until CONVERGED
+5. **Completion**: Outputs `<promise>MANIFOLD_COMPLETE</promise>`
+
+### Why This Works
+
+| Ralph Principle | Manifold Implementation |
+|-----------------|-------------------------|
+| Iteration > Perfection | Generate → Verify → Fix gaps → Re-verify |
+| Clear completion | `convergence.status: CONVERGED` |
+| Failures are data | Gaps identify exactly what to fix |
+| Persistence wins | Loop until all constraints SATISFIED |
+
 ## Why Manifold?
 
 ### 1. Surface Conflicts Before Coding
