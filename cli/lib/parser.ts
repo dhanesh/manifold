@@ -1,6 +1,7 @@
 /**
- * YAML Parser for Manifold CLI
- * Satisfies: RT-1 (Fast/safe YAML parsing), T2 (Schema v1/v2 detection), S1 (Safe parsing)
+ * Parser for Manifold CLI
+ * Supports JSON (preferred) and YAML (legacy) formats
+ * Satisfies: RT-1 (Fast/safe parsing), T2 (Schema v1/v2/v3 detection), S1 (Safe parsing)
  */
 
 import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
@@ -445,12 +446,18 @@ export function readAnchor(filePath: string): AnchorDocument | null {
 
 /**
  * Read and parse a verify document
+ * Supports both JSON (preferred) and YAML (legacy) formats
  */
 export function readVerify(filePath: string): VerifyDocument | null {
   if (!existsSync(filePath)) return null;
 
   try {
     const content = readFileSync(filePath, 'utf-8');
+    // JSON files (preferred format)
+    if (filePath.endsWith('.json')) {
+      return JSON.parse(content) as VerifyDocument;
+    }
+    // YAML files (legacy format)
     return parseYamlSafe<VerifyDocument>(content);
   } catch {
     return null;
@@ -485,7 +492,7 @@ export function listFeatures(manifoldDir: string): string[] {
     if (!file.endsWith('.yaml')) continue;
 
     // Skip anchor and verify files - only count main manifold files
-    if (file.endsWith('.anchor.yaml') || file.endsWith('.verify.yaml')) {
+    if (file.endsWith('.anchor.yaml') || file.endsWith('.verify.yaml') || file.endsWith('.verify.json')) {
       continue;
     }
 
@@ -511,7 +518,10 @@ export function getFeatureFiles(manifoldDir: string, feature: string): FeatureFi
 
   const manifoldPath = join(manifoldDir, `${feature}.yaml`);
   const anchorPath = join(manifoldDir, `${feature}.anchor.yaml`);
-  const verifyPath = join(manifoldDir, `${feature}.verify.yaml`);
+  // Check for JSON first (preferred), fallback to YAML (legacy)
+  const verifyPathJson = join(manifoldDir, `${feature}.verify.json`);
+  const verifyPathYaml = join(manifoldDir, `${feature}.verify.yaml`);
+  const verifyPath = existsSync(verifyPathJson) ? verifyPathJson : verifyPathYaml;
 
   if (existsSync(manifoldPath)) files.manifold = manifoldPath;
   if (existsSync(anchorPath)) files.anchor = anchorPath;

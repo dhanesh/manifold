@@ -388,35 +388,49 @@ Manifold: All artifacts derive from the SAME constraint source:
 
 ## Schema
 
-Manifold uses YAML files stored in `.manifold/`:
+Manifold uses JSON+Markdown hybrid format stored in `.manifold/`:
 
 ```
 .manifold/
-├── <feature>.yaml           # Constraint manifold
-├── <feature>.anchor.yaml    # Outcome anchoring
-└── <feature>.verify.yaml    # Verification results
+├── <feature>.json           # Structure (IDs, types, phases)
+├── <feature>.md             # Content (statements, rationale)
+└── <feature>.verify.json    # Verification results
 ```
+
+> **Legacy YAML format** (`.yaml` files) is still supported for backwards compatibility.
 
 ### Schema Version 3 (Current)
 
-```yaml
-schema_version: 3
-feature: payment-retry
-outcome: "95% retry success rate"
-phase: INITIALIZED
+**JSON structure file** (`.manifold/<feature>.json`):
+```json
+{
+  "schema_version": 3,
+  "feature": "payment-retry",
+  "phase": "INITIALIZED",
+  "constraints": {
+    "business": [],
+    "technical": [],
+    "user_experience": [],
+    "security": [],
+    "operational": []
+  },
+  "tensions": [],
+  "anchors": { "required_truths": [] },
+  "iterations": [],
+  "convergence": { "status": "NOT_STARTED" }
+}
+```
 
-constraints:
-  business: []
-  technical: []
-  user_experience: []
-  security: []
-  operational: []
+**Markdown content file** (`.manifold/<feature>.md`):
+```markdown
+# payment-retry
 
-tensions: []
-anchors: []
-iterations: []
-convergence:
-  status: NOT_STARTED
+## Outcome
+95% retry success rate
+
+## Constraints
+### Business
+<!-- #### B1: Title -->
 ```
 
 ### Valid Values

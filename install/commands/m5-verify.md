@@ -119,47 +119,59 @@ Gap G3: T2 (10K concurrent) - No test coverage
 
 VERIFICATION RESULT: PARTIAL (3 gaps)
 
-Updated: .manifold/payment-retry.verify.yaml
+Updated: .manifold/payment-retry.verify.json
 ```
 
 ## Task Tracking
 
-Verification updates `.manifold/<feature>.verify.yaml` with comprehensive tracking:
+Verification updates `.manifold/<feature>.verify.json` with comprehensive tracking:
 
-```yaml
-verification:
-  timestamp: <ISO timestamp>
-  result: PARTIAL | SATISFIED | FAILED
-  matrix:
-    - constraint: B1
-      type: INVARIANT
-      code: true
-      test: true
-      docs: true
-      ops: true
-      status: SATISFIED
-    - constraint: T2
-      type: GOAL
-      code: true
-      test: false
-      docs: true
-      ops: true
-      status: PARTIAL
-      gap: "Missing load test for 10K concurrent operations"
-      action: "Add concurrency test to integration.test.ts"
-  coverage:
-    invariants: { satisfied: 4, total: 4, percentage: 100 }
-    goals: { satisfied: 3, total: 5, percentage: 60 }
-    boundaries: { satisfied: 2, total: 3, percentage: 67 }
-  gaps:
-    - id: G1
-      constraint: T2
-      issue: "No test coverage"
-      action: "Add load test in integration.test.ts"
+```json
+{
+  "verification": {
+    "timestamp": "<ISO timestamp>",
+    "result": "PARTIAL",
+    "matrix": [
+      {
+        "constraint": "B1",
+        "type": "INVARIANT",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": true,
+        "status": "SATISFIED"
+      },
+      {
+        "constraint": "T2",
+        "type": "GOAL",
+        "code": true,
+        "test": false,
+        "docs": true,
+        "ops": true,
+        "status": "PARTIAL",
+        "gap": "Missing load test for 10K concurrent operations",
+        "action": "Add concurrency test to integration.test.ts"
+      }
+    ],
+    "coverage": {
+      "invariants": { "satisfied": 4, "total": 4, "percentage": 100 },
+      "goals": { "satisfied": 3, "total": 5, "percentage": 60 },
+      "boundaries": { "satisfied": 2, "total": 3, "percentage": 67 }
+    },
+    "gaps": [
+      {
+        "id": "G1",
+        "constraint": "T2",
+        "issue": "No test coverage",
+        "action": "Add load test in integration.test.ts"
+      }
+    ]
+  }
+}
 ```
 
 This enables:
-- **Programmatic verification** - CI/CD can check `.verify.yaml`
+- **Programmatic verification** - CI/CD can check `.verify.json`
 - **Gap tracking** - Each gap has an action item
 - **Progress monitoring** - Coverage improves as gaps are addressed
 
@@ -343,7 +355,7 @@ manifold verify payment-retry --verify-evidence --json
 12. If `--strict` mode, fail verification on any gaps or failed evidence
 13. **Record iteration** in JSON `iterations[]` (v2)
 14. **Calculate convergence status** (v2)
-15. **Update `.manifold/<feature>.verify.yaml`** with full results including evidence status
+15. **Update `.manifold/<feature>.verify.json`** with full results including evidence status
 16. Set phase to VERIFIED in JSON (or keep GENERATED if gaps exist)
 
 ### Linking Validation
@@ -376,7 +388,7 @@ Use `manifold validate <feature>` for automatic linking validation.
 10. If `--strict` mode, fail verification on any gaps or failed evidence
 11. **Record iteration** in `iterations[]` (v2)
 12. **Calculate convergence status** (v2)
-13. **Update `.manifold/<feature>.verify.yaml`** with full results including evidence status
+13. **Update `.manifold/<feature>.verify.json`** with full results including evidence status
 14. Set phase to VERIFIED (or keep GENERATED if gaps exist)
 
 ## Quality Gate: Schema Validation

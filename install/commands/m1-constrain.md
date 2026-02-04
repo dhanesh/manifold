@@ -236,7 +236,7 @@ Operational:
 - O1: Retry queue depth monitored (GOAL)
 - O2: Alert on retry success rate < 90% (BOUNDARY)
 
-Updated: .manifold/payment-retry.yaml (12 constraints)
+Updated: .manifold/payment-retry.json + .manifold/payment-retry.md (12 constraints)
 
 Next: /m2-tension payment-retry
 ```

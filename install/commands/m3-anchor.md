@@ -231,7 +231,7 @@ Option C: Hybrid (Client retry + Server queue)
 
 RECOMMENDATION: Option C (Hybrid)
 
-Updated: .manifold/payment-retry.anchor.yaml
+Updated: .manifold/payment-retry.json + .manifold/payment-retry.md
 
 Next: /m4-generate payment-retry --option=C
 ```

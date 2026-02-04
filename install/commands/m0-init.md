@@ -1,5 +1,5 @@
 ---
-description: "Initialize a constraint manifold for a feature. Creates .manifold/<feature>.yaml"
+description: "Initialize a constraint manifold for a feature. Creates .manifold/<feature>.json + .manifold/<feature>.md"
 ---
 
 # /m0-init - Initialize Constraint Manifold
@@ -24,7 +24,7 @@ Initialize a new constraint manifold for a feature.
 ## Process
 
 1. **Create manifold directory** if it doesn't exist: `.manifold/`
-2. **Create feature manifold file**: `.manifold/<feature-name>.yaml`
+2. **Create feature manifold files**: `.manifold/<feature-name>.json` + `.manifold/<feature-name>.md`
 3. **Initialize structure** with:
    - Schema version for forward compatibility
    - Feature name and outcome

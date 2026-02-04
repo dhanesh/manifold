@@ -440,7 +440,7 @@ describe('PaymentRetryClient', () => {
 5. Calculate coverage percentages
 6. Identify gaps with actionable items
 7. If `--actions`, generate executable fix commands
-8. Update `.manifold/<feature>.verify.yaml`
+8. Update `.manifold/<feature>.verify.json`
 9. Set phase to `VERIFIED` (if no blocking gaps) or keep `GENERATED`
 
 ### Verification Matrix

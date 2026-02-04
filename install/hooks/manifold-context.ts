@@ -89,7 +89,7 @@ function loadManifoldContext(): string | null {
     return null; // No manifold in this project
   }
 
-  const files = readdirSync(manifoldDir).filter(f => f.endsWith('.yaml'));
+  const files = readdirSync(manifoldDir).filter(f => f.endsWith('.yaml') || f.endsWith('.json'));
   if (files.length === 0) {
     return null;
   }
@@ -101,7 +101,17 @@ function loadManifoldContext(): string | null {
 
   for (const file of files) {
     const content = readFileSync(join(manifoldDir, file), 'utf-8');
-    const data = parseYamlSafe(content);
+    let data: any;
+
+    if (file.endsWith('.json')) {
+      try {
+        data = JSON.parse(content);
+      } catch {
+        continue;
+      }
+    } else {
+      data = parseYamlSafe(content);
+    }
     if (!data) continue;
 
     // Determine feature name and file type
@@ -114,6 +124,12 @@ function loadManifoldContext(): string | null {
     } else if (file.endsWith('.verify.yaml')) {
       featureName = file.replace('.verify.yaml', '');
       fileType = 'verify';
+    } else if (file.endsWith('.verify.json')) {
+      featureName = file.replace('.verify.json', '');
+      fileType = 'verify';
+    } else if (file.endsWith('.json')) {
+      featureName = file.replace('.json', '');
+      fileType = 'manifold';
     } else {
       featureName = file.replace('.yaml', '');
       fileType = 'manifold';

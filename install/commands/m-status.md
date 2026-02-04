@@ -88,7 +88,7 @@ FORMAT: JSON+Markdown Hybrid
 FILES:
 ├── .manifold/payment-retry.json     (structure)
 ├── .manifold/payment-retry.md       (content)
-└── .manifold/payment-retry.anchor.yaml
+└── .manifold/payment-retry.verify.json  (if verified)
 
 SUGGESTED NEXT ACTION (run when ready):
 → /m4-generate payment-retry --option=C
@@ -167,7 +167,7 @@ Active Manifolds: 3
    - For JSON+Markdown: Read `.manifold/<feature>.json` + `.manifold/<feature>.md`
    - For legacy YAML: Read `.manifold/<feature>.yaml`
    - Read `.manifold/<feature>.anchor.yaml` if exists
-   - Read `.manifold/<feature>.verify.yaml` if exists
+   - Read `.manifold/<feature>.verify.json` if exists
    - Display detailed status with format indicator
 2. If no feature name:
    - Scan `.manifold/` directory for all manifold files

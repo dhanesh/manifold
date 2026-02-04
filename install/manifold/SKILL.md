@@ -280,14 +280,16 @@ Next: /m4-generate payment-retry --option=B
 
 ## Storage
 
-All data stored in `.manifold/`:
+All data stored in `.manifold/` using JSON+Markdown hybrid format:
 
 ```
 .manifold/
-├── <feature>.yaml           # Constraint manifold
-├── <feature>.anchor.yaml    # Outcome anchoring
-└── <feature>.verify.yaml    # Verification results
+├── <feature>.json           # Structure (IDs, types, phases)
+├── <feature>.md             # Content (statements, rationale)
+└── <feature>.verify.json    # Verification results
 ```
+
+> **Legacy YAML format** (`.yaml` files) is still supported for backwards compatibility.
 
 ## Task Tracking
 
@@ -295,35 +297,51 @@ Manifold ensures tasks are completed through **constraint traceability**:
 
 ### Generation Tracking (`/m4-generate`)
 Every generated artifact is recorded with the constraints it satisfies:
-```yaml
-generation:
-  artifacts:
-    - path: src/retry/PaymentRetryClient.ts
-      satisfies: [RT-1, RT-3]
-      status: generated
-  coverage:
-    constraints_addressed: 12
-    constraints_total: 12
+```json
+{
+  "generation": {
+    "artifacts": [
+      {
+        "path": "src/retry/PaymentRetryClient.ts",
+        "satisfies": ["RT-1", "RT-3"],
+        "status": "generated"
+      }
+    ],
+    "coverage": {
+      "constraints_addressed": 12,
+      "constraints_total": 12
+    }
+  }
+}
 ```
 
 ### Verification Matrix (`/m5-verify`)
 Each constraint is checked across all artifacts:
-```yaml
-verification:
-  matrix:
-    - constraint: B1
-      code: true
-      test: true
-      docs: true
-      status: SATISFIED
-  gaps:
-    - id: G1
-      constraint: T2
-      action: "Add load test"
+```json
+{
+  "verification": {
+    "matrix": [
+      {
+        "constraint": "B1",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "status": "SATISFIED"
+      }
+    ],
+    "gaps": [
+      {
+        "id": "G1",
+        "constraint": "T2",
+        "action": "Add load test"
+      }
+    ]
+  }
+}
 ```
 
 This enables:
-- **Programmatic CI/CD checks** - Validate `.verify.yaml` in pipelines
+- **Programmatic CI/CD checks** - Validate `.verify.json` in pipelines
 - **Gap tracking** - Each gap has an actionable item
 - **Progress monitoring** - Coverage improves as gaps are addressed
 

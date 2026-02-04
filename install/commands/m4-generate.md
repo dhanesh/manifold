@@ -133,23 +133,32 @@ Next: /m5-verify payment-retry
 
 ## Task Tracking
 
-When generating artifacts, update `.manifold/<feature>.yaml` with completion status:
+When generating artifacts, update `.manifold/<feature>.json` with completion status:
 
-```yaml
-generation:
-  option: C
-  timestamp: <ISO timestamp>
-  artifacts:
-    - path: src/retry/PaymentRetryClient.ts
-      satisfies: [RT-1, RT-3]
-      status: generated
-    - path: src/retry/__tests__/PaymentRetryClient.test.ts
-      validates: [B1, B2, T1, U2]
-      status: generated
-  coverage:
-    constraints_addressed: 12
-    constraints_total: 12
-    percentage: 100
+```json
+{
+  "generation": {
+    "option": "C",
+    "timestamp": "<ISO timestamp>",
+    "artifacts": [
+      {
+        "path": "src/retry/PaymentRetryClient.ts",
+        "satisfies": ["RT-1", "RT-3"],
+        "status": "generated"
+      },
+      {
+        "path": "src/retry/__tests__/PaymentRetryClient.test.ts",
+        "validates": ["B1", "B2", "T1", "U2"],
+        "status": "generated"
+      }
+    ],
+    "coverage": {
+      "constraints_addressed": 12,
+      "constraints_total": 12,
+      "percentage": 100
+    }
+  }
+}
 ```
 
 This ensures:
@@ -294,8 +303,8 @@ User runs: /m4-generate payment-retry --option=C
 
 ### Phase 1: Planning (BEFORE any file writes)
 
-1. Read manifold from `.manifold/<feature>.yaml`
-2. Read anchoring from `.manifold/<feature>.anchor.yaml`
+1. Read manifold from `.manifold/<feature>.json` (or `.yaml` for legacy)
+2. Read anchoring from JSON `anchors` section (or `.manifold/<feature>.anchor.yaml` for legacy)
 3. Select solution option (from `--option` or prompt user)
 4. **BUILD ARTIFACT LIST** - List ALL files that will be generated
 5. **⚠️ MANDATORY PARALLELIZATION CHECK** (See "STEP 0" above)
@@ -406,7 +415,7 @@ docs/<feature>/PRD.md
 [Generated from: boundary constraints with timeline + operational constraints]
 
 ---
-_Generated from `.manifold/<feature>.yaml`_
+_Generated from `.manifold/<feature>.json`_
 _Constraint coverage: [X]/[Y] constraints addressed_
 _Traces: [list of all constraint IDs referenced]_
 ```
@@ -478,15 +487,21 @@ Increase checkout conversion by 15% while maintaining existing checkout stabilit
 
 ### PRD Artifact Tracking
 
-After PRD generation, update `.manifold/<feature>.yaml`:
+After PRD generation, update `.manifold/<feature>.json`:
 
-```yaml
-generation:
-  artifacts:
-    - path: docs/<feature>/PRD.md
-      type: prd
-      satisfies: [B1, B2, T1, U1, S1, O1]  # All referenced constraints
-      status: generated
+```json
+{
+  "generation": {
+    "artifacts": [
+      {
+        "path": "docs/<feature>/PRD.md",
+        "type": "prd",
+        "satisfies": ["B1", "B2", "T1", "U1", "S1", "O1"],
+        "status": "generated"
+      }
+    ]
+  }
+}
 ```
 
 ---
@@ -543,7 +558,7 @@ graph TD
 ```
 
 ---
-_Generated from `.manifold/<feature>.yaml`_
+_Generated from `.manifold/<feature>.json`_
 ```
 
 ### Constraint-to-Story Transformation Rules
@@ -641,17 +656,25 @@ Both files cross-reference each other:
 
 ### Stories Artifact Tracking
 
-After stories generation, update `.manifold/<feature>.yaml`:
+After stories generation, update `.manifold/<feature>.json`:
 
-```yaml
-generation:
-  artifacts:
-    - path: docs/<feature>/PRD.md
-      type: prd
-      satisfies: [B1, B2, T1, U1, S1, O1]
-      status: generated
-    - path: docs/<feature>/STORIES.md
-      type: stories
-      satisfies: [U1, U2, U3, U4]
-      status: generated
+```json
+{
+  "generation": {
+    "artifacts": [
+      {
+        "path": "docs/<feature>/PRD.md",
+        "type": "prd",
+        "satisfies": ["B1", "B2", "T1", "U1", "S1", "O1"],
+        "status": "generated"
+      },
+      {
+        "path": "docs/<feature>/STORIES.md",
+        "type": "stories",
+        "satisfies": ["U1", "U2", "U3", "U4"],
+        "status": "generated"
+      }
+    ]
+  }
+}
 ```

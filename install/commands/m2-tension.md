@@ -216,7 +216,7 @@ TENSION SUMMARY:
 - Trade-offs: 0
 - Hidden Dependencies: 0
 
-Updated: .manifold/payment-retry.yaml
+Updated: .manifold/payment-retry.json + .manifold/payment-retry.md
 
 Next: /m3-anchor payment-retry
 ```

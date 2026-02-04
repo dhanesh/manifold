@@ -187,7 +187,7 @@ With `--auto-wire`, safe integrations are performed automatically:
 
 ## Execution Instructions
 
-1. Read manifold from `.manifold/<feature>.yaml`
+1. Read manifold from `.manifold/<feature>.json` (or `.yaml` for legacy)
 2. Read generation data to get artifact list
 3. For each generated artifact:
    - Detect integration points using pattern matching

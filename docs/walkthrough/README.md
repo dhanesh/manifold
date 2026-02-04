@@ -539,7 +539,7 @@ Feature notification-preferences is COMPLETE.
 .manifold/
 ├── notification-preferences.yaml
 ├── notification-preferences.anchor.yaml
-└── notification-preferences.verify.yaml
+└── notification-preferences.verify.json
 
 src/preferences/
 ├── schema.sql

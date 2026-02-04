@@ -211,8 +211,8 @@ This command embodies **temporally non-linear reasoning**:
 
 When this command is invoked:
 
-1. Read manifold from `.manifold/<feature>.yaml`
-2. Read anchor from `.manifold/<feature>.anchor.yaml` if exists
+1. Read manifold from `.manifold/<feature>.json` (or `.yaml` for legacy)
+2. Read anchors from JSON `anchors` section (or `.manifold/<feature>.anchor.yaml` for legacy)
 3. Build constraint graph:
    - Parse constraints from all categories
    - Parse tensions and create conflict edges

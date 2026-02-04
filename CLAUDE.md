@@ -100,10 +100,10 @@ manifold verify [feature]      # Verify artifacts exist
 ## File Organization
 
 ```
-.manifold/                      # Constraint manifolds
-├── <feature>.yaml              # Main constraint manifold
-├── <feature>.anchor.yaml       # Outcome anchoring
-└── <feature>.verify.yaml       # Verification results
+.manifold/                      # Constraint manifolds (JSON+Markdown hybrid)
+├── <feature>.json              # Structure (IDs, types, phases)
+├── <feature>.md                # Content (statements, rationale)
+└── <feature>.verify.json       # Verification results
 
 cli/                            # Native CLI (Commander.js)
 ├── commands/                   # CLI command implementations
