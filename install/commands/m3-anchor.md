@@ -36,9 +36,84 @@ Backward reasoning from desired outcome to required conditions.
 
 > See SCHEMA_REFERENCE.md for all valid values. Do NOT invent new statuses.
 
-## v3 Schema Compliance
+## Output Format: JSON+Markdown Hybrid
 
-When recording required truths, maintain v3 schema structure:
+**CRITICAL**: Generate TWO outputs, not one YAML file.
+
+### 1. JSON Structure (IDs, statuses, maps ONLY)
+
+Update `.manifold/<feature>.json` with required truth references:
+
+```json
+{
+  "anchors": {
+    "required_truths": [
+      {
+        "id": "RT-1",
+        "status": "NOT_SATISFIED",
+        "maps_to": ["B1", "T1"]
+      },
+      {
+        "id": "RT-2",
+        "status": "SPECIFICATION_READY",
+        "maps_to": ["B2"]
+      }
+    ],
+    "recommended_option": "C"
+  }
+}
+```
+
+**Key rule**: JSON contains NO text content. Only IDs, statuses, and constraint mappings.
+
+### 2. Markdown Content (statements and gaps)
+
+Update `.manifold/<feature>.md` with required truth content:
+
+```markdown
+## Required Truths
+
+### RT-1: Error Classification System
+
+Can distinguish transient from permanent failures.
+
+**Gap:** No current error taxonomy exists.
+
+### RT-2: Idempotent Retries
+
+Retries are idempotent via transaction idempotency keys.
+
+**Gap:** Current system lacks idempotency implementation.
+
+---
+
+## Solution Space
+
+### Option A: Client-side Exponential Backoff
+- Satisfies: RT-3
+- Gaps: RT-2, RT-4, RT-5
+- Complexity: Low
+
+### Option B: Server-side Workflow Engine
+- Satisfies: RT-1, RT-2, RT-3, RT-4, RT-5
+- Gaps: None
+- Complexity: High
+
+### Option C: Hybrid (Client retry + Server queue) ← Recommended
+- Satisfies: RT-1, RT-3, RT-5
+- Gaps: None (with implementation)
+- Complexity: Medium
+```
+
+### Markdown Heading Rules
+
+| ID Pattern | Markdown Heading Level | Example |
+|------------|------------------------|---------|
+| RT-1, RT-2 | `###` (h3) | `### RT-1: Error Classification` |
+
+## Legacy YAML Format (Still Supported)
+
+When using legacy YAML, maintain v3 schema structure:
 
 ```yaml
 anchors:
@@ -162,6 +237,23 @@ Next: /m4-generate payment-retry --option=C
 ```
 
 ## Execution Instructions
+
+### For JSON+Markdown Format (Default)
+
+1. Read structure from `.manifold/<feature>.json`
+2. Read content from `.manifold/<feature>.md`
+3. Get outcome from `--outcome` flag or Markdown `## Outcome` section
+4. For the outcome, recursively ask "What must be TRUE?"
+5. Each truth becomes an RT-N (Required Truth)
+6. Identify gaps between current state and requirement
+7. Generate 2-4 solution options
+8. Recommend best option with rationale
+9. **Update TWO files:**
+   - `.manifold/<feature>.json` — Add required truths to `anchors.required_truths` with id, status, maps_to
+   - `.manifold/<feature>.md` — Add `### RT-1: Title` + statement + gap under `## Required Truths`
+10. Set phase to ANCHORED in JSON
+
+### For Legacy YAML Format
 
 1. Read manifold from `.manifold/<feature>.yaml`
 2. Get outcome from `--outcome` flag or manifold file

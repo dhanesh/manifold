@@ -33,11 +33,80 @@ Interview-driven constraint discovery across 5 categories.
 
 > See SCHEMA_REFERENCE.md for all valid values. Do NOT invent new types or categories.
 
-## ⚠️ CRITICAL: Constraint Field Names
+## Output Format: JSON+Markdown Hybrid
 
-**Constraints use `statement`, NOT `description`.**
+**CRITICAL**: Generate TWO outputs, not one YAML file.
 
-Each constraint MUST have these fields:
+### 1. JSON Structure (IDs and types ONLY)
+
+Update `.manifold/<feature>.json` with constraint references:
+
+```json
+{
+  "constraints": {
+    "business": [
+      {"id": "B1", "type": "invariant"},
+      {"id": "B2", "type": "goal"}
+    ],
+    "technical": [
+      {"id": "T1", "type": "boundary"}
+    ]
+  }
+}
+```
+
+**Key rule**: JSON contains NO text content. Only IDs and types.
+
+### 2. Markdown Content (text and rationale)
+
+Update `.manifold/<feature>.md` with constraint content:
+
+```markdown
+## Constraints
+
+### Business
+
+#### B1: No Duplicate Payments
+
+Payment processing must never create duplicate charges for the same order.
+
+> **Rationale:** Duplicates cause chargebacks, refund processing overhead, and customer complaints.
+
+**Implemented by:** `lib/retry/IdempotencyService.ts`
+
+#### B2: 95% Success Rate
+
+Achieve 95% retry success rate within 72 hours of initial failure.
+
+> **Rationale:** Industry standard for payment retry success.
+
+---
+
+### Technical
+
+#### T1: 72-Hour Retry Window
+
+All retries must complete within 72 hours of initial failure.
+
+> **Rationale:** Payment processor SLAs require resolution within 72 hours.
+```
+
+### Markdown Heading Rules
+
+| ID Pattern | Markdown Heading Level | Example |
+|------------|------------------------|---------|
+| B1, T1, U1, S1, O1 | `####` (h4) | `#### B1: No Duplicates` |
+| Category | `###` (h3) | `### Business` |
+
+### Why This Eliminates Field Confusion
+
+- **Old YAML**: Had to remember `statement` for constraints, `description` for tensions
+- **New format**: JSON has NO text fields. All text lives in Markdown.
+- **Linking**: JSON ID `B1` links to Markdown heading `#### B1: Title`
+
+## Legacy YAML Format (Still Supported)
+
+If using legacy YAML, constraints use `statement`, NOT `description`:
 
 | Field | Type | Required | Notes |
 |-------|------|----------|-------|
@@ -45,25 +114,6 @@ Each constraint MUST have these fields:
 | `statement` | string | ✅ | The constraint text ← **NOT 'description'** |
 | `type` | string | ✅ | `invariant`, `goal`, or `boundary` |
 | `rationale` | string | ✅ | Why this constraint exists |
-
-### Correct Example
-```yaml
-constraints:
-  business:
-    - id: B1
-      statement: "No duplicate payments allowed"  # ← CORRECT: 'statement'
-      type: invariant
-      rationale: "Duplicate charges cause chargebacks"
-```
-
-### WRONG (will fail validation)
-```yaml
-constraints:
-  business:
-    - id: B1
-      description: "No duplicate payments"  # ← WRONG: 'description' is for tensions
-      type: invariant
-```
 
 > **Memory Aid**: Constraints _state_ what must be true → `statement`
 
@@ -193,6 +243,21 @@ Next: /m2-tension payment-retry
 
 ## Execution Instructions
 
+### For JSON+Markdown Format (Default)
+
+1. Read existing structure from `.manifold/<feature>.json`
+2. Read existing content from `.manifold/<feature>.md`
+3. If `--category` specified, focus on that category only
+4. For each category, ask probing questions and classify responses
+5. Assign constraint IDs (B1, T1, U1, S1, O1, etc.)
+6. **Update TWO files:**
+   - `.manifold/<feature>.json` — Add `{"id": "B1", "type": "invariant"}` to constraints
+   - `.manifold/<feature>.md` — Add `#### B1: Title` + statement + rationale
+7. Set phase to CONSTRAINED in JSON
+8. Display summary and next step
+
+### For Legacy YAML Format
+
 1. Read existing manifold from `.manifold/<feature>.yaml`
 2. If `--category` specified, focus on that category only
 3. For each category, ask probing questions and classify responses
@@ -200,3 +265,10 @@ Next: /m2-tension payment-retry
 5. Update the manifold YAML with discovered constraints
 6. Set phase to CONSTRAINED
 7. Display summary and next step
+
+### Format Detection
+
+The CLI auto-detects format:
+- If `.json` + `.md` exist → JSON+Markdown hybrid
+- If only `.yaml` exists → Legacy YAML
+- Use `manifold show <feature>` to see current format

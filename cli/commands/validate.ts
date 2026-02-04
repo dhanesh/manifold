@@ -1,6 +1,8 @@
 /**
  * Validate Command for Manifold CLI
  * Satisfies: T2 (Parse both schema v1 and v2 correctly), T3 (Exit codes)
+ *
+ * Supports both legacy YAML format and new JSON+Markdown hybrid format.
  */
 
 import type { Command } from 'commander';
@@ -19,6 +21,12 @@ import {
   detectCrossFeatureConflicts,
   formatCrossFeatureResults
 } from '../lib/solver.js';
+import {
+  detectManifoldFormat,
+  loadManifoldByFeature,
+  formatLinkingResult,
+  type LinkingResult,
+} from '../lib/manifold-linker.js';
 import {
   println,
   printError,
@@ -359,16 +367,28 @@ interface FeatureValidationResult {
   result?: ValidationResult;
   parseError?: string;
   manifold?: Manifold;  // For conflict detection (INT-1)
+  format?: 'yaml' | 'json-md';  // Format of the manifold
+  linkingResult?: LinkingResult;  // For JSON+MD format
 }
 
 /**
  * Validate a single feature
+ * Supports both YAML and JSON+Markdown formats
  */
 async function validateFeature(
   manifoldDir: string,
   feature: string,
   options: ValidateOptions
 ): Promise<FeatureValidationResult> {
+  // Detect format
+  const format = detectManifoldFormat(manifoldDir, feature);
+
+  // Handle JSON+Markdown format
+  if (format === 'json-md') {
+    return validateJsonMdFeature(manifoldDir, feature, options);
+  }
+
+  // Handle legacy YAML format
   const manifoldPath = join(manifoldDir, `${feature}.yaml`);
 
   // Check file exists
@@ -424,13 +444,91 @@ async function validateFeature(
     valid: result.valid,
     result,
     manifold: parsed,  // Include for conflict detection (INT-1)
+    format: 'yaml',
     json: {
       feature,
       valid: result.valid,
+      format: 'yaml',
       schemaVersion: result.schemaVersion,
       errors: result.errors.length > 0 ? result.errors : undefined,
       warnings: result.warnings.length > 0 ? result.warnings : undefined,
       path: manifoldPath
+    }
+  };
+}
+
+/**
+ * Validate a JSON+Markdown format feature
+ */
+async function validateJsonMdFeature(
+  manifoldDir: string,
+  feature: string,
+  options: ValidateOptions
+): Promise<FeatureValidationResult> {
+  const jsonPath = join(manifoldDir, `${feature}.json`);
+  const mdPath = join(manifoldDir, `${feature}.md`);
+
+  // Load and validate using linker
+  const loadResult = loadManifoldByFeature(manifoldDir, feature);
+
+  if (!loadResult.success) {
+    return {
+      valid: false,
+      format: 'json-md',
+      json: {
+        feature,
+        valid: false,
+        format: 'json-md',
+        error: loadResult.error,
+        paths: { json: jsonPath, md: mdPath }
+      }
+    };
+  }
+
+  const { structure, linking } = loadResult;
+
+  // Convert linking result to validation result format
+  const errors = (linking?.errors || []).map((e) => ({
+    field: e.field,
+    message: e.message,
+    value: undefined,
+  }));
+
+  const warnings = (linking?.warnings || []).map((w) => ({
+    field: w.field,
+    message: w.message,
+    suggestion: w.suggestion,
+  }));
+
+  const validationResult: ValidationResult = {
+    valid: linking?.valid ?? true,
+    errors,
+    warnings,
+    schemaVersion: 3,
+  };
+
+  return {
+    valid: validationResult.valid,
+    result: validationResult,
+    format: 'json-md',
+    linkingResult: linking,
+    json: {
+      feature,
+      valid: validationResult.valid,
+      format: 'json-md',
+      schemaVersion: 3,
+      phase: structure?.phase,
+      errors: errors.length > 0 ? errors : undefined,
+      warnings: warnings.length > 0 ? warnings : undefined,
+      linking: linking ? {
+        totalConstraints: linking.summary.totalConstraints,
+        linkedConstraints: linking.summary.linkedConstraints,
+        totalTensions: linking.summary.totalTensions,
+        linkedTensions: linking.summary.linkedTensions,
+        totalRequiredTruths: linking.summary.totalRequiredTruths,
+        linkedRequiredTruths: linking.summary.linkedRequiredTruths,
+      } : undefined,
+      paths: { json: jsonPath, md: mdPath }
     }
   };
 }
@@ -457,8 +555,21 @@ function printValidationOutput(feature: string, result: FeatureValidationResult,
 
   const { valid, errors, warnings, schemaVersion } = result.result;
 
+  // Format indicator
+  if (result.format) {
+    println(`  Format: ${result.format === 'json-md' ? 'JSON+Markdown' : 'YAML'}`);
+  }
+
   // Schema version
   println(`  Schema: v${schemaVersion}`);
+
+  // Linking summary for JSON+MD format
+  if (result.linkingResult) {
+    const { summary } = result.linkingResult;
+    println(`  Linked: ${summary.linkedConstraints}/${summary.totalConstraints} constraints, ` +
+            `${summary.linkedTensions}/${summary.totalTensions} tensions, ` +
+            `${summary.linkedRequiredTruths}/${summary.totalRequiredTruths} required truths`);
+  }
 
   // Overall result
   println(`  Result: ${formatValidationResult(valid, errors.length, warnings.length)}`);

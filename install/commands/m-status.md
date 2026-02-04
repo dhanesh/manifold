@@ -84,8 +84,10 @@ WORKFLOW PROGRESS:
 [ ] /m4-generate    - Pending
 [ ] /m5-verify      - Pending
 
+FORMAT: JSON+Markdown Hybrid
 FILES:
-├── .manifold/payment-retry.yaml
+├── .manifold/payment-retry.json     (structure)
+├── .manifold/payment-retry.md       (content)
 └── .manifold/payment-retry.anchor.yaml
 
 SUGGESTED NEXT ACTION (run when ready):
@@ -93,6 +95,9 @@ SUGGESTED NEXT ACTION (run when ready):
 
 ⏸️ Waiting for your command...
 ```
+
+> **Note**: Older manifolds may use legacy YAML format (single `.yaml` file).
+> Use `manifold migrate <feature>` to convert to JSON+Markdown.
 
 ## Example: With Iteration History (v2)
 
@@ -158,15 +163,27 @@ Active Manifolds: 3
 ## Execution Instructions
 
 1. If feature name provided:
-   - Read `.manifold/<feature>.yaml`
+   - **Detect format**: JSON+MD (`.json` + `.md`) or legacy YAML (`.yaml`)
+   - For JSON+Markdown: Read `.manifold/<feature>.json` + `.manifold/<feature>.md`
+   - For legacy YAML: Read `.manifold/<feature>.yaml`
    - Read `.manifold/<feature>.anchor.yaml` if exists
    - Read `.manifold/<feature>.verify.yaml` if exists
-   - Display detailed status
+   - Display detailed status with format indicator
 2. If no feature name:
-   - Scan `.manifold/` directory for all `.yaml` files
-   - Display summary table
+   - Scan `.manifold/` directory for all manifold files
+   - Detect format for each feature
+   - Display summary table with format column
 3. Determine next action based on current phase
 4. Display workflow progress with checkmarks
+
+### Format Detection
+
+| Files Present | Format |
+|---------------|--------|
+| `.json` + `.md` | JSON+Markdown Hybrid |
+| `.yaml` only | Legacy YAML |
+
+Use `manifold show <feature>` or CLI status for format details.
 
 ## Post-Display Behavior
 

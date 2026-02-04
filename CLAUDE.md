@@ -175,7 +175,55 @@ describe('IdempotencyService', () => {
 });
 ```
 
-### YAML Manifold (Schema v3)
+### Manifold Format (Schema v3)
+
+**Recommended: JSON+Markdown Hybrid**
+
+Two files that work together, eliminating field name confusion:
+
+**`.manifold/<feature>.json`** — Structure only (IDs, types, refs)
+```json
+{
+  "schema_version": 3,
+  "feature": "payment-retry",
+  "phase": "INITIALIZED",
+  "constraints": {
+    "business": [{"id": "B1", "type": "invariant"}],
+    "technical": [],
+    "user_experience": [],
+    "security": [],
+    "operational": []
+  },
+  "tensions": [],
+  "anchors": {"required_truths": []},
+  "convergence": {"status": "NOT_STARTED"}
+}
+```
+
+**`.manifold/<feature>.md`** — Content only (text, rationale)
+```markdown
+# payment-retry
+
+## Outcome
+95% retry success rate
+
+## Constraints
+### Business
+#### B1: No Duplicate Payments
+Payment processing must never create duplicate charges.
+> **Rationale:** Duplicates cause chargebacks.
+```
+
+**CLI commands:**
+```bash
+manifold validate <feature>    # Validates JSON+MD linking
+manifold show <feature>        # Combined view
+manifold migrate <feature>     # Convert YAML → JSON+MD
+```
+
+**Legacy: YAML Manifold**
+
+Single file with both structure and content (still supported):
 
 ```yaml
 schema_version: 3

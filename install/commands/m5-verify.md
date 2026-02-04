@@ -322,6 +322,43 @@ manifold verify payment-retry --verify-evidence --json
 
 ## Execution Instructions
 
+### For JSON+Markdown Format (Default)
+
+1. Read structure from `.manifold/<feature>.json`
+2. Read content from `.manifold/<feature>.md`
+3. **Validate linking** between JSON IDs and Markdown headings
+4. Read generation data from JSON (artifacts list)
+5. **Verify each declared artifact exists** on disk
+6. Scan all artifacts for constraint references (comments like `// Satisfies: B1`)
+7. Build verification matrix comparing declared vs actual coverage
+8. Calculate coverage percentages by type and artifact
+9. Identify specific gaps with actionable items
+10. **If `--verify-evidence` (v3)**, verify concrete evidence for each required truth:
+    - `file_exists`: Check file exists on disk
+    - `content_match`: Grep for pattern in file content
+    - `test_passes`: Run test if `--run-tests` flag is set
+    - `metric_value`: Check runtime metric threshold
+    - `manual_review`: Skip, mark as pending
+11. **If `--actions` (v2)**, generate executable actions for each gap
+12. If `--strict` mode, fail verification on any gaps or failed evidence
+13. **Record iteration** in JSON `iterations[]` (v2)
+14. **Calculate convergence status** (v2)
+15. **Update `.manifold/<feature>.verify.yaml`** with full results including evidence status
+16. Set phase to VERIFIED in JSON (or keep GENERATED if gaps exist)
+
+### Linking Validation
+
+When verifying JSON+Markdown manifolds, check:
+- All constraint IDs in JSON have matching `#### ID: Title` in Markdown
+- All tension IDs in JSON have matching `### ID: Title` in Markdown
+- All required truth IDs in JSON have matching `### ID: Title` in Markdown
+- `tension.between` references exist as constraint IDs
+- `required_truth.maps_to` references exist
+
+Use `manifold validate <feature>` for automatic linking validation.
+
+### For Legacy YAML Format
+
 1. Read manifold from `.manifold/<feature>.yaml`
 2. Read generation data from manifold (artifacts list)
 3. **Verify each declared artifact exists** on disk
@@ -350,7 +387,13 @@ manifold verify payment-retry --verify-evidence --json
 # CLI validation (instant, no AI required)
 manifold validate <feature>
 
-# This catches:
+# For JSON+Markdown format, this validates:
+# - JSON structure against Zod schema
+# - Markdown content parsing
+# - Linking between JSON IDs and Markdown headings
+# - Reference integrity (tension.between, maps_to)
+
+# For legacy YAML format, this catches:
 # - Invalid phase values (e.g., CONVERGED instead of VERIFIED)
 # - Invalid constraint types
 # - Invalid tension types
@@ -358,7 +401,7 @@ manifold validate <feature>
 ```
 
 **Why?** Schema validation and constraint verification are different:
-- `manifold validate` = "Is the YAML structure correct?"
+- `manifold validate` = "Is the structure correct and linked?"
 - `/m5-verify` = "Do artifacts satisfy constraints?"
 
-Run `manifold validate` after every manifold modification to catch schema errors immediately
+Run `manifold validate` after every manifold modification to catch schema/linking errors immediately

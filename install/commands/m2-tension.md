@@ -37,11 +37,70 @@ Surface and resolve constraint conflicts. A "tension" is when two requirements c
 
 > See SCHEMA_REFERENCE.md for all valid values. Do NOT invent new tension types or statuses.
 
-## ⚠️ CRITICAL: Tension Field Names
+## Output Format: JSON+Markdown Hybrid
 
-**Tensions use `description`, NOT `statement`.**
+**CRITICAL**: Generate TWO outputs, not one YAML file.
 
-Each tension MUST have these fields:
+### 1. JSON Structure (IDs, types, refs ONLY)
+
+Update `.manifold/<feature>.json` with tension references:
+
+```json
+{
+  "tensions": [
+    {
+      "id": "TN1",
+      "type": "trade_off",
+      "between": ["T1", "B1"],
+      "status": "resolved"
+    },
+    {
+      "id": "TN2",
+      "type": "resource_tension",
+      "between": ["T2", "O1"],
+      "status": "unresolved"
+    }
+  ]
+}
+```
+
+**Key rule**: JSON contains NO text content. Only IDs, types, `between` refs, and status.
+
+### 2. Markdown Content (descriptions and resolutions)
+
+Update `.manifold/<feature>.md` with tension content:
+
+```markdown
+## Tensions
+
+### TN1: Performance vs Safety
+
+Performance optimizations (caching, batch processing) conflict with safety checks (duplicate detection, validation).
+
+> **Resolution:** Use async safety checks after initial response. Caching includes idempotency keys.
+
+### TN2: Retry Frequency vs Provider Limits
+
+Aggressive retry frequency conflicts with payment processor rate limits.
+
+> **Unresolved:** Need to negotiate higher rate limits or implement adaptive throttling.
+```
+
+### Markdown Heading Rules
+
+| ID Pattern | Markdown Heading Level | Example |
+|------------|------------------------|---------|
+| TN1, TN2, TN3 | `###` (h3) | `### TN1: Performance vs Safety` |
+
+### Why This Eliminates Field Confusion
+
+- **Old YAML**: Had to remember `description` for tensions (different from constraints)
+- **New format**: JSON has NO text fields. All text lives in Markdown.
+- **Linking**: JSON ID `TN1` links to Markdown heading `### TN1: Title`
+
+## Legacy YAML Format (Still Supported)
+
+If using legacy YAML, tensions use `description`, NOT `statement`:
 
 | Field | Type | Required | Notes |
 |-------|------|----------|-------|
@@ -51,27 +110,6 @@ Each tension MUST have these fields:
 | `between` | array | ✅ | Array of constraint IDs in conflict (min 2) |
 | `status` | string | ✅ | `resolved` or `unresolved` |
 | `resolution` | string | If resolved | How the tension was resolved |
-
-### Correct Example
-```yaml
-tensions:
-  - id: TN1
-    type: trade_off
-    description: "Performance vs Safety trade-off"  # ← CORRECT: 'description'
-    between: [T1, B1]
-    status: resolved
-    resolution: "Use caching to achieve both"
-```
-
-### WRONG (will fail validation)
-```yaml
-tensions:
-  - id: TN1
-    type: trade_off
-    statement: "Performance vs Safety"  # ← WRONG: 'statement' is for constraints
-    between: [T1, B1]
-    status: resolved
-```
 
 > **Memory Aid**: Tensions _describe_ conflicts → `description`
 
@@ -225,6 +263,30 @@ AUTO-DETECTED DEPENDENCIES:
 ```
 
 ## Execution Instructions
+
+### For JSON+Markdown Format (Default)
+
+1. Read structure from `.manifold/<feature>.json`
+2. Read content from `.manifold/<feature>.md`
+3. For each pair of constraints, check for conflicts
+4. **If `--auto-deps` (v2):**
+   - Extract keywords from constraint content in Markdown
+   - Map keywords to dependency patterns
+   - Identify hidden dependencies automatically
+   - Flag blocking dependencies with elevated priority
+5. For each tension found:
+   - Describe the conflict
+   - Generate resolution options (A, B, C)
+   - Recommend based on constraint types (INVARIANT > BOUNDARY > GOAL)
+6. If `--resolve` flag, prompt user to choose resolutions
+7. **Update TWO files:**
+   - `.manifold/<feature>.json` — Add tension objects with id, type, between, status
+   - `.manifold/<feature>.md` — Add `### TN1: Title` + description + resolution
+8. **Record iteration** in JSON `iterations[]`
+9. Set phase to TENSIONED in JSON
+10. Display summary and next step
+
+### For Legacy YAML Format
 
 1. Read manifold from `.manifold/<feature>.yaml`
 2. For each pair of constraints, check for conflicts

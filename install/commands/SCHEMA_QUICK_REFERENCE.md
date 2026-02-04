@@ -1,9 +1,36 @@
 # Manifold Schema Quick Reference
 
 > **PURPOSE**: This file exists to prevent field name confusion between AI commands.
-> Embed this reference in prompts when generating manifold YAML.
+> It documents both the legacy YAML format and the new JSON+Markdown hybrid format.
 
-## Field Names - CRITICAL
+## Format Options
+
+### JSON+Markdown Hybrid (Recommended)
+
+**Why this format eliminates field name confusion:**
+- **JSON file** (`<feature>.json`) contains ONLY structure: IDs, types, phases, references
+- **Markdown file** (`<feature>.md`) contains ALL text content: statements, descriptions, rationale
+- No text fields in JSON = no `statement` vs `description` confusion
+
+**Files created:**
+```
+.manifold/
+├── <feature>.json    # Structure only (IDs, types, refs)
+└── <feature>.md      # Content only (text, rationale)
+```
+
+**CLI commands:**
+```bash
+manifold validate <feature>    # Validates both files + linking
+manifold show <feature>        # Combined view
+manifold migrate <feature>     # Convert YAML → JSON+MD
+```
+
+### Legacy YAML Format
+
+Single file (`<feature>.yaml`) with both structure and content.
+
+## Field Names - For YAML Only
 
 | Structure | Text Field | Use | Memory Aid |
 |-----------|------------|-----|------------|
@@ -12,12 +39,15 @@
 | **RequiredTruth** | `statement` | What must be verified | Truths _state_ conditions |
 | **Iteration** | `result` | What was accomplished | Iterations report _results_ |
 
-### The Rule
+### The Rule (YAML only)
 
 ```
 NEVER use 'description' for Constraints or RequiredTruths
 NEVER use 'statement' for Tensions
 ```
+
+> **NOTE**: In JSON+Markdown format, these text fields live in Markdown, not JSON.
+> JSON only has IDs and type references, eliminating this confusion entirely.
 
 ## Valid Values Reference
 
@@ -75,7 +105,100 @@ TN1, TN2, ...  # Tension IDs
 RT-1, RT-2, ... # Required truth IDs
 ```
 
-## Correct YAML Templates
+## JSON+Markdown Templates (Recommended)
+
+### JSON Structure File (`<feature>.json`)
+
+```json
+{
+  "schema_version": 3,
+  "feature": "payment-retry",
+  "phase": "CONSTRAINED",
+  "constraints": {
+    "business": [
+      {"id": "B1", "type": "invariant"},
+      {"id": "B2", "type": "goal"}
+    ],
+    "technical": [
+      {"id": "T1", "type": "boundary"}
+    ]
+  },
+  "tensions": [
+    {"id": "TN1", "type": "trade_off", "between": ["B1", "T1"], "status": "resolved"}
+  ],
+  "anchors": {
+    "required_truths": [
+      {"id": "RT-1", "status": "NOT_SATISFIED", "maps_to": ["B1"]}
+    ]
+  }
+}
+```
+
+**Key insight**: JSON has NO text content fields. Only IDs, types, and references.
+
+### Markdown Content File (`<feature>.md`)
+
+```markdown
+# payment-retry
+
+## Outcome
+
+Achieve 95% retry success rate with zero duplicate payments.
+
+---
+
+## Constraints
+
+### Business
+
+#### B1: No Duplicate Payments
+
+Payment processing must never create duplicate charges for the same order.
+
+> **Rationale:** Duplicates cause chargebacks, refund overhead, and complaints.
+
+**Implemented by:** `lib/retry/IdempotencyService.ts`
+**Verified by:** `tests/idempotency.test.ts`
+
+#### B2: 95% Success Rate
+
+Achieve 95% retry success rate within 72 hours of initial failure.
+
+---
+
+### Technical
+
+#### T1: 72-Hour Retry Window
+
+All retries must complete within 72 hours of initial failure.
+
+---
+
+## Tensions
+
+### TN1: Performance vs Safety
+
+Performance optimizations conflict with safety checks (duplicate detection).
+
+> **Resolution:** Use async safety checks after initial response.
+
+---
+
+## Required Truths
+
+### RT-1: Idempotency Preserved
+
+Idempotency key must be preserved across all retry attempts.
+```
+
+**Parsing rules:**
+- `#### B1: Title` → Constraint ID `B1`
+- `### TN1: Title` → Tension ID `TN1`
+- `### RT-1: Title` → Required Truth ID `RT-1`
+- `> **Rationale:**` → Rationale blockquote
+- `> **Resolution:**` → Resolution blockquote
+
+## Legacy YAML Templates
 
 ### Constraint (uses `statement`)
 ```yaml
@@ -120,17 +243,33 @@ iterations:
 ## Validation Commands
 
 ```bash
-# Validate a feature manifold
-bun run cli/index.ts validate <feature>
+# Validate a feature manifold (auto-detects format)
+manifold validate <feature>
+
+# Show combined JSON+Markdown view
+manifold show <feature>
+
+# Migrate YAML to JSON+Markdown
+manifold migrate <feature>
 
 # Validate with all checks
-bun run cli/index.ts validate <feature> --all
+manifold validate <feature> --all
 
 # Strict mode (warnings become errors)
-bun run cli/index.ts validate <feature> --strict
+manifold validate <feature> --strict
 ```
 
 ## Common Mistakes
+
+### JSON+Markdown Format
+
+| Wrong | Right | Fix |
+|-------|-------|-----|
+| Text in JSON | Text in Markdown | JSON = structure only |
+| `"statement": "..."` in JSON | Markdown heading | Move text to `.md` file |
+| Missing Markdown heading for ID | `#### B1: Title` | Every JSON ID needs Markdown heading |
+
+### Legacy YAML Format
 
 | Wrong | Right | Fix |
 |-------|-------|-----|
