@@ -197,9 +197,23 @@ export class ResourceMonitor {
       4 // Hard cap at 4 for safety
     );
 
+    // If recommended is 1 or less, provide a reason
+    if (recommended <= 1) {
+      const bottleneck =
+        diskBasedConcurrency <= 1 ? 'disk space' :
+        memoryBasedConcurrency <= 1 ? 'memory' :
+        cpuBasedConcurrency <= 1 ? 'CPU capacity' : 'resource limits';
+
+      return {
+        canParallelize: false,
+        recommendedConcurrency: 1,
+        reason: `Insufficient ${bottleneck} for parallel execution`,
+      };
+    }
+
     return {
-      canParallelize: recommended > 1,
-      recommendedConcurrency: Math.max(1, recommended),
+      canParallelize: true,
+      recommendedConcurrency: recommended,
     };
   }
 
