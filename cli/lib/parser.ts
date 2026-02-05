@@ -418,12 +418,18 @@ export function detectSchemaVersion(manifold: Manifold): SchemaVersion {
 
 /**
  * Read and parse a manifold file
+ * Supports both JSON (preferred) and YAML (legacy) formats
  */
 export function readManifold(filePath: string): Manifold | null {
   if (!existsSync(filePath)) return null;
 
   try {
     const content = readFileSync(filePath, 'utf-8');
+    // JSON files (preferred format)
+    if (filePath.endsWith('.json')) {
+      return JSON.parse(content) as Manifold;
+    }
+    // YAML files (legacy format)
     return parseYamlSafe<Manifold>(content);
   } catch {
     return null;
@@ -481,6 +487,7 @@ export function findManifoldDir(cwd: string = process.cwd()): string | null {
 /**
  * List all manifold features in the .manifold directory
  * Only returns features that have a main manifold file (not just anchor/verify files)
+ * Supports both JSON (preferred) and YAML (legacy) formats
  */
 export function listFeatures(manifoldDir: string): string[] {
   if (!existsSync(manifoldDir)) return [];
@@ -489,15 +496,21 @@ export function listFeatures(manifoldDir: string): string[] {
   const features = new Set<string>();
 
   for (const file of files) {
-    if (!file.endsWith('.yaml')) continue;
+    // Support both JSON (preferred) and YAML (legacy)
+    if (!file.endsWith('.yaml') && !file.endsWith('.json')) continue;
 
-    // Skip anchor and verify files - only count main manifold files
-    if (file.endsWith('.anchor.yaml') || file.endsWith('.verify.yaml') || file.endsWith('.verify.json')) {
+    // Skip anchor, verify, and markdown files - only count main manifold files
+    if (file.endsWith('.anchor.yaml') ||
+        file.endsWith('.verify.yaml') ||
+        file.endsWith('.verify.json') ||
+        file.endsWith('.md')) {
       continue;
     }
 
     // Extract feature name from main manifold filename
-    const featureName = file.replace('.yaml', '');
+    const featureName = file.endsWith('.json')
+      ? file.replace('.json', '')
+      : file.replace('.yaml', '');
     features.add(featureName);
   }
 
@@ -516,8 +529,13 @@ export interface FeatureFiles {
 export function getFeatureFiles(manifoldDir: string, feature: string): FeatureFiles {
   const files: FeatureFiles = {};
 
-  const manifoldPath = join(manifoldDir, `${feature}.yaml`);
+  // Check for JSON first (preferred), fallback to YAML (legacy)
+  const manifoldPathJson = join(manifoldDir, `${feature}.json`);
+  const manifoldPathYaml = join(manifoldDir, `${feature}.yaml`);
+  const manifoldPath = existsSync(manifoldPathJson) ? manifoldPathJson : manifoldPathYaml;
+
   const anchorPath = join(manifoldDir, `${feature}.anchor.yaml`);
+
   // Check for JSON first (preferred), fallback to YAML (legacy)
   const verifyPathJson = join(manifoldDir, `${feature}.verify.json`);
   const verifyPathYaml = join(manifoldDir, `${feature}.verify.yaml`);

@@ -1,5 +1,6 @@
 ---
 description: "Generate ALL artifacts simultaneously from the constraint manifold - code, tests, docs, runbooks, alerts"
+argument-hint: "<feature-name> [--option=A|B|C]"
 ---
 
 # /m4-generate - Artifact Generation

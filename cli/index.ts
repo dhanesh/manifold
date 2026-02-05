@@ -19,6 +19,7 @@ import { registerGraphCommand } from './commands/graph.js';
 import { registerSolveCommand } from './commands/solve.js';
 import { registerMigrateCommand } from './commands/migrate.js';
 import { registerShowCommand } from './commands/show.js';
+import { registerCompletionCommand } from './commands/completion.js';
 import { setColorMode } from './lib/output.js';
 import pkg from './package.json';
 
@@ -55,6 +56,7 @@ registerGraphCommand(program);
 registerSolveCommand(program);
 registerMigrateCommand(program);
 registerShowCommand(program);
+registerCompletionCommand(program);
 
 // Parse arguments
 program.parse();

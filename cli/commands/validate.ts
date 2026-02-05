@@ -367,7 +367,7 @@ interface FeatureValidationResult {
   result?: ValidationResult;
   parseError?: string;
   manifold?: Manifold;  // For conflict detection (INT-1)
-  format?: 'yaml' | 'json-md';  // Format of the manifold
+  format?: 'yaml' | 'json' | 'json-md';  // Format of the manifold
   linkingResult?: LinkingResult;  // For JSON+MD format
 }
 
@@ -386,6 +386,11 @@ async function validateFeature(
   // Handle JSON+Markdown format
   if (format === 'json-md') {
     return validateJsonMdFeature(manifoldDir, feature, options);
+  }
+
+  // Handle JSON-only format
+  if (format === 'json') {
+    return validateJsonOnlyFeature(manifoldDir, feature, options);
   }
 
   // Handle legacy YAML format
@@ -534,6 +539,83 @@ async function validateJsonMdFeature(
 }
 
 /**
+ * Validate a JSON-only format feature (no accompanying .md file)
+ */
+async function validateJsonOnlyFeature(
+  manifoldDir: string,
+  feature: string,
+  options: ValidateOptions
+): Promise<FeatureValidationResult> {
+  const jsonPath = join(manifoldDir, `${feature}.json`);
+
+  // Check file exists
+  if (!existsSync(jsonPath)) {
+    return {
+      valid: false,
+      json: {
+        feature,
+        valid: false,
+        error: 'Manifold file not found',
+        path: jsonPath
+      }
+    };
+  }
+
+  // Read and parse file
+  let content: string;
+  try {
+    content = readFileSync(jsonPath, 'utf-8');
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return {
+      valid: false,
+      json: {
+        feature,
+        valid: false,
+        error: `Failed to read file: ${message}`,
+        path: jsonPath
+      }
+    };
+  }
+
+  // Parse JSON
+  let parsed: Manifold;
+  try {
+    parsed = JSON.parse(content) as Manifold;
+  } catch {
+    return {
+      valid: false,
+      parseError: 'Invalid JSON syntax',
+      json: {
+        feature,
+        valid: false,
+        error: 'Invalid JSON syntax',
+        path: jsonPath
+      }
+    };
+  }
+
+  // Validate against schema
+  const result = validateManifold(parsed, options.strict);
+
+  return {
+    valid: result.valid,
+    result,
+    manifold: parsed,  // Include for conflict detection (INT-1)
+    format: 'json',
+    json: {
+      feature,
+      valid: result.valid,
+      format: 'json',
+      schemaVersion: result.schemaVersion,
+      errors: result.errors.length > 0 ? result.errors : undefined,
+      warnings: result.warnings.length > 0 ? result.warnings : undefined,
+      path: jsonPath
+    }
+  };
+}
+
+/**
  * Print validation output to console
  * Satisfies: U3 (error truncation), TN4 (--all flag), INT-1 (conflict detection)
  */
@@ -557,7 +639,9 @@ function printValidationOutput(feature: string, result: FeatureValidationResult,
 
   // Format indicator
   if (result.format) {
-    println(`  Format: ${result.format === 'json-md' ? 'JSON+Markdown' : 'YAML'}`);
+    const formatLabel = result.format === 'json-md' ? 'JSON+Markdown' :
+                        result.format === 'json' ? 'JSON' : 'YAML';
+    println(`  Format: ${formatLabel}`);
   }
 
   // Schema version

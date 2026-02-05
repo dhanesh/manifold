@@ -1,5 +1,6 @@
 ---
 description: "Verify ALL artifacts against ALL constraints. Produces a verification matrix showing coverage and gaps"
+argument-hint: "<feature-name> [--actions] [--strict]"
 ---
 
 # /m5-verify - Constraint Verification

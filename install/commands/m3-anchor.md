@@ -1,5 +1,6 @@
 ---
 description: "Backward reasoning from desired outcome. Derives required conditions by asking 'What must be TRUE?'"
+argument-hint: "<feature-name>"
 ---
 
 # /m3-anchor - Outcome Anchoring (Requirements Derivation)

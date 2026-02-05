@@ -1,5 +1,6 @@
 ---
 description: "Surface and resolve constraint conflicts (trade-offs). Identifies direct conflicts, resource tensions, and competing requirements"
+argument-hint: "<feature-name> [--resolve]"
 ---
 
 # /m2-tension - Conflict Resolution (Trade-offs)

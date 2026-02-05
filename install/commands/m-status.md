@@ -1,5 +1,6 @@
 ---
 description: "Show current Manifold state, constraint summary, workflow progress, and next action"
+argument-hint: "[<feature-name>] [--history] [--diff]"
 ---
 
 # /m-status - Manifold Status

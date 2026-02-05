@@ -1,5 +1,6 @@
 ---
 description: "Initialize a constraint manifold for a feature. Creates .manifold/<feature>.json + .manifold/<feature>.md"
+argument-hint: "<feature-name> [--template=auth|crud|payment|api] [--outcome='...']"
 ---
 
 # /m0-init - Initialize Constraint Manifold

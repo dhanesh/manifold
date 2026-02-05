@@ -1,5 +1,6 @@
 ---
 description: "Wire generated artifacts together. Identifies integration points and produces actionable wiring checklist"
+argument-hint: "<feature-name>"
 ---
 
 # /m6-integrate - Artifact Integration (v2)

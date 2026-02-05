@@ -1,5 +1,6 @@
 ---
 description: "Generate parallel execution plan from constraint network. Identifies waves, critical path, and bidirectional dependencies"
+argument-hint: "[<feature-name>]"
 ---
 
 # /m-solve - Constraint Solver

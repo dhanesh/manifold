@@ -1,5 +1,6 @@
 ---
 description: "Light mode: 3-phase workflow for simple changes. Use instead of full workflow for bug fixes, small features, or quick iterations."
+argument-hint: "<feature-name> --outcome='...'"
 ---
 
 # /m-quick - Light Mode Workflow

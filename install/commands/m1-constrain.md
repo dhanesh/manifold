@@ -1,5 +1,6 @@
 ---
 description: "Interview-driven constraint discovery across 5 categories (business, technical, UX, security, operational)"
+argument-hint: "<feature-name>"
 ---
 
 # /m1-constrain - Constraint Discovery

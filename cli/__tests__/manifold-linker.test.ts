@@ -301,10 +301,10 @@ describe('detectManifoldFormat', () => {
     expect(detectManifoldFormat(testDir, 'nonexistent')).toBe('unknown');
   });
 
-  test('returns unknown for partial json-md (only json)', () => {
+  test('returns json for json-only (no md file)', () => {
     writeFileSync(join(testDir, 'test.json'), '{}');
-    // Missing .md file
-    expect(detectManifoldFormat(testDir, 'test')).toBe('unknown');
+    // Missing .md file - still valid as JSON-only format
+    expect(detectManifoldFormat(testDir, 'test')).toBe('json');
   });
 });
 

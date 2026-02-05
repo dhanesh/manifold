@@ -1,5 +1,6 @@
 ---
 description: "Execute tasks in parallel using git worktrees. Analyzes dependencies and file overlaps to safely parallelize independent tasks."
+argument-hint: "\"task1\" \"task2\" [\"task3\"] [--dry-run] [--max-parallel=N]"
 ---
 
 # /parallel - Parallel Task Execution

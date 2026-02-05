@@ -380,10 +380,10 @@ export function loadManifoldByFeature(
 // Format Detection (JSON+MD vs YAML)
 // ============================================================
 
-export type ManifoldFormat = 'json-md' | 'yaml' | 'unknown';
+export type ManifoldFormat = 'json-md' | 'json' | 'yaml' | 'unknown';
 
 /**
- * Detect the format of a manifold (JSON+MD hybrid or legacy YAML)
+ * Detect the format of a manifold (JSON+MD hybrid, JSON-only, or legacy YAML)
  */
 export function detectManifoldFormat(manifoldDir: string, feature: string): ManifoldFormat {
   const jsonPath = join(manifoldDir, `${feature}.json`);
@@ -396,6 +396,10 @@ export function detectManifoldFormat(manifoldDir: string, feature: string): Mani
 
   if (hasJson && hasMd) {
     return 'json-md';
+  }
+
+  if (hasJson) {
+    return 'json';
   }
 
   if (hasYaml) {
