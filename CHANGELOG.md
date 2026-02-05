@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.17.1](https://github.com/dhanesh/manifold/compare/v2.17.0...v2.17.1) (2026-02-05)
+
+### Bug Fixes
+
+* **cli:** improve json+md format support across commands ([b46ea01](https://github.com/dhanesh/manifold/commit/b46ea01b55acbdf2172e9ab829db6c56ba1e946e))
+
 ## [2.17.0](https://github.com/dhanesh/manifold/compare/v2.16.0...v2.17.0) (2026-02-05)
 
 ### Features
