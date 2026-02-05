@@ -1,12 +1,13 @@
 /**
  * Init Command for Manifold CLI
  * Satisfies: U1 (mirrors /m0-init), RT-5 (Edge case handling)
+ *
+ * Generates JSON+Markdown hybrid format (preferred) by default.
  */
 
 import type { Command } from 'commander';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import * as yaml from 'yaml';
 import { findManifoldDir } from '../lib/parser.js';
 import {
   println,
@@ -76,14 +77,19 @@ async function initCommand(feature: string, options: InitOptions): Promise<numbe
     }
   }
 
-  // Check if manifold already exists
-  const manifoldPath = join(manifoldDir, `${feature}.yaml`);
+  // Check if manifold already exists (check both JSON+MD and legacy YAML)
+  const jsonPath = join(manifoldDir, `${feature}.json`);
+  const mdPath = join(manifoldDir, `${feature}.md`);
+  const yamlPath = join(manifoldDir, `${feature}.yaml`);
 
-  if (existsSync(manifoldPath) && !options.force) {
+  const existingPath = existsSync(jsonPath) ? jsonPath :
+                       existsSync(yamlPath) ? yamlPath : null;
+
+  if (existingPath && !options.force) {
     if (options.json) {
       println(toJSON({
         error: 'Manifold already exists',
-        path: manifoldPath,
+        path: existingPath,
         suggestion: 'Use --force to overwrite'
       }));
     } else {
@@ -95,33 +101,31 @@ async function initCommand(feature: string, options: InitOptions): Promise<numbe
     return 1;
   }
 
-  // Generate manifold content
-  const manifold = generateManifoldTemplate(feature, options.outcome);
+  // Generate manifold content (JSON+MD format)
+  const { structure, markdown } = generateManifoldTemplate(feature, options.outcome);
 
-  // Write file
+  // Write JSON structure file
   try {
-    const content = yaml.stringify(manifold, {
-      indent: 2,
-      lineWidth: 100,
-      defaultKeyType: 'PLAIN',
-      defaultStringType: 'QUOTE_DOUBLE'
-    });
-
-    // Add header comment
-    const header = `# ${feature}.yaml
-# Constraint Manifold for ${feature}
-# Created: ${new Date().toISOString().split('T')[0]}
-# Schema: v3
-
-`;
-
-    writeFileSync(manifoldPath, header + content, 'utf-8');
+    writeFileSync(jsonPath, JSON.stringify(structure, null, 2), 'utf-8');
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     if (options.json) {
-      println(toJSON({ error: `Failed to write manifold: ${message}` }));
+      println(toJSON({ error: `Failed to write JSON: ${message}` }));
     } else {
-      printError(`Failed to write manifold: ${message}`);
+      printError(`Failed to write JSON: ${message}`);
+    }
+    return 1;
+  }
+
+  // Write Markdown content file
+  try {
+    writeFileSync(mdPath, markdown, 'utf-8');
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    if (options.json) {
+      println(toJSON({ error: `Failed to write Markdown: ${message}` }));
+    } else {
+      printError(`Failed to write Markdown: ${message}`);
     }
     return 1;
   }
@@ -131,12 +135,17 @@ async function initCommand(feature: string, options: InitOptions): Promise<numbe
     println(toJSON({
       success: true,
       feature,
-      path: manifoldPath,
+      format: 'json-md',
+      paths: {
+        json: jsonPath,
+        md: mdPath
+      },
       nextAction: `/m1-constrain ${feature}`
     }));
   } else {
     println(`${style.check()} Created manifold: ${style.feature(feature)}`);
-    println(`  Path: ${manifoldPath}`);
+    println(`  JSON: ${jsonPath}`);
+    println(`  MD:   ${mdPath}`);
     println();
     println(`  ${style.dim('Next:')} /m1-constrain ${feature}`);
   }
@@ -152,33 +161,26 @@ function isValidFeatureName(name: string): boolean {
   return /^[a-z][a-z0-9-]*[a-z0-9]$|^[a-z]$/.test(name);
 }
 
+interface ManifoldTemplate {
+  structure: Record<string, unknown>;
+  markdown: string;
+}
+
 /**
- * Generate manifold template
+ * Generate manifold template in JSON+MD format
  * Satisfies: Schema v3 with evidence[], constraint_graph
  */
-function generateManifoldTemplate(feature: string, outcome?: string): Record<string, unknown> {
+function generateManifoldTemplate(feature: string, outcome?: string): ManifoldTemplate {
   const now = new Date().toISOString();
+  const date = now.split('T')[0];
+  const outcomeText = outcome || `[Describe the desired outcome for ${feature}]`;
 
-  return {
+  // JSON structure (IDs, types, phases, references only)
+  const structure: Record<string, unknown> = {
     schema_version: 3,
     feature,
-    outcome: outcome || `[Describe the desired outcome for ${feature}]`,
     phase: 'INITIALIZED',
-    created: now.split('T')[0],
-
-    // Context section
-    context: {
-      motivation: [
-        '[Why is this feature needed?]',
-        '[What problem does it solve?]'
-      ],
-      prior_art: [
-        '[Any existing solutions or patterns to consider?]'
-      ],
-      success_metrics: [
-        '[How will we measure success?]'
-      ]
-    },
+    created: date,
 
     // Constraints placeholder (populated by /m1-constrain)
     constraints: {
@@ -203,9 +205,7 @@ function generateManifoldTemplate(feature: string, outcome?: string): Record<str
     // Anchors placeholder (populated by /m3-anchor)
     anchors: {
       required_truths: [],
-      recommended_option: null,
-      implementation_phases: [],
-      anchor_document: null
+      implementation_phases: []
     },
 
     // v2+: Iteration tracking
@@ -221,22 +221,69 @@ function generateManifoldTemplate(feature: string, outcome?: string): Record<str
     // v2+: Convergence tracking
     convergence: {
       status: 'NOT_STARTED'
-    },
-
-    // v3: Evidence system (reality grounding)
-    evidence: [],
-
-    // v3: Constraint graph (temporal non-linearity)
-    constraint_graph: {
-      version: 1,
-      generated_at: now,
-      feature,
-      nodes: {},
-      edges: {
-        dependencies: [],
-        conflicts: [],
-        satisfies: []
-      }
     }
   };
+
+  // Markdown content (human-readable text)
+  const markdown = `# ${feature}
+
+## Outcome
+
+${outcomeText}
+
+---
+
+## Context
+
+### Motivation
+
+- [Why is this feature needed?]
+- [What problem does it solve?]
+
+### Prior Art
+
+- [Any existing solutions or patterns to consider?]
+
+### Success Metrics
+
+- [How will we measure success?]
+
+---
+
+## Constraints
+
+### Business
+
+_No business constraints defined yet. Run \`/m1-constrain ${feature}\` to discover constraints._
+
+### Technical
+
+_No technical constraints defined yet._
+
+### User Experience
+
+_No UX constraints defined yet._
+
+### Security
+
+_No security constraints defined yet._
+
+### Operational
+
+_No operational constraints defined yet._
+
+---
+
+## Tensions
+
+_No tensions identified yet. Run \`/m2-tension ${feature}\` after defining constraints._
+
+---
+
+## Required Truths
+
+_No required truths anchored yet. Run \`/m3-anchor ${feature}\` after resolving tensions._
+`;
+
+  return { structure, markdown };
 }

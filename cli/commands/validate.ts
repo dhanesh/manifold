@@ -629,9 +629,23 @@ function printValidationOutput(feature: string, result: FeatureValidationResult,
     return;
   }
 
-  // File not found
+  // File not found or loading error
   if (!result.result) {
-    println(`  ${style.cross()} ${style.error('Manifold file not found')}`);
+    // Check for specific error message in json result (e.g., from JSON+MD loader)
+    const errorMsg = (result.json?.error as string) || 'Manifold file not found';
+    println(`  ${style.cross()} ${style.error(errorMsg)}`);
+    if (result.format) {
+      const formatLabel = result.format === 'json-md' ? 'JSON+Markdown' :
+                          result.format === 'json' ? 'JSON' : 'YAML';
+      println(`  ${style.dim('Format:')} ${formatLabel}`);
+    }
+    if (result.json?.paths) {
+      const paths = result.json.paths as { json?: string; md?: string };
+      if (paths.json) println(`  ${style.dim('JSON:')} ${paths.json}`);
+      if (paths.md) println(`  ${style.dim('MD:')} ${paths.md}`);
+    } else if (result.json?.path) {
+      println(`  ${style.dim('Path:')} ${result.json.path}`);
+    }
     return;
   }
 

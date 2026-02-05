@@ -155,6 +155,9 @@ interface MigrationResult {
   mdPath?: string;
   backupPath?: string;
   structure?: ManifoldStructure;
+  // Verify file migration
+  verifyJsonPath?: string;
+  verifyBackupPath?: string;
 }
 
 /**
@@ -196,6 +199,11 @@ async function migrateFeature(
   // Generate Markdown content
   const markdown = generateMarkdown(manifold);
 
+  // Check for verify.yaml
+  const verifyYamlPath = join(manifoldDir, `${feature}.verify.yaml`);
+  const verifyJsonPath = join(manifoldDir, `${feature}.verify.json`);
+  const hasVerifyYaml = existsSync(verifyYamlPath);
+
   // Dry run - just return what would be created
   if (options.dryRun) {
     return {
@@ -204,6 +212,7 @@ async function migrateFeature(
       jsonPath,
       mdPath,
       structure,
+      verifyJsonPath: hasVerifyYaml ? verifyJsonPath : undefined,
     };
   }
 
@@ -241,6 +250,33 @@ async function migrateFeature(
     }
   }
 
+  // Migrate verify.yaml to verify.json if it exists
+  let verifyBackupPath: string | undefined;
+
+  if (hasVerifyYaml) {
+    try {
+      const verifyContent = readFileSync(verifyYamlPath, 'utf-8');
+      const verifyData = yaml.parse(verifyContent);
+
+      if (!options.dryRun) {
+        writeFileSync(verifyJsonPath, JSON.stringify(verifyData, null, 2), 'utf-8');
+
+        // Backup verify YAML
+        if (options.backup !== false) {
+          verifyBackupPath = `${verifyYamlPath}.backup`;
+          try {
+            renameSync(verifyYamlPath, verifyBackupPath);
+          } catch {
+            // Non-fatal
+            verifyBackupPath = undefined;
+          }
+        }
+      }
+    } catch {
+      // Non-fatal - verify file migration is optional
+    }
+  }
+
   return {
     feature,
     success: true,
@@ -248,6 +284,8 @@ async function migrateFeature(
     mdPath,
     backupPath,
     structure,
+    verifyJsonPath: hasVerifyYaml ? verifyJsonPath : undefined,
+    verifyBackupPath,
   };
 }
 
@@ -507,6 +545,13 @@ function printMigrationResult(feature: string, result: MigrationResult, dryRun?:
     println(`    MD:   ${result.mdPath}`);
     if (result.backupPath) {
       println(`    ${style.dim(`Backup: ${result.backupPath}`)}`);
+    }
+    // Show verify file migration if it happened
+    if (result.verifyJsonPath) {
+      println(`    Verify: ${result.verifyJsonPath}`);
+      if (result.verifyBackupPath) {
+        println(`    ${style.dim(`Verify backup: ${result.verifyBackupPath}`)}`);
+      }
     }
   } else {
     println(`  ${style.cross()} ${style.feature(feature)}: ${style.error(result.error || 'Unknown error')}`);
