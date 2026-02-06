@@ -5,6 +5,17 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.18.0](https://github.com/dhanesh/manifold/compare/v2.17.1...v2.18.0) (2026-02-06)
+
+### Features
+
+* convert templates/examples to json+md, modernize prd generation ([89cc76b](https://github.com/dhanesh/manifold/commit/89cc76b7489f5339442960ec714168da14cd4877))
+* enforce json+md schema validation across manifold lifecycle ([c673664](https://github.com/dhanesh/manifold/commit/c6736649a3a3ae09cb8f0420e46cf3b20a31c936))
+
+### Bug Fixes
+
+* **cli:** fix validate and show commands for json+md manifolds ([53e62aa](https://github.com/dhanesh/manifold/commit/53e62aa021816ea9518e7697c463e347dce23117))
+
 ## [2.17.1](https://github.com/dhanesh/manifold/compare/v2.17.0...v2.17.1) (2026-02-05)
 
 ### Bug Fixes
