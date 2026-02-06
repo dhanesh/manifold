@@ -199,4 +199,17 @@ With `--auto-wire`, safe integrations are performed automatically:
 6. **Record iteration** in `iterations[]`
 7. Update manifold with integration status
 8. Display checklist with copy-paste commands
-9. Recommend `/m5-verify` after integration
+9. **⚠️ Run `manifold validate <feature>`** — fix any errors before proceeding
+10. Recommend `/m5-verify` after integration
+
+### ⚠️ Mandatory Post-Phase Validation
+
+After updating manifold files, you MUST run validation:
+
+```bash
+manifold validate <feature>
+```
+
+If validation fails, fix the errors BEFORE proceeding. The JSON structure must conform to `install/manifold-structure.schema.json`.
+
+**Format lock**: If `.manifold/<feature>.json` exists, ALWAYS use JSON+Markdown format. Never create/update `.yaml` when `.json` exists.

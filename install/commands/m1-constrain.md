@@ -267,9 +267,23 @@ Next: /m2-tension payment-retry
 6. Set phase to CONSTRAINED
 7. Display summary and next step
 
-### Format Detection
+### Format Detection & Lock
 
 The CLI auto-detects format:
 - If `.json` + `.md` exist → JSON+Markdown hybrid
 - If only `.yaml` exists → Legacy YAML
 - Use `manifold show <feature>` to see current format
+
+**Format lock**: If `.manifold/<feature>.json` exists, you MUST use JSON+Markdown format for ALL subsequent updates. Never create or update a `.yaml` file when `.json` exists for the same feature.
+
+### ⚠️ Mandatory Post-Phase Validation
+
+After updating manifold files, you MUST run validation before showing results:
+
+```bash
+manifold validate <feature>
+```
+
+If validation fails, fix the errors BEFORE proceeding. The JSON structure must conform to the schema defined in `install/manifold-structure.schema.json`. The pre-commit hook will also enforce this — invalid manifolds cannot be committed.
+
+**Schema reference**: `cli/lib/structure-schema.ts` (Zod) / `install/manifold-structure.schema.json` (JSON Schema)

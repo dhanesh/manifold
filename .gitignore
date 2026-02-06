@@ -55,5 +55,8 @@ build/
 # ===========================================
 *.bun-build
 
+# Migration backups
+*.backup
+
 # Serena MCP local config
 .serena/

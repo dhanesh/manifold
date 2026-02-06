@@ -340,18 +340,21 @@ User runs: /m4-generate payment-retry --option=C
 
 ### Phase 3: Finalization
 
-10. **Update manifold YAML** with generation tracking (artifacts, coverage)
+10. **Update manifold** with generation tracking (artifacts, coverage)
+    - JSON+MD: Update `.manifold/<feature>.json` with `generation` section
+    - Legacy YAML: Update `.manifold/<feature>.yaml`
 11. Set phase to GENERATED
 12. **⚠️ MANDATORY POST-GENERATION VALIDATION**
     ```bash
-    bun run cli/index.ts validate <feature> --strict
+    manifold validate <feature>
     ```
-    - If validation fails, fix the YAML errors BEFORE proceeding
-    - Common issues:
-      - Constraints missing `statement` field
-      - Tensions missing `description` field
-      - Required truths missing `statement` field
+    - If validation fails, fix the errors BEFORE proceeding
+    - **JSON+MD format**: Ensure JSON IDs match Markdown headings, constraint IDs follow patterns (B1, T1, U1, S1, O1)
+    - **Legacy YAML**: Constraints use `statement`, tensions use `description`
     - See SCHEMA_QUICK_REFERENCE.md for field mappings
+    - Schema reference: `install/manifold-structure.schema.json`
+
+    **Format lock**: If `.manifold/<feature>.json` exists, ALWAYS use JSON+Markdown format. Never create/update `.yaml` when `.json` exists.
 13. Display summary with constraint coverage
 
 ---

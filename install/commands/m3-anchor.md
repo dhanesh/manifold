@@ -253,6 +253,7 @@ Next: /m4-generate payment-retry --option=C
    - `.manifold/<feature>.json` — Add required truths to `anchors.required_truths` with id, status, maps_to
    - `.manifold/<feature>.md` — Add `### RT-1: Title` + statement + gap under `## Required Truths`
 10. Set phase to ANCHORED in JSON
+11. **⚠️ Run `manifold validate <feature>`** — fix any errors before proceeding
 
 ### For Legacy YAML Format
 
@@ -265,3 +266,15 @@ Next: /m4-generate payment-retry --option=C
 7. Recommend best option with rationale
 8. Save to `.manifold/<feature>.anchor.yaml`
 9. Set phase to ANCHORED
+
+### ⚠️ Mandatory Post-Phase Validation
+
+After updating manifold files, you MUST run validation before showing results:
+
+```bash
+manifold validate <feature>
+```
+
+If validation fails, fix the errors BEFORE proceeding. The JSON structure must conform to `install/manifold-structure.schema.json`.
+
+**Format lock**: If `.manifold/<feature>.json` exists, ALWAYS use JSON+Markdown format. Never create/update `.yaml` when `.json` exists.

@@ -285,7 +285,8 @@ AUTO-DETECTED DEPENDENCIES:
    - `.manifold/<feature>.md` — Add `### TN1: Title` + description + resolution
 8. **Record iteration** in JSON `iterations[]`
 9. Set phase to TENSIONED in JSON
-10. Display summary and next step
+10. **⚠️ Run `manifold validate <feature>`** — fix any errors before proceeding
+11. Display summary and next step
 
 ### For Legacy YAML Format
 
@@ -305,3 +306,15 @@ AUTO-DETECTED DEPENDENCIES:
 7. **Record iteration** in `iterations[]` (v2)
 8. Set phase to TENSIONED
 9. Display summary and next step
+
+### ⚠️ Mandatory Post-Phase Validation
+
+After updating manifold files, you MUST run validation before showing results:
+
+```bash
+manifold validate <feature>
+```
+
+If validation fails, fix the errors BEFORE proceeding. The JSON structure must conform to `install/manifold-structure.schema.json`.
+
+**Format lock**: If `.manifold/<feature>.json` exists, ALWAYS use JSON+Markdown format. Never create/update `.yaml` when `.json` exists.

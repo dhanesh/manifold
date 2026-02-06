@@ -47,26 +47,61 @@ fi
 # ============================================================
 # MANIFOLD SCHEMA VALIDATION
 # Satisfies: Schema enforcement at commit time
+# Validates both JSON+Markdown and legacy YAML manifold formats
 # ============================================================
 
-# Get list of staged manifold files (main manifold YAML files only)
-MANIFOLD_FILES=$(git diff --cached --name-only | grep '^\.manifold/.*\.yaml$' | grep -v '\.\(anchor\|verify\|integrate\)\.' || true)
+# Extract unique feature names from staged manifold files
+STAGED_MANIFOLD=$(git diff --cached --name-only | grep '^\.manifold/' || true)
+FEATURES=""
 
-if [ -n "$MANIFOLD_FILES" ]; then
+if [ -n "$STAGED_MANIFOLD" ]; then
+    for file in $STAGED_MANIFOLD; do
+        base=$(basename "$file")
+        feature=""
+        case "$base" in
+            # Skip auxiliary files (verify results, anchor docs)
+            *.verify.json|*.verify.yaml|*.anchor.yaml|*.integrate.yaml)
+                ;;
+            *.json)
+                feature="${base%.json}"
+                ;;
+            *.yaml)
+                feature="${base%.yaml}"
+                ;;
+            *.md)
+                feature="${base%.md}"
+                ;;
+        esac
+        # Add feature if non-empty and not already in list
+        if [ -n "$feature" ]; then
+            if ! echo "$FEATURES" | grep -qx "$feature"; then
+                FEATURES="${FEATURES:+$FEATURES
+}$feature"
+            fi
+        fi
+    done
+fi
+
+if [ -n "$FEATURES" ]; then
     echo "Validating manifold schemas..."
 
     VALIDATION_FAILED=0
 
-    for file in $MANIFOLD_FILES; do
-        # Extract feature name from filename
-        feature=$(basename "$file" .yaml)
+    echo "$FEATURES" | while IFS= read -r feature; do
+        [ -z "$feature" ] && continue
 
-        # Run validation (suppress non-error output for clean commits)
+        # Run validation (handles both JSON+MD and YAML formats)
         if ! bun run cli/index.ts validate "$feature" --strict 2>/dev/null; then
             echo "❌ Manifold validation failed: $feature"
-            VALIDATION_FAILED=1
+            # Write failure flag since we're in a subshell (pipe)
+            echo "FAILED" > /tmp/manifold_validate_$$
         fi
     done
+
+    if [ -f /tmp/manifold_validate_$$ ]; then
+        rm -f /tmp/manifold_validate_$$
+        VALIDATION_FAILED=1
+    fi
 
     if [ $VALIDATION_FAILED -eq 1 ]; then
         echo ""
@@ -79,10 +114,14 @@ if [ -n "$MANIFOLD_FILES" ]; then
         echo "To see detailed validation errors:"
         echo "  bun run cli/index.ts validate <feature> --all"
         echo ""
-        echo "Common issues:"
+        echo "Common issues (JSON+MD format):"
+        echo "  - JSON IDs must match Markdown headings (#### B1: Title)"
+        echo "  - Constraint IDs: B1, T1, U1, S1, O1 (match prefix to category)"
+        echo "  - Tension IDs: TN1, TN2, ... | Required Truth IDs: RT-1, RT-2, ..."
+        echo ""
+        echo "Common issues (legacy YAML format):"
         echo "  - Constraints use 'statement', not 'description'"
         echo "  - Tensions use 'description', not 'statement'"
-        echo "  - Required truths use 'statement'"
         echo ""
         echo "See install/commands/SCHEMA_QUICK_REFERENCE.md for field reference."
         echo ""
