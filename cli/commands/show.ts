@@ -125,7 +125,9 @@ async function showCommand(feature: string | undefined, options: ShowOptions): P
   // Load JSON+Markdown manifold
   const result = loadManifoldByFeature(manifoldDir, feature);
 
-  if (!result.success) {
+  // Distinguish load failure (can't read/parse files) from linking failure
+  // (files loaded but cross-references have issues)
+  if (!result.success && !result.linking) {
     if (options.json) {
       println(toJSON({ feature, error: result.error }));
     } else {

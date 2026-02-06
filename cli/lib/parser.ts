@@ -522,17 +522,35 @@ export function listFeatures(manifoldDir: string): string[] {
  */
 export interface FeatureFiles {
   manifold?: string;
+  markdown?: string;
   anchor?: string;
   verify?: string;
+  format: 'json-md' | 'json' | 'yaml' | 'unknown';
 }
 
 export function getFeatureFiles(manifoldDir: string, feature: string): FeatureFiles {
-  const files: FeatureFiles = {};
+  const files: FeatureFiles = { format: 'unknown' };
 
-  // Check for JSON first (preferred), fallback to YAML (legacy)
+  // Check for JSON+MD hybrid (preferred), JSON-only, or YAML (legacy)
   const manifoldPathJson = join(manifoldDir, `${feature}.json`);
+  const manifoldPathMd = join(manifoldDir, `${feature}.md`);
   const manifoldPathYaml = join(manifoldDir, `${feature}.yaml`);
-  const manifoldPath = existsSync(manifoldPathJson) ? manifoldPathJson : manifoldPathYaml;
+
+  const hasJson = existsSync(manifoldPathJson);
+  const hasMd = existsSync(manifoldPathMd);
+  const hasYaml = existsSync(manifoldPathYaml);
+
+  if (hasJson && hasMd) {
+    files.manifold = manifoldPathJson;
+    files.markdown = manifoldPathMd;
+    files.format = 'json-md';
+  } else if (hasJson) {
+    files.manifold = manifoldPathJson;
+    files.format = 'json';
+  } else if (hasYaml) {
+    files.manifold = manifoldPathYaml;
+    files.format = 'yaml';
+  }
 
   const anchorPath = join(manifoldDir, `${feature}.anchor.yaml`);
 
@@ -541,7 +559,6 @@ export function getFeatureFiles(manifoldDir: string, feature: string): FeatureFi
   const verifyPathYaml = join(manifoldDir, `${feature}.verify.yaml`);
   const verifyPath = existsSync(verifyPathJson) ? verifyPathJson : verifyPathYaml;
 
-  if (existsSync(manifoldPath)) files.manifold = manifoldPath;
   if (existsSync(anchorPath)) files.anchor = anchorPath;
   if (existsSync(verifyPath)) files.verify = verifyPath;
 
@@ -557,6 +574,275 @@ export interface FeatureData {
   anchor?: AnchorDocument;
   verify?: VerifyDocument;
   schemaVersion: SchemaVersion;
+  format?: 'json-md' | 'json' | 'yaml';
+}
+
+/**
+ * Reconstruct a Manifold object from JSON structure + Markdown content.
+ * This bridges the JSON+MD hybrid format into the Manifold interface
+ * that all commands expect.
+ */
+function loadJsonMdAsManifold(jsonPath: string, mdPath: string): Manifold | null {
+  try {
+    const jsonContent = readFileSync(jsonPath, 'utf-8');
+    const structure = JSON.parse(jsonContent);
+
+    // Read markdown content for text fields (outcome, statements, descriptions)
+    let mdContent = '';
+    try {
+      mdContent = readFileSync(mdPath, 'utf-8');
+    } catch {
+      // MD file read failure is non-fatal - continue with structure only
+    }
+
+    // Extract text from markdown sections
+    const mdSections = parseMarkdownSections(mdContent);
+
+    // Build Manifold from structure + markdown content
+    const manifold: Manifold = {
+      schema_version: structure.schema_version ?? 3,
+      feature: structure.feature,
+      phase: structure.phase,
+      created: structure.created,
+      mode: structure.mode,
+      template: structure.template,
+      template_version: structure.template_version,
+      outcome: mdSections.outcome || structure.outcome_ref,
+      tensions: [],
+      convergence: structure.convergence,
+      iterations: structure.iterations,
+      generation: structure.generation,
+      constraint_graph: structure.constraint_graph,
+      quick_summary: structure.quick_summary,
+      tension_summary: structure.tension_summary,
+    };
+
+    // Reconstruct constraints with text from markdown
+    if (structure.constraints) {
+      manifold.constraints = {};
+      for (const category of ['business', 'technical', 'user_experience', 'security', 'operational'] as const) {
+        const refs = structure.constraints[category] || [];
+        manifold.constraints[category] = refs.map((ref: { id: string; type: string }) => {
+          const mdConstraint = mdSections.constraints.get(ref.id);
+          return {
+            id: ref.id,
+            type: ref.type,
+            statement: mdConstraint?.statement || `[${ref.id}]`,
+            rationale: mdConstraint?.rationale,
+          } as Constraint;
+        });
+      }
+    }
+
+    // Reconstruct tensions with text from markdown
+    if (structure.tensions) {
+      manifold.tensions = structure.tensions.map((ref: { id: string; type: string; between: string[]; status: string }) => {
+        const mdTension = mdSections.tensions.get(ref.id);
+        return {
+          id: ref.id,
+          type: ref.type,
+          between: ref.between,
+          status: ref.status,
+          description: mdTension?.description || `[${ref.id}]`,
+          resolution: mdTension?.resolution,
+        } as Tension;
+      });
+    }
+
+    // Reconstruct anchors with text from markdown
+    if (structure.anchors) {
+      manifold.anchors = {
+        required_truths: (structure.anchors.required_truths || []).map(
+          (ref: { id: string; status: string; maps_to?: string[] }) => {
+            const mdRT = mdSections.requiredTruths.get(ref.id);
+            return {
+              id: ref.id,
+              status: ref.status,
+              statement: mdRT?.statement || `[${ref.id}]`,
+              maps_to_constraints: ref.maps_to,
+            } as RequiredTruth;
+          }
+        ),
+        recommended_option: structure.anchors.recommended_option,
+        implementation_phases: structure.anchors.implementation_phases,
+        anchor_document: structure.anchors.anchor_document,
+      };
+    }
+
+    // Copy inline verification if present
+    if (structure.verification) {
+      manifold.verification = structure.verification;
+    }
+
+    return manifold;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Simple markdown section parser for extracting text content.
+ * Extracts outcome, constraint statements, tension descriptions,
+ * and required truth statements from the Markdown companion file.
+ */
+interface MdSections {
+  outcome?: string;
+  constraints: Map<string, { statement: string; rationale?: string }>;
+  tensions: Map<string, { description: string; resolution?: string }>;
+  requiredTruths: Map<string, { statement: string }>;
+}
+
+function parseMarkdownSections(md: string): MdSections {
+  const result: MdSections = {
+    constraints: new Map(),
+    tensions: new Map(),
+    requiredTruths: new Map(),
+  };
+
+  const lines = md.split('\n');
+  let currentId: string | null = null;
+  let currentType: 'constraint' | 'tension' | 'requiredTruth' | 'outcome' | null = null;
+  let collecting: string[] = [];
+  let inOutcome = false;
+
+  const CONSTRAINT_RE = /^####\s+([BTUSO]\d+):\s*(.+)/;
+  const TENSION_RE = /^###\s+(TN\d+):\s*(.+)/;
+  const RT_RE = /^###\s+(RT-\d+):\s*(.+)/;
+  const RATIONALE_RE = /^>\s*\*\*Rationale:\*\*\s*(.*)/;
+  const RESOLUTION_RE = /^>\s*\*\*Resolution:\*\*\s*(.*)/;
+
+  function flush() {
+    if (!currentId || !currentType) return;
+    const text = collecting.join('\n').trim();
+    if (currentType === 'constraint') {
+      const existing = result.constraints.get(currentId);
+      if (existing) {
+        existing.statement = text || existing.statement;
+      } else {
+        result.constraints.set(currentId, { statement: text });
+      }
+    } else if (currentType === 'tension') {
+      const existing = result.tensions.get(currentId);
+      if (existing) {
+        existing.description = text || existing.description;
+      } else {
+        result.tensions.set(currentId, { description: text });
+      }
+    } else if (currentType === 'requiredTruth') {
+      result.requiredTruths.set(currentId, { statement: text });
+    }
+    collecting = [];
+  }
+
+  for (const line of lines) {
+    // Outcome section
+    if (line.startsWith('## Outcome')) {
+      flush();
+      currentType = 'outcome';
+      currentId = null;
+      inOutcome = true;
+      collecting = [];
+      continue;
+    }
+
+    // New section header breaks outcome collection
+    if (inOutcome && line.startsWith('## ') && !line.startsWith('## Outcome')) {
+      result.outcome = collecting.join('\n').trim();
+      inOutcome = false;
+      collecting = [];
+    }
+
+    if (inOutcome && !line.startsWith('## ') && !line.startsWith('---')) {
+      collecting.push(line);
+      continue;
+    }
+
+    // Constraint heading
+    const cmatch = line.match(CONSTRAINT_RE);
+    if (cmatch) {
+      flush();
+      currentId = cmatch[1];
+      currentType = 'constraint';
+      collecting = [];
+      continue;
+    }
+
+    // Tension heading
+    const tmatch = line.match(TENSION_RE);
+    if (tmatch) {
+      flush();
+      currentId = tmatch[1];
+      currentType = 'tension';
+      collecting = [];
+      continue;
+    }
+
+    // Required truth heading
+    const rtmatch = line.match(RT_RE);
+    if (rtmatch) {
+      flush();
+      currentId = rtmatch[1];
+      currentType = 'requiredTruth';
+      collecting = [];
+      continue;
+    }
+
+    // Section headers reset context
+    if (line.startsWith('## ') || line.startsWith('### ') && !cmatch && !tmatch && !rtmatch) {
+      flush();
+      currentId = null;
+      currentType = null;
+      collecting = [];
+      continue;
+    }
+
+    // Rationale blockquote
+    const ratmatch = line.match(RATIONALE_RE);
+    if (ratmatch && currentId && currentType === 'constraint') {
+      const entry = result.constraints.get(currentId);
+      if (entry) {
+        entry.rationale = ratmatch[1].trim();
+      } else {
+        result.constraints.set(currentId, {
+          statement: collecting.join('\n').trim(),
+          rationale: ratmatch[1].trim(),
+        });
+      }
+      continue;
+    }
+
+    // Resolution blockquote
+    const resmatch = line.match(RESOLUTION_RE);
+    if (resmatch && currentId && currentType === 'tension') {
+      const entry = result.tensions.get(currentId);
+      if (entry) {
+        entry.resolution = resmatch[1].trim();
+      } else {
+        result.tensions.set(currentId, {
+          description: collecting.join('\n').trim(),
+          resolution: resmatch[1].trim(),
+        });
+      }
+      continue;
+    }
+
+    // Skip separator lines and empty blockquotes
+    if (line === '---' || line === '') continue;
+    if (line.startsWith('> **') || line.startsWith('**Implemented by:**') || line.startsWith('**Verified by:**') || line.startsWith('**Evidence:**')) continue;
+
+    // Collect content
+    if (currentId && currentType) {
+      collecting.push(line);
+    }
+  }
+
+  // Final flush
+  flush();
+  if (inOutcome) {
+    result.outcome = collecting.join('\n').trim();
+  }
+
+  return result;
 }
 
 export function loadFeature(manifoldDir: string, feature: string): FeatureData | null {
@@ -564,13 +850,22 @@ export function loadFeature(manifoldDir: string, feature: string): FeatureData |
 
   if (!files.manifold) return null;
 
-  const manifold = readManifold(files.manifold);
+  let manifold: Manifold | null = null;
+
+  // Handle JSON+MD hybrid format
+  if (files.format === 'json-md' && files.markdown) {
+    manifold = loadJsonMdAsManifold(files.manifold, files.markdown);
+  } else {
+    manifold = readManifold(files.manifold);
+  }
+
   if (!manifold) return null;
 
   const data: FeatureData = {
     feature,
     manifold,
     schemaVersion: detectSchemaVersion(manifold),
+    format: files.format !== 'unknown' ? files.format : undefined,
   };
 
   if (files.anchor) {

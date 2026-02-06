@@ -476,7 +476,9 @@ async function validateJsonMdFeature(
   // Load and validate using linker
   const loadResult = loadManifoldByFeature(manifoldDir, feature);
 
-  if (!loadResult.success) {
+  // Distinguish between load failure (can't read/parse files) and linking failure
+  // (files loaded but cross-references have issues). Only bail out for load failures.
+  if (!loadResult.success && !loadResult.linking) {
     return {
       valid: false,
       format: 'json-md',
@@ -631,8 +633,10 @@ function printValidationOutput(feature: string, result: FeatureValidationResult,
 
   // File not found or loading error
   if (!result.result) {
-    // Check for specific error message in json result (e.g., from JSON+MD loader)
-    const errorMsg = (result.json?.error as string) || 'Manifold file not found';
+    // Use actual error message from the validation result
+    const errorMsg = typeof result.json?.error === 'string' && result.json.error
+      ? result.json.error
+      : 'Manifold file not found';
     println(`  ${style.cross()} ${style.error(errorMsg)}`);
     if (result.format) {
       const formatLabel = result.format === 'json-md' ? 'JSON+Markdown' :

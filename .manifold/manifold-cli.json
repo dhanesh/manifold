@@ -1,0 +1,529 @@
+{
+  "schema_version": 3,
+  "feature": "manifold-cli",
+  "phase": "VERIFIED",
+  "created": "2026-01-14",
+  "constraints": {
+    "business": [
+      {
+        "id": "B1",
+        "type": "goal"
+      },
+      {
+        "id": "B2",
+        "type": "invariant"
+      },
+      {
+        "id": "B3",
+        "type": "goal"
+      }
+    ],
+    "technical": [
+      {
+        "id": "T1",
+        "type": "boundary"
+      },
+      {
+        "id": "T2",
+        "type": "invariant"
+      },
+      {
+        "id": "T3",
+        "type": "invariant"
+      },
+      {
+        "id": "T4",
+        "type": "goal"
+      },
+      {
+        "id": "T5",
+        "type": "boundary"
+      },
+      {
+        "id": "T6",
+        "type": "invariant"
+      }
+    ],
+    "user_experience": [
+      {
+        "id": "U1",
+        "type": "goal"
+      },
+      {
+        "id": "U2",
+        "type": "boundary"
+      },
+      {
+        "id": "U3",
+        "type": "goal"
+      },
+      {
+        "id": "U4",
+        "type": "invariant"
+      },
+      {
+        "id": "U5",
+        "type": "goal"
+      }
+    ],
+    "security": [
+      {
+        "id": "S1",
+        "type": "invariant"
+      },
+      {
+        "id": "S2",
+        "type": "invariant"
+      },
+      {
+        "id": "S3",
+        "type": "boundary"
+      }
+    ],
+    "operational": [
+      {
+        "id": "O1",
+        "type": "goal"
+      },
+      {
+        "id": "O2",
+        "type": "invariant"
+      },
+      {
+        "id": "O3",
+        "type": "goal"
+      },
+      {
+        "id": "O4",
+        "type": "boundary"
+      }
+    ]
+  },
+  "tensions": [
+    {
+      "id": "TN1",
+      "type": "trade_off",
+      "between": [
+        "B2",
+        "feature_completeness"
+      ],
+      "status": "resolved"
+    },
+    {
+      "id": "TN2",
+      "type": "trade_off",
+      "between": [
+        "T4",
+        "T1"
+      ],
+      "status": "resolved"
+    },
+    {
+      "id": "TN3",
+      "type": "resource_tension",
+      "between": [
+        "U5",
+        "U4"
+      ],
+      "status": "resolved"
+    },
+    {
+      "id": "TN4",
+      "type": "hidden_dependency",
+      "between": [
+        "O3",
+        "T3"
+      ],
+      "status": "resolved"
+    },
+    {
+      "id": "TN5",
+      "type": "trade_off",
+      "between": [
+        "S2",
+        "U1"
+      ],
+      "status": "resolved"
+    },
+    {
+      "id": "TN6",
+      "type": "trade_off",
+      "between": [
+        "B1",
+        "B2"
+      ],
+      "status": "resolved"
+    }
+  ],
+  "tension_summary": {
+    "trade_offs": 4,
+    "resource_tensions": 1,
+    "hidden_dependencies": 1,
+    "total": 6,
+    "resolved": 6,
+    "unresolved": 0
+  },
+  "anchors": {
+    "required_truths": [
+      {
+        "id": "RT-1",
+        "status": "SATISFIED"
+      },
+      {
+        "id": "RT-2",
+        "status": "SATISFIED"
+      },
+      {
+        "id": "RT-3",
+        "status": "SATISFIED"
+      },
+      {
+        "id": "RT-4",
+        "status": "SATISFIED"
+      },
+      {
+        "id": "RT-5",
+        "status": "SATISFIED"
+      },
+      {
+        "id": "RT-6",
+        "status": "SATISFIED"
+      }
+    ],
+    "recommended_option": "B - Full TypeScript CLI",
+    "implementation_phases": [
+      {
+        "phase_1": "Core Infrastructure - YAML parsing, schema detection"
+      },
+      {
+        "phase_2": "Commands - status, validate, init, verify"
+      },
+      {
+        "phase_3": "Polish - TTY, colors, errors, JSON output"
+      },
+      {
+        "phase_4": "Distribution - bun compile, installer, GitHub Action"
+      }
+    ]
+  },
+  "iterations": [
+    {
+      "number": 0,
+      "phase": "init",
+      "timestamp": "2026-01-14T23:30:00Z",
+      "result": "initialized"
+    },
+    {
+      "number": 1,
+      "phase": "constrain",
+      "timestamp": "2026-01-14T23:35:00Z",
+      "constraints_discovered": 18,
+      "by_category": {
+        "business": 3,
+        "technical": 6,
+        "user_experience": 5,
+        "security": 3,
+        "operational": 4
+      },
+      "result": "constrained"
+    },
+    {
+      "number": 2,
+      "phase": "tension",
+      "timestamp": "2026-01-14T23:40:00Z",
+      "tensions_found": 6,
+      "tensions_resolved": 6,
+      "key_decisions": [
+        "Scope limited to 4 deterministic commands",
+        "Accept bun compile startup overhead",
+        "Strict .manifold/ path restriction"
+      ],
+      "result": "tensioned"
+    },
+    {
+      "number": 3,
+      "phase": "anchor",
+      "timestamp": "2026-01-14T23:45:00Z",
+      "required_truths": 6,
+      "solution_options": 4,
+      "selected_option": "B - Full TypeScript CLI",
+      "key_decisions": [
+        "TypeScript + Bun stack (matches preferences)",
+        "4 commands: status, validate, init, verify",
+        "4-phase implementation plan"
+      ],
+      "result": "anchored"
+    },
+    {
+      "number": 4,
+      "phase": "generate",
+      "timestamp": "2026-01-15T00:05:00Z",
+      "option": "B - Full TypeScript CLI",
+      "artifacts_created": 12,
+      "by_type": {
+        "library": 3,
+        "command": 4,
+        "test": 3,
+        "config": 2
+      },
+      "key_artifacts": [
+        "cli/lib/parser.ts - YAML parsing and schema detection",
+        "cli/lib/schema.ts - Schema validation",
+        "cli/lib/output.ts - TTY and color handling",
+        "cli/commands/status.ts - Status command",
+        "cli/commands/validate.ts - Validate command",
+        "cli/commands/init.ts - Init command",
+        "cli/commands/verify.ts - Verify command",
+        "cli/index.ts - CLI entry point"
+      ],
+      "result": "generated"
+    },
+    {
+      "number": 5,
+      "phase": "verify",
+      "timestamp": "2026-01-15T00:10:00Z",
+      "mode": "artifacts",
+      "artifacts_verified": 12,
+      "constraints_verified": 21,
+      "required_truths_verified": 6,
+      "coverage": {
+        "invariants": "7/7 (100%)",
+        "goals": "8/10 (80%)",
+        "boundaries": "4/4 (100%)"
+      },
+      "gaps_found": 2,
+      "gaps_blocking": 0,
+      "gaps_nonblocking": 2,
+      "performance_measured": "68ms",
+      "tests_passing": 39,
+      "result": "PASS"
+    },
+    {
+      "number": 6,
+      "phase": "integrate",
+      "timestamp": "2026-01-15T00:22:00Z",
+      "integration_points": [
+        "install.sh → CLI binary download",
+        "GitHub Action → CI/CD workflow"
+      ],
+      "artifacts_added": [
+        ".github/workflows/manifold-verify.yml",
+        ".github/workflows/ci.yml"
+      ],
+      "gaps_closed": [
+        "O1: Install via curl",
+        "O3: GitHub Action"
+      ],
+      "required_truths_satisfied": [
+        "RT-4: Distribution must be zero-friction"
+      ],
+      "result": "CONVERGED"
+    },
+    {
+      "number": 7,
+      "phase": "integrate",
+      "timestamp": "2026-01-19T10:20:00Z",
+      "integration_points": [
+        "solver.ts → graph caching and real-time updates",
+        "graph.ts → constraint network visualization",
+        "solve.ts → execution plan generation"
+      ],
+      "artifacts_added": [
+        "cli/lib/solver.ts",
+        "cli/commands/graph.ts",
+        "cli/commands/solve.ts"
+      ],
+      "new_capabilities": [
+        "Constraint graph visualization (JSON/ASCII/DOT)",
+        "Parallel execution plan generation",
+        "Backward reasoning (Arrival-style)",
+        "Graph caching for performance",
+        "Real-time progress tracking"
+      ],
+      "result": "EXTENDED"
+    }
+  ],
+  "convergence": {
+    "status": "CONVERGED",
+    "criteria": {
+      "all_invariants_satisfied": true,
+      "all_required_truths_satisfied": true,
+      "no_blocking_gaps": true,
+      "verification_passed": true,
+      "all_integrations_complete": true
+    },
+    "progress": "6/6 RT satisfied, all gaps closed",
+    "converged_at": "2026-01-15T00:22:00Z"
+  },
+  "generation": {
+    "option": "B",
+    "timestamp": "2026-01-15T00:05:00Z",
+    "iteration": 4,
+    "artifacts": [
+      {
+        "path": "cli/lib/parser.ts",
+        "type": "library",
+        "satisfies": [
+          "RT-1",
+          "T2",
+          "S1"
+        ],
+        "status": "generated",
+        "description": "YAML parsing with schema v1/v2 detection"
+      },
+      {
+        "path": "cli/lib/schema.ts",
+        "type": "library",
+        "satisfies": [
+          "T2",
+          "RT-5"
+        ],
+        "status": "generated",
+        "description": "Schema validation for v1 and v2 manifolds"
+      },
+      {
+        "path": "cli/lib/output.ts",
+        "type": "library",
+        "satisfies": [
+          "RT-6",
+          "U3",
+          "U4",
+          "U5"
+        ],
+        "status": "generated",
+        "description": "TTY detection, color handling, formatting"
+      },
+      {
+        "path": "cli/lib/solver.ts",
+        "type": "library",
+        "satisfies": [
+          "T1",
+          "B1"
+        ],
+        "status": "generated",
+        "description": "Constraint solver with graph caching and real-time updates"
+      },
+      {
+        "path": "cli/commands/status.ts",
+        "type": "command",
+        "satisfies": [
+          "RT-2",
+          "U1"
+        ],
+        "status": "generated",
+        "description": "Status command matching /m-status output"
+      },
+      {
+        "path": "cli/commands/validate.ts",
+        "type": "command",
+        "satisfies": [
+          "T2",
+          "T3"
+        ],
+        "status": "generated",
+        "description": "Schema validation with exit codes"
+      },
+      {
+        "path": "cli/commands/init.ts",
+        "type": "command",
+        "satisfies": [
+          "U1",
+          "RT-5"
+        ],
+        "status": "generated",
+        "description": "Manifold initialization with v2 template"
+      },
+      {
+        "path": "cli/commands/verify.ts",
+        "type": "command",
+        "satisfies": [
+          "RT-2",
+          "T3"
+        ],
+        "status": "generated",
+        "description": "Artifact verification with coverage"
+      },
+      {
+        "path": "cli/commands/graph.ts",
+        "type": "command",
+        "satisfies": [
+          "U1",
+          "U3"
+        ],
+        "status": "generated",
+        "description": "Constraint graph visualization (JSON/ASCII/DOT)"
+      },
+      {
+        "path": "cli/commands/solve.ts",
+        "type": "command",
+        "satisfies": [
+          "U1",
+          "U3",
+          "B1"
+        ],
+        "status": "generated",
+        "description": "Execution plan generation with backward reasoning"
+      },
+      {
+        "path": "cli/index.ts",
+        "type": "entrypoint",
+        "satisfies": [
+          "O2",
+          "T3"
+        ],
+        "status": "generated",
+        "description": "CLI entry point with commander.js"
+      },
+      {
+        "path": "cli/__tests__/parser.test.ts",
+        "type": "test",
+        "satisfies": [
+          "RT-1"
+        ],
+        "status": "generated",
+        "description": "Parser unit tests"
+      },
+      {
+        "path": "cli/__tests__/schema.test.ts",
+        "type": "test",
+        "satisfies": [
+          "T2"
+        ],
+        "status": "generated",
+        "description": "Schema validation tests"
+      },
+      {
+        "path": "cli/__tests__/output.test.ts",
+        "type": "test",
+        "satisfies": [
+          "RT-6"
+        ],
+        "status": "generated",
+        "description": "Output formatting tests"
+      },
+      {
+        "path": "cli/package.json",
+        "type": "config",
+        "satisfies": [
+          "T4"
+        ],
+        "status": "generated",
+        "description": "Package with build scripts for all platforms"
+      },
+      {
+        "path": "cli/tsconfig.json",
+        "type": "config",
+        "satisfies": [],
+        "status": "generated",
+        "description": "TypeScript configuration"
+      }
+    ],
+    "coverage": {
+      "constraints_addressed": 21,
+      "constraints_total": 21,
+      "required_truths_addressed": 6,
+      "required_truths_total": 6,
+      "percentage": 100
+    }
+  }
+}

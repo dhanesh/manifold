@@ -259,7 +259,9 @@ export type ConstraintsByCategory = z.infer<typeof ConstraintsByCategorySchema>;
 export const AnchorsSchema = z.object({
   required_truths: z.array(RequiredTruthRefSchema).default([]),
   recommended_option: z.string().optional(),
-  implementation_phases: z.array(z.string()).optional(),
+  // implementation_phases can be strings or objects (from legacy YAML formats)
+  implementation_phases: z.array(z.union([z.string(), z.record(z.any())])).optional(),
+  anchor_document: z.string().optional(),
 });
 
 export type Anchors = z.infer<typeof AnchorsSchema>;
@@ -276,9 +278,12 @@ export const ConvergenceSchema = z.object({
     no_blocking_gaps: z.boolean().optional(),
     all_integrations_complete: z.boolean().optional(),
     strict_verification_passed: z.boolean().optional(),
+    verification_passed: z.boolean().optional(), // Legacy alias
   }).optional(),
   iterations_to_convergence: z.number().optional(),
   timestamp: z.string().optional(),
+  progress: z.string().optional(),
+  converged_at: z.string().optional(),
 });
 
 export type Convergence = z.infer<typeof ConvergenceSchema>;
@@ -305,6 +310,7 @@ export const ArtifactRefSchema = z.object({
   type: z.string(),
   satisfies: z.array(z.string()).optional(),
   status: z.string(),
+  description: z.string().optional(),
 });
 
 export type ArtifactRef = z.infer<typeof ArtifactRefSchema>;
