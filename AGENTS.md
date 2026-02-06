@@ -57,11 +57,11 @@ Specialized agents for constraint-first development. Each agent handles a specif
 
 ### Behavior
 
-1. Load existing manifold from `.manifold/<feature>.yaml`
+1. Load existing manifold from `.manifold/<feature>.json` + `.manifold/<feature>.md`
 2. For each category, ask probing questions (see Interview Protocol)
 3. Classify responses into constraint types (`invariant`, `goal`, `boundary`)
 4. Assign IDs (B1, T1, U1, S1, O1, etc.)
-5. Update manifold YAML
+5. Update manifold JSON + MD files
 6. Set phase to `CONSTRAINED`
 
 ### Interview Protocol
@@ -129,7 +129,7 @@ Technical:
 - T1: <statement> (boundary)
 ...
 
-Updated: .manifold/<feature>.yaml (N constraints)
+Updated: .manifold/<feature>.json + .manifold/<feature>.md (N constraints)
 
 Next: /m2-tension <feature>
 ```
@@ -156,13 +156,13 @@ Next: /m2-tension <feature>
 
 ### Behavior
 
-1. Load manifold from `.manifold/<feature>.yaml`
+1. Load manifold from `.manifold/<feature>.json` + `.manifold/<feature>.md`
 2. Compare each pair of constraints for conflicts
 3. Detect hidden dependencies (`--auto-deps`)
 4. Generate resolution options for each tension
 5. Recommend resolution based on priority (`invariant` > `boundary` > `goal`)
 6. If `--resolve`, prompt user to choose
-7. Update manifold with tensions and resolutions
+7. Update manifold JSON + MD with tensions and resolutions
 8. Set phase to `TENSIONED`
 
 ### Tension Detection Patterns
@@ -222,7 +222,7 @@ TENSION SUMMARY:
 - Resource Tensions: N
 - Hidden Dependencies: N
 
-Updated: .manifold/<feature>.yaml
+Updated: .manifold/<feature>.json + .md
 
 Next: /m3-anchor <feature>
 ```
@@ -249,14 +249,14 @@ Next: /m3-anchor <feature>
 
 ### Behavior
 
-1. Load manifold from `.manifold/<feature>.yaml`
+1. Load manifold from `.manifold/<feature>.json` + `.manifold/<feature>.md`
 2. Get outcome (from flag or manifold)
 3. Recursively ask "What must be TRUE for this outcome?"
 4. Each truth becomes RT-N (Required Truth)
 5. Identify gaps between current state and requirements
 6. Generate 2-4 solution options
 7. Recommend best option with rationale
-8. Save to `.manifold/<feature>.anchor.yaml`
+8. Save to `.manifold/<feature>.json` + `.manifold/<feature>.md`
 9. Set phase to `ANCHORED`
 
 ### Backward Reasoning Process
@@ -313,7 +313,7 @@ Option B: <name>
 RECOMMENDATION: Option <X>
 <rationale>
 
-Updated: .manifold/<feature>.anchor.yaml
+Updated: .manifold/<feature>.json + .md
 
 Next: /m4-generate <feature> --option=<X>
 ```
@@ -643,7 +643,7 @@ Groups:
 ### Cross-Agent Communication
 
 Agents communicate through:
-1. **Manifold files** — Primary state storage (`.manifold/*.yaml`)
+1. **Manifold files** — Primary state storage (`.manifold/*.json` + `.manifold/*.md`)
 2. **Phase transitions** — Signal readiness for next agent
 3. **Constraint IDs** — Reference shared constraints (B1, T1, etc.)
 4. **Required truth IDs** — Link to anchoring (RT-1, RT-2, etc.)

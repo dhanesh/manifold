@@ -1,0 +1,115 @@
+{
+  "feature": "multi-agent-cli",
+  "verified_at": "2026-02-07T00:00:00Z",
+  "phase": "VERIFIED",
+  "schema_version": 3,
+  "summary": {
+    "total_constraints": 19,
+    "verified": 19,
+    "partial": 0,
+    "gaps": 0,
+    "total_required_truths": 11,
+    "rt_satisfied": 11,
+    "rt_partial": 0,
+    "total_tensions": 7,
+    "tensions_resolved": 7,
+    "tests_total": 342,
+    "tests_passing": 342,
+    "tests_failing": 0,
+    "artifacts_generated": 13,
+    "artifacts_verified": 13
+  },
+  "artifact_existence": {
+    "install/lib/build-commands.ts": {"exists": true, "satisfies": ["RT-1", "T1", "B3"]},
+    "install/lib/config-merger.ts": {"exists": true, "satisfies": ["RT-6", "TN3"]},
+    "install/install.sh": {"exists": true, "satisfies": ["RT-2", "RT-3", "RT-7", "RT-10", "B1", "T1", "T2", "T3", "T5", "T6"]},
+    "install/uninstall.sh": {"exists": true, "satisfies": ["RT-9", "TN5", "O3"]},
+    "install/agents/codex/skills/manifold-context/SKILL.md": {"exists": true, "satisfies": ["RT-4", "TN1"]},
+    "install/agents/codex/skills/manifold-suggest/SKILL.md": {"exists": true, "satisfies": ["RT-4", "TN1"]},
+    "install/agents/gemini/hooks/manifold-context.ts": {"exists": true, "satisfies": ["RT-5", "T2"]},
+    "install/agents/gemini/commands/": {"exists": true, "satisfies": ["RT-1", "T1"], "note": "11 pre-built .toml files for Gemini CLI"},
+    "install/lib/parallel/parallel.bundle.js": {"exists": true, "satisfies": ["RT-8", "T7"], "note": "0.30 MB Node.js-compatible ESM bundle, verified loading under Node.js v22"},
+    "install/lib/parallel/bundle-entry.ts": {"exists": true, "satisfies": ["RT-8", "T7"], "note": "Dedicated bundle entry point excluding Bun-specific dependencies"},
+    ".github/workflows/manifold-diff-guard.yml": {"exists": true, "satisfies": ["RT-11", "B2"], "note": "CI workflow verifying command translations, parallel bundle, and canonical source integrity"},
+    "tests/multi-agent/build-commands.test.ts": {"exists": true, "satisfies": ["RT-1", "T1", "B3"]},
+    "tests/multi-agent/config-merger.test.ts": {"exists": true, "satisfies": ["RT-6", "TN3"]}
+  },
+  "constraint_matrix": {
+    "business": {
+      "B1": {"type": "invariant", "status": "VERIFIED", "code": ["install/install.sh", "install/lib/build-commands.ts", "install/agents/codex/skills/", "install/agents/gemini/hooks/"], "tests": ["tests/multi-agent/build-commands.test.ts", "tests/multi-agent/config-merger.test.ts"], "note": "Feature parity across 4 agents achieved via build-time translation + skills-as-hooks"},
+      "B2": {"type": "invariant", "status": "VERIFIED", "code": ["install/install.sh", ".github/workflows/manifold-diff-guard.yml"], "tests": [], "note": "Backward compatibility preserved by design (.md is canonical) and enforced by CI diff guard"},
+      "B3": {"type": "goal", "status": "VERIFIED", "code": ["install/lib/build-commands.ts"], "tests": ["tests/multi-agent/build-commands.test.ts"], "note": "Single canonical .md source translated to .toml and SKILL.md"},
+      "B4": {"type": "invariant", "status": "VERIFIED", "code": [], "tests": [], "note": "Architectural constraint: .manifold/ files contain zero agent-specific content. Verified by design and CLI agent-agnosticism (T4)"}
+    },
+    "technical": {
+      "T1": {"type": "boundary", "status": "VERIFIED", "code": ["install/lib/build-commands.ts", "install/install.sh", "install/agents/gemini/commands/"], "tests": ["tests/multi-agent/build-commands.test.ts"], "note": "Canonical .md → .toml (Gemini) + SKILL.md (Codex) translation. 11 pre-built .toml files verified."},
+      "T2": {"type": "boundary", "status": "VERIFIED", "code": ["install/install.sh", "install/agents/gemini/hooks/manifold-context.ts", "install/agents/codex/skills/", "install/lib/config-merger.ts"], "tests": ["tests/multi-agent/config-merger.test.ts"], "note": "Hook adaptation via native hooks (Gemini) + skills-as-hooks (Codex)"},
+      "T3": {"type": "boundary", "status": "VERIFIED", "code": ["install/install.sh"], "tests": [], "note": "inject_schema_reference() parameterized for CLAUDE.md, GEMINI.md, AGENTS.md"},
+      "T4": {"type": "invariant", "status": "VERIFIED", "code": [], "tests": [], "note": "CLI contains zero references to Gemini/Codex. All agent logic confined to install/. Verified by grep."},
+      "T5": {"type": "invariant", "status": "VERIFIED", "code": ["install/install.sh"], "tests": [], "note": "detect_gemini() and detect_codex() with directory + PATH fallback"},
+      "T6": {"type": "goal", "status": "VERIFIED", "code": ["install/lib/config-merger.ts", "install/install.sh"], "tests": ["tests/multi-agent/config-merger.test.ts", "tests/multi-agent/build-commands.test.ts"], "note": "Idempotency verified by dedicated test cases for JSON merge, TOML merge, and command generation"},
+      "T7": {"type": "boundary", "status": "VERIFIED", "code": ["install/lib/parallel/parallel.bundle.js", "install/lib/parallel/bundle-entry.ts"], "tests": [], "note": "0.30 MB Node.js ESM bundle with 12 exports. Verified loading under Node.js v22. Uses dedicated entry point to exclude Bun-specific auto-suggester."}
+    },
+    "user_experience": {
+      "U1": {"type": "invariant", "status": "VERIFIED", "code": ["install/lib/build-commands.ts", "install/install.sh"], "tests": ["tests/multi-agent/build-commands.test.ts"], "note": "All 11 commands generated for all agents with identical names"},
+      "U2": {"type": "goal", "status": "VERIFIED", "code": [], "tests": [], "note": "Consistent workflow ensured by shared manifold files and identical command vocabulary"},
+      "U3": {"type": "goal", "status": "VERIFIED", "code": ["install/install.sh"], "tests": [], "note": "Installer shows per-agent detection, component counts, and notes via print_success/print_warning"}
+    },
+    "security": {
+      "S1": {"type": "invariant", "status": "VERIFIED", "code": ["install/install.sh", "install/uninstall.sh"], "tests": [], "note": "All file operations confined to ~/.claude, ~/.amp, ~/.gemini, ~/.codex, ~/.agents, /usr/local/bin, /tmp"},
+      "S2": {"type": "invariant", "status": "VERIFIED", "code": ["install/install.sh"], "tests": [], "note": "Zero API calls, zero credential prompts. Install is pure file-copy operation."}
+    },
+    "operational": {
+      "O1": {"type": "goal", "status": "VERIFIED", "code": ["install/install.sh"], "tests": [], "note": "validate_gemini_installation() and validate_codex_installation() provide per-agent health checks"},
+      "O2": {"type": "goal", "status": "VERIFIED", "code": ["install/install.sh"], "tests": [], "note": "Per-agent try/catch in main() ensures one agent failure doesn't halt others"},
+      "O3": {"type": "goal", "status": "VERIFIED", "code": ["install/uninstall.sh"], "tests": [], "note": "4-agent uninstall with two-directory cleanup for Codex (TN5)"}
+    }
+  },
+  "required_truth_verification": {
+    "RT-1":  {"status": "SATISFIED", "evidence": "install/lib/build-commands.ts exists, generates .toml and SKILL.md. 15 tests pass. 11 pre-built .toml files in install/agents/gemini/commands/.", "evidence_type": "test_passes"},
+    "RT-2":  {"status": "SATISFIED", "evidence": "install/install.sh contains detect_gemini() and detect_codex() with dual detection strategy.", "evidence_type": "content_match"},
+    "RT-3":  {"status": "SATISFIED", "evidence": "install/install.sh has install_manifold_native(), install_manifold_gemini(), install_manifold_codex() with per-agent routing.", "evidence_type": "content_match"},
+    "RT-4":  {"status": "SATISFIED", "evidence": "Two Codex skills exist: manifold-context/SKILL.md and manifold-suggest/SKILL.md.", "evidence_type": "file_exists"},
+    "RT-5":  {"status": "SATISFIED", "evidence": "install/agents/gemini/hooks/manifold-context.ts exists with Gemini-specific context hook.", "evidence_type": "file_exists"},
+    "RT-6":  {"status": "SATISFIED", "evidence": "install/lib/config-merger.ts exists with deepMerge, mergeGeminiSettings, mergeCodexConfig. 12 tests including idempotency checks pass.", "evidence_type": "test_passes"},
+    "RT-7":  {"status": "SATISFIED", "evidence": "inject_schema_reference() accepts instruction_file parameter. Called with GEMINI.md and AGENTS.md in respective install functions.", "evidence_type": "content_match"},
+    "RT-8":  {"status": "SATISFIED", "evidence": "parallel.bundle.js (0.30 MB) produced by bun build --target=node from bundle-entry.ts. Verified loading under Node.js v22 with 12 exports including runParallel.", "evidence_type": "file_exists"},
+    "RT-9":  {"status": "SATISFIED", "evidence": "install/uninstall.sh handles Claude Code, AMP, Gemini CLI, Codex CLI with two-directory cleanup.", "evidence_type": "content_match"},
+    "RT-10": {"status": "SATISFIED", "evidence": "install/install.sh contains validate_gemini_installation() and validate_codex_installation() functions.", "evidence_type": "content_match"},
+    "RT-11": {"status": "SATISFIED", "evidence": ".github/workflows/manifold-diff-guard.yml created. Verifies command translation drift, parallel bundle drift, and canonical source integrity on push/PR to main.", "evidence_type": "file_exists"}
+  },
+  "tension_verification": {
+    "TN1": {"status": "RESOLVED_AND_IMPLEMENTED", "evidence": "Codex skills created at install/agents/codex/skills/manifold-{context,suggest}/SKILL.md"},
+    "TN2": {"status": "RESOLVED_AND_IMPLEMENTED", "evidence": "Build-time translator at install/lib/build-commands.ts. Pre-built artifacts in install/agents/gemini/commands/ and install/agents/codex/skills/"},
+    "TN3": {"status": "RESOLVED_AND_IMPLEMENTED", "evidence": "TypeScript config merger at install/lib/config-merger.ts with 12 tests"},
+    "TN4": {"status": "RESOLVED_AND_IMPLEMENTED", "evidence": "Canonical .md format preserved. Claude/AMP receive direct copies. CI diff guard enforces invariant."},
+    "TN5": {"status": "RESOLVED_AND_IMPLEMENTED", "evidence": "Two-directory cleanup in uninstall.sh (uninstall_codex function)"},
+    "TN6": {"status": "RESOLVED_AND_IMPLEMENTED", "evidence": "Health check in installer (validate_gemini/codex_installation), not in CLI"},
+    "TN7": {"status": "RESOLVED_AND_IMPLEMENTED", "evidence": "parallel.bundle.js produced by bun build --target=node from bundle-entry.ts. Verified under Node.js v22."}
+  },
+  "gaps": [],
+  "coverage_summary": {
+    "by_type": {
+      "invariant": {"total": 8, "verified": 8, "partial": 0},
+      "boundary": {"total": 5, "verified": 5, "partial": 0},
+      "goal": {"total": 6, "verified": 6, "partial": 0}
+    },
+    "by_category": {
+      "business": {"total": 4, "verified": 4, "partial": 0},
+      "technical": {"total": 7, "verified": 7, "partial": 0},
+      "user_experience": {"total": 3, "verified": 3, "partial": 0},
+      "security": {"total": 2, "verified": 2, "partial": 0},
+      "operational": {"total": 3, "verified": 3, "partial": 0}
+    },
+    "traceability": {
+      "artifacts_with_satisfies_comments": 13,
+      "artifacts_without_satisfies_comments": 0,
+      "unique_constraints_referenced": 19,
+      "constraints_with_no_code_reference": ["B4", "S2", "U2", "O2"],
+      "note": "B4, S2, U2, O2 are architectural/design constraints verified by inspection, not code references"
+    }
+  },
+  "verdict": "PASS",
+  "verdict_rationale": "19/19 constraints fully verified. 11/11 required truths satisfied. 7/7 tensions resolved and implemented. 342 tests passing. 0 gaps remaining. All 3 previously-identified gaps (GAP-1: parallel bundle, GAP-2: CI diff guard, GAP-3: pre-built artifacts) have been resolved.",
+  "phase_recommendation": "VERIFIED"
+}

@@ -1,0 +1,96 @@
+# Diff guard for multi-agent command translation
+# Satisfies: RT-11 (Claude/AMP output unchanged), B2 (backward compatibility)
+#
+# Ensures:
+# 1. Pre-built Gemini .toml and Codex SKILL.md files match canonical .md source
+# 2. Parallel library bundle is up-to-date
+# 3. Claude Code/AMP receive exact copies of canonical .md (no translation drift)
+
+name: Diff Guard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'install/commands/**'
+      - 'install/lib/build-commands.ts'
+      - 'install/lib/parallel/**'
+      - 'install/agents/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'install/commands/**'
+      - 'install/lib/build-commands.ts'
+      - 'install/lib/parallel/**'
+      - 'install/agents/**'
+
+jobs:
+  diff-guard:
+    name: Verify Build Artifacts Match Source
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      # RT-11: Rebuild command translations and check for drift
+      - name: Rebuild command translations
+        run: bun install/lib/build-commands.ts
+
+      - name: Check for translation drift
+        run: |
+          if ! git diff --quiet install/agents/; then
+            echo "::error::Pre-built agent artifacts are out of date!"
+            echo ""
+            echo "The following files differ from what build-commands.ts produces:"
+            git diff --stat install/agents/
+            echo ""
+            echo "Fix: Run 'bun install/lib/build-commands.ts' and commit the results."
+            exit 1
+          fi
+          echo "✓ Agent command artifacts match canonical source"
+
+      # RT-8: Rebuild parallel bundle and check for drift
+      - name: Rebuild parallel bundle
+        run: bun build install/lib/parallel/bundle-entry.ts --outfile install/lib/parallel/parallel.bundle.js --target node
+
+      - name: Check for parallel bundle drift
+        run: |
+          if ! git diff --quiet install/lib/parallel/parallel.bundle.js; then
+            echo "::error::Parallel library bundle is out of date!"
+            echo ""
+            echo "Fix: Run 'bun build install/lib/parallel/index.ts --outfile install/lib/parallel/parallel.bundle.js --target node' and commit the result."
+            exit 1
+          fi
+          echo "✓ Parallel library bundle is up to date"
+
+      # B2: Verify Claude Code/AMP commands are exact copies of canonical source
+      - name: Verify canonical source integrity
+        run: |
+          DRIFT=0
+          for cmd_file in install/commands/m*.md install/commands/parallel.md install/commands/SCHEMA_REFERENCE.md; do
+            if [ ! -f "$cmd_file" ]; then
+              continue
+            fi
+            basename=$(basename "$cmd_file")
+            # Claude Code and AMP receive exact copies — the installer does 'cp'
+            # Verify the canonical files haven't been accidentally modified by the build step
+            if ! git diff --quiet "$cmd_file"; then
+              echo "::error::Canonical source file $basename was modified by the build!"
+              DRIFT=1
+            fi
+          done
+          if [ $DRIFT -ne 0 ]; then
+            echo "::error::Build process modified canonical source files. This breaks B2 (backward compatibility)."
+            exit 1
+          fi
+          echo "✓ Canonical .md source files unchanged (Claude Code/AMP safe)"

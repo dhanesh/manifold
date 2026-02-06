@@ -1,0 +1,257 @@
+{
+  "schema_version": 3,
+  "feature": "multi-agent-cli",
+  "phase": "VERIFIED",
+  "created": "2026-02-07",
+  "constraints": {
+    "business": [
+      {"id": "B1", "type": "invariant"},
+      {"id": "B2", "type": "invariant"},
+      {"id": "B3", "type": "goal"},
+      {"id": "B4", "type": "invariant"}
+    ],
+    "technical": [
+      {"id": "T1", "type": "boundary"},
+      {"id": "T2", "type": "boundary"},
+      {"id": "T3", "type": "boundary"},
+      {"id": "T4", "type": "invariant"},
+      {"id": "T5", "type": "invariant"},
+      {"id": "T6", "type": "goal"},
+      {"id": "T7", "type": "boundary"}
+    ],
+    "user_experience": [
+      {"id": "U1", "type": "invariant"},
+      {"id": "U2", "type": "goal"},
+      {"id": "U3", "type": "goal"}
+    ],
+    "security": [
+      {"id": "S1", "type": "invariant"},
+      {"id": "S2", "type": "invariant"}
+    ],
+    "operational": [
+      {"id": "O1", "type": "goal"},
+      {"id": "O2", "type": "goal"},
+      {"id": "O3", "type": "goal"}
+    ]
+  },
+  "tensions": [
+    {
+      "id": "TN1",
+      "type": "trade_off",
+      "between": ["B1", "T2"],
+      "status": "resolved",
+      "resolution": "Skills-as-hooks: package hook functionality as Codex skills that read manifold state and provide context/suggestions. Different mechanism, same outcome.",
+      "decision": "A"
+    },
+    {
+      "id": "TN2",
+      "type": "resource_tension",
+      "between": ["B3", "T1"],
+      "status": "resolved",
+      "resolution": "Build-time translation: TypeScript build script generates per-agent command formats from canonical .md source. Installer copies pre-built artifacts.",
+      "decision": "A"
+    },
+    {
+      "id": "TN3",
+      "type": "hidden_dependency",
+      "between": ["T6", "T2"],
+      "status": "resolved",
+      "resolution": "TypeScript config merger helper: a small Bun script handles idempotent JSON merging (Gemini settings.json) and TOML merging (Codex config.toml), avoiding fragile bash parsing.",
+      "decision": "B"
+    },
+    {
+      "id": "TN4",
+      "type": "trade_off",
+      "between": ["B2", "B3"],
+      "status": "resolved",
+      "resolution": "Keep .md as canonical format (identical to Claude Code/AMP native). Translate only for Gemini and Codex. Add CI diff guard to ensure Claude/AMP output never diverges from canonical source.",
+      "decision": "A"
+    },
+    {
+      "id": "TN5",
+      "type": "hidden_dependency",
+      "between": ["S1", "T2"],
+      "status": "resolved",
+      "resolution": "Accept two-directory split for Codex: ~/.codex/ for config and ~/.agents/skills/ for skills. Both paths are already in S1 allowed list. Uninstall must clean both.",
+      "decision": "A"
+    },
+    {
+      "id": "TN6",
+      "type": "trade_off",
+      "between": ["O1", "T4"],
+      "status": "resolved",
+      "resolution": "Health check lives in installer (install.sh --verify), not in the CLI. Keeps agent knowledge out of the native CLI binary per T4 invariant.",
+      "decision": "A"
+    },
+    {
+      "id": "TN7",
+      "type": "resource_tension",
+      "between": ["T7", "B1"],
+      "status": "resolved",
+      "resolution": "Bundle parallel library using bun build --target=node to produce a single .js file that runs on any Node.js runtime. Same approach already used for CLI binary compilation.",
+      "decision": "A"
+    }
+  ],
+  "anchors": {
+    "required_truths": [
+      {
+        "id": "RT-1",
+        "status": "SATISFIED",
+        "maps_to": ["T1", "B3", "U1"]
+      },
+      {
+        "id": "RT-2",
+        "status": "SATISFIED",
+        "maps_to": ["T5", "B1"]
+      },
+      {
+        "id": "RT-3",
+        "status": "SATISFIED",
+        "maps_to": ["T1", "T2", "T3", "B1"]
+      },
+      {
+        "id": "RT-4",
+        "status": "SATISFIED",
+        "maps_to": ["B1", "T2"]
+      },
+      {
+        "id": "RT-5",
+        "status": "SATISFIED",
+        "maps_to": ["B1", "T2"]
+      },
+      {
+        "id": "RT-6",
+        "status": "SATISFIED",
+        "maps_to": ["T6", "T2"]
+      },
+      {
+        "id": "RT-7",
+        "status": "SATISFIED",
+        "maps_to": ["T3", "T6"]
+      },
+      {
+        "id": "RT-8",
+        "status": "SATISFIED",
+        "maps_to": ["T7", "B1"]
+      },
+      {
+        "id": "RT-9",
+        "status": "SATISFIED",
+        "maps_to": ["O3"]
+      },
+      {
+        "id": "RT-10",
+        "status": "SATISFIED",
+        "maps_to": ["O1"]
+      },
+      {
+        "id": "RT-11",
+        "status": "SATISFIED",
+        "maps_to": ["B2"]
+      }
+    ],
+    "recommended_option": "B"
+  },
+  "iterations": [
+    {
+      "number": 1,
+      "phase": "constrain",
+      "timestamp": "2026-02-07T00:00:00Z",
+      "result": "Discovered 19 constraints across 5 categories from interview-driven analysis with agent research",
+      "constraints_added": 19,
+      "by_category": {
+        "business": 4,
+        "technical": 7,
+        "user_experience": 3,
+        "security": 2,
+        "operational": 3
+      }
+    },
+    {
+      "number": 2,
+      "phase": "tension",
+      "timestamp": "2026-02-07T00:00:00Z",
+      "result": "Surfaced 7 tensions (3 trade-offs, 2 resource tensions, 2 hidden dependencies), all resolved",
+      "tensions_found": 7,
+      "tensions_resolved": 7,
+      "by_type": {
+        "trade_offs": 3,
+        "resource_tensions": 2,
+        "hidden_dependencies": 2
+      }
+    },
+    {
+      "number": 3,
+      "phase": "anchor",
+      "timestamp": "2026-02-07T00:00:00Z",
+      "result": "Derived 11 required truths via backward reasoning. 9 NOT_SATISFIED, 2 PARTIAL. Recommended Option B (build pipeline).",
+      "required_truths": 11,
+      "by_status": {
+        "SATISFIED": 0,
+        "PARTIAL": 2,
+        "NOT_SATISFIED": 9,
+        "SPECIFICATION_READY": 0
+      },
+      "solution_options": 3,
+      "selected_option": "B: Build Pipeline with TypeScript tooling"
+    },
+    {
+      "number": 4,
+      "phase": "generate",
+      "timestamp": "2026-02-07T00:00:00Z",
+      "result": "Generated 10 artifacts across 3 waves using Option B (build pipeline). 9/11 RTs satisfied, 2 partial (RT-8: parallel bundling, RT-11: CI diff guard).",
+      "artifacts_generated": 10,
+      "by_wave": {
+        "wave_1": ["build-commands.ts", "config-merger.ts", "install.sh (extended)"],
+        "wave_2": ["codex manifold-context skill", "codex manifold-suggest skill", "gemini manifold-context hook"],
+        "wave_3": ["uninstall.sh (extended)", "build-commands.test.ts", "config-merger.test.ts"]
+      },
+      "option_used": "B",
+      "tests_added": 27,
+      "tests_passing": 27
+    },
+    {
+      "number": 5,
+      "phase": "verify",
+      "timestamp": "2026-02-07T00:00:00Z",
+      "result": "All 19 constraints verified, all 11 required truths satisfied, all 7 tensions resolved and implemented. 3 gaps fixed: parallel bundle for Node.js (RT-8), CI diff guard (RT-11), pre-built command artifacts (RT-1).",
+      "constraints_verified": 19,
+      "required_truths_satisfied": 11,
+      "gaps_found": 3,
+      "gaps_fixed": 3,
+      "tests_total": 342,
+      "tests_passing": 342
+    },
+    {
+      "number": 6,
+      "phase": "integrate",
+      "timestamp": "2026-02-07T00:00:00Z",
+      "result": "5 integration points identified and resolved. Critical: parallel bundle wired into Gemini/Codex installer. Build scripts added. Documentation updated.",
+      "integration_points": 5,
+      "completed": 5,
+      "pending": 0,
+      "auto_wireable": 4,
+      "manual_required": 1,
+      "changes": [
+        "INT-1: Wired parallel.bundle.js into install_manifold_gemini() and install_manifold_codex()",
+        "INT-2: Added build:commands, build:parallel-bundle, build:all scripts to package.json",
+        "INT-3: Rewrote install/README.md for 4-agent support",
+        "INT-4: Updated AGENTS.md format references from .yaml to json+md",
+        "INT-5: Added parallel bundle checks to validate_gemini/codex_installation()"
+      ]
+    }
+  ],
+  "convergence": {
+    "status": "CONVERGED",
+    "converged_at": "2026-02-07T00:00:00Z"
+  },
+  "constraint_graph": {
+    "version": 1,
+    "nodes": {},
+    "edges": {
+      "dependencies": [],
+      "conflicts": [],
+      "satisfies": []
+    }
+  }
+}
