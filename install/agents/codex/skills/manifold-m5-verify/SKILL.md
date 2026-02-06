@@ -1,6 +1,6 @@
 ---
 name: manifold-m5-verify
-description: Verify ALL artifacts against ALL constraints. Produces a verification matrix showing coverage and gaps
+description: "Verify ALL artifacts against ALL constraints. Produces a verification matrix showing coverage and gaps"
 ---
 
 # /m5-verify

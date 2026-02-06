@@ -1,6 +1,6 @@
 ---
 name: manifold-m-solve
-description: Generate parallel execution plan from constraint network. Identifies waves, critical path, and bidirectional dependencies
+description: "Generate parallel execution plan from constraint network. Identifies waves, critical path, and bidirectional dependencies"
 ---
 
 # /m-solve

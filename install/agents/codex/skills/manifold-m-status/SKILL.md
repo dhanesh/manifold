@@ -1,6 +1,6 @@
 ---
 name: manifold-m-status
-description: Show current Manifold state, constraint summary, workflow progress, and next action
+description: "Show current Manifold state, constraint summary, workflow progress, and next action"
 ---
 
 # /m-status

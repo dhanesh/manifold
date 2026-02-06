@@ -1,6 +1,6 @@
 ---
 name: manifold-m-quick
-description: Light mode: 3-phase workflow for simple changes. Use instead of full workflow for bug fixes, small features, or quick iterations.
+description: "Light mode: 3-phase workflow for simple changes. Use instead of full workflow for bug fixes, small features, or quick iterations."
 ---
 
 # /m-quick

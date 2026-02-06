@@ -130,11 +130,12 @@ function toCodexSkillMd(cmd: ParsedCommand): string {
   // Codex SKILL.md uses name + description metadata at the top,
   // followed by the skill content as markdown instructions
   const name = `manifold-${cmd.commandName}`;
-  const desc = cmd.meta.description;
+  // Quote description to avoid YAML parsing issues with colons
+  const desc = cmd.meta.description.replace(/"/g, '\\"');
 
   return `---
 name: ${name}
-description: ${desc}
+description: "${desc}"
 ---
 
 # /${cmd.commandName}

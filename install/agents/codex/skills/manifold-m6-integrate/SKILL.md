@@ -1,6 +1,6 @@
 ---
 name: manifold-m6-integrate
-description: Wire generated artifacts together. Identifies integration points and produces actionable wiring checklist
+description: "Wire generated artifacts together. Identifies integration points and produces actionable wiring checklist"
 ---
 
 # /m6-integrate

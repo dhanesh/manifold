@@ -1,6 +1,6 @@
 ---
 name: manifold-m3-anchor
-description: Backward reasoning from desired outcome. Derives required conditions by asking 'What must be TRUE?'
+description: "Backward reasoning from desired outcome. Derives required conditions by asking 'What must be TRUE?'"
 ---
 
 # /m3-anchor

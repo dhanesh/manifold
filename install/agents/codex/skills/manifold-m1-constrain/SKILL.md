@@ -1,6 +1,6 @@
 ---
 name: manifold-m1-constrain
-description: Interview-driven constraint discovery across 5 categories (business, technical, UX, security, operational)
+description: "Interview-driven constraint discovery across 5 categories (business, technical, UX, security, operational)"
 ---
 
 # /m1-constrain
