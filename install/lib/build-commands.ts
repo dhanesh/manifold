@@ -132,8 +132,10 @@ function toCodexSkillMd(cmd: ParsedCommand): string {
   const name = `manifold-${cmd.commandName}`;
   const desc = cmd.meta.description;
 
-  return `name: ${name}
+  return `---
+name: ${name}
 description: ${desc}
+---
 
 # /${cmd.commandName}
 

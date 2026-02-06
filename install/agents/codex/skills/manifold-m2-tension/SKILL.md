@@ -1,5 +1,7 @@
+---
 name: manifold-m2-tension
 description: Surface and resolve constraint conflicts (trade-offs). Identifies direct conflicts, resource tensions, and competing requirements
+---
 
 # /m2-tension
 

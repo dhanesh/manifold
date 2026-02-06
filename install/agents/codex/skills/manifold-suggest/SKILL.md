@@ -1,5 +1,7 @@
+---
 name: manifold-suggest
 description: Analyze current tasks and suggest parallelization opportunities. Examines task descriptions for file overlap and dependency patterns to recommend safe parallel execution groups. Use when planning multi-task work.
+---
 
 # /manifold-suggest
 

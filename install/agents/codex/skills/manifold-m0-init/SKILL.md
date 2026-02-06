@@ -1,5 +1,7 @@
+---
 name: manifold-m0-init
 description: Initialize a constraint manifold for a feature. Creates .manifold/<feature>.json + .manifold/<feature>.md
+---
 
 # /m0-init
 

@@ -1,5 +1,7 @@
+---
 name: manifold-m4-generate
 description: Generate ALL artifacts simultaneously from the constraint manifold - code, tests, docs, runbooks, alerts
+---
 
 # /m4-generate
 

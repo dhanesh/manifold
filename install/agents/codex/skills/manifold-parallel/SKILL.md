@@ -1,5 +1,7 @@
+---
 name: manifold-parallel
 description: Execute tasks in parallel using git worktrees. Analyzes dependencies and file overlaps to safely parallelize independent tasks.
+---
 
 # /parallel
 

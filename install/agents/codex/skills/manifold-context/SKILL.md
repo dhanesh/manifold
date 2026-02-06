@@ -1,5 +1,7 @@
+---
 name: manifold-context
 description: Preserve Manifold constraint state for context retention. Reads .manifold/ directory and outputs a summary of current features, phases, constraints, tensions, and next actions. Use this skill when resuming work or before starting a new phase.
+---
 
 # /manifold-context
 
