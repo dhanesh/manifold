@@ -8,20 +8,22 @@ Pre-built constraint patterns for common development scenarios. These templates 
 
 | Template | Use Case | Constraints | Typical Time Saved |
 |----------|----------|-------------|-------------------|
-| `auth.yaml` | User authentication | 15 | 30-60 min |
-| `crud.yaml` | Data CRUD operations | 12 | 20-40 min |
-| `api.yaml` | REST/GraphQL APIs | 14 | 25-50 min |
-| `payment.yaml` | Payment processing | 18 | 45-90 min |
+| `auth.json` + `auth.md` | User authentication | 15 | 30-60 min |
+| `crud.json` + `crud.md` | Data CRUD operations | 12 | 20-40 min |
+| `api.json` + `api.md` | REST/GraphQL APIs | 14 | 25-50 min |
+| `payment.json` + `payment.md` | Payment processing | 18 | 45-90 min |
 
 ### Product Management Templates
 
 | Template | Use Case | Constraints | Typical Time Saved |
 |----------|----------|-------------|-------------------|
-| `pm/feature-launch.yaml` | New feature or product launch | 15-18 | 45-90 min |
-| `pm/experiment.yaml` | A/B test or experiment design | 12-14 | 30-60 min |
-| `pm/deprecation.yaml` | Feature sunset or migration | 14-16 | 40-75 min |
+| `pm/feature-launch.json` + `.md` | New feature or product launch | 15-18 | 45-90 min |
+| `pm/experiment.json` + `.md` | A/B test or experiment design | 12-14 | 30-60 min |
+| `pm/deprecation.json` + `.md` | Feature sunset or migration | 14-16 | 40-75 min |
 
 PM templates use the same constraint categories (business, technical, user_experience, security, operational) but with PM-focused language. See [PM Templates README](pm/README.md) for details.
+
+> **Note:** Legacy `.yaml` templates are still available for backward compatibility but new projects should use the JSON+MD format.
 
 ## Usage
 
@@ -36,8 +38,11 @@ This creates a manifold pre-populated with auth constraints, ready for customiza
 ### Option 2: Copy and Customize
 
 ```bash
-cp install/templates/auth.yaml .manifold/my-feature.yaml
-# Edit to customize
+# Copy both JSON (structure) and MD (content) files
+cp install/templates/auth.json .manifold/my-feature.json
+cp install/templates/auth.md .manifold/my-feature.md
+# Edit JSON for structural changes (add/remove constraint IDs)
+# Edit MD for content changes (statements, rationale, thresholds)
 ```
 
 ### Option 3: Reference During /m1-constrain
@@ -52,7 +57,12 @@ The AI will use the template as a starting point and prompt you to customize.
 
 ## Template Structure
 
-Each template includes:
+Each template consists of two files:
+
+1. **`.json` file** — Structure only (IDs, types, relationships, status)
+2. **`.md` file** — Content only (statements, rationale, customization notes)
+
+The markdown file contains:
 
 1. **Suggested Constraints** - Pre-written constraints with clear statements
 2. **Common Tensions** - Typical conflicts and their resolutions
@@ -81,8 +91,8 @@ Templates are starting points, not rigid requirements:
 
 To add a new template:
 
-1. Create `install/templates/<name>.yaml`
-2. Follow the structure of existing templates
+1. Create `install/templates/<name>.json` (structure) and `install/templates/<name>.md` (content)
+2. Follow the JSON+MD split pattern of existing templates
 3. Include at least:
    - 3 invariants (must never violate)
    - 3 boundaries (hard limits)

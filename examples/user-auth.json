@@ -1,0 +1,36 @@
+{
+  "schema_version": 3,
+  "feature": "user-auth",
+  "phase": "CONSTRAINED",
+  "created": "2026-01-14",
+  "constraints": {
+    "business": [
+      { "id": "B1", "type": "invariant" },
+      { "id": "B2", "type": "goal" }
+    ],
+    "technical": [
+      { "id": "T1", "type": "boundary" },
+      { "id": "T2", "type": "invariant" }
+    ],
+    "user_experience": [
+      { "id": "U1", "type": "goal" },
+      { "id": "U2", "type": "boundary" }
+    ],
+    "security": [
+      { "id": "S1", "type": "invariant" },
+      { "id": "S2", "type": "invariant" }
+    ],
+    "operational": [
+      { "id": "O1", "type": "goal" },
+      { "id": "O2", "type": "boundary" }
+    ]
+  },
+  "tensions": [
+    { "id": "TN1", "type": "trade_off", "between": ["T1", "S2"], "status": "resolved" }
+  ],
+  "anchors": {
+    "required_truths": []
+  },
+  "iterations": [],
+  "convergence": { "status": "NOT_STARTED" }
+}

@@ -1,0 +1,43 @@
+{
+  "schema_version": 3,
+  "feature": "payment-retry-v2",
+  "phase": "INITIALIZED",
+  "created": "2025-01-12",
+  "constraints": {
+    "business": [
+      { "id": "B1", "type": "invariant" },
+      { "id": "B2", "type": "goal" },
+      { "id": "B3", "type": "boundary" },
+      { "id": "B4", "type": "invariant" }
+    ],
+    "technical": [
+      { "id": "T1", "type": "invariant" },
+      { "id": "T2", "type": "invariant" },
+      { "id": "T3", "type": "goal" },
+      { "id": "T4", "type": "boundary" },
+      { "id": "T5", "type": "invariant" }
+    ],
+    "user_experience": [
+      { "id": "U1", "type": "invariant" },
+      { "id": "U2", "type": "goal" },
+      { "id": "U3", "type": "boundary" }
+    ],
+    "security": [
+      { "id": "S1", "type": "invariant" },
+      { "id": "S2", "type": "invariant" }
+    ],
+    "operational": [
+      { "id": "O1", "type": "goal" },
+      { "id": "O2", "type": "boundary" }
+    ]
+  },
+  "tensions": [
+    { "id": "TN1", "type": "trade_off", "between": ["U1", "U3"], "status": "resolved" },
+    { "id": "TN2", "type": "trade_off", "between": ["T3", "T5"], "status": "resolved" }
+  ],
+  "anchors": {
+    "required_truths": []
+  },
+  "iterations": [],
+  "convergence": { "status": "NOT_STARTED" }
+}

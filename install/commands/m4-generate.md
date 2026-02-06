@@ -361,7 +361,7 @@ User runs: /m4-generate payment-retry --option=C
 
 ## PRD Generation (`--prd` flag)
 
-When `--prd` is specified, generate a structured Product Requirements Document from the manifold.
+When `--prd` is specified, generate an industry-standard Product Requirements Document from the manifold.
 
 ### PRD Output Location
 
@@ -369,124 +369,220 @@ When `--prd` is specified, generate a structured Product Requirements Document f
 docs/<feature>/PRD.md
 ```
 
-### PRD Structure
+### PRD Structure (13 Sections + Appendices)
 
 ```markdown
 # PRD: [Feature Name]
 
-## Problem Statement
-[Generated from: outcome statement + business constraints rationale]
+| Field | Value |
+|-------|-------|
+| **Author** | [From manifold meta or "Product Manager"] |
+| **Status** | Draft / In Review / Approved |
+| **Created** | [timestamp] |
+| **Last Updated** | [timestamp] |
+| **Manifold** | `.manifold/<feature>.json` |
 
-## Success Metrics
+## 1. Problem Statement
+[Generated from: outcome + business constraint rationale]
+**Who is affected:** [from UX constraints context]
+**Current impact:** [from business constraints with baselines]
+**Why now:** [from timeline/boundary constraints]
+
+## 2. Business Objectives
+[Generated from: business GOAL constraints + outcome]
+- **Strategic alignment:** [from B-constraints rationale]
+- **Success criteria:** [measurable targets from GOALs]
+
+## 3. Success Metrics
+
+| Metric | Target | Baseline | Constraint |
+|--------|--------|----------|------------|
+| [name] | [target] | [current] | [ID] |
+
 [Generated from: GOAL type constraints with measurable criteria]
 
-| Metric | Target | Constraint |
-|--------|--------|------------|
-| [metric name] | [threshold] | [ID] |
+## 4. Target Users & Personas
+[Generated from: user_experience constraints context + "As a" patterns]
 
-## Requirements
+### Persona 1: [User Type]
+- **Needs:** [from UX constraint statements]
+- **Pain Points:** [from UX constraint rationale]
+- **Key Workflows:** [from UX boundaries]
+
+## 5. Assumptions & Constraints
+**Assumptions:**
+[Generated from: technical constraints with "assumes", security compliance refs]
+
+**Constraints:**
+[Generated from: ALL boundary-type constraints across categories]
+
+## 6. Requirements (MoSCoW)
 
 ### Must Have (Invariants)
-[All constraints with type: invariant]
+[All constraints.*.type: invariant]
 - **[statement]** ([ID]) — [rationale]
-  - _Traces to: [related constraint IDs]_
+  - _Traces to: [related IDs]_
 
 ### Should Have (Boundaries)
-[All constraints with type: boundary]
+[All constraints.*.type: boundary]
 - **[statement]** ([ID]) — [rationale]
 
-### Nice to Have (Goals)
-[All constraints with type: goal, excluding success metrics]
+### Could Have (Goals)
+[All constraints.*.type: goal, excluding success metrics]
 - **[statement]** ([ID]) — [rationale]
 
-## Out of Scope
-[Generated from: _customization.common_removals if present, or explicitly excluded items]
+### Won't Have (This Release)
+[Generated from: _customization.common_removals]
 
-## Risks & Mitigations
-[Generated from: tensions + security constraints]
+## 7. User Flows & Design
+[Generated from: UX constraints describing workflows + required truths about user journeys]
 
-| Risk | Source | Mitigation |
-|------|--------|------------|
-| [description] | [tension/constraint ID] | [resolution] |
+## 8. Out of Scope
+[Generated from: _customization.common_removals + explicit exclusions]
 
-## Dependencies
-[Generated from: technical constraints mentioning "depends on", "requires", "integrates with"]
+## 9. Risks & Mitigations
 
-## Open Questions
-[Generated from: unresolved tensions + anchors.open_questions if present]
+| Risk | Severity | Source | Mitigation |
+|------|----------|--------|------------|
+| [description] | High/Med/Low | [ID] | [resolution] |
 
-## Timeline & Phases
+[Generated from: resolved tensions + security constraints]
+
+## 10. Dependencies
+
+| Dependency | Type | Owner | Status |
+|------------|------|-------|--------|
+| [description] | Internal/External | [team] | Pending/Ready |
+
+[Generated from: technical constraints with "depends on", "requires", "integrates with"]
+
+## 11. Timeline & Milestones
+
+| Milestone | Date | Dependencies |
+|-----------|------|--------------|
+| [name] | [date] | [items] |
+
 [Generated from: boundary constraints with timeline + operational constraints]
 
+## 12. Open Questions
+
+| # | Question | Impact | Decision Needed By |
+|---|----------|--------|-------------------|
+| 1 | [question] | [constraint IDs] | [date] |
+
+[Generated from: unresolved tensions + anchors.open_questions]
+
 ---
-_Generated from `.manifold/<feature>.json`_
+
+## Appendix A: Constraint Traceability Matrix
+
+| PRD Section | Constraint IDs |
+|-------------|---------------|
+| Problem Statement | B1, B2 |
+| Success Metrics | B2, B4 |
+| Must Have | B1, T2, S1, ... |
+| ... | ... |
+
+## Appendix B: Manifold Reference
+_Generated from `.manifold/<feature>.json` + `.manifold/<feature>.md`_
+_Schema version: [version]_
+_Phase: [phase]_
 _Constraint coverage: [X]/[Y] constraints addressed_
-_Traces: [list of all constraint IDs referenced]_
 ```
 
 ### Constraint-to-PRD Mapping Rules
 
 | Constraint Source | PRD Section | Logic |
 |-------------------|-------------|-------|
-| `outcome` | Problem Statement | Direct inclusion |
+| `outcome` | Problem Statement + Business Objectives | Direct inclusion |
 | `constraints.*.type: goal` with metric | Success Metrics | Extract measurable targets |
 | `constraints.*.type: invariant` | Must Have | All invariants are non-negotiable |
-| `constraints.*.type: boundary` | Should Have | Boundaries define limits |
-| `constraints.*.type: goal` (non-metric) | Nice to Have | Goals are optimization targets |
-| `tensions.status: unresolved` | Open Questions | Unresolved = needs decision |
-| `tensions.status: resolved` | Risks & Mitigations | Resolved = documented decision |
-| `constraints.security.*` | Risks & Mitigations | Security = risk considerations |
-| `constraints.technical` with dependencies | Dependencies | Extract dependency statements |
-| `_customization.common_removals` | Out of Scope | Explicitly excluded |
+| `constraints.*.type: boundary` | Should Have + Assumptions & Constraints | Boundaries define limits |
+| `constraints.*.type: goal` (non-metric) | Could Have | Optimization targets |
+| `constraints.user_experience` | Target Users & Personas + User Flows | UX context derives personas |
+| `_customization.common_removals` | Won't Have + Out of Scope | Explicitly excluded |
+| `tensions.status: resolved` | Risks & Mitigations | Documented decisions |
+| `tensions.status: unresolved` | Open Questions | Needs decision |
+| `constraints.security.*` | Assumptions & Constraints + Risks | Compliance requirements |
+| `constraints.technical` with deps | Dependencies | Extract dependency refs |
+| `constraints` with timeline | Timeline & Milestones | Date-bearing constraints |
 
 ### PRD Generation Example
 
-Input manifold:
-```yaml
-outcome: "Increase checkout conversion by 15%"
-constraints:
-  business:
-    - id: B1
-      type: invariant
-      statement: "Must not disrupt existing checkout"
-    - id: B2
-      type: goal
-      statement: "Increase conversion by 15%"
-  user_experience:
-    - id: U1
-      type: boundary
-      statement: "Maximum 3 clicks to complete"
-tensions:
-  - id: TN1
-    between: [B2, T1]
-    status: resolved
-    resolution: "Phased rollout"
+Input manifold (JSON+MD):
+
+**`.manifold/checkout-redesign.json`** (structure):
+```json
+{
+  "constraints": {
+    "business": [
+      { "id": "B1", "type": "invariant" },
+      { "id": "B2", "type": "goal" }
+    ],
+    "user_experience": [
+      { "id": "U1", "type": "boundary" }
+    ]
+  },
+  "tensions": [
+    { "id": "TN1", "between": ["B2", "T1"], "status": "resolved" }
+  ]
+}
+```
+
+**`.manifold/checkout-redesign.md`** (content):
+```markdown
+## Outcome
+Increase checkout conversion by 15%
+
+### Business
+#### B1: Protect Existing Checkout
+Must not disrupt existing checkout.
+> **Rationale:** Revenue protection during transition.
+
+#### B2: Conversion Target
+Increase conversion by 15%.
+> **Rationale:** Mobile is 60% of traffic.
+
+### User Experience
+#### U1: Checkout Steps
+Maximum 3 clicks to complete.
+> **Rationale:** Each step adds abandonment risk.
+
+## Tensions
+### TN1: Conversion Goal vs Capacity
+> **Resolution:** Phased rollout.
 ```
 
 Generated PRD excerpt:
 ```markdown
-## Problem Statement
+## 1. Problem Statement
 Increase checkout conversion by 15% while maintaining existing checkout stability.
+**Who is affected:** Mobile shoppers (60% of traffic)
+**Why now:** Revenue protection during transition period
 
-## Success Metrics
-| Metric | Target | Constraint |
-|--------|--------|------------|
-| Checkout conversion | +15% | B2 |
+## 2. Business Objectives
+- **Strategic alignment:** Maximize mobile conversion opportunity
+- **Success criteria:** 15% improvement in checkout conversion rate
 
-## Requirements
+## 3. Success Metrics
+| Metric | Target | Baseline | Constraint |
+|--------|--------|----------|------------|
+| Checkout conversion | +15% | Current rate | B2 |
+
+## 6. Requirements (MoSCoW)
 
 ### Must Have (Invariants)
-- **Must not disrupt existing checkout** (B1)
+- **Must not disrupt existing checkout** (B1) — Revenue protection during transition
   - _Traces to: B1_
 
 ### Should Have (Boundaries)
-- **Maximum 3 clicks to complete** (U1)
+- **Maximum 3 clicks to complete** (U1) — Each step adds abandonment risk
   - _Traces to: U1_
 
-## Risks & Mitigations
-| Risk | Source | Mitigation |
-|------|--------|------------|
-| Conversion goal vs capacity | TN1 | Phased rollout |
+## 9. Risks & Mitigations
+| Risk | Severity | Source | Mitigation |
+|------|----------|--------|------------|
+| Conversion goal vs capacity | Medium | TN1 | Phased rollout |
 ```
 
 ### PRD Artifact Tracking
@@ -525,12 +621,17 @@ docs/<feature>/STORIES.md
 ```markdown
 # User Stories: [Feature Name]
 
+_See also: [PRD](PRD.md) for business context and full requirements_
+
 ## Epic: [Outcome statement]
 
 ### US-1: [Story title derived from U1 statement]
-**As a** [user type - extracted from constraint context or default "user"]
+**As a** [user type - derived from PRD Section 4: Target Users & Personas]
 **I want** [capability - action verb from constraint statement]
 **So that** [value - from constraint rationale]
+
+**Priority:** P0/P1/P2
+**Estimate:** [story points placeholder - to be estimated by team]
 
 **Acceptance Criteria:**
 - [ ] [Derived from constraint statement]
@@ -538,6 +639,7 @@ docs/<feature>/STORIES.md
 - [ ] [Derived from required truth if mapped]
 
 **Traces to:** [constraint IDs]
+**PRD Sections:** [cross-reference to relevant PRD section numbers]
 
 ---
 
@@ -548,10 +650,10 @@ docs/<feature>/STORIES.md
 
 ## Story Map
 
-| Priority | Story | Constraints | Dependencies | Status |
-|----------|-------|-------------|--------------|--------|
-| P0 | US-1 | U1, B2 | - | Ready |
-| P1 | US-2 | U2, T3 | US-1 | Blocked |
+| Priority | Story | Constraints | Dependencies | Estimate | Status |
+|----------|-------|-------------|--------------|----------|--------|
+| P0 | US-1 | U1, B2 | - | - | Ready |
+| P1 | US-2 | U2, T3 | US-1 | - | Blocked |
 
 ## Dependencies Graph
 
@@ -562,7 +664,8 @@ graph TD
 ```
 
 ---
-_Generated from `.manifold/<feature>.json`_
+_Generated from `.manifold/<feature>.json` + `.manifold/<feature>.md`_
+_Cross-references: [PRD](PRD.md)_
 ```
 
 ### Constraint-to-Story Transformation Rules
@@ -572,19 +675,20 @@ _Generated from `.manifold/<feature>.json`_
 | `constraints.user_experience` | One story per UX constraint | Primary source |
 | Constraint statement | "I want" clause | Extract action verb, user-facing language |
 | Constraint rationale | "So that" clause | Focus on value/outcome |
-| Constraint context | "As a" clause | Look for user/customer/admin; default "user" |
+| PRD Section 4 (Personas) | "As a" clause | Use persona from PRD; fallback to constraint context or default "user" |
 | Related constraints | Acceptance criteria | One criterion per related constraint |
 | `anchors.required_truths` | Acceptance criteria | If maps_to_constraints includes this story's source |
 | Boundary constraints | Acceptance criteria | Measurable thresholds |
 | `tensions` | Dependencies | Tensions between story constraints |
+| PRD Section numbers | PRD Sections field | Cross-reference to relevant PRD sections |
 
 ### Story Priority Rules
 
-| Constraint Type | Default Priority |
-|-----------------|------------------|
-| Invariant-related | P0 (must have) |
-| Boundary-related | P1 (should have) |
-| Goal-related | P2 (nice to have) |
+| Constraint Type | Default Priority | MoSCoW (PRD Section 6) |
+|-----------------|------------------|------------------------|
+| Invariant-related | P0 (must have) | Must Have |
+| Boundary-related | P1 (should have) | Should Have |
+| Goal-related | P2 (nice to have) | Could Have |
 
 ### Story Dependencies from Tensions
 
@@ -596,43 +700,62 @@ tensions:
     description: "Feature A must complete before B"
 
 # Then in STORIES.md:
-| Priority | Story | Dependencies |
-|----------|-------|--------------|
-| P0 | US-1 (from U1) | - |
-| P1 | US-2 (from U2) | US-1 |
+| Priority | Story | Dependencies | Estimate |
+|----------|-------|--------------|----------|
+| P0 | US-1 (from U1) | - | - |
+| P1 | US-2 (from U2) | US-1 | - |
 ```
 
 ### Stories Generation Example
 
-Input manifold:
-```yaml
-constraints:
-  user_experience:
-    - id: U1
-      type: boundary
-      statement: "User can complete checkout in 3 steps or fewer"
-      rationale: "Simplicity drives conversion"
-    - id: U2
-      type: goal
-      statement: "First-time users succeed without help"
-      rationale: "Self-service reduces support burden"
-  business:
-    - id: B1
-      type: invariant
-      statement: "No conversion regression"
-anchors:
-  required_truths:
-    - id: RT-1
-      statement: "User completes purchase without errors"
-      maps_to_constraints: [U1, B1]
+Input manifold (JSON+MD):
+
+**`.manifold/checkout-redesign.json`** (structure):
+```json
+{
+  "constraints": {
+    "user_experience": [
+      { "id": "U1", "type": "boundary" },
+      { "id": "U2", "type": "goal" }
+    ],
+    "business": [
+      { "id": "B1", "type": "invariant" }
+    ]
+  },
+  "anchors": {
+    "required_truths": [
+      { "id": "RT-1", "maps_to": ["U1", "B1"] }
+    ]
+  }
+}
+```
+
+**`.manifold/checkout-redesign.md`** (content):
+```markdown
+#### U1: Quick Checkout
+User can complete checkout in 3 steps or fewer.
+> **Rationale:** Simplicity drives conversion.
+
+#### U2: Self-Service Success
+First-time users succeed without help.
+> **Rationale:** Self-service reduces support burden.
+
+#### B1: No Conversion Regression
+No conversion regression.
+
+### RT-1: Error-Free Purchase
+User completes purchase without errors.
 ```
 
 Generated stories:
 ```markdown
 ### US-1: Quick Checkout Flow
-**As a** mobile shopper
+**As a** mobile shopper _(from PRD Persona 1)_
 **I want** to complete checkout in 3 steps or fewer
 **So that** I can purchase quickly (simplicity drives conversion)
+
+**Priority:** P1 (boundary)
+**Estimate:** _To be estimated by team_
 
 **Acceptance Criteria:**
 - [ ] Checkout completes in ≤3 steps (U1)
@@ -640,6 +763,7 @@ Generated stories:
 - [ ] User completes purchase without errors (RT-1)
 
 **Traces to:** U1, B1, RT-1
+**PRD Sections:** 4 (Target Users), 6 (Requirements), 7 (User Flows)
 ```
 
 ### Combined Flag Support
@@ -655,8 +779,8 @@ Generates:
 - `docs/payment-checkout/STORIES.md`
 
 Both files cross-reference each other:
-- PRD links to stories for detailed requirements
-- Stories link back to PRD for business context
+- PRD Section 6 (Requirements) links to stories for detailed user requirements
+- Stories link back to PRD sections for business context, personas, and user flows
 
 ### Stories Artifact Tracking
 

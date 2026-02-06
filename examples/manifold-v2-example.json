@@ -1,0 +1,118 @@
+{
+  "schema_version": 2,
+  "feature": "example-feature",
+  "phase": "VERIFIED",
+  "created": "2026-01-14",
+  "constraints": {
+    "business": [
+      { "id": "B1", "type": "invariant" }
+    ],
+    "technical": [
+      { "id": "T1", "type": "goal" }
+    ],
+    "user_experience": [
+      { "id": "U1", "type": "boundary" }
+    ],
+    "security": [
+      { "id": "S1", "type": "invariant" }
+    ],
+    "operational": [
+      { "id": "O1", "type": "goal" }
+    ]
+  },
+  "tensions": [
+    { "id": "TN1", "type": "trade_off", "between": ["T1", "U1"], "status": "resolved" }
+  ],
+  "anchors": {
+    "required_truths": [
+      { "id": "RT-1", "status": "SATISFIED" }
+    ],
+    "recommended_option": "A",
+    "anchor_document": ".manifold/example-feature.anchor.yaml"
+  },
+  "iterations": [
+    {
+      "number": 1,
+      "phase": "generate",
+      "timestamp": "2026-01-14T10:00:00Z",
+      "artifacts_created": 5,
+      "gaps_found": 0,
+      "gaps_resolved": 0,
+      "result": "artifacts"
+    },
+    {
+      "number": 2,
+      "phase": "verify",
+      "timestamp": "2026-01-14T10:30:00Z",
+      "artifacts_created": 0,
+      "gaps_found": 3,
+      "gaps_resolved": 0,
+      "result": "gaps found"
+    },
+    {
+      "number": 3,
+      "phase": "generate",
+      "timestamp": "2026-01-14T11:00:00Z",
+      "artifacts_created": 2,
+      "gaps_found": 0,
+      "gaps_resolved": 3,
+      "result": "fixes"
+    },
+    {
+      "number": 4,
+      "phase": "verify",
+      "timestamp": "2026-01-14T11:30:00Z",
+      "artifacts_created": 0,
+      "gaps_found": 0,
+      "gaps_resolved": 0,
+      "result": "PASS"
+    }
+  ],
+  "convergence": {
+    "status": "CONVERGED",
+    "criteria": {
+      "all_invariants_satisfied": true,
+      "test_pass_rate": 100,
+      "no_blocking_gaps": true
+    },
+    "iterations_to_convergence": 4,
+    "timestamp": "2026-01-14T11:30:00Z"
+  },
+  "generation": {
+    "option": "A",
+    "timestamp": "2026-01-14T11:00:00Z",
+    "iteration": 3,
+    "artifacts": [
+      {
+        "path": "src/example.ts",
+        "type": "code",
+        "satisfies": ["RT-1"],
+        "status": "generated"
+      }
+    ],
+    "coverage": {
+      "constraints_addressed": 5,
+      "constraints_total": 5,
+      "percentage": 100
+    }
+  },
+  "integration": {
+    "timestamp": "2026-01-14T11:15:00Z",
+    "iteration": 3,
+    "checklist": [
+      {
+        "id": "INT-1",
+        "source": "src/example.ts",
+        "target": "src/index.ts",
+        "action": "Add export",
+        "status": "completed",
+        "satisfies": ["RT-1"]
+      }
+    ],
+    "summary": {
+      "total_points": 1,
+      "completed": 1,
+      "pending": 0
+    }
+  }
+}

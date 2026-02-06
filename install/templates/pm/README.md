@@ -6,9 +6,11 @@ Pre-built constraint patterns for common PM workflows. These templates reduce th
 
 | Template | Use Case | Constraints | Typical Time Saved |
 |----------|----------|-------------|-------------------|
-| `pm/feature-launch` | New feature or product launch | 15-18 | 45-90 min |
-| `pm/experiment` | A/B test or experiment design | 12-14 | 30-60 min |
-| `pm/deprecation` | Feature sunset or migration | 14-16 | 40-75 min |
+| `pm/feature-launch.json` + `.md` | New feature or product launch | 15-18 | 45-90 min |
+| `pm/experiment.json` + `.md` | A/B test or experiment design | 12-14 | 30-60 min |
+| `pm/deprecation.json` + `.md` | Feature sunset or migration | 14-16 | 40-75 min |
+
+> **Note:** Legacy `.yaml` templates are still available for backward compatibility but new projects should use the JSON+MD format.
 
 ## Usage
 
@@ -23,8 +25,11 @@ Creates a manifold pre-populated with PM-focused constraints, ready for customiz
 ### Option 2: Copy and Customize
 
 ```bash
-cp install/templates/pm/feature-launch.yaml .manifold/my-feature.yaml
-# Edit to customize
+# Copy both JSON (structure) and MD (content) files
+cp install/templates/pm/feature-launch.json .manifold/my-feature.json
+cp install/templates/pm/feature-launch.md .manifold/my-feature.md
+# Edit JSON for structural changes (add/remove constraint IDs)
+# Edit MD for content changes (statements, rationale, thresholds)
 ```
 
 ### Option 3: Reference During /m1-constrain
@@ -37,7 +42,7 @@ The AI will use the template as a starting point and prompt you to customize.
 
 ## Template Descriptions
 
-### feature-launch.yaml
+### feature-launch.json + feature-launch.md
 
 For launching new features or products to users.
 
@@ -54,7 +59,7 @@ For launching new features or products to users.
 - Legal/competitive risk (security)
 - Rollout and support readiness (operational)
 
-### experiment.yaml
+### experiment.json + experiment.md
 
 For designing and running A/B tests or experiments.
 
@@ -71,7 +76,7 @@ For designing and running A/B tests or experiments.
 - Experiment ethics and consent (security)
 - Monitoring and analysis (operational)
 
-### deprecation.yaml
+### deprecation.json + deprecation.md
 
 For sunsetting features or migrating users.
 
@@ -102,7 +107,12 @@ Templates are starting points, not rigid requirements:
 
 ## Template Structure
 
-Each PM template includes:
+Each PM template consists of two files:
+
+1. **`.json` file** — Structure only (IDs, types, relationships, status)
+2. **`.md` file** — Content only (statements, rationale, customization notes)
+
+The markdown file contains:
 
 1. **PM-Focused Constraints** - Written from product perspective, not technical
 2. **Common Tensions** - Typical PM trade-offs (scope vs timeline, etc.)
@@ -122,8 +132,8 @@ These templates are designed to work with the `--prd` and `--stories` flags:
 ```
 
 This workflow produces:
-- `docs/new-feature/PRD.md` - Structured PRD
-- `docs/new-feature/STORIES.md` - User stories with acceptance criteria
+- `docs/new-feature/PRD.md` - Industry-standard PRD (13 sections + appendices)
+- `docs/new-feature/STORIES.md` - User stories with acceptance criteria and PRD cross-references
 
 ## When NOT to Use PM Templates
 
@@ -138,11 +148,11 @@ See [When NOT to Use](../../docs/WHEN_NOT_TO_USE.md) for more guidance.
 
 To add a new PM template:
 
-1. Create `install/templates/pm/<name>.yaml`
-2. Follow the structure of existing PM templates
+1. Create `install/templates/pm/<name>.json` (structure) and `install/templates/pm/<name>.md` (content)
+2. Follow the JSON+MD split pattern of existing PM templates
 3. Include PM-focused language (not technical jargon)
 4. Document common tensions for the use case
-5. Add `_customization` block with guidance
+5. Add customization notes in the MD file
 6. Update this README
 
 ## See Also
