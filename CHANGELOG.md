@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.19.0](https://github.com/dhanesh/manifold/compare/v2.18.0...v2.19.0) (2026-02-06)
+
+### Features
+
+* add multi-agent support for gemini and codex ([eebb982](https://github.com/dhanesh/manifold/commit/eebb9827f3fc17e27f9abbc811fad136c64e0982))
+
 ## [2.18.0](https://github.com/dhanesh/manifold/compare/v2.17.1...v2.18.0) (2026-02-06)
 
 ### Features
