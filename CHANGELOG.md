@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.19.3](https://github.com/dhanesh/manifold/compare/v2.19.2...v2.19.3) (2026-02-06)
+
+### Bug Fixes
+
+* quote yaml descriptions in codex skill.md to handle colons ([1248b86](https://github.com/dhanesh/manifold/commit/1248b8686ba9f0031e65601842261f5a86ce2630))
+
 ## [2.19.2](https://github.com/dhanesh/manifold/compare/v2.19.1...v2.19.2) (2026-02-06)
 
 ### Bug Fixes
