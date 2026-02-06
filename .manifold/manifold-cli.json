@@ -105,7 +105,7 @@
       "type": "trade_off",
       "between": [
         "B2",
-        "feature_completeness"
+        "B3"
       ],
       "status": "resolved"
     },

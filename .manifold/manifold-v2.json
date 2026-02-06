@@ -1,0 +1,349 @@
+{
+  "schema_version": 3,
+  "feature": "manifold-v2",
+  "phase": "VERIFIED",
+  "created": "2026-01-14",
+  "constraints": {
+    "business": [
+      {
+        "id": "B1",
+        "type": "invariant"
+      },
+      {
+        "id": "B2",
+        "type": "goal"
+      },
+      {
+        "id": "B3",
+        "type": "goal"
+      }
+    ],
+    "technical": [
+      {
+        "id": "T1",
+        "type": "invariant"
+      },
+      {
+        "id": "T2",
+        "type": "invariant"
+      },
+      {
+        "id": "T3",
+        "type": "boundary"
+      },
+      {
+        "id": "T4",
+        "type": "goal"
+      },
+      {
+        "id": "T5",
+        "type": "goal"
+      }
+    ],
+    "user_experience": [
+      {
+        "id": "U1",
+        "type": "goal"
+      },
+      {
+        "id": "U2",
+        "type": "boundary"
+      },
+      {
+        "id": "U3",
+        "type": "goal"
+      }
+    ],
+    "security": [
+      {
+        "id": "S1",
+        "type": "invariant"
+      }
+    ],
+    "operational": [
+      {
+        "id": "O1",
+        "type": "goal"
+      },
+      {
+        "id": "O2",
+        "type": "boundary"
+      },
+      {
+        "id": "O3",
+        "type": "goal"
+      }
+    ]
+  },
+  "tensions": [
+    {
+      "id": "TN1",
+      "type": "trade_off",
+      "between": [
+        "B2",
+        "B1"
+      ],
+      "status": "resolved"
+    },
+    {
+      "id": "TN2",
+      "type": "resource_tension",
+      "between": [
+        "T5",
+        "T4"
+      ],
+      "status": "resolved"
+    },
+    {
+      "id": "TN3",
+      "type": "trade_off",
+      "between": [
+        "U3",
+        "T1"
+      ],
+      "status": "resolved"
+    },
+    {
+      "id": "TN4",
+      "type": "hidden_dependency",
+      "between": [
+        "T5",
+        "U1"
+      ],
+      "status": "resolved"
+    },
+    {
+      "id": "TN5",
+      "type": "trade_off",
+      "between": [
+        "T5",
+        "S1"
+      ],
+      "status": "resolved"
+    }
+  ],
+  "tension_summary": {
+    "trade_offs": 3,
+    "resource_tensions": 1,
+    "hidden_dependencies": 1,
+    "total": 5,
+    "resolved": 5,
+    "unresolved": 0
+  },
+  "anchors": {
+    "required_truths": [
+      {
+        "id": "RT-1",
+        "status": "SATISFIED"
+      },
+      {
+        "id": "RT-2",
+        "status": "SATISFIED"
+      },
+      {
+        "id": "RT-3",
+        "status": "SATISFIED"
+      },
+      {
+        "id": "RT-4",
+        "status": "SATISFIED"
+      },
+      {
+        "id": "RT-5",
+        "status": "SATISFIED"
+      },
+      {
+        "id": "RT-6",
+        "status": "SATISFIED"
+      }
+    ],
+    "recommended_option": "C - Phased Enhancement",
+    "implementation_phases": [
+      {
+        "phase_a": "Schema Evolution - iterations tracking + version field"
+      },
+      {
+        "phase_b": "Intelligence Layer - dependency detection + convergence"
+      },
+      {
+        "phase_c": "Automation Layer - /m6-integrate + gap-to-action"
+      }
+    ]
+  },
+  "iterations": [
+    {
+      "number": 1,
+      "phase": "generate",
+      "timestamp": "2026-01-14T22:40:00Z",
+      "artifacts_created": 8,
+      "gaps_found": 0,
+      "gaps_resolved": 0,
+      "result": "artifacts"
+    },
+    {
+      "number": 2,
+      "phase": "verify",
+      "timestamp": "2026-01-14T22:45:00Z",
+      "artifacts_verified": 8,
+      "gaps_found": 0,
+      "gaps_resolved": 0,
+      "result": "PASS"
+    },
+    {
+      "number": 3,
+      "phase": "integrate",
+      "timestamp": "2026-01-14T23:18:00Z",
+      "integration_points": 8,
+      "completed": 8,
+      "pending": 0,
+      "result": "INTEGRATED"
+    },
+    {
+      "number": 4,
+      "phase": "verify",
+      "timestamp": "2026-01-14T23:20:00Z",
+      "mode": "strict",
+      "constraints_verified": 14,
+      "required_truths_verified": 6,
+      "gaps_found": 0,
+      "result": "PASS"
+    }
+  ],
+  "convergence": {
+    "status": "CONVERGED",
+    "criteria": {
+      "all_invariants_satisfied": true,
+      "all_required_truths_satisfied": true,
+      "no_blocking_gaps": true,
+      "all_integrations_complete": true,
+      "strict_verification_passed": true
+    },
+    "iterations_to_convergence": 4,
+    "timestamp": "2026-01-14T23:20:00Z"
+  },
+  "generation": {
+    "option": "C",
+    "timestamp": "2026-01-14T22:40:00Z",
+    "iteration": 1,
+    "artifacts": [
+      {
+        "path": "install/commands/m0-init.md",
+        "type": "documentation",
+        "satisfies": [
+          "RT-1",
+          "RT-5"
+        ],
+        "status": "generated",
+        "phase": "A",
+        "description": "Updated with schema_version and iterations[] section"
+      },
+      {
+        "path": "install/commands/m-status.md",
+        "type": "documentation",
+        "satisfies": [
+          "RT-1",
+          "U1"
+        ],
+        "status": "generated",
+        "phase": "A",
+        "description": "Added --history flag and convergence display"
+      },
+      {
+        "path": "install/commands/m2-tension.md",
+        "type": "documentation",
+        "satisfies": [
+          "RT-3"
+        ],
+        "status": "generated",
+        "phase": "B",
+        "description": "Added --auto-deps for dependency detection"
+      },
+      {
+        "path": "install/commands/m6-integrate.md",
+        "type": "documentation",
+        "satisfies": [
+          "RT-2",
+          "RT-6"
+        ],
+        "status": "generated",
+        "phase": "C",
+        "description": "New command for artifact integration"
+      },
+      {
+        "path": "install/commands/m5-verify.md",
+        "type": "documentation",
+        "satisfies": [
+          "RT-4"
+        ],
+        "status": "generated",
+        "phase": "C",
+        "description": "Added --actions for gap-to-action automation"
+      },
+      {
+        "path": "install/install.sh",
+        "type": "infrastructure",
+        "satisfies": [
+          "RT-6"
+        ],
+        "status": "generated",
+        "phase": "C",
+        "description": "Updated to v2.0.0 with m6-integrate"
+      },
+      {
+        "path": "install/manifold/SKILL.md",
+        "type": "documentation",
+        "satisfies": [
+          "RT-5",
+          "RT-6"
+        ],
+        "status": "generated",
+        "phase": "C",
+        "description": "Updated with v2 features and /m6-integrate"
+      },
+      {
+        "path": "examples/manifold-v2-example.yaml",
+        "type": "example",
+        "satisfies": [
+          "RT-5"
+        ],
+        "status": "generated",
+        "phase": "C",
+        "description": "Example manifold demonstrating v2 schema"
+      }
+    ],
+    "coverage": {
+      "constraints_addressed": 12,
+      "constraints_total": 14,
+      "required_truths_addressed": 6,
+      "required_truths_total": 6,
+      "percentage": 86
+    },
+    "by_phase": {
+      "phase_a": {
+        "constraints": [
+          "RT-1",
+          "RT-5",
+          "U1"
+        ],
+        "artifacts": 2,
+        "status": "generated"
+      },
+      "phase_b": {
+        "constraints": [
+          "RT-3"
+        ],
+        "artifacts": 1,
+        "status": "generated"
+      },
+      "phase_c": {
+        "constraints": [
+          "RT-2",
+          "RT-4",
+          "RT-6"
+        ],
+        "artifacts": 5,
+        "status": "generated"
+      }
+    }
+  }
+}

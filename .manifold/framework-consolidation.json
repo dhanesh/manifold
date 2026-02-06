@@ -1,0 +1,102 @@
+{
+  "schema_version": 3,
+  "feature": "framework-consolidation",
+  "phase": "VERIFIED",
+  "created": "2026-01-14",
+  "constraints": {
+    "business": [
+      {
+        "id": "B1",
+        "type": "invariant"
+      },
+      {
+        "id": "B2",
+        "type": "invariant"
+      },
+      {
+        "id": "B3",
+        "type": "goal"
+      }
+    ],
+    "technical": [
+      {
+        "id": "T1",
+        "type": "invariant"
+      },
+      {
+        "id": "T2",
+        "type": "invariant"
+      },
+      {
+        "id": "T3",
+        "type": "boundary"
+      },
+      {
+        "id": "T4",
+        "type": "goal"
+      }
+    ],
+    "user_experience": [
+      {
+        "id": "U1",
+        "type": "goal"
+      },
+      {
+        "id": "U2",
+        "type": "boundary"
+      },
+      {
+        "id": "U3",
+        "type": "goal"
+      }
+    ],
+    "security": [
+      {
+        "id": "S1",
+        "type": "invariant"
+      }
+    ],
+    "operational": [
+      {
+        "id": "O1",
+        "type": "goal"
+      },
+      {
+        "id": "O2",
+        "type": "boundary"
+      }
+    ]
+  },
+  "tensions": [
+    {
+      "id": "TN1",
+      "type": "trade_off",
+      "between": [
+        "T1",
+        "T4"
+      ],
+      "status": "resolved"
+    },
+    {
+      "id": "TN2",
+      "type": "resource_tension",
+      "between": [
+        "B3",
+        "O1"
+      ],
+      "status": "resolved"
+    },
+    {
+      "id": "TN3",
+      "type": "hidden_dependency",
+      "between": [
+        "U3",
+        "T3"
+      ],
+      "status": "resolved"
+    }
+  ],
+  "anchors": {
+    "required_truths": []
+  }
+}

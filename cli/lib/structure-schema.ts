@@ -207,16 +207,22 @@ export type EvidenceRef = z.infer<typeof EvidenceRefSchema>;
 // Constraint Graph (v3)
 // ============================================================
 
+// Edges can be arrays of [string, string] pairs OR objects with {from, to, reason}
+const EdgeItemSchema = z.union([
+  z.array(z.string()).min(2),
+  z.record(z.any()),
+]);
+
 export const ConstraintGraphEdgesSchema = z.object({
-  dependencies: z.array(z.array(z.string()).min(2)).optional(),
-  conflicts: z.array(z.array(z.string()).min(2)).optional(),
-  satisfies: z.array(z.array(z.string()).min(2)).optional(),
+  dependencies: z.array(EdgeItemSchema).optional(),
+  conflicts: z.array(EdgeItemSchema).optional(),
+  satisfies: z.array(EdgeItemSchema).optional(),
 });
 
 export type ConstraintGraphEdges = z.infer<typeof ConstraintGraphEdgesSchema>;
 
 export const ConstraintNodeRefSchema = z.object({
-  id: z.string(),
+  id: z.string().optional(), // Optional when used as record value (key is the ID)
   type: NodeTypeSchema.optional(),
   status: NodeStatusSchema.optional(),
   depends_on: z.array(z.string()).optional(),
@@ -272,14 +278,18 @@ export type Anchors = z.infer<typeof AnchorsSchema>;
 
 export const ConvergenceSchema = z.object({
   status: ConvergenceStatusSchema,
-  criteria: z.object({
-    all_invariants_satisfied: z.boolean().optional(),
-    all_required_truths_satisfied: z.boolean().optional(),
-    no_blocking_gaps: z.boolean().optional(),
-    all_integrations_complete: z.boolean().optional(),
-    strict_verification_passed: z.boolean().optional(),
-    verification_passed: z.boolean().optional(), // Legacy alias
-  }).optional(),
+  // Criteria can be a structured object or a plain string summary
+  criteria: z.union([
+    z.object({
+      all_invariants_satisfied: z.boolean().optional(),
+      all_required_truths_satisfied: z.boolean().optional(),
+      no_blocking_gaps: z.boolean().optional(),
+      all_integrations_complete: z.boolean().optional(),
+      strict_verification_passed: z.boolean().optional(),
+      verification_passed: z.boolean().optional(), // Legacy alias
+    }),
+    z.string(),
+  ]).optional(),
   iterations_to_convergence: z.number().optional(),
   timestamp: z.string().optional(),
   progress: z.string().optional(),
@@ -320,13 +330,14 @@ export const GenerationSchema = z.object({
   timestamp: z.string().optional(),
   iteration: z.number().optional(),
   artifacts: z.array(ArtifactRefSchema).optional(),
+  // Coverage fields are all optional to support varying manifold formats
   coverage: z.object({
-    constraints_addressed: z.number(),
-    constraints_total: z.number(),
-    required_truths_addressed: z.number(),
-    required_truths_total: z.number(),
-    percentage: z.number(),
-  }).optional(),
+    constraints_addressed: z.number().optional(),
+    constraints_total: z.number().optional(),
+    required_truths_addressed: z.number().optional(),
+    required_truths_total: z.number().optional(),
+    percentage: z.number().optional(),
+  }).passthrough().optional(),
 });
 
 export type Generation = z.infer<typeof GenerationSchema>;
