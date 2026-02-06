@@ -3,7 +3,7 @@
 # Satisfies: T1 (command format translation), B3 (single canonical source)
 
 description = "Execute tasks in parallel using git worktrees. Analyzes dependencies and file overlaps to safely parallelize independent tasks."
-argument_hint = "\\"task1\\" \\"task2\\" [\\"task3\\"] [--dry-run] [--max-parallel=N]"
+argument_hint = "\"task1\" \"task2\" [\"task3\"] [--dry-run] [--max-parallel=N]"
 prompt = """
 # /parallel - Parallel Task Execution
 

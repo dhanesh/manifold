@@ -51,6 +51,8 @@ function parseFrontmatter(content: string): { meta: Record<string, string>; body
       if ((value.startsWith('"') && value.endsWith('"')) ||
           (value.startsWith("'") && value.endsWith("'"))) {
         value = value.slice(1, -1);
+        // Unescape YAML double-quoted string escapes
+        value = value.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
       }
       meta[key] = value;
     }
