@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.21.0](https://github.com/dhanesh/manifold/compare/v2.20.0...v2.21.0) (2026-02-07)
+
+### Features
+
+* terminal-optimized graph rendering with z-order patch ([9d4aecb](https://github.com/dhanesh/manifold/commit/9d4aecb5ddb605425746f9b0ee79b62d80dcc125))
+
 ## [2.20.0](https://github.com/dhanesh/manifold/compare/v2.19.3...v2.20.0) (2026-02-07)
 
 ### Features
