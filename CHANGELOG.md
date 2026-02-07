@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.20.0](https://github.com/dhanesh/manifold/compare/v2.19.3...v2.20.0) (2026-02-07)
+
+### Features
+
+* replace ascii renderer with beautiful-mermaid across all viz commands ([8466f74](https://github.com/dhanesh/manifold/commit/8466f745126894233530f16adef4c17895f3a3b8))
+
 ## [2.19.3](https://github.com/dhanesh/manifold/compare/v2.19.2...v2.19.3) (2026-02-06)
 
 ### Bug Fixes
