@@ -53,7 +53,7 @@
       },
       {
         "id": "RT-3",
-        "status": "PARTIAL",
+        "status": "SATISFIED",
         "maps_to": ["U1", "U2"]
       },
       {
@@ -109,19 +109,34 @@
       "timestamp": "2026-02-07T00:04:00Z",
       "result": "PASS",
       "changes": "Verification: 10/11 SATISFIED, 1 PARTIAL (U1 layout at scale). 342/342 tests pass. 1 non-blocking gap."
+    },
+    {
+      "number": 6,
+      "phase": "integrate",
+      "timestamp": "2026-02-07T00:05:00Z",
+      "result": "integrated",
+      "changes": "Integration analysis: 12 points checked, 11 PASS, 1 fixed (cli/package.json missing beautiful-mermaid). Added explicit dependency."
+    },
+    {
+      "number": 7,
+      "phase": "VERIFIED",
+      "timestamp": "2026-02-07T00:06:00Z",
+      "result": "PASS",
+      "changes": "Closed U1 gap: Added 48 tests in mermaid.test.ts covering all 5 exports, scale tests at 20/30/50 nodes, end-to-end pipeline. RT-3 now SATISFIED. 390/390 tests pass. 0 gaps."
     }
   ],
   "verification": {
-    "result": "PARTIAL",
+    "result": "PASS",
     "invariants_satisfied": "6/6 (100%)",
-    "boundaries_satisfied": "1/2 (50% + 1 PARTIAL)",
+    "boundaries_satisfied": "2/2 (100%)",
     "goals_satisfied": "3/3 (100%)",
-    "required_truths_satisfied": "5/6 (83%)",
-    "tests_passed": "342/342",
-    "gaps": 1
+    "required_truths_satisfied": "6/6 (100%)",
+    "tests_passed": "390/390",
+    "gaps": 0
   },
   "convergence": {
-    "status": "IN_PROGRESS"
+    "status": "CONVERGED",
+    "converged_at": "2026-02-07T00:06:00Z"
   },
   "constraint_graph": {
     "version": 1,

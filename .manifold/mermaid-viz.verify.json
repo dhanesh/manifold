@@ -1,7 +1,7 @@
 {
   "verification": {
     "timestamp": "2026-02-07T00:04:00Z",
-    "result": "PARTIAL",
+    "result": "PASS",
     "matrix": [
       {
         "constraint": "B1",
@@ -70,12 +70,10 @@
         "constraint": "U1",
         "type": "boundary",
         "code": true,
-        "test": false,
+        "test": true,
         "docs": false,
         "ops": null,
-        "status": "PARTIAL",
-        "gap": "No automated test for layout readability at 20+ nodes. Manual verification shows layout is wide but functional.",
-        "action": "Add unit test asserting graphToMermaid() produces valid syntax for 20-node graph and renderMermaidToTerminal() does not throw"
+        "status": "SATISFIED"
       },
       {
         "constraint": "U2",
@@ -107,24 +105,16 @@
     ],
     "coverage": {
       "invariants": { "satisfied": 6, "total": 6, "percentage": 100 },
-      "boundaries": { "satisfied": 1, "partial": 1, "total": 2, "percentage": 75 },
+      "boundaries": { "satisfied": 2, "total": 2, "percentage": 100 },
       "goals": { "satisfied": 3, "total": 3, "percentage": 100 }
     },
-    "required_truths_satisfied": "5/6 (83%)",
-    "gaps": [
-      {
-        "id": "G1",
-        "constraint": "U1",
-        "issue": "No automated test for readability at scale (20+ nodes). Manual test shows wide but functional output.",
-        "action": "Add unit test for graphToMermaid() with 20-node graph and renderMermaidToTerminal() non-throw assertion",
-        "severity": "non-blocking"
-      }
-    ],
+    "required_truths_satisfied": "6/6 (100%)",
+    "gaps": [],
     "test_results": {
-      "total": 342,
-      "passed": 342,
+      "total": 390,
+      "passed": 390,
       "failed": 0,
-      "files": 15
+      "files": 16
     },
     "build_results": {
       "modules": 340,

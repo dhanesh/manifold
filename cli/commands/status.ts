@@ -31,7 +31,8 @@ import {
 import { ConstraintSolver } from '../lib/solver.js';
 import {
   miniGraphToMermaid,
-  renderMermaidToTerminal
+  renderMermaidToTerminal,
+  renderGraphToTerminal
 } from '../lib/mermaid.js';
 
 interface StatusOptions {
@@ -340,13 +341,12 @@ function printFeatureGraph(data: FeatureData, mode: 'ascii' | 'mermaid'): number
     return 0;
   }
 
-  const mermaidSyntax = miniGraphToMermaid(graph);
-
   if (mode === 'mermaid') {
+    const mermaidSyntax = miniGraphToMermaid(graph);
     println(mermaidSyntax);
   } else {
     println(formatHeader('Constraint Network'));
-    println(renderMermaidToTerminal(mermaidSyntax));
+    println(renderGraphToTerminal(graph, 'mini'));
   }
 
   return 0;

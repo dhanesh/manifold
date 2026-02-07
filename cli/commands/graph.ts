@@ -22,7 +22,8 @@ import {
 } from '../lib/solver.js';
 import {
   graphToMermaid,
-  renderMermaidToTerminal
+  renderMermaidToTerminal,
+  renderGraphToTerminal
 } from '../lib/mermaid.js';
 
 interface GraphOptions {
@@ -102,9 +103,8 @@ async function graphCommand(feature: string | undefined, options: GraphOptions):
     // Satisfies: B3 (raw Mermaid export)
     println(graphToMermaid(graph));
   } else if (options.ascii) {
-    // Satisfies: U2 (terminal-friendly), B2 (uses Mermaid renderer)
-    const mermaidSyntax = graphToMermaid(graph);
-    println(renderMermaidToTerminal(mermaidSyntax));
+    // Satisfies: U2 (terminal-friendly), U1 (readable at scale)
+    println(renderGraphToTerminal(graph, 'full'));
   } else {
     // Default to JSON — Satisfies: T3 (existing format unchanged)
     println(toJSON(formatGraphForJson(graph, feature)));

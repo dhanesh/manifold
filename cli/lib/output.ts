@@ -239,7 +239,7 @@ export function formatTable(columns: TableColumn[], rows: Record<string, string>
 /**
  * Strip ANSI codes for length calculation
  */
-function stripAnsi(str: string): string {
+export function stripAnsi(str: string): string {
   return str.replace(/\x1b\[[0-9;]*m/g, '');
 }
 

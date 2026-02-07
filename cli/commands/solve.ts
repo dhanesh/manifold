@@ -27,7 +27,10 @@ import {
   graphToMermaid,
   executionPlanToMermaid,
   backwardReasoningToMermaid,
-  renderMermaidToTerminal
+  renderMermaidToTerminal,
+  renderGraphToTerminal,
+  renderPlanToTerminal,
+  renderBackwardToTerminal
 } from '../lib/mermaid.js';
 
 interface SolveOptions {
@@ -121,12 +124,10 @@ async function solveCommand(feature: string | undefined, options: SolveOptions):
     println();
     println(executionPlanToMermaid(plan));
   } else if (options.ascii) {
-    // Satisfies: U2 (terminal-friendly), B2 (uses Mermaid renderer)
-    const graphMermaid = graphToMermaid(graph);
-    println(renderMermaidToTerminal(graphMermaid));
+    // Satisfies: U2 (terminal-friendly), U1 (readable at scale)
+    println(renderGraphToTerminal(graph, 'full'));
     println();
-    const planMermaid = executionPlanToMermaid(plan);
-    println(renderMermaidToTerminal(planMermaid));
+    println(renderPlanToTerminal(plan));
   } else {
     // Default to JSON — Satisfies: T3 (existing format unchanged)
     println(toJSON(formatPlanForJson(plan, feature)));
@@ -179,8 +180,8 @@ function handleBackwardReasoning(
     // Satisfies: B3 (raw Mermaid export for backward reasoning)
     println(backwardReasoningToMermaid(graph, targetId, requirements));
   } else {
-    // ASCII output — use Mermaid for dependency visualization
-    printBackwardAnalysis(solver, feature, targetId, requirements, options.ascii);
+    // ASCII output — use terminal-optimized Mermaid for dependency visualization
+    printBackwardAnalysis(solver, feature, targetId, requirements);
   }
 
   return 0;
@@ -221,8 +222,7 @@ function printBackwardAnalysis(
   solver: ConstraintSolver,
   feature: string,
   targetId: string,
-  requirements: string[],
-  useAsciiGraph?: boolean
+  requirements: string[]
 ): void {
   const graph = solver.getGraph();
   if (!graph) return;
@@ -259,17 +259,10 @@ function printBackwardAnalysis(
 
   println();
 
-  // Show dependency chain as Mermaid graph
+  // Show dependency chain as terminal-optimized graph
   println(style.bold('DEPENDENCY CHAIN:'));
   println('═'.repeat(50));
-  if (useAsciiGraph) {
-    const mermaidSyntax = backwardReasoningToMermaid(graph, targetId, requirements);
-    println(renderMermaidToTerminal(mermaidSyntax));
-  } else {
-    // Default text: still use Mermaid for the chain visualization
-    const mermaidSyntax = backwardReasoningToMermaid(graph, targetId, requirements);
-    println(renderMermaidToTerminal(mermaidSyntax));
-  }
+  println(renderBackwardToTerminal(graph, targetId, requirements));
 
   println();
 

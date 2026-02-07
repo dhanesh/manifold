@@ -25,7 +25,8 @@ import {
 import { ConstraintSolver } from '../lib/solver.js';
 import {
   miniGraphToMermaid,
-  renderMermaidToTerminal
+  renderMermaidToTerminal,
+  renderGraphToTerminal
 } from '../lib/mermaid.js';
 
 interface ShowOptions {
@@ -309,13 +310,12 @@ function printConstraintMap(manifoldDir: string, feature: string, mode: 'ascii' 
     return 0;
   }
 
-  const mermaidSyntax = miniGraphToMermaid(graph);
-
   if (mode === 'mermaid') {
+    const mermaidSyntax = miniGraphToMermaid(graph);
     println(mermaidSyntax);
   } else {
     println(formatHeader('Constraint Relationship Map'));
-    println(renderMermaidToTerminal(mermaidSyntax));
+    println(renderGraphToTerminal(graph, 'mini'));
   }
 
   return 0;
