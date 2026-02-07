@@ -8,6 +8,9 @@
 # FPF (First Principles Framework) - development decisioning
 .fpf/
 
+# Roughwork - temporary testing and exploration
+.roughwork/
+
 # Old temporal data directory
 .temporal/
 
