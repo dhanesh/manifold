@@ -58,7 +58,7 @@ _manifold_completions() {
         -*)
             case "\${COMP_WORDS[1]}" in
                 status)
-                    COMPREPLY=( $(compgen -W "--json --history --diff" -- "\${cur}") )
+                    COMPREPLY=( $(compgen -W "--json --history --diff --graph --mermaid" -- "\${cur}") )
                     ;;
                 validate)
                     COMPREPLY=( $(compgen -W "--json --strict --all --conflicts" -- "\${cur}") )
@@ -70,16 +70,16 @@ _manifold_completions() {
                     COMPREPLY=( $(compgen -W "--template --outcome --format" -- "\${cur}") )
                     ;;
                 graph)
-                    COMPREPLY=( $(compgen -W "--json --ascii --dot" -- "\${cur}") )
+                    COMPREPLY=( $(compgen -W "--json --ascii --dot --mermaid" -- "\${cur}") )
                     ;;
                 solve)
-                    COMPREPLY=( $(compgen -W "--json --ascii --dot" -- "\${cur}") )
+                    COMPREPLY=( $(compgen -W "--json --ascii --dot --mermaid --backward --target" -- "\${cur}") )
                     ;;
                 migrate)
                     COMPREPLY=( $(compgen -W "--dry-run --force" -- "\${cur}") )
                     ;;
                 show)
-                    COMPREPLY=( $(compgen -W "--json --raw" -- "\${cur}") )
+                    COMPREPLY=( $(compgen -W "--json --structure --content --validate --map --mermaid" -- "\${cur}") )
                     ;;
             esac
             return 0
@@ -156,7 +156,9 @@ _manifold_features() {
             _arguments \\
                 '--json[Output as JSON]' \\
                 '--history[Show iteration history]' \\
-                '--diff[Show changes since last iteration]'
+                '--diff[Show changes since last iteration]' \\
+                '--graph[Show constraint network graph]' \\
+                '--mermaid[Output constraint network as Mermaid]'
             ;;
         validate)
             _arguments \\
@@ -175,13 +177,17 @@ _manifold_features() {
             _arguments \\
                 '--json[Output as JSON]' \\
                 '--ascii[ASCII art output]' \\
-                '--dot[GraphViz DOT output]'
+                '--dot[GraphViz DOT output]' \\
+                '--mermaid[Raw Mermaid syntax output]'
             ;;
         solve)
             _arguments \\
                 '--json[Output as JSON]' \\
                 '--ascii[ASCII art output]' \\
-                '--dot[GraphViz DOT output]'
+                '--dot[GraphViz DOT output]' \\
+                '--mermaid[Raw Mermaid syntax output]' \\
+                '--backward[Backward reasoning mode]' \\
+                '--target[Target node for backward reasoning]'
             ;;
         migrate)
             _arguments \\
@@ -191,7 +197,11 @@ _manifold_features() {
         show)
             _arguments \\
                 '--json[Output as JSON]' \\
-                '--raw[Show raw content]'
+                '--structure[Show only JSON structure]' \\
+                '--content[Show only Markdown content]' \\
+                '--validate[Include linking validation]' \\
+                '--map[Show constraint relationship map]' \\
+                '--mermaid[Output constraint map as Mermaid]'
             ;;
     esac
 }
@@ -244,6 +254,8 @@ complete -c manifold -n "__fish_seen_subcommand_from init" -l format -d "Output 
 complete -c manifold -n "__fish_seen_subcommand_from status" -l json -d "Output as JSON"
 complete -c manifold -n "__fish_seen_subcommand_from status" -l history -d "Show iteration history"
 complete -c manifold -n "__fish_seen_subcommand_from status" -l diff -d "Show changes"
+complete -c manifold -n "__fish_seen_subcommand_from status" -l graph -d "Show constraint network graph"
+complete -c manifold -n "__fish_seen_subcommand_from status" -l mermaid -d "Output constraint network as Mermaid"
 
 # validate flags
 complete -c manifold -n "__fish_seen_subcommand_from validate" -l json -d "Output as JSON"
@@ -260,11 +272,15 @@ complete -c manifold -n "__fish_seen_subcommand_from verify" -l strict -d "Stric
 complete -c manifold -n "__fish_seen_subcommand_from graph" -l json -d "Output as JSON"
 complete -c manifold -n "__fish_seen_subcommand_from graph" -l ascii -d "ASCII art output"
 complete -c manifold -n "__fish_seen_subcommand_from graph" -l dot -d "GraphViz DOT output"
+complete -c manifold -n "__fish_seen_subcommand_from graph" -l mermaid -d "Raw Mermaid syntax output"
 
 # solve flags
 complete -c manifold -n "__fish_seen_subcommand_from solve" -l json -d "Output as JSON"
 complete -c manifold -n "__fish_seen_subcommand_from solve" -l ascii -d "ASCII art output"
 complete -c manifold -n "__fish_seen_subcommand_from solve" -l dot -d "GraphViz DOT output"
+complete -c manifold -n "__fish_seen_subcommand_from solve" -l mermaid -d "Raw Mermaid syntax output"
+complete -c manifold -n "__fish_seen_subcommand_from solve" -l backward -d "Backward reasoning mode"
+complete -c manifold -n "__fish_seen_subcommand_from solve" -l target -d "Target node for backward reasoning"
 
 # migrate flags
 complete -c manifold -n "__fish_seen_subcommand_from migrate" -l dry-run -d "Show what would be done"
@@ -272,7 +288,11 @@ complete -c manifold -n "__fish_seen_subcommand_from migrate" -l force -d "Overw
 
 # show flags
 complete -c manifold -n "__fish_seen_subcommand_from show" -l json -d "Output as JSON"
-complete -c manifold -n "__fish_seen_subcommand_from show" -l raw -d "Show raw content"
+complete -c manifold -n "__fish_seen_subcommand_from show" -l structure -d "Show only JSON structure"
+complete -c manifold -n "__fish_seen_subcommand_from show" -l content -d "Show only Markdown content"
+complete -c manifold -n "__fish_seen_subcommand_from show" -l validate -d "Include linking validation"
+complete -c manifold -n "__fish_seen_subcommand_from show" -l map -d "Show constraint relationship map"
+complete -c manifold -n "__fish_seen_subcommand_from show" -l mermaid -d "Output constraint map as Mermaid"
 `;
 
 /**

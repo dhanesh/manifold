@@ -1,0 +1,135 @@
+{
+  "schema_version": 3,
+  "feature": "mermaid-viz",
+  "phase": "VERIFIED",
+  "created": "2026-02-07",
+  "constraints": {
+    "business": [
+      {"id": "B1", "type": "invariant"},
+      {"id": "B2", "type": "invariant"},
+      {"id": "B3", "type": "goal"}
+    ],
+    "technical": [
+      {"id": "T1", "type": "invariant"},
+      {"id": "T2", "type": "invariant"},
+      {"id": "T3", "type": "invariant"},
+      {"id": "T4", "type": "boundary"}
+    ],
+    "user_experience": [
+      {"id": "U1", "type": "boundary"},
+      {"id": "U2", "type": "goal"}
+    ],
+    "security": [],
+    "operational": [
+      {"id": "O1", "type": "invariant"},
+      {"id": "O2", "type": "goal"}
+    ]
+  },
+  "tensions": [
+    {
+      "id": "TN1",
+      "type": "trade_off",
+      "between": ["B2", "U1"],
+      "status": "resolved"
+    },
+    {
+      "id": "TN2",
+      "type": "hidden_dependency",
+      "between": ["T1", "T2"],
+      "status": "resolved"
+    }
+  ],
+  "anchors": {
+    "required_truths": [
+      {
+        "id": "RT-1",
+        "status": "SATISFIED",
+        "maps_to": ["T1", "T2"]
+      },
+      {
+        "id": "RT-2",
+        "status": "SATISFIED",
+        "maps_to": ["T4", "B1"]
+      },
+      {
+        "id": "RT-3",
+        "status": "PARTIAL",
+        "maps_to": ["U1", "U2"]
+      },
+      {
+        "id": "RT-4",
+        "status": "SATISFIED",
+        "maps_to": ["B3", "B1"]
+      },
+      {
+        "id": "RT-5",
+        "status": "SATISFIED",
+        "maps_to": ["O2", "T3", "B2"]
+      },
+      {
+        "id": "RT-6",
+        "status": "SATISFIED",
+        "maps_to": ["O1"]
+      }
+    ],
+    "recommended_option": "A"
+  },
+  "iterations": [
+    {
+      "number": 1,
+      "phase": "CONSTRAINED",
+      "timestamp": "2026-02-07T00:00:00Z",
+      "result": "constrained",
+      "changes": "11 constraints discovered across 4 categories"
+    },
+    {
+      "number": 2,
+      "phase": "TENSIONED",
+      "timestamp": "2026-02-07T00:01:00Z",
+      "result": "tensioned",
+      "changes": "2 tensions found and resolved"
+    },
+    {
+      "number": 3,
+      "phase": "ANCHORED",
+      "timestamp": "2026-02-07T00:02:00Z",
+      "result": "anchored",
+      "changes": "6 required truths derived, Option A selected"
+    },
+    {
+      "number": 4,
+      "phase": "GENERATED",
+      "timestamp": "2026-02-07T00:03:00Z",
+      "result": "generated",
+      "changes": "All artifacts generated: mermaid.ts, graph.ts, solve.ts, status.ts, show.ts updated, old renderer removed, completion.ts updated"
+    },
+    {
+      "number": 5,
+      "phase": "VERIFIED",
+      "timestamp": "2026-02-07T00:04:00Z",
+      "result": "PASS",
+      "changes": "Verification: 10/11 SATISFIED, 1 PARTIAL (U1 layout at scale). 342/342 tests pass. 1 non-blocking gap."
+    }
+  ],
+  "verification": {
+    "result": "PARTIAL",
+    "invariants_satisfied": "6/6 (100%)",
+    "boundaries_satisfied": "1/2 (50% + 1 PARTIAL)",
+    "goals_satisfied": "3/3 (100%)",
+    "required_truths_satisfied": "5/6 (83%)",
+    "tests_passed": "342/342",
+    "gaps": 1
+  },
+  "convergence": {
+    "status": "IN_PROGRESS"
+  },
+  "constraint_graph": {
+    "version": 1,
+    "nodes": {},
+    "edges": {
+      "dependencies": [],
+      "conflicts": [],
+      "satisfies": []
+    }
+  }
+}

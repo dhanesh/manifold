@@ -1,7 +1,7 @@
 /**
  * Graph Command for Manifold CLI
- * Outputs constraint network as JSON, ASCII, or GraphViz DOT
- * Satisfies: Phase B (Constraint Graph Data Model)
+ * Outputs constraint network as JSON, ASCII, Mermaid, or GraphViz DOT
+ * Satisfies: Phase B (Constraint Graph Data Model), B3 (--mermaid export)
  */
 
 import type { Command } from 'commander';
@@ -18,14 +18,18 @@ import {
 import {
   ConstraintSolver,
   type ConstraintGraph,
-  visualizeGraphAscii,
   exportGraphDot
 } from '../lib/solver.js';
+import {
+  graphToMermaid,
+  renderMermaidToTerminal
+} from '../lib/mermaid.js';
 
 interface GraphOptions {
   json?: boolean;
   ascii?: boolean;
   dot?: boolean;
+  mermaid?: boolean;
 }
 
 /**
@@ -34,10 +38,11 @@ interface GraphOptions {
 export function registerGraphCommand(program: Command): void {
   program
     .command('graph [feature]')
-    .description('Output constraint network as JSON, ASCII, or DOT')
+    .description('Output constraint network as JSON, ASCII, Mermaid, or DOT')
     .option('--json', 'Output as JSON (default)')
     .option('--ascii', 'Output as ASCII visualization')
     .option('--dot', 'Output as GraphViz DOT format')
+    .option('--mermaid', 'Output as raw Mermaid syntax')
     .action(async (feature: string | undefined, options: GraphOptions) => {
       const exitCode = await graphCommand(feature, options);
       process.exit(exitCode);
@@ -65,14 +70,14 @@ async function graphCommand(feature: string | undefined, options: GraphOptions):
       return 1;
     }
 
-    if (options.json || (!options.ascii && !options.dot)) {
+    if (options.json || (!options.ascii && !options.dot && !options.mermaid)) {
       println(toJSON({ features, message: 'Specify a feature to generate graph' }));
     } else {
       println('Available features:');
       for (const f of features) {
         println(`  - ${f}`);
       }
-      println('\nUsage: manifold graph <feature> [--ascii|--dot]');
+      println('\nUsage: manifold graph <feature> [--ascii|--dot|--mermaid]');
     }
     return 0;
   }
@@ -91,11 +96,17 @@ async function graphCommand(feature: string | undefined, options: GraphOptions):
 
   // Output in requested format
   if (options.dot) {
+    // Satisfies: T3 (existing format unchanged)
     println(exportGraphDot(graph));
+  } else if (options.mermaid) {
+    // Satisfies: B3 (raw Mermaid export)
+    println(graphToMermaid(graph));
   } else if (options.ascii) {
-    println(visualizeGraphAscii(graph));
+    // Satisfies: U2 (terminal-friendly), B2 (uses Mermaid renderer)
+    const mermaidSyntax = graphToMermaid(graph);
+    println(renderMermaidToTerminal(mermaidSyntax));
   } else {
-    // Default to JSON
+    // Default to JSON — Satisfies: T3 (existing format unchanged)
     println(toJSON(formatGraphForJson(graph, feature)));
   }
 

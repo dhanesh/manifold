@@ -7,7 +7,7 @@
 
 import type { Command } from 'commander';
 import { join } from 'path';
-import { findManifoldDir, listFeatures } from '../lib/parser.js';
+import { findManifoldDir, listFeatures, loadFeature } from '../lib/parser.js';
 import {
   loadManifoldByFeature,
   detectManifoldFormat,
@@ -22,12 +22,19 @@ import {
   toJSON,
   formatHeader,
 } from '../lib/output.js';
+import { ConstraintSolver } from '../lib/solver.js';
+import {
+  miniGraphToMermaid,
+  renderMermaidToTerminal
+} from '../lib/mermaid.js';
 
 interface ShowOptions {
   json?: boolean;
   structure?: boolean;
   content?: boolean;
   validate?: boolean;
+  map?: boolean;
+  mermaid?: boolean;
 }
 
 /**
@@ -41,6 +48,8 @@ export function registerShowCommand(program: Command): void {
     .option('--structure', 'Show only JSON structure')
     .option('--content', 'Show only Markdown content')
     .option('--validate', 'Include linking validation')
+    .option('--map', 'Show constraint relationship map as ASCII graph')
+    .option('--mermaid', 'Output constraint relationship map as raw Mermaid syntax')
     .action(async (feature: string | undefined, options: ShowOptions) => {
       const exitCode = await showCommand(feature, options);
       process.exit(exitCode);
@@ -163,6 +172,11 @@ async function showCommand(feature: string | undefined, options: ShowOptions): P
     return linking?.valid === false ? 2 : 0;
   }
 
+  // Mermaid raw syntax output — Satisfies: B3, RT-4
+  if (options.mermaid) {
+    return printConstraintMap(manifoldDir, feature, 'mermaid');
+  }
+
   // Human-readable output
   println(formatHeader(`Manifold: ${style.feature(feature)}`));
   println();
@@ -175,6 +189,12 @@ async function showCommand(feature: string | undefined, options: ShowOptions): P
   // Show content (unless --structure only)
   if (!options.structure && content) {
     printContent(content);
+  }
+
+  // Show constraint map if --map flag — Satisfies: B1, RT-4
+  if (options.map) {
+    println();
+    printConstraintMap(manifoldDir, feature, 'ascii');
   }
 
   // Show validation (if requested)
@@ -258,6 +278,47 @@ function printStructure(structure: ManifoldStructure): void {
     println(`  ${style.dim('Convergence:')} ${structure.convergence.status}`);
     println();
   }
+}
+
+/**
+ * Print constraint relationship map for a feature
+ * Uses parser path to build graph from manifold data
+ * Satisfies: B1, B3, RT-4
+ */
+function printConstraintMap(manifoldDir: string, feature: string, mode: 'ascii' | 'mermaid'): number {
+  const data = loadFeature(manifoldDir, feature);
+
+  if (!data?.manifold) {
+    if (mode === 'mermaid') {
+      println('graph TD\n    empty["No manifold data available"]');
+    } else {
+      println(style.dim('  No constraint map available (could not load manifold)'));
+    }
+    return 1;
+  }
+
+  const solver = new ConstraintSolver(data.manifold, data.anchor);
+  const graph = solver.getGraph();
+
+  if (!graph || Object.keys(graph.nodes).length === 0) {
+    if (mode === 'mermaid') {
+      println('graph TD\n    empty["No constraints defined"]');
+    } else {
+      println(style.dim('  No constraint map available (no constraints defined)'));
+    }
+    return 0;
+  }
+
+  const mermaidSyntax = miniGraphToMermaid(graph);
+
+  if (mode === 'mermaid') {
+    println(mermaidSyntax);
+  } else {
+    println(formatHeader('Constraint Relationship Map'));
+    println(renderMermaidToTerminal(mermaidSyntax));
+  }
+
+  return 0;
 }
 
 /**

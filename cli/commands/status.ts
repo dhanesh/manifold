@@ -28,10 +28,17 @@ import {
   style,
   toJSON
 } from '../lib/output.js';
+import { ConstraintSolver } from '../lib/solver.js';
+import {
+  miniGraphToMermaid,
+  renderMermaidToTerminal
+} from '../lib/mermaid.js';
 
 interface StatusOptions {
   json?: boolean;
   history?: boolean;
+  graph?: boolean;
+  mermaid?: boolean;
 }
 
 /**
@@ -43,6 +50,8 @@ export function registerStatusCommand(program: Command): void {
     .description('Show manifold state, iteration history, and convergence status')
     .option('--json', 'Output as JSON')
     .option('--history', 'Show full iteration history')
+    .option('--graph', 'Show constraint network as ASCII graph')
+    .option('--mermaid', 'Output constraint network as raw Mermaid syntax')
     .action(async (feature: string | undefined, options: StatusOptions) => {
       const exitCode = await statusCommand(feature, options);
       process.exit(exitCode);
@@ -113,10 +122,20 @@ async function statusCommand(feature: string | undefined, options: StatusOptions
     return 1;
   }
 
+  // Mermaid raw syntax output — Satisfies: B3, RT-4
+  if (options.mermaid) {
+    return printFeatureGraph(data, 'mermaid');
+  }
+
   if (options.json) {
     println(toJSON(formatFeatureJSON(data, options.history)));
   } else {
     printFeatureStatus(data, options.history);
+    // Show graph after status if --graph flag is set — Satisfies: B1, RT-4
+    if (options.graph) {
+      println();
+      printFeatureGraph(data, 'ascii');
+    }
   }
 
   return 0;
@@ -297,4 +316,38 @@ function formatIterationResult(result: string): string {
     return style.error(result);
   }
   return result;
+}
+
+/**
+ * Print constraint network graph for a feature
+ * Satisfies: B1, B3, RT-4
+ */
+function printFeatureGraph(data: FeatureData, mode: 'ascii' | 'mermaid'): number {
+  if (!data.manifold) {
+    printError('No manifold data available for graph');
+    return 1;
+  }
+
+  const solver = new ConstraintSolver(data.manifold, data.anchor);
+  const graph = solver.getGraph();
+
+  if (!graph || Object.keys(graph.nodes).length === 0) {
+    if (mode === 'mermaid') {
+      println('graph TD\n    empty["No constraints defined"]');
+    } else {
+      println(style.dim('  No constraint graph available (no constraints defined)'));
+    }
+    return 0;
+  }
+
+  const mermaidSyntax = miniGraphToMermaid(graph);
+
+  if (mode === 'mermaid') {
+    println(mermaidSyntax);
+  } else {
+    println(formatHeader('Constraint Network'));
+    println(renderMermaidToTerminal(mermaidSyntax));
+  }
+
+  return 0;
 }

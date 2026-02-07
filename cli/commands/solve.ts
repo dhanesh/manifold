@@ -1,7 +1,7 @@
 /**
  * Solve Command for Manifold CLI
  * Generates execution plan from constraint network
- * Satisfies: Phase C (Execution Planning), Phase D (/m-solve equivalent)
+ * Satisfies: Phase C (Execution Planning), Phase D (/m-solve equivalent), B3 (--mermaid export)
  */
 
 import type { Command } from 'commander';
@@ -21,15 +21,20 @@ import {
 import {
   ConstraintSolver,
   type ExecutionPlan,
-  visualizeGraphAscii,
-  visualizeExecutionPlan,
   exportGraphDot
 } from '../lib/solver.js';
+import {
+  graphToMermaid,
+  executionPlanToMermaid,
+  backwardReasoningToMermaid,
+  renderMermaidToTerminal
+} from '../lib/mermaid.js';
 
 interface SolveOptions {
   json?: boolean;
   ascii?: boolean;
   dot?: boolean;
+  mermaid?: boolean;
   backward?: boolean;
   target?: string;
 }
@@ -44,6 +49,7 @@ export function registerSolveCommand(program: Command): void {
     .option('--json', 'Output as JSON (default)')
     .option('--ascii', 'Output as ASCII visualization')
     .option('--dot', 'Output as GraphViz DOT format')
+    .option('--mermaid', 'Output as raw Mermaid syntax')
     .option('--backward', 'Reason backward from outcome (Arrival-style)')
     .option('--target <id>', 'Target node for backward reasoning (default: outcome)')
     .action(async (feature: string | undefined, options: SolveOptions) => {
@@ -73,14 +79,14 @@ async function solveCommand(feature: string | undefined, options: SolveOptions):
       return 1;
     }
 
-    if (options.json || (!options.ascii && !options.dot)) {
+    if (options.json || (!options.ascii && !options.dot && !options.mermaid)) {
       println(toJSON({ features, message: 'Specify a feature to generate execution plan' }));
     } else {
       println('Available features:');
       for (const f of features) {
         println(`  - ${f}`);
       }
-      println('\nUsage: manifold solve <feature> [--ascii|--dot|--backward]');
+      println('\nUsage: manifold solve <feature> [--ascii|--dot|--mermaid|--backward]');
     }
     return 0;
   }
@@ -107,13 +113,22 @@ async function solveCommand(feature: string | undefined, options: SolveOptions):
   // Output in requested format
   const graph = solver.getGraph();
   if (options.dot) {
+    // Satisfies: T3 (existing format unchanged)
     println(exportGraphDot(graph));
-  } else if (options.ascii) {
-    println(visualizeGraphAscii(graph));
+  } else if (options.mermaid) {
+    // Satisfies: B3 (raw Mermaid export)
+    println(graphToMermaid(graph));
     println();
-    println(visualizeExecutionPlan(plan));
+    println(executionPlanToMermaid(plan));
+  } else if (options.ascii) {
+    // Satisfies: U2 (terminal-friendly), B2 (uses Mermaid renderer)
+    const graphMermaid = graphToMermaid(graph);
+    println(renderMermaidToTerminal(graphMermaid));
+    println();
+    const planMermaid = executionPlanToMermaid(plan);
+    println(renderMermaidToTerminal(planMermaid));
   } else {
-    // Default to JSON
+    // Default to JSON — Satisfies: T3 (existing format unchanged)
     println(toJSON(formatPlanForJson(plan, feature)));
   }
 
@@ -160,9 +175,12 @@ function handleBackwardReasoning(
       requirements,
       dependency_chain: buildDependencyChain(solver, targetId)
     }));
+  } else if (options.mermaid) {
+    // Satisfies: B3 (raw Mermaid export for backward reasoning)
+    println(backwardReasoningToMermaid(graph, targetId, requirements));
   } else {
-    // ASCII output
-    printBackwardAnalysis(solver, feature, targetId, requirements);
+    // ASCII output — use Mermaid for dependency visualization
+    printBackwardAnalysis(solver, feature, targetId, requirements, options.ascii);
   }
 
   return 0;
@@ -197,13 +215,14 @@ function buildDependencyChain(solver: ConstraintSolver, targetId: string): objec
 }
 
 /**
- * Print backward analysis in ASCII format
+ * Print backward analysis with Mermaid visualization
  */
 function printBackwardAnalysis(
   solver: ConstraintSolver,
   feature: string,
   targetId: string,
-  requirements: string[]
+  requirements: string[],
+  useAsciiGraph?: boolean
 ): void {
   const graph = solver.getGraph();
   if (!graph) return;
@@ -214,7 +233,7 @@ function printBackwardAnalysis(
   println(`${style.bold('Question')}: What must be TRUE for this outcome?`);
   println();
 
-  // Show requirements tree
+  // Show requirements list
   println(style.bold('REQUIRED CONDITIONS:'));
   println('═'.repeat(50));
 
@@ -240,10 +259,17 @@ function printBackwardAnalysis(
 
   println();
 
-  // Show dependency chain visualization
+  // Show dependency chain as Mermaid graph
   println(style.bold('DEPENDENCY CHAIN:'));
   println('═'.repeat(50));
-  visualizeDependencyChain(solver, targetId);
+  if (useAsciiGraph) {
+    const mermaidSyntax = backwardReasoningToMermaid(graph, targetId, requirements);
+    println(renderMermaidToTerminal(mermaidSyntax));
+  } else {
+    // Default text: still use Mermaid for the chain visualization
+    const mermaidSyntax = backwardReasoningToMermaid(graph, targetId, requirements);
+    println(renderMermaidToTerminal(mermaidSyntax));
+  }
 
   println();
 
@@ -263,50 +289,6 @@ function printBackwardAnalysis(
       if (depNode && depNode.status !== 'SATISFIED') {
         println(`  ${style.warning('•')} ${depId} blocks ${targetId}`);
       }
-    }
-  }
-}
-
-/**
- * Visualize dependency chain as ASCII tree
- */
-function visualizeDependencyChain(solver: ConstraintSolver, targetId: string): void {
-  const graph = solver.getGraph();
-  if (!graph) return;
-
-  const visited = new Set<string>();
-
-  function printNode(nodeId: string, prefix: string, isLast: boolean): void {
-    if (visited.has(nodeId)) {
-      println(`${prefix}${isLast ? '└── ' : '├── '}${nodeId} (circular ref)`);
-      return;
-    }
-    visited.add(nodeId);
-
-    const node = graph.nodes[nodeId];
-    if (!node) return;
-
-    const connector = isLast ? '└── ' : '├── ';
-    const statusIcon = node.status === 'SATISFIED' ? style.success('✓') : style.dim('○');
-    println(`${prefix}${connector}${statusIcon} ${nodeId}`);
-
-    const newPrefix = prefix + (isLast ? '    ' : '│   ');
-    const deps = node.depends_on;
-
-    for (let i = 0; i < deps.length; i++) {
-      printNode(deps[i], newPrefix, i === deps.length - 1);
-    }
-  }
-
-  println(`${targetId} (target)`);
-  const targetNode = graph.nodes[targetId];
-  if (targetNode) {
-    for (let i = 0; i < targetNode.depends_on.length; i++) {
-      printNode(
-        targetNode.depends_on[i],
-        '',
-        i === targetNode.depends_on.length - 1
-      );
     }
   }
 }
