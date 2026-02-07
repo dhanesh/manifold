@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.22.0](https://github.com/dhanesh/manifold/compare/v2.21.0...v2.22.0) (2026-02-07)
+
+### Features
+
+* add 10 pm templates for greenfield projects and general pm workflows ([b2216cc](https://github.com/dhanesh/manifold/commit/b2216ccd641203d3333a4398825adf135d85c2b9))
+
 ## [2.21.0](https://github.com/dhanesh/manifold/compare/v2.20.0...v2.21.0) (2026-02-07)
 
 ### Features
