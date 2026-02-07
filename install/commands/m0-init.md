@@ -1,6 +1,6 @@
 ---
 description: "Initialize a constraint manifold for a feature. Creates .manifold/<feature>.json + .manifold/<feature>.md"
-argument-hint: "<feature-name> [--template=auth|crud|payment|api] [--outcome='...']"
+argument-hint: "<feature-name> [--template=auth|crud|payment|api|pm/feature-launch|pm/experiment|pm/deprecation|pm/opportunity-assessment|pm/product-vision|pm/lean-canvas|pm/pr-faq|pm/mvp-definition|pm/competitive-analysis|pm/user-persona|pm/go-to-market|pm/product-roadmap|pm/shape-up-pitch] [--outcome='...']"
 ---
 
 # /m0-init - Initialize Constraint Manifold
@@ -229,7 +229,7 @@ When this command is invoked:
 5. **Create TWO files (JSON+Markdown hybrid format)**:
    - `.manifold/<feature>.json` — Structure with IDs, types, phases (NO text content)
    - `.manifold/<feature>.md` — Content with outcome, section headings
-6. **⚠️ Run `manifold validate <feature>`** — confirm the new manifold is valid
+6. **Run `manifold validate <feature>`** — confirm the new manifold is valid
 7. Display confirmation with file paths and next step
 
 ### Generation Guidelines

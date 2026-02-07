@@ -1,0 +1,50 @@
+{
+  "$schema": "../../manifold-structure.schema.json",
+  "schema_version": 3,
+  "feature": "[CUSTOMIZE: your-mvp-name]",
+  "phase": "INITIALIZED",
+  "template": "pm/mvp-definition",
+  "template_version": 1,
+  "constraints": {
+    "business": [
+      { "id": "B1", "type": "invariant" },
+      { "id": "B2", "type": "goal" },
+      { "id": "B3", "type": "boundary" }
+    ],
+    "technical": [
+      { "id": "T1", "type": "invariant" },
+      { "id": "T2", "type": "boundary" },
+      { "id": "T3", "type": "boundary" }
+    ],
+    "user_experience": [
+      { "id": "U1", "type": "invariant" },
+      { "id": "U2", "type": "boundary" },
+      { "id": "U3", "type": "goal" }
+    ],
+    "security": [
+      { "id": "S1", "type": "invariant" },
+      { "id": "S2", "type": "boundary" }
+    ],
+    "operational": [
+      { "id": "O1", "type": "boundary" },
+      { "id": "O2", "type": "goal" },
+      { "id": "O3", "type": "goal" }
+    ]
+  },
+  "tensions": [
+    { "id": "TN1", "type": "trade_off", "between": ["T1", "B3"], "status": "unresolved" },
+    { "id": "TN2", "type": "trade_off", "between": ["T3", "B3"], "status": "unresolved" },
+    { "id": "TN3", "type": "resource_tension", "between": ["U2", "B3"], "status": "unresolved" },
+    { "id": "TN4", "type": "hidden_dependency", "between": ["O2", "T1"], "status": "unresolved" }
+  ],
+  "anchors": {
+    "required_truths": [
+      { "id": "RT-1", "status": "NOT_SATISFIED", "maps_to": ["T1", "B1"] },
+      { "id": "RT-2", "status": "NOT_SATISFIED", "maps_to": ["U1", "B1"] },
+      { "id": "RT-3", "status": "NOT_SATISFIED", "maps_to": ["T2", "O1"] },
+      { "id": "RT-4", "status": "NOT_SATISFIED", "maps_to": ["B2", "B3"] }
+    ]
+  },
+  "iterations": [],
+  "convergence": { "status": "NOT_STARTED" }
+}

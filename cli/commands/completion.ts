@@ -48,7 +48,7 @@ _manifold_completions() {
             return 0
             ;;
         --template)
-            COMPREPLY=( $(compgen -W "auth crud payment api pm/feature-launch pm/experiment pm/deprecation" -- "\${cur}") )
+            COMPREPLY=( $(compgen -W "auth crud payment api pm/feature-launch pm/experiment pm/deprecation pm/opportunity-assessment pm/product-vision pm/lean-canvas pm/pr-faq pm/mvp-definition pm/competitive-analysis pm/user-persona pm/go-to-market pm/product-roadmap pm/shape-up-pitch" -- "\${cur}") )
             return 0
             ;;
     esac
@@ -130,7 +130,7 @@ _manifold() {
                     ;;
                 init)
                     _arguments \\
-                        '--template[Use template]:template:(auth crud payment api pm/feature-launch pm/experiment pm/deprecation)' \\
+                        '--template[Use template]:template:(auth crud payment api pm/feature-launch pm/experiment pm/deprecation pm/opportunity-assessment pm/product-vision pm/lean-canvas pm/pr-faq pm/mvp-definition pm/competitive-analysis pm/user-persona pm/go-to-market pm/product-roadmap pm/shape-up-pitch)' \\
                         '--outcome[Set outcome]:outcome:' \\
                         '--format[Output format]:format:(yaml json-md)' \\
                         '*:feature name:'
@@ -246,7 +246,7 @@ complete -c manifold -n "__fish_seen_subcommand_from status validate verify grap
 complete -c manifold -n "__fish_seen_subcommand_from completion" -a "bash zsh fish" -d "Shell type"
 
 # init command
-complete -c manifold -n "__fish_seen_subcommand_from init" -l template -d "Use template" -a "auth crud payment api pm/feature-launch pm/experiment pm/deprecation"
+complete -c manifold -n "__fish_seen_subcommand_from init" -l template -d "Use template" -a "auth crud payment api pm/feature-launch pm/experiment pm/deprecation pm/opportunity-assessment pm/product-vision pm/lean-canvas pm/pr-faq pm/mvp-definition pm/competitive-analysis pm/user-persona pm/go-to-market pm/product-roadmap pm/shape-up-pitch"
 complete -c manifold -n "__fish_seen_subcommand_from init" -l outcome -d "Set outcome"
 complete -c manifold -n "__fish_seen_subcommand_from init" -l format -d "Output format" -a "yaml json-md"
 

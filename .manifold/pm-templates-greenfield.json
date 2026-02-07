@@ -1,0 +1,490 @@
+{
+  "$schema": "../install/manifold-structure.schema.json",
+  "schema_version": 3,
+  "feature": "pm-templates-greenfield",
+  "phase": "VERIFIED",
+  "created": "2026-02-07T12:00:00Z",
+  "constraints": {
+    "business": [
+      {
+        "id": "B1",
+        "type": "invariant"
+      },
+      {
+        "id": "B2",
+        "type": "goal"
+      },
+      {
+        "id": "B3",
+        "type": "boundary"
+      },
+      {
+        "id": "B4",
+        "type": "goal"
+      }
+    ],
+    "technical": [
+      {
+        "id": "T1",
+        "type": "invariant"
+      },
+      {
+        "id": "T2",
+        "type": "invariant"
+      },
+      {
+        "id": "T3",
+        "type": "boundary"
+      },
+      {
+        "id": "T4",
+        "type": "boundary"
+      }
+    ],
+    "user_experience": [
+      {
+        "id": "U1",
+        "type": "invariant"
+      },
+      {
+        "id": "U2",
+        "type": "boundary"
+      },
+      {
+        "id": "U3",
+        "type": "goal"
+      }
+    ],
+    "security": [
+      {
+        "id": "S1",
+        "type": "boundary"
+      }
+    ],
+    "operational": [
+      {
+        "id": "O1",
+        "type": "invariant"
+      },
+      {
+        "id": "O2",
+        "type": "goal"
+      }
+    ]
+  },
+  "tensions": [
+    {
+      "id": "TN1",
+      "type": "trade_off",
+      "between": [
+        "B2",
+        "T2"
+      ],
+      "status": "resolved"
+    },
+    {
+      "id": "TN2",
+      "type": "resource_tension",
+      "between": [
+        "B1",
+        "U2"
+      ],
+      "status": "resolved"
+    },
+    {
+      "id": "TN3",
+      "type": "trade_off",
+      "between": [
+        "B4",
+        "B3"
+      ],
+      "status": "resolved"
+    },
+    {
+      "id": "TN4",
+      "type": "hidden_dependency",
+      "between": [
+        "U1",
+        "S1"
+      ],
+      "status": "resolved"
+    }
+  ],
+  "anchors": {
+    "required_truths": [
+      {
+        "id": "RT-1",
+        "status": "SATISFIED",
+        "maps_to": [
+          "B1",
+          "T1",
+          "T2"
+        ]
+      },
+      {
+        "id": "RT-2",
+        "status": "SATISFIED",
+        "maps_to": [
+          "B2",
+          "T2"
+        ]
+      },
+      {
+        "id": "RT-3",
+        "status": "SATISFIED",
+        "maps_to": [
+          "B3",
+          "O2"
+        ]
+      },
+      {
+        "id": "RT-4",
+        "status": "SATISFIED",
+        "maps_to": [
+          "B4",
+          "U1",
+          "U2",
+          "U3"
+        ]
+      },
+      {
+        "id": "RT-5",
+        "status": "SATISFIED",
+        "maps_to": [
+          "T3",
+          "T1"
+        ]
+      },
+      {
+        "id": "RT-6",
+        "status": "SATISFIED",
+        "maps_to": [
+          "T4",
+          "O1"
+        ]
+      }
+    ],
+    "recommended_option": "B"
+  },
+  "iterations": [
+    {
+      "number": 1,
+      "phase": "CONSTRAINED",
+      "timestamp": "2026-02-07T12:15:00Z",
+      "result": "constrained",
+      "changes": "14 constraints discovered: 4 business, 4 technical, 3 UX, 1 security, 2 operational"
+    },
+    {
+      "number": 2,
+      "phase": "TENSIONED",
+      "timestamp": "2026-02-07T12:30:00Z",
+      "result": "tensioned",
+      "changes": "4 tensions found and resolved: 2 trade-offs, 1 resource tension, 1 hidden dependency"
+    },
+    {
+      "number": 3,
+      "phase": "ANCHORED",
+      "timestamp": "2026-02-07T12:45:00Z",
+      "result": "anchored",
+      "changes": "6 required truths derived via backward reasoning, 3 solution options evaluated, Option B (batch by tier) recommended"
+    },
+    {
+      "number": 4,
+      "phase": "GENERATED",
+      "timestamp": "2026-02-07T13:00:00Z",
+      "result": "generated",
+      "changes": "20 template files (10 JSON + 10 MD), 5 doc updates (completion.ts, pm/README.md, templates/README.md, docs/pm/guide.md, m0-init.md). Option B batch-by-tier with 3 parallel agents."
+    },
+    {
+      "number": 5,
+      "phase": "VERIFIED",
+      "timestamp": "2026-02-07T13:30:00Z",
+      "result": "verified",
+      "changes": "14/14 constraints verified: 13 SATISFIED, 1 PARTIAL (B2 goal). 5/6 RTs SATISFIED, 1 PARTIAL (RT-2). 1 non-blocking gap: 4 general PM templates lack Framework Mapping. 407 tests pass, build succeeds."
+    }
+  ],
+  "convergence": {
+    "status": "CONVERGED"
+  },
+  "generation": {
+    "option": "B",
+    "timestamp": "2026-02-07T13:00:00Z",
+    "artifacts": [
+      {
+        "path": "install/templates/pm/opportunity-assessment.json",
+        "satisfies": [
+          "B1",
+          "B2",
+          "T1",
+          "T2"
+        ],
+        "status": "generated",
+        "type": "template-structure"
+      },
+      {
+        "path": "install/templates/pm/opportunity-assessment.md",
+        "satisfies": [
+          "B1",
+          "B2",
+          "U1",
+          "U2",
+          "U3"
+        ],
+        "status": "generated",
+        "type": "template-content"
+      },
+      {
+        "path": "install/templates/pm/product-vision.json",
+        "satisfies": [
+          "B1",
+          "B2",
+          "T1",
+          "T2"
+        ],
+        "status": "generated",
+        "type": "template-structure"
+      },
+      {
+        "path": "install/templates/pm/product-vision.md",
+        "satisfies": [
+          "B1",
+          "B2",
+          "U1",
+          "U2",
+          "U3"
+        ],
+        "status": "generated",
+        "type": "template-content"
+      },
+      {
+        "path": "install/templates/pm/lean-canvas.json",
+        "satisfies": [
+          "B1",
+          "B2",
+          "T1",
+          "T2"
+        ],
+        "status": "generated",
+        "type": "template-structure"
+      },
+      {
+        "path": "install/templates/pm/lean-canvas.md",
+        "satisfies": [
+          "B1",
+          "B2",
+          "U1",
+          "U2",
+          "U3"
+        ],
+        "status": "generated",
+        "type": "template-content"
+      },
+      {
+        "path": "install/templates/pm/pr-faq.json",
+        "satisfies": [
+          "B1",
+          "B2",
+          "T1",
+          "T2"
+        ],
+        "status": "generated",
+        "type": "template-structure"
+      },
+      {
+        "path": "install/templates/pm/pr-faq.md",
+        "satisfies": [
+          "B1",
+          "B2",
+          "U1",
+          "U2",
+          "U3"
+        ],
+        "status": "generated",
+        "type": "template-content"
+      },
+      {
+        "path": "install/templates/pm/mvp-definition.json",
+        "satisfies": [
+          "B1",
+          "B2",
+          "T1",
+          "T2"
+        ],
+        "status": "generated",
+        "type": "template-structure"
+      },
+      {
+        "path": "install/templates/pm/mvp-definition.md",
+        "satisfies": [
+          "B1",
+          "B3",
+          "U1",
+          "U2",
+          "U3"
+        ],
+        "status": "generated",
+        "type": "template-content"
+      },
+      {
+        "path": "install/templates/pm/competitive-analysis.json",
+        "satisfies": [
+          "B2",
+          "T1",
+          "T2"
+        ],
+        "status": "generated",
+        "type": "template-structure"
+      },
+      {
+        "path": "install/templates/pm/competitive-analysis.md",
+        "satisfies": [
+          "B2",
+          "U1",
+          "U2",
+          "U3"
+        ],
+        "status": "generated",
+        "type": "template-content"
+      },
+      {
+        "path": "install/templates/pm/user-persona.json",
+        "satisfies": [
+          "B2",
+          "T1",
+          "T2"
+        ],
+        "status": "generated",
+        "type": "template-structure"
+      },
+      {
+        "path": "install/templates/pm/user-persona.md",
+        "satisfies": [
+          "B2",
+          "U1",
+          "U2",
+          "U3"
+        ],
+        "status": "generated",
+        "type": "template-content"
+      },
+      {
+        "path": "install/templates/pm/go-to-market.json",
+        "satisfies": [
+          "B2",
+          "T1",
+          "T2"
+        ],
+        "status": "generated",
+        "type": "template-structure"
+      },
+      {
+        "path": "install/templates/pm/go-to-market.md",
+        "satisfies": [
+          "B2",
+          "U1",
+          "U2",
+          "U3"
+        ],
+        "status": "generated",
+        "type": "template-content"
+      },
+      {
+        "path": "install/templates/pm/product-roadmap.json",
+        "satisfies": [
+          "B2",
+          "T1",
+          "T2"
+        ],
+        "status": "generated",
+        "type": "template-structure"
+      },
+      {
+        "path": "install/templates/pm/product-roadmap.md",
+        "satisfies": [
+          "B2",
+          "U1",
+          "U2",
+          "U3"
+        ],
+        "status": "generated",
+        "type": "template-content"
+      },
+      {
+        "path": "install/templates/pm/shape-up-pitch.json",
+        "satisfies": [
+          "B2",
+          "T1",
+          "T2"
+        ],
+        "status": "generated",
+        "type": "template-structure"
+      },
+      {
+        "path": "install/templates/pm/shape-up-pitch.md",
+        "satisfies": [
+          "B2",
+          "U1",
+          "U2",
+          "U3"
+        ],
+        "status": "generated",
+        "type": "template-content"
+      },
+      {
+        "path": "cli/commands/completion.ts",
+        "satisfies": [
+          "T4"
+        ],
+        "status": "generated",
+        "type": "shell-completion"
+      },
+      {
+        "path": "install/templates/pm/README.md",
+        "satisfies": [
+          "O1"
+        ],
+        "status": "generated",
+        "type": "documentation"
+      },
+      {
+        "path": "install/templates/README.md",
+        "satisfies": [
+          "O1"
+        ],
+        "status": "generated",
+        "type": "documentation"
+      },
+      {
+        "path": "docs/pm/guide.md",
+        "satisfies": [
+          "O1",
+          "O2"
+        ],
+        "status": "generated",
+        "type": "documentation"
+      },
+      {
+        "path": "install/commands/m0-init.md",
+        "satisfies": [
+          "O1"
+        ],
+        "status": "generated",
+        "type": "skill-file"
+      }
+    ],
+    "coverage": {
+      "constraints_addressed": 14,
+      "constraints_total": 14,
+      "percentage": 100
+    }
+  },
+  "constraint_graph": {
+    "version": 1,
+    "nodes": {},
+    "edges": {
+      "dependencies": [],
+      "conflicts": [],
+      "satisfies": []
+    }
+  }
+}

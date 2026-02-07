@@ -1,0 +1,192 @@
+{
+  "verification": {
+    "timestamp": "2026-02-07T13:30:00Z",
+    "result": "FULLY_SATISFIED",
+    "matrix": [
+      {
+        "constraint": "B1",
+        "type": "invariant",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": true,
+        "status": "SATISFIED",
+        "evidence": "5 greenfield templates exist with new-product language: opportunity-assessment, product-vision, lean-canvas, pr-faq, mvp-definition"
+      },
+      {
+        "constraint": "B2",
+        "type": "goal",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": true,
+        "status": "SATISFIED",
+        "evidence": "All 10 templates have explicit Framework Mapping sections acknowledging source frameworks. G1 gap resolved."
+      },
+      {
+        "constraint": "B3",
+        "type": "boundary",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": true,
+        "status": "SATISFIED",
+        "evidence": "5 greenfield templates cover full lifecycle: opportunity evaluation → vision → business modeling → MVP scoping. See Also cross-links chain templates together."
+      },
+      {
+        "constraint": "B4",
+        "type": "goal",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": true,
+        "status": "SATISFIED",
+        "evidence": "All 10 templates self-explanatory with Use/Covers headers, CUSTOMIZE markers, and Customization Notes sections"
+      },
+      {
+        "constraint": "T1",
+        "type": "invariant",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": true,
+        "status": "SATISFIED",
+        "evidence": "manifold validate passes. All 10 JSON templates conform to v3 Zod schema. 407 tests pass, 0 fail."
+      },
+      {
+        "constraint": "T2",
+        "type": "invariant",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": true,
+        "status": "SATISFIED",
+        "evidence": "All 10 templates use JSON+MD hybrid format with $schema, template, template_version fields. Consistent heading levels and section order."
+      },
+      {
+        "constraint": "T3",
+        "type": "boundary",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": true,
+        "status": "SATISFIED",
+        "evidence": "Zero dangling references across all 10 templates. 87 constraint ID references verified. All tension.between and RT.maps_to reference valid IDs."
+      },
+      {
+        "constraint": "T4",
+        "type": "boundary",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": true,
+        "status": "SATISFIED",
+        "evidence": "All 13 PM template names appear in bash, zsh, and fish completion scripts. Each appears exactly 3 times in completion.ts."
+      },
+      {
+        "constraint": "U1",
+        "type": "invariant",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": true,
+        "status": "SATISFIED",
+        "evidence": "7-14 CUSTOMIZE markers per template. All user-editable values marked. Range: shape-up-pitch (7) to product-vision (14)."
+      },
+      {
+        "constraint": "U2",
+        "type": "boundary",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": true,
+        "status": "SATISFIED",
+        "evidence": "All 10 templates include Customization Notes with Required Changes, Optional Additions, and Common Removals subsections."
+      },
+      {
+        "constraint": "U3",
+        "type": "goal",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": true,
+        "status": "SATISFIED",
+        "evidence": "All 10 templates have Use: and Covers: lines in header. Purpose and use case clear from template content alone."
+      },
+      {
+        "constraint": "S1",
+        "type": "boundary",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": true,
+        "status": "SATISFIED",
+        "evidence": "No real company names, financial figures, API keys, or email addresses in CUSTOMIZE examples. All use generic patterns like 'e.g., 10,000 MAU'."
+      },
+      {
+        "constraint": "O1",
+        "type": "invariant",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": true,
+        "status": "SATISFIED",
+        "evidence": "All 4 documentation touchpoints updated: pm/README.md, templates/README.md, docs/pm/guide.md, m0-init.md. All 10 new templates referenced in each."
+      },
+      {
+        "constraint": "O2",
+        "type": "goal",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": true,
+        "status": "SATISFIED",
+        "evidence": "Greenfield Workflow section in docs/pm/guide.md with ASCII flow diagram, decision table, and usage examples showing opportunity-assessment → product-vision → lean-canvas → mvp-definition → feature-launch progression."
+      }
+    ],
+    "coverage": {
+      "invariants": { "satisfied": 5, "total": 5, "percentage": 100 },
+      "boundaries": { "satisfied": 5, "total": 5, "percentage": 100 },
+      "goals": { "satisfied": 4, "total": 4, "percentage": 100 }
+    },
+    "required_truths": [
+      {
+        "id": "RT-1",
+        "status": "SATISFIED",
+        "evidence": "10 JSON+MD template pairs exist in install/templates/pm/ with correct v3 schema and full markdown content"
+      },
+      {
+        "id": "RT-2",
+        "status": "SATISFIED",
+        "evidence": "All 10 templates have Framework Mapping notes acknowledging source industry frameworks."
+      },
+      {
+        "id": "RT-3",
+        "status": "SATISFIED",
+        "evidence": "5 greenfield templates form logical progression with See Also cross-links and workflow guide in docs/pm/guide.md"
+      },
+      {
+        "id": "RT-4",
+        "status": "SATISFIED",
+        "evidence": "All 10 templates usable without training: Use/Covers headers, CUSTOMIZE markers (7-14 each), Customization Notes with 3 subsections"
+      },
+      {
+        "id": "RT-5",
+        "status": "SATISFIED",
+        "evidence": "Zero dangling references. 87 constraint ID references verified across 10 templates."
+      },
+      {
+        "id": "RT-6",
+        "status": "SATISFIED",
+        "evidence": "All 13 PM templates in bash/zsh/fish completions. All 10 new templates in 4 documentation files."
+      }
+    ],
+    "gaps": [],
+    "test_results": {
+      "total": 407,
+      "passed": 407,
+      "failed": 0,
+      "build": "success"
+    }
+  }
+}

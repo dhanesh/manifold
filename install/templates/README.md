@@ -20,6 +20,16 @@ Pre-built constraint patterns for common development scenarios. These templates 
 | `pm/feature-launch.json` + `.md` | New feature or product launch | 15-18 | 45-90 min |
 | `pm/experiment.json` + `.md` | A/B test or experiment design | 12-14 | 30-60 min |
 | `pm/deprecation.json` + `.md` | Feature sunset or migration | 14-16 | 40-75 min |
+| `pm/opportunity-assessment.json` + `.md` | Go/no-go opportunity decision (SVPG) | 10 | 30-60 min |
+| `pm/product-vision.json` + `.md` | Product vision & strategy | 12 | 45-90 min |
+| `pm/lean-canvas.json` + `.md` | Lean Canvas business model | 10 | 25-45 min |
+| `pm/pr-faq.json` + `.md` | Amazon Working Backwards PR/FAQ | 12 | 45-90 min |
+| `pm/mvp-definition.json` + `.md` | MVP scope definition | 14 | 40-75 min |
+| `pm/competitive-analysis.json` + `.md` | Competitive landscape | 12 | 35-60 min |
+| `pm/user-persona.json` + `.md` | User persona with JTBD | 10 | 30-50 min |
+| `pm/go-to-market.json` + `.md` | Go-to-market strategy | 14 | 45-90 min |
+| `pm/product-roadmap.json` + `.md` | Now-Next-Later roadmap | 12 | 35-60 min |
+| `pm/shape-up-pitch.json` + `.md` | Shape Up pitch | 10 | 25-45 min |
 
 PM templates use the same constraint categories (business, technical, user_experience, security, operational) but with PM-focused language. See [PM Templates README](pm/README.md) for details.
 

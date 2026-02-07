@@ -28,7 +28,7 @@ Manifold's five constraint categories translate directly to PM concepts:
 
 ### Deep Dive: Each Category
 
-#### Business → Product Goals
+#### Business -> Product Goals
 
 *What business outcomes does this serve?*
 
@@ -44,7 +44,7 @@ Questions to ask:
 - Are there compliance requirements?
 - What's the competitive positioning?
 
-#### Technical → Feasibility
+#### Technical -> Feasibility
 
 *What's practically achievable?*
 
@@ -60,7 +60,7 @@ Questions to ask:
 - What technical debt would this create?
 - What platform limitations apply?
 
-#### User Experience → User Value
+#### User Experience -> User Value
 
 *What value does this deliver to users?*
 
@@ -76,7 +76,7 @@ Questions to ask:
 - What's the adoption risk?
 - How does this affect user satisfaction?
 
-#### Security → Risk
+#### Security -> Risk
 
 *What could go wrong?*
 
@@ -92,7 +92,7 @@ Questions to ask:
 - What's the reputational risk?
 - What data sensitivity applies?
 
-#### Operational → Go-to-Market
+#### Operational -> Go-to-Market
 
 *How will this be launched and maintained?*
 
@@ -267,9 +267,71 @@ docs/feature/STORIES.md
 └── Story Map (priority/dependency view)
 ```
 
+## Greenfield Workflow
+
+For brand new software products (not features within existing products), use this recommended template progression:
+
+```
+┌─────────────────────────┐
+│ 1. opportunity-assessment│  "Should we build this?"
+│    (SVPG framework)      │  Go/no-go with market sizing
+└──────────┬──────────────┘
+           ▼
+┌─────────────────────────┐
+│ 2. product-vision        │  "What are we building?"
+│    (Product School)      │  Vision, market, team
+└──────────┬──────────────┘
+           ▼
+┌─────────────────────────┐
+│ 3. lean-canvas           │  "Is the model viable?"
+│    (Lean Startup)        │  9-block business model
+└──────────┬──────────────┘
+           ▼
+┌─────────────────────────┐
+│ 4. mvp-definition        │  "What's the minimum?"
+│    (Atlassian/Lean)      │  MoSCoW scope + quality bar
+└──────────┬──────────────┘
+           ▼
+┌─────────────────────────┐
+│ 5. feature-launch        │  "Ship individual features"
+│    (per feature)         │  Standard feature workflow
+└─────────────────────────┘
+```
+
+**Alternative path:** Use `pm/pr-faq` (Amazon Working Backwards) instead of `pm/product-vision` when customer empathy is the primary driver.
+
+### When to Use Greenfield Templates
+
+| Signal | Template to Start With |
+|--------|----------------------|
+| "Should we even build this?" | `pm/opportunity-assessment` |
+| "We're building this, need a vision doc" | `pm/product-vision` |
+| "Need to validate the business model" | `pm/lean-canvas` |
+| "What's the MVP scope?" | `pm/mvp-definition` |
+| "Want to write it as a press release" | `pm/pr-faq` |
+
+### Greenfield Usage Example
+
+```
+/m0-init wellness-app --template=pm/opportunity-assessment
+/m1-constrain wellness-app   # Validate the opportunity
+/m2-tension wellness-app     # Surface go/no-go tensions
+/m3-anchor wellness-app      # Required truths for the decision
+# -> Decision: GO
+
+/m0-init wellness-app-vision --template=pm/product-vision
+/m1-constrain wellness-app-vision
+# ... continue through workflow
+
+/m0-init wellness-app-mvp --template=pm/mvp-definition
+# ... scope the MVP
+```
+
 ## Templates for PMs
 
-Three PM-focused templates are available:
+Thirteen PM-focused templates are available:
+
+### Existing Product Templates
 
 | Template | Use Case | Constraints |
 |----------|----------|-------------|
@@ -277,11 +339,33 @@ Three PM-focused templates are available:
 | `pm/experiment` | A/B tests, experiments | 12-14 |
 | `pm/deprecation` | Feature sunset, migrations | 14-16 |
 
+### Greenfield / New Product Templates
+
+| Template | Use Case | Constraints |
+|----------|----------|-------------|
+| `pm/opportunity-assessment` | Go/no-go decision (SVPG) | 10 |
+| `pm/product-vision` | Vision & strategy foundation | 12 |
+| `pm/lean-canvas` | Business model canvas | 10 |
+| `pm/pr-faq` | Working Backwards PR/FAQ | 12 |
+| `pm/mvp-definition` | MVP scope definition | 14 |
+
+### General PM Templates
+
+| Template | Use Case | Constraints |
+|----------|----------|-------------|
+| `pm/competitive-analysis` | Competitive landscape | 12 |
+| `pm/user-persona` | Persona with JTBD | 10 |
+| `pm/go-to-market` | GTM launch strategy | 14 |
+| `pm/product-roadmap` | Now-Next-Later roadmap | 12 |
+| `pm/shape-up-pitch` | Shape Up pitch | 10 |
+
 Usage:
 ```
 /m0-init mobile-checkout --template=pm/feature-launch
 /m0-init pricing-test --template=pm/experiment
 /m0-init legacy-removal --template=pm/deprecation
+/m0-init new-product --template=pm/opportunity-assessment
+/m0-init product-strategy --template=pm/product-vision
 ```
 
 ## Best Practices
