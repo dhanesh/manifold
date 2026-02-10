@@ -1,0 +1,176 @@
+# Authentication Constraint Template
+# Use: /m0-init <feature> --template=auth
+# Covers: Login, registration, session management, password handling
+
+schema_version: 3
+feature: "[CUSTOMIZE: your-auth-feature]"
+outcome: "[CUSTOMIZE: e.g., 'Secure user authentication with <1s login time']"
+phase: INITIALIZED
+template: auth
+template_version: 1
+
+# =============================================================================
+# CONSTRAINTS - Customize these for your specific authentication needs
+# =============================================================================
+
+constraints:
+  business:
+    - id: B1
+      type: invariant
+      statement: "User credentials must never be exposed in logs, errors, or responses"
+      rationale: "Credential leakage causes account compromise and regulatory violations"
+      # CUSTOMIZE: Add compliance requirements (GDPR, SOC2, HIPAA)
+
+    - id: B2
+      type: boundary
+      statement: "Session timeout must not exceed [CUSTOMIZE: 30] minutes of inactivity"
+      rationale: "Balances security with user convenience; adjust based on data sensitivity"
+
+    - id: B3
+      type: goal
+      statement: "Support [CUSTOMIZE: 2+] authentication methods (password, OAuth, SSO)"
+      rationale: "Multiple auth methods improve adoption and enterprise compatibility"
+
+  technical:
+    - id: T1
+      type: invariant
+      statement: "Passwords must be hashed with bcrypt/argon2 (cost factor >= [CUSTOMIZE: 10])"
+      rationale: "Industry-standard password hashing prevents rainbow table attacks"
+
+    - id: T2
+      type: boundary
+      statement: "Authentication must complete in <[CUSTOMIZE: 500]ms at p95"
+      rationale: "Slow auth causes user abandonment; adjust based on UX requirements"
+
+    - id: T3
+      type: invariant
+      statement: "Tokens must be cryptographically signed and include expiration"
+      rationale: "Unsigned tokens can be forged; missing expiration creates persistent sessions"
+
+    - id: T4
+      type: goal
+      statement: "Token refresh should not require re-authentication"
+      rationale: "Seamless token refresh improves user experience"
+
+  user_experience:
+    - id: U1
+      type: boundary
+      statement: "Login form must be accessible (WCAG 2.1 AA)"
+      rationale: "Accessibility is required for inclusive design and compliance"
+
+    - id: U2
+      type: goal
+      statement: "Password strength meter should provide real-time feedback"
+      rationale: "Helps users create stronger passwords, reducing support burden"
+
+    - id: U3
+      type: boundary
+      statement: "Error messages must not reveal whether email/username exists"
+      rationale: "Prevents user enumeration attacks"
+
+  security:
+    - id: S1
+      type: invariant
+      statement: "Rate limit login attempts to [CUSTOMIZE: 5] per minute per IP/account"
+      rationale: "Prevents brute force and credential stuffing attacks"
+
+    - id: S2
+      type: invariant
+      statement: "All auth endpoints must use HTTPS with TLS 1.2+"
+      rationale: "Protects credentials in transit from interception"
+
+    - id: S3
+      type: boundary
+      statement: "Failed login must not take measurably different time than success"
+      rationale: "Prevents timing attacks that reveal valid usernames"
+
+    - id: S4
+      type: goal
+      statement: "Implement account lockout after [CUSTOMIZE: 10] failed attempts"
+      rationale: "Additional protection against brute force; balance with DoS risk"
+
+  operational:
+    - id: O1
+      type: boundary
+      statement: "Auth service must handle [CUSTOMIZE: 1000] concurrent logins"
+      rationale: "Based on expected peak load with safety margin"
+
+    - id: O2
+      type: goal
+      statement: "Auth failures should be logged with context (IP, user agent, timestamp)"
+      rationale: "Enables security incident investigation and pattern detection"
+
+# =============================================================================
+# COMMON TENSIONS - Typical conflicts in auth systems
+# =============================================================================
+
+tensions:
+  - id: TN1
+    type: trade_off
+    between: [S1, U1]
+    description: "Rate limiting (S1) vs accessibility for legitimate users"
+    status: resolved
+    resolution: "Implement progressive delays instead of hard blocks; CAPTCHA as fallback"
+    priority: 1
+
+  - id: TN2
+    type: trade_off
+    between: [T2, T1]
+    description: "Fast auth (T2) vs secure hashing (T1)"
+    status: resolved
+    resolution: "Async password verification with immediate session creation; verify hash in background"
+    priority: 2
+
+  - id: TN3
+    type: resource_tension
+    between: [O1, S4]
+    description: "High concurrency (O1) vs account lockout state tracking (S4)"
+    status: unresolved
+    resolution: "[CUSTOMIZE: Consider distributed cache for lockout state]"
+    priority: 3
+
+# =============================================================================
+# REQUIRED TRUTHS - What must be true for auth to work
+# =============================================================================
+
+anchors:
+  required_truths:
+    - id: RT-1
+      statement: "User identity can be verified through at least one authentication method"
+      status: NOT_SATISFIED
+      priority: 1
+      maps_to_constraints: [B1, T1, T3]
+
+    - id: RT-2
+      statement: "Session state can be maintained across requests"
+      status: NOT_SATISFIED
+      priority: 1
+      maps_to_constraints: [B2, T3, T4]
+
+    - id: RT-3
+      statement: "Auth failures can be detected and responded to appropriately"
+      status: NOT_SATISFIED
+      priority: 2
+      maps_to_constraints: [S1, S4, O2]
+
+# =============================================================================
+# CUSTOMIZATION NOTES
+# =============================================================================
+
+_customization:
+  required_changes:
+    - "Replace [CUSTOMIZE: ...] values with your specific requirements"
+    - "Review session timeout (B2) based on data sensitivity"
+    - "Adjust rate limits (S1, S4) based on expected traffic"
+    - "Add compliance-specific constraints for GDPR/HIPAA/SOC2"
+
+  optional_additions:
+    - "MFA/2FA requirements"
+    - "OAuth provider constraints"
+    - "SSO/SAML integration"
+    - "Biometric authentication"
+    - "Passwordless authentication"
+
+  common_removals:
+    - "Remove OAuth (B3) if single auth method"
+    - "Remove account lockout (S4) if using progressive delays"

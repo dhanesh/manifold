@@ -1,0 +1,217 @@
+# Feature Launch Constraint Template
+# Use: /m0-init <feature> --template=pm/feature-launch
+# Covers: New features, product launches, major enhancements
+
+schema_version: 3
+feature: "[CUSTOMIZE: your-feature-name]"
+outcome: "[CUSTOMIZE: e.g., 'Increase checkout conversion by 15% while maintaining support volume']"
+phase: INITIALIZED
+template: pm/feature-launch
+template_version: 1
+
+# =============================================================================
+# CONSTRAINTS - Customize these for your specific feature launch
+# =============================================================================
+
+constraints:
+  business:
+    - id: B1
+      type: invariant
+      statement: "Feature must not negatively impact existing revenue streams"
+      rationale: "Protect core business while pursuing growth"
+      # CUSTOMIZE: Add specific revenue protection requirements
+
+    - id: B2
+      type: goal
+      statement: "[CUSTOMIZE: Primary success metric, e.g., 'Increase DAU by 15%']"
+      rationale: "Primary KPI that defines feature success"
+
+    - id: B3
+      type: boundary
+      statement: "Launch must occur within [CUSTOMIZE: Q3 2025] to meet business objectives"
+      rationale: "Timeline tied to annual planning, competitive pressure, or market window"
+
+    - id: B4
+      type: goal
+      statement: "Feature adoption target: [CUSTOMIZE: 60%] of eligible users within 30 days"
+      rationale: "Adoption rate indicates product-market fit"
+
+  technical:
+    - id: T1
+      type: boundary
+      statement: "Engineering effort must not exceed [CUSTOMIZE: 2 sprints] of capacity"
+      rationale: "Capacity constraint based on team availability and competing priorities"
+
+    - id: T2
+      type: invariant
+      statement: "Must integrate with existing [CUSTOMIZE: authentication/payments/etc.] system"
+      rationale: "Avoid duplicate infrastructure; leverage existing investments"
+
+    - id: T3
+      type: boundary
+      statement: "Page load time must remain under [CUSTOMIZE: 3s] on mobile networks"
+      rationale: "Performance regression would hurt overall user experience"
+
+    - id: T4
+      type: goal
+      statement: "Reuse existing design system components where possible"
+      rationale: "Faster development, consistent UX, reduced testing burden"
+
+  user_experience:
+    - id: U1
+      type: invariant
+      statement: "Must not break existing user workflows or learned behaviors"
+      rationale: "Protect existing user satisfaction and reduce retraining burden"
+
+    - id: U2
+      type: boundary
+      statement: "Core task must complete in [CUSTOMIZE: 3] clicks or fewer"
+      rationale: "Simplicity drives adoption and satisfaction"
+
+    - id: U3
+      type: goal
+      statement: "Target NPS improvement of [CUSTOMIZE: +5 points] post-launch"
+      rationale: "User satisfaction metric tied to feature value"
+
+    - id: U4
+      type: goal
+      statement: "Reduce user-reported friction by [CUSTOMIZE: 25%] for this workflow"
+      rationale: "Addresses known pain points from user research"
+
+  security:
+    - id: S1
+      type: invariant
+      statement: "Must comply with [CUSTOMIZE: GDPR/CCPA/HIPAA] for user data handling"
+      rationale: "Legal compliance is non-negotiable"
+
+    - id: S2
+      type: boundary
+      statement: "Legal review must approve feature before public launch"
+      rationale: "Mitigate regulatory and liability risks"
+
+    - id: S3
+      type: goal
+      statement: "Minimize competitive exposure by [CUSTOMIZE: avoiding public preview]"
+      rationale: "Protect competitive advantage until launch"
+
+  operational:
+    - id: O1
+      type: invariant
+      statement: "Support team must be trained before launch"
+      rationale: "Poor support experience damages feature adoption and brand"
+
+    - id: O2
+      type: boundary
+      statement: "Feature must support gradual rollout (feature flag)"
+      rationale: "Risk mitigation through controlled release"
+
+    - id: O3
+      type: goal
+      statement: "Dashboard ready for monitoring [CUSTOMIZE: key metrics] at launch"
+      rationale: "Data-driven decision making requires observability"
+
+    - id: O4
+      type: goal
+      statement: "Documentation and help content published before GA"
+      rationale: "Self-service support reduces ticket volume"
+
+# =============================================================================
+# COMMON TENSIONS - Typical conflicts in feature launches
+# =============================================================================
+
+tensions:
+  - id: TN1
+    type: trade_off
+    between: [B2, T1]
+    description: "Full feature scope (B2) vs engineering capacity (T1)"
+    status: unresolved
+    resolution: "[CUSTOMIZE: Consider MVP approach or phased delivery]"
+    priority: 1
+
+  - id: TN2
+    type: trade_off
+    between: [B3, U3]
+    description: "Timeline pressure (B3) vs user experience quality (U3)"
+    status: unresolved
+    resolution: "[CUSTOMIZE: Define must-have vs nice-to-have UX elements]"
+    priority: 2
+
+  - id: TN3
+    type: resource_tension
+    between: [U4, T4]
+    description: "Optimal UX (U4) may require new components vs reuse goal (T4)"
+    status: unresolved
+    resolution: "[CUSTOMIZE: Evaluate new component ROI]"
+    priority: 3
+
+  - id: TN4
+    type: hidden_dependency
+    between: [O1, B3]
+    description: "Support training (O1) requires feature stability before deadline (B3)"
+    status: unresolved
+    resolution: "[CUSTOMIZE: Build training buffer into timeline]"
+    priority: 2
+
+# =============================================================================
+# REQUIRED TRUTHS - What must be true for successful launch
+# =============================================================================
+
+anchors:
+  required_truths:
+    - id: RT-1
+      statement: "Success metric is measurable and instrumented"
+      status: NOT_SATISFIED
+      priority: 1
+      maps_to_constraints: [B2, O3]
+
+    - id: RT-2
+      statement: "User can complete core workflow without assistance"
+      status: NOT_SATISFIED
+      priority: 1
+      maps_to_constraints: [U1, U2, U4]
+
+    - id: RT-3
+      statement: "Rollback path exists if critical issues emerge"
+      status: NOT_SATISFIED
+      priority: 1
+      maps_to_constraints: [O2, B1]
+
+    - id: RT-4
+      statement: "Stakeholders aligned on success criteria and timeline"
+      status: NOT_SATISFIED
+      priority: 2
+      maps_to_constraints: [B2, B3, B4]
+
+# =============================================================================
+# CUSTOMIZATION NOTES
+# =============================================================================
+
+_customization:
+  required_changes:
+    - "Replace [CUSTOMIZE: ...] values with your specific requirements"
+    - "Define primary success metric in B2"
+    - "Set realistic timeline in B3"
+    - "Adjust engineering capacity in T1"
+    - "Specify compliance requirements in S1"
+
+  optional_additions:
+    - "Add competitive constraints if market timing matters"
+    - "Add integration constraints for third-party dependencies"
+    - "Add localization constraints for international launches"
+    - "Add accessibility constraints (WCAG compliance)"
+    - "Add pricing constraints if monetization involved"
+
+  common_removals:
+    - "Remove S3 if feature is not competitively sensitive"
+    - "Remove U4 if not addressing existing pain points"
+    - "Remove O4 if documentation not required for launch"
+
+# =============================================================================
+# PHASE TRACKING
+# =============================================================================
+
+iterations: []
+
+convergence:
+  status: NOT_STARTED
+  criteria: []

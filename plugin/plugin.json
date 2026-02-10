@@ -1,0 +1,18 @@
+{
+  "name": "manifold",
+  "version": "2.21.0",
+  "description": "Constraint-first development framework. Makes ALL constraints visible BEFORE implementation through structured phases: initialize, constrain, tension, anchor, generate, verify.",
+  "author": {
+    "name": "Dhanesh",
+    "url": "https://github.com/dhanesh/manifold"
+  },
+  "repository": "https://github.com/dhanesh/manifold",
+  "license": "MIT",
+  "keywords": [
+    "constraints",
+    "development-framework",
+    "backward-reasoning",
+    "constraint-satisfaction",
+    "manifold"
+  ]
+}

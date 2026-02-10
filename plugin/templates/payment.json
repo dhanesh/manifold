@@ -1,0 +1,61 @@
+{
+  "$schema": "../manifold-structure.schema.json",
+  "schema_version": 3,
+  "feature": "[CUSTOMIZE: your-payment-feature]",
+  "phase": "INITIALIZED",
+  "template": "payment",
+  "template_version": 1,
+  "constraints": {
+    "business": [
+      { "id": "B1", "type": "invariant" },
+      { "id": "B2", "type": "invariant" },
+      { "id": "B3", "type": "boundary" },
+      { "id": "B4", "type": "goal" },
+      { "id": "B5", "type": "boundary" }
+    ],
+    "technical": [
+      { "id": "T1", "type": "invariant" },
+      { "id": "T2", "type": "invariant" },
+      { "id": "T3", "type": "boundary" },
+      { "id": "T4", "type": "boundary" },
+      { "id": "T5", "type": "goal" }
+    ],
+    "user_experience": [
+      { "id": "U1", "type": "boundary" },
+      { "id": "U2", "type": "invariant" },
+      { "id": "U3", "type": "goal" },
+      { "id": "U4", "type": "boundary" }
+    ],
+    "security": [
+      { "id": "S1", "type": "invariant" },
+      { "id": "S2", "type": "invariant" },
+      { "id": "S3", "type": "invariant" },
+      { "id": "S4", "type": "boundary" },
+      { "id": "S5", "type": "goal" }
+    ],
+    "operational": [
+      { "id": "O1", "type": "invariant" },
+      { "id": "O2", "type": "boundary" },
+      { "id": "O3", "type": "goal" },
+      { "id": "O4", "type": "boundary" }
+    ]
+  },
+  "tensions": [
+    { "id": "TN1", "type": "trade_off", "between": ["T3", "S5"], "status": "resolved" },
+    { "id": "TN2", "type": "trade_off", "between": ["B4", "S4"], "status": "resolved" },
+    { "id": "TN3", "type": "trade_off", "between": ["T5", "B1"], "status": "resolved" },
+    { "id": "TN4", "type": "hidden_dependency", "between": ["O1", "T4"], "status": "resolved" },
+    { "id": "TN5", "type": "resource_tension", "between": ["O2", "S1"], "status": "unresolved" }
+  ],
+  "anchors": {
+    "required_truths": [
+      { "id": "RT-1", "status": "NOT_SATISFIED", "maps_to": ["B1", "T1", "O4"] },
+      { "id": "RT-2", "status": "NOT_SATISFIED", "maps_to": ["T2", "B2"] },
+      { "id": "RT-3", "status": "NOT_SATISFIED", "maps_to": ["T4", "O1", "B3"] },
+      { "id": "RT-4", "status": "NOT_SATISFIED", "maps_to": ["S1", "S2", "S3"] },
+      { "id": "RT-5", "status": "NOT_SATISFIED", "maps_to": ["O3", "O4", "T5"] }
+    ]
+  },
+  "iterations": [],
+  "convergence": { "status": "NOT_STARTED" }
+}
