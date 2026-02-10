@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.23.0](https://github.com/dhanesh/manifold/compare/v2.22.0...v2.23.0) (2026-02-10)
+
+### Features
+
+* add claude code plugin distribution ([d1ea8a1](https://github.com/dhanesh/manifold/commit/d1ea8a115e3789ff593d01ce88d0cb9268cc3342))
+
 ## [2.22.0](https://github.com/dhanesh/manifold/compare/v2.21.0...v2.22.0) (2026-02-07)
 
 ### Features
