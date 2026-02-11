@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.23.1](https://github.com/dhanesh/manifold/compare/v2.23.0...v2.23.1) (2026-02-11)
+
+### Refactoring
+
+* consolidate plugin/install duplication via symlinks ([9fb34f8](https://github.com/dhanesh/manifold/commit/9fb34f88b1224f98a554123a8af688e447418857))
+
 ## [2.23.0](https://github.com/dhanesh/manifold/compare/v2.22.0...v2.23.0) (2026-02-10)
 
 ### Features
