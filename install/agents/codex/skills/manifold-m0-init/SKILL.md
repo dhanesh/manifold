@@ -44,7 +44,7 @@ Creates TWO files that work together:
 **`.manifold/<feature>.json`** — Structure only (IDs, types, references)
 ```json
 {
-  "$schema": "../install/manifold-structure.schema.json",
+  "$schema": "https://raw.githubusercontent.com/dhanesh/manifold/main/install/manifold-structure.schema.json",
   "schema_version": 3,
   "feature": "<feature-name>",
   "phase": "INITIALIZED",
@@ -231,7 +231,7 @@ When this command is invoked:
 5. **Create TWO files (JSON+Markdown hybrid format)**:
    - `.manifold/<feature>.json` — Structure with IDs, types, phases (NO text content)
    - `.manifold/<feature>.md` — Content with outcome, section headings
-6. **⚠️ Run `manifold validate <feature>`** — confirm the new manifold is valid
+6. **Run `manifold validate <feature>`** — confirm the new manifold is valid
 7. Display confirmation with file paths and next step
 
 ### Generation Guidelines

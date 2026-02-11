@@ -16,6 +16,7 @@ on:
       - 'install/lib/build-commands.ts'
       - 'install/lib/parallel/**'
       - 'install/agents/**'
+      - 'plugin/**'
   pull_request:
     branches: [main]
     paths:
@@ -23,6 +24,7 @@ on:
       - 'install/lib/build-commands.ts'
       - 'install/lib/parallel/**'
       - 'install/agents/**'
+      - 'plugin/**'
 
 jobs:
   diff-guard:
@@ -72,6 +74,22 @@ jobs:
             exit 1
           fi
           echo "✓ Parallel library bundle is up to date"
+
+      # Verify plugin symlinks resolve (no broken links after consolidation)
+      - name: Verify plugin symlinks
+        run: |
+          BROKEN=0
+          for link in $(find plugin/ -type l); do
+            if [ ! -e "$link" ]; then
+              echo "::error::Broken symlink: $link -> $(readlink "$link")"
+              BROKEN=1
+            fi
+          done
+          if [ $BROKEN -ne 0 ]; then
+            echo "::error::Plugin has broken symlinks. Run 'find plugin/ -type l ! -exec test -e {} \\; -print' to see them."
+            exit 1
+          fi
+          echo "✓ All plugin symlinks resolve correctly"
 
       # B2: Verify Claude Code/AMP commands are exact copies of canonical source
       - name: Verify canonical source integrity

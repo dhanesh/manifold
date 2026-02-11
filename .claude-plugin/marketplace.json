@@ -1,0 +1,20 @@
+{
+  "name": "manifold",
+  "owner": {
+    "name": "Dhanesh",
+    "url": "https://github.com/dhanesh/manifold"
+  },
+  "metadata": {
+    "description": "Constraint-first development framework",
+    "homepage": "https://github.com/dhanesh/manifold"
+  },
+  "plugins": [
+    {
+      "name": "manifold",
+      "version": "2.23.0",
+      "source": "./plugin",
+      "description": "Constraint-first development framework with structured phases: initialize, constrain, tension, anchor, generate, verify.",
+      "category": "development"
+    }
+  ]
+}

@@ -69,6 +69,7 @@ jobs:
           semantic_version: 24
           extra_plugins: |
             @semantic-release/changelog
+            @semantic-release/exec
             @semantic-release/git
             @semantic-release/github
             conventional-changelog-conventionalcommits

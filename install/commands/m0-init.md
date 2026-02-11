@@ -42,7 +42,7 @@ Creates TWO files that work together:
 **`.manifold/<feature>.json`** — Structure only (IDs, types, references)
 ```json
 {
-  "$schema": "../install/manifold-structure.schema.json",
+  "$schema": "https://raw.githubusercontent.com/dhanesh/manifold/main/install/manifold-structure.schema.json",
   "schema_version": 3,
   "feature": "<feature-name>",
   "phase": "INITIALIZED",
@@ -235,7 +235,7 @@ When this command is invoked:
 ### Generation Guidelines
 
 **For the JSON file:**
-- Include `"$schema": "../install/manifold-structure.schema.json"` for IDE validation
+- Include `"$schema": "https://raw.githubusercontent.com/dhanesh/manifold/main/install/manifold-structure.schema.json"` for IDE validation
 - Include only IDs, types, phases, and references
 - NO text content (no `statement`, no `description`, no `rationale`)
 - Use Zod-compatible structure (see `cli/lib/structure-schema.ts`)

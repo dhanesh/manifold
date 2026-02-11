@@ -1,3 +1,7 @@
+---
+description: "Quick lookup for Manifold field names across YAML and JSON+MD formats. Prevents field name confusion."
+---
+
 # Manifold Schema Quick Reference
 
 > **PURPOSE**: This file exists to prevent field name confusion between AI commands.

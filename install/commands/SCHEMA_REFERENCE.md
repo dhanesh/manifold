@@ -1,3 +1,7 @@
+---
+description: "Complete Manifold schema reference with all valid phases, types, statuses, and field values."
+---
+
 # Manifold Schema Reference
 
 > **CRITICAL**: Always use EXACTLY these values. Do NOT invent new phases or statuses.

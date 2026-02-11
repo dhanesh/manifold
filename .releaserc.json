@@ -43,8 +43,11 @@
       "npmPublish": false,
       "pkgRoot": "cli"
     }],
+    ["@semantic-release/exec", {
+      "prepareCmd": "jq --arg v '${nextRelease.version}' '.version = $v' plugin/plugin.json > plugin/plugin.json.tmp && mv plugin/plugin.json.tmp plugin/plugin.json && jq --arg v '${nextRelease.version}' '.plugins[0].version = $v' .claude-plugin/marketplace.json > .claude-plugin/marketplace.json.tmp && mv .claude-plugin/marketplace.json.tmp .claude-plugin/marketplace.json"
+    }],
     ["@semantic-release/git", {
-      "assets": ["CHANGELOG.md", "cli/package.json"],
+      "assets": ["CHANGELOG.md", "cli/package.json", "plugin/plugin.json", ".claude-plugin/marketplace.json"],
       "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
     }],
     ["@semantic-release/github", {

@@ -1,21 +1,9 @@
 #!/usr/bin/env bun
 // Manifold PreCompact Hook
 // Injects .manifold/ context before compaction to preserve state across sessions
-//
-// Install: Copy to ~/.claude/hooks/manifold-context.ts
-// Configure in ~/.claude/settings.json:
-// {
-//   "hooks": {
-//     "PreCompact": [{
-//       "matcher": "",
-//       "hooks": [{ "type": "command", "command": "bun run ~/.claude/hooks/manifold-context.ts" }]
-//     }]
-//   }
-// }
 
 import { existsSync, readdirSync, readFileSync } from 'fs';
-import { join, basename } from 'path';
-import * as yaml from 'yaml';
+import { join } from 'path';
 
 interface ManifoldData {
   feature: string;
@@ -45,7 +33,9 @@ function getManifoldDir(): string {
 }
 
 function parseYamlSafe(content: string): any {
+  // Portable: try dynamic require of yaml package; fall back to null for YAML files
   try {
+    const yaml = require('yaml');
     return yaml.parse(content);
   } catch {
     return null;
@@ -82,6 +72,25 @@ function getPhaseProgress(phase: string): string {
   return `${phase || 'UNKNOWN'} (${progress})`;
 }
 
+function getNextAction(phase: string, feature: string): string {
+  switch (phase?.toUpperCase()) {
+    case 'INITIALIZED':
+      return `/m1-constrain ${feature}`;
+    case 'CONSTRAINED':
+      return `/m2-tension ${feature}`;
+    case 'TENSIONED':
+      return `/m3-anchor ${feature}`;
+    case 'ANCHORED':
+      return `/m4-generate ${feature}`;
+    case 'GENERATED':
+      return `/m5-verify ${feature}`;
+    case 'VERIFIED':
+      return 'Complete!';
+    default:
+      return `/m-status ${feature}`;
+  }
+}
+
 function loadManifoldContext(): string | null {
   const manifoldDir = getManifoldDir();
 
@@ -93,8 +102,6 @@ function loadManifoldContext(): string | null {
   if (files.length === 0) {
     return null;
   }
-
-  const summaries: string[] = [];
 
   // Group files by feature
   const features = new Map<string, { manifold?: ManifoldData; anchor?: AnchorData; verify?: any }>();
@@ -121,11 +128,8 @@ function loadManifoldContext(): string | null {
     if (file.endsWith('.anchor.yaml')) {
       featureName = file.replace('.anchor.yaml', '');
       fileType = 'anchor';
-    } else if (file.endsWith('.verify.yaml')) {
-      featureName = file.replace('.verify.yaml', '');
-      fileType = 'verify';
-    } else if (file.endsWith('.verify.json')) {
-      featureName = file.replace('.verify.json', '');
+    } else if (file.endsWith('.verify.yaml') || file.endsWith('.verify.json')) {
+      featureName = file.replace(/\.verify\.(yaml|json)$/, '');
       fileType = 'verify';
     } else if (file.endsWith('.json')) {
       featureName = file.replace('.json', '');
@@ -140,6 +144,8 @@ function loadManifoldContext(): string | null {
     }
     features.get(featureName)![fileType] = data;
   }
+
+  const summaries: string[] = [];
 
   // Generate summary for each feature
   for (const [featureName, data] of features) {
@@ -181,25 +187,6 @@ function loadManifoldContext(): string | null {
   return `## Manifold State (${features.size} feature${features.size > 1 ? 's' : ''})
 
 ${summaries.join('\n\n')}`;
-}
-
-function getNextAction(phase: string, feature: string): string {
-  switch (phase?.toUpperCase()) {
-    case 'INITIALIZED':
-      return `/m1-constrain ${feature}`;
-    case 'CONSTRAINED':
-      return `/m2-tension ${feature}`;
-    case 'TENSIONED':
-      return `/m3-anchor ${feature}`;
-    case 'ANCHORED':
-      return `/m4-generate ${feature}`;
-    case 'GENERATED':
-      return `/m5-verify ${feature}`;
-    case 'VERIFIED':
-      return 'Complete!';
-    default:
-      return `/m-status ${feature}`;
-  }
 }
 
 async function main() {

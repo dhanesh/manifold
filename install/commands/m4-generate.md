@@ -229,9 +229,9 @@ When the generation plan includes **3+ files across different modules/directorie
 
 2. **Invoke Auto-Suggester**
    ```typescript
-   // The auto-suggester at ~/.claude/hooks/auto-suggester.ts analyzes tasks
-   // Import and use when parallelization is beneficial:
-   import { AutoSuggester } from '~/.claude/lib/parallel/index';
+   // The auto-suggester analyzes tasks for parallelization opportunities
+   // Use the /parallel command when parallelization is beneficial:
+   // /parallel "task1" "task2" "task3" --dry-run
 
    const suggester = new AutoSuggester(process.cwd());
    const tasks = [
