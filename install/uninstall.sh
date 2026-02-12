@@ -18,15 +18,15 @@ NC='\033[0m'
 BOLD='\033[1m'
 
 print_step() {
-    echo -e "${BLUE}▶${NC} $1"
+    echo -e "${BLUE}▶${NC} $1" >&2
 }
 
 print_success() {
-    echo -e "${GREEN}✓${NC} $1"
+    echo -e "${GREEN}✓${NC} $1" >&2
 }
 
 print_warning() {
-    echo -e "${YELLOW}⚠${NC} $1"
+    echo -e "${YELLOW}⚠${NC} $1" >&2
 }
 
 # Command files to remove (canonical .md for Claude Code / AMP)
