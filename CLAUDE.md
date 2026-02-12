@@ -111,10 +111,17 @@ cli/                            # Native CLI (Commander.js)
 └── __tests__/                  # CLI tests
 
 lib/                            # Core library modules
-install/                        # Distribution files
+install/                        # Distribution files (canonical source)
 ├── commands/                   # Claude Code skill files (.md)
 ├── lib/                        # Distributable TypeScript modules
-└── hooks/                      # Claude Code hooks
+├── hooks/                      # Claude Code hooks
+└── templates/                  # Constraint templates
+
+plugin/                         # Claude Code plugin (synced from install/)
+├── commands/                   # Synced from install/commands/
+├── lib/                        # Synced from install/lib/
+├── hooks/                      # Synced from install/hooks/
+└── templates/                  # Synced from install/templates/
 
 docs/                           # User documentation
 ops/                            # Operational artifacts
@@ -126,6 +133,22 @@ tests/                          # Test files (Bun test)
 examples/                       # Example manifolds
 ```
 
+**Plugin Sync**: The `plugin/` directory is synced from `install/` (canonical source) using `bun scripts/sync-plugin.ts`. CI enforces sync via the diff-guard workflow. Edit files in `install/` only; `plugin/` is auto-generated.
+
+**Build Commands**:
+```bash
+bun run build:commands        # Rebuild command translations for Gemini/Codex
+bun run build:parallel-bundle # Bundle parallel execution library
+bun run sync:plugin           # Sync install/ → plugin/
+bun run build:all             # Run all build steps
+```
+
+**Release Automation**: Semantic release automatically:
+- Bumps version in `cli/package.json`, `plugin/plugin.json`, `.claude-plugin/marketplace.json`
+- Syncs plugin files via `sync:plugin` script
+- Generates CHANGELOG.md with conventional commits
+- Creates git tags (format: `v${version}`)
+
 ## Coding Conventions
 
 ### TypeScript
@@ -134,6 +157,14 @@ examples/                       # Example manifolds
 - **Test Framework**: Bun test (`bun test`)
 - **Entry Points**: `index.ts` for module exports
 - **Strict Mode**: TypeScript strict mode enabled
+
+### Distribution Model
+
+- **Canonical source**: `install/` directory contains single source of truth
+- **Plugin sync**: `plugin/` contains synced copies (Claude Code doesn't follow symlinks)
+- **Sync script**: `bun scripts/sync-plugin.ts` copies `install/` → `plugin/`
+- **CI validation**: Diff-guard workflow ensures sync is current
+- **Edit location**: Always edit in `install/`, never in `plugin/`
 
 ### Constraint Traceability
 

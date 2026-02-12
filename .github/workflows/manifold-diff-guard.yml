@@ -15,7 +15,11 @@ on:
       - 'install/commands/**'
       - 'install/lib/build-commands.ts'
       - 'install/lib/parallel/**'
+      - 'install/hooks/**'
+      - 'install/templates/**'
+      - 'install/manifold-structure.schema.json'
       - 'install/agents/**'
+      - 'scripts/sync-plugin.ts'
       - 'plugin/**'
   pull_request:
     branches: [main]
@@ -23,7 +27,11 @@ on:
       - 'install/commands/**'
       - 'install/lib/build-commands.ts'
       - 'install/lib/parallel/**'
+      - 'install/hooks/**'
+      - 'install/templates/**'
+      - 'install/manifold-structure.schema.json'
       - 'install/agents/**'
+      - 'scripts/sync-plugin.ts'
       - 'plugin/**'
 
 jobs:
@@ -75,21 +83,22 @@ jobs:
           fi
           echo "✓ Parallel library bundle is up to date"
 
-      # Verify plugin symlinks resolve (no broken links after consolidation)
-      - name: Verify plugin symlinks
+      # Verify plugin files are synced copies of canonical install/ source
+      - name: Sync plugin files
+        run: bun scripts/sync-plugin.ts
+
+      - name: Check for plugin sync drift
         run: |
-          BROKEN=0
-          for link in $(find plugin/ -type l); do
-            if [ ! -e "$link" ]; then
-              echo "::error::Broken symlink: $link -> $(readlink "$link")"
-              BROKEN=1
-            fi
-          done
-          if [ $BROKEN -ne 0 ]; then
-            echo "::error::Plugin has broken symlinks. Run 'find plugin/ -type l ! -exec test -e {} \\; -print' to see them."
+          if ! git diff --quiet plugin/; then
+            echo "::error::Plugin files are out of sync with install/ source!"
+            echo ""
+            echo "The following plugin files differ:"
+            git diff --stat plugin/
+            echo ""
+            echo "Fix: Run 'bun scripts/sync-plugin.ts' and commit the results."
             exit 1
           fi
-          echo "✓ All plugin symlinks resolve correctly"
+          echo "✓ Plugin files match canonical install/ source"
 
       # B2: Verify Claude Code/AMP commands are exact copies of canonical source
       - name: Verify canonical source integrity

@@ -8,7 +8,8 @@
     "prepare": "husky",
     "build:commands": "bun install/lib/build-commands.ts",
     "build:parallel-bundle": "bun build install/lib/parallel/bundle-entry.ts --outfile install/lib/parallel/parallel.bundle.js --target node",
-    "build:all": "bun run build:commands && bun run build:parallel-bundle"
+    "sync:plugin": "bun scripts/sync-plugin.ts",
+    "build:all": "bun run build:commands && bun run build:parallel-bundle && bun run sync:plugin"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.0.0",

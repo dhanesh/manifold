@@ -1,7 +1,3 @@
-# Plugin symlinks: canonical files live in install/
-# Editing should happen in install/ — plugin/ follows via symlinks.
-plugin/commands/*.md linguist-symlink
-plugin/templates linguist-symlink
-plugin/hooks/manifold-context.ts linguist-symlink
-plugin/lib/parallel/parallel.bundle.js linguist-symlink
-plugin/manifold-structure.schema.json linguist-symlink
+# Plugin files: canonical source lives in install/
+# Run 'bun scripts/sync-plugin.ts' to copy install/ -> plugin/
+# CI enforces sync via manifold-diff-guard.yml

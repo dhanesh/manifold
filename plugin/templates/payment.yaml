@@ -1,0 +1,245 @@
+# Payment Processing Constraint Template
+# Use: /m0-init <feature> --template=payment
+# Covers: Payment processing, refunds, subscriptions, financial transactions
+
+schema_version: 3
+feature: "[CUSTOMIZE: your-payment-feature]"
+outcome: "[CUSTOMIZE: e.g., '99.9% payment success rate with zero duplicate charges']"
+phase: INITIALIZED
+template: payment
+template_version: 1
+
+# =============================================================================
+# CONSTRAINTS - Payment systems have strict requirements; customize carefully
+# =============================================================================
+
+constraints:
+  business:
+    - id: B1
+      type: invariant
+      statement: "No duplicate charges may occur for the same transaction"
+      rationale: "Duplicate charges cause customer disputes, chargebacks, and trust loss"
+
+    - id: B2
+      type: invariant
+      statement: "Refund amount must never exceed original charge amount"
+      rationale: "Over-refunds cause financial loss and potential fraud"
+
+    - id: B3
+      type: boundary
+      statement: "Transaction records must be retained for [CUSTOMIZE: 7] years"
+      rationale: "Regulatory requirement for financial record keeping (varies by jurisdiction)"
+
+    - id: B4
+      type: goal
+      statement: "Payment success rate should exceed [CUSTOMIZE: 95]%"
+      rationale: "Failed payments directly impact revenue and customer experience"
+
+    - id: B5
+      type: boundary
+      statement: "Refunds must be processed within [CUSTOMIZE: 5] business days"
+      rationale: "Customer service SLA and regulatory requirements"
+
+  technical:
+    - id: T1
+      type: invariant
+      statement: "All payment operations must use idempotency keys with [CUSTOMIZE: 24]-hour retention"
+      rationale: "Prevents duplicate charges from network retries or user double-clicks"
+
+    - id: T2
+      type: invariant
+      statement: "Payment state machine must enforce valid transitions only"
+      rationale: "Invalid state transitions can cause inconsistent ledger entries"
+
+    - id: T3
+      type: boundary
+      statement: "Payment authorization must complete in <[CUSTOMIZE: 10]s"
+      rationale: "User abandonment increases significantly after this threshold"
+
+    - id: T4
+      type: boundary
+      statement: "Database transactions must be ACID-compliant for all financial operations"
+      rationale: "Eventual consistency is unacceptable for money movement"
+
+    - id: T5
+      type: goal
+      statement: "Support automatic retry with exponential backoff for transient failures"
+      rationale: "Improves payment success rate without manual intervention"
+
+  user_experience:
+    - id: U1
+      type: boundary
+      statement: "Payment form must support [CUSTOMIZE: 3+] payment methods"
+      rationale: "Different users prefer different payment methods"
+
+    - id: U2
+      type: invariant
+      statement: "Users must see clear amount and currency before confirming payment"
+      rationale: "Hidden costs are illegal in many jurisdictions and erode trust"
+
+    - id: U3
+      type: goal
+      statement: "Failed payments should suggest alternative payment methods"
+      rationale: "Recovers potentially lost sales"
+
+    - id: U4
+      type: boundary
+      statement: "Receipt/confirmation must be sent within [CUSTOMIZE: 5] minutes of successful payment"
+      rationale: "Users need immediate confirmation of their purchase"
+
+  security:
+    - id: S1
+      type: invariant
+      statement: "PCI DSS compliance must be maintained for all card data handling"
+      rationale: "Legal requirement; non-compliance results in fines and processing ban"
+
+    - id: S2
+      type: invariant
+      statement: "Card numbers must never be logged, even partially"
+      rationale: "PCI requirement; logs are often less protected than primary systems"
+
+    - id: S3
+      type: invariant
+      statement: "Payment tokens must be scoped to merchant and non-replayable"
+      rationale: "Prevents token theft from enabling unauthorized charges"
+
+    - id: S4
+      type: boundary
+      statement: "All payment endpoints must require re-authentication for amounts > [CUSTOMIZE: $1000]"
+      rationale: "High-value transactions warrant additional verification"
+
+    - id: S5
+      type: goal
+      statement: "Fraud detection should flag suspicious patterns in real-time"
+      rationale: "Reduces chargebacks and protects customers"
+
+  operational:
+    - id: O1
+      type: invariant
+      statement: "Payment system must have real-time reconciliation with payment processor"
+      rationale: "Discrepancies must be caught immediately, not in monthly reports"
+
+    - id: O2
+      type: boundary
+      statement: "Payment system downtime must not exceed [CUSTOMIZE: 4] hours/month (99.5% uptime)"
+      rationale: "Payment unavailability directly impacts revenue"
+
+    - id: O3
+      type: goal
+      statement: "Payment failures should alert on-call within [CUSTOMIZE: 5] minutes"
+      rationale: "Enables rapid response to payment processor issues"
+
+    - id: O4
+      type: boundary
+      statement: "Complete audit trail must exist for every payment state change"
+      rationale: "Required for dispute resolution and regulatory compliance"
+
+# =============================================================================
+# COMMON TENSIONS - Payment systems have many inherent conflicts
+# =============================================================================
+
+tensions:
+  - id: TN1
+    type: trade_off
+    between: [T3, S5]
+    description: "Fast authorization (T3) vs thorough fraud checking (S5)"
+    status: resolved
+    resolution: "Async fraud scoring with hold release; immediate auth for trusted customers"
+    priority: 1
+
+  - id: TN2
+    type: trade_off
+    between: [B4, S4]
+    description: "High success rate (B4) vs re-auth for high amounts (S4)"
+    status: resolved
+    resolution: "Risk-based authentication; re-auth only for anomalous patterns, not just amount"
+    priority: 2
+
+  - id: TN3
+    type: trade_off
+    between: [T5, B1]
+    description: "Automatic retry (T5) vs no duplicate charges (B1)"
+    status: resolved
+    resolution: "Idempotency keys (T1) make retry safe; verify charge status before retry"
+    priority: 1
+
+  - id: TN4
+    type: hidden_dependency
+    between: [O1, T4]
+    description: "Reconciliation (O1) requires transactions to be committed (T4)"
+    status: resolved
+    resolution: "Two-phase commit with reconciliation as verification step"
+    priority: 2
+
+  - id: TN5
+    type: resource_tension
+    between: [O2, S1]
+    description: "High uptime (O2) vs security updates requiring downtime (S1)"
+    status: unresolved
+    resolution: "[CUSTOMIZE: Blue-green deployment or rolling updates]"
+    priority: 3
+
+# =============================================================================
+# REQUIRED TRUTHS - What must be true for payment processing to work
+# =============================================================================
+
+anchors:
+  required_truths:
+    - id: RT-1
+      statement: "Every payment attempt has a unique, traceable identifier"
+      status: NOT_SATISFIED
+      priority: 1
+      maps_to_constraints: [B1, T1, O4]
+
+    - id: RT-2
+      statement: "Payment state can only transition through valid paths"
+      status: NOT_SATISFIED
+      priority: 1
+      maps_to_constraints: [T2, B2]
+
+    - id: RT-3
+      statement: "Financial records are accurate and reconcilable"
+      status: NOT_SATISFIED
+      priority: 1
+      maps_to_constraints: [T4, O1, B3]
+
+    - id: RT-4
+      statement: "Card data is protected at every processing stage"
+      status: NOT_SATISFIED
+      priority: 1
+      maps_to_constraints: [S1, S2, S3]
+
+    - id: RT-5
+      statement: "Payment failures can be diagnosed and resolved"
+      status: NOT_SATISFIED
+      priority: 2
+      maps_to_constraints: [O3, O4, T5]
+
+# =============================================================================
+# CUSTOMIZATION NOTES
+# =============================================================================
+
+_customization:
+  required_changes:
+    - "Replace retention period (B3) based on your jurisdiction"
+    - "Set re-auth threshold (S4) based on your risk tolerance"
+    - "Configure uptime SLA (O2) based on business requirements"
+    - "Add specific payment processor constraints"
+
+  optional_additions:
+    - "Subscription billing cycles"
+    - "Multi-currency support"
+    - "Split payments"
+    - "Marketplace payouts"
+    - "Cryptocurrency acceptance"
+    - "Buy-now-pay-later integration"
+
+  common_removals:
+    - "Remove fraud detection (S5) if using processor's fraud tools"
+    - "Remove multi-method (U1) for single payment method"
+
+  compliance_notes:
+    - "PCI DSS level depends on transaction volume"
+    - "Strong Customer Authentication (SCA) required in EU"
+    - "State-specific money transmission licenses may be required"
+    - "Consult legal/compliance team for jurisdiction-specific requirements"

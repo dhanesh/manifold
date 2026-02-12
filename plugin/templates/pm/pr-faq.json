@@ -1,0 +1,46 @@
+{
+  "$schema": "../../manifold-structure.schema.json",
+  "schema_version": 3,
+  "feature": "[CUSTOMIZE: your-product-name]",
+  "phase": "INITIALIZED",
+  "template": "pm/pr-faq",
+  "template_version": 1,
+  "constraints": {
+    "business": [
+      { "id": "B1", "type": "invariant" },
+      { "id": "B2", "type": "boundary" },
+      { "id": "B3", "type": "goal" }
+    ],
+    "technical": [
+      { "id": "T1", "type": "invariant" },
+      { "id": "T2", "type": "boundary" }
+    ],
+    "user_experience": [
+      { "id": "U1", "type": "invariant" },
+      { "id": "U2", "type": "boundary" },
+      { "id": "U3", "type": "goal" }
+    ],
+    "security": [
+      { "id": "S1", "type": "boundary" },
+      { "id": "S2", "type": "goal" }
+    ],
+    "operational": [
+      { "id": "O1", "type": "boundary" },
+      { "id": "O2", "type": "boundary" }
+    ]
+  },
+  "tensions": [
+    { "id": "TN1", "type": "trade_off", "between": ["B1", "T2"], "status": "unresolved" },
+    { "id": "TN2", "type": "trade_off", "between": ["U2", "T2"], "status": "unresolved" },
+    { "id": "TN3", "type": "hidden_dependency", "between": ["B2", "S1"], "status": "unresolved" }
+  ],
+  "anchors": {
+    "required_truths": [
+      { "id": "RT-1", "status": "NOT_SATISFIED", "maps_to": ["B1", "U1", "T1"] },
+      { "id": "RT-2", "status": "NOT_SATISFIED", "maps_to": ["S1", "S2", "O2"] },
+      { "id": "RT-3", "status": "NOT_SATISFIED", "maps_to": ["B3", "O1"] }
+    ]
+  },
+  "iterations": [],
+  "convergence": { "status": "NOT_STARTED" }
+}
