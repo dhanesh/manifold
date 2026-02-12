@@ -5,6 +5,14 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.23.2](https://github.com/dhanesh/manifold/compare/v2.23.1...v2.23.2) (2026-02-12)
+
+### Bug Fixes
+
+* **ci:** add bun to release workflow and rebuild agent artifacts ([4ee18b8](https://github.com/dhanesh/manifold/commit/4ee18b83d630c8ccd1435583439d0c71b4ca392e))
+* **ci:** remove bun install from release workflow ([2364e59](https://github.com/dhanesh/manifold/commit/2364e59ce056577ef39eb8ffcde88acbcb291b09))
+* replace plugin symlinks with real files for marketplace installs ([dd3d437](https://github.com/dhanesh/manifold/commit/dd3d437293373d19f999a8236133c08c67ee13ac))
+
 ## [2.23.1](https://github.com/dhanesh/manifold/compare/v2.23.0...v2.23.1) (2026-02-11)
 
 ### Refactoring
