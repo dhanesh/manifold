@@ -237,7 +237,7 @@ When this command is invoked:
 ### Generation Guidelines
 
 **For the JSON file:**
-- Include `"$schema": "../install/manifold-structure.schema.json"` for IDE validation
+- Include `"$schema": "https://raw.githubusercontent.com/dhanesh/manifold/main/install/manifold-structure.schema.json"` for IDE validation
 - Include only IDs, types, phases, and references
 - NO text content (no `statement`, no `description`, no `rationale`)
 - Use Zod-compatible structure (see `cli/lib/structure-schema.ts`)
