@@ -149,7 +149,7 @@ Manifold's constraint-first approach transformed a contentious prioritization di
 
 ## Generated Artifacts
 
-Using `/m4-generate --prd`, this prioritization produces:
+Using `/manifold:m4-generate --prd`, this prioritization produces:
 
 ```
 docs/q3-roadmap/PRD.md

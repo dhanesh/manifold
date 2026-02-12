@@ -82,7 +82,7 @@ constraints:
       relates_to: ["B2"]
       
   # Note: This example shows the extended CMS schema with additional metadata.
-  # Basic manifolds created by /m0-init use simplified structure.
+  # Basic manifolds created by /manifold:m0-init use simplified structure.
   user_experience:
     - id: "U1"
       type: "invariant"

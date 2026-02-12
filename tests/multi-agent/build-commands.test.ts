@@ -108,7 +108,7 @@ describe('buildCommands', () => {
     expect(skillContent).toContain('description: "Initialize a new constraint manifold"');
 
     // Should have command body
-    expect(skillContent).toContain('# /m0-init');
+    expect(skillContent).toContain('# /manifold:m0-init');
     expect(skillContent).toContain('# Initialize Manifold');
   });
 

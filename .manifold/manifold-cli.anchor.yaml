@@ -26,7 +26,7 @@ required_truths:
   - id: RT-2
     statement: "Command output must match AI equivalents exactly"
     requires:
-      - "Same formatting logic as /m-status"
+      - "Same formatting logic as /manifold:m-status"
       - "Same convergence calculation algorithm"
       - "Same coverage percentage formulas"
     maps_to_constraints: [B2]
@@ -220,7 +220,7 @@ validation_gates:
     - "Schema v1 and v2 both detected"
     - "Parse time < 20ms for graph-d-validation.yaml"
   phase_2:
-    - "manifold status output matches /m-status format"
+    - "manifold status output matches /manifold:m-status format"
     - "Exit code 0 for valid manifolds"
     - "Exit code 2 for schema violations"
   phase_3:

@@ -75,19 +75,19 @@ function getPhaseProgress(phase: string): string {
 function getNextAction(phase: string, feature: string): string {
   switch (phase?.toUpperCase()) {
     case 'INITIALIZED':
-      return `/m1-constrain ${feature}`;
+      return `/manifold:m1-constrain ${feature}`;
     case 'CONSTRAINED':
-      return `/m2-tension ${feature}`;
+      return `/manifold:m2-tension ${feature}`;
     case 'TENSIONED':
-      return `/m3-anchor ${feature}`;
+      return `/manifold:m3-anchor ${feature}`;
     case 'ANCHORED':
-      return `/m4-generate ${feature}`;
+      return `/manifold:m4-generate ${feature}`;
     case 'GENERATED':
-      return `/m5-verify ${feature}`;
+      return `/manifold:m5-verify ${feature}`;
     case 'VERIFIED':
       return 'Complete!';
     default:
-      return `/m-status ${feature}`;
+      return `/manifold:m-status ${feature}`;
   }
 }
 
@@ -204,7 +204,7 @@ MANIFOLD CONTEXT (PreCompact - Preserve across compaction)
 
 ${context}
 
-Use /m-status for detailed state. Continue from the "Next" action for each feature.
+Use /manifold:m-status for detailed state. Continue from the "Next" action for each feature.
 </system-reminder>`;
 
     console.log(output);

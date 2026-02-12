@@ -6,12 +6,12 @@ Each Manifold phase maps to established research in software engineering, cognit
 
 | Phase | Command | Key Activity | Primary Research Domain |
 |-------|---------|--------------|------------------------|
-| **INITIALIZED** | `/m0-init` | Create constraint manifold | Constraint Satisfaction Problems (CSP) |
-| **CONSTRAINED** | `/m1-constrain` | Discover all constraints | Requirements Quality & Explicit Constraints |
-| **TENSIONED** | `/m2-tension` | Surface conflicts & trade-offs | Design Rationale & Cognitive Bias Mitigation |
-| **ANCHORED** | `/m3-anchor` | Backward reasoning from outcome | Goal-Driven Planning (Psychological Science) |
-| **GENERATED** | `/m4-generate` | Create artifacts with traceability | Shift-Left Economics & Traceability |
-| **VERIFIED** | `/m5-verify` | Validate against constraints | Evidence-Based Verification & Theory of Constraints |
+| **INITIALIZED** | `/manifold:m0-init` | Create constraint manifold | Constraint Satisfaction Problems (CSP) |
+| **CONSTRAINED** | `/manifold:m1-constrain` | Discover all constraints | Requirements Quality & Explicit Constraints |
+| **TENSIONED** | `/manifold:m2-tension` | Surface conflicts & trade-offs | Design Rationale & Cognitive Bias Mitigation |
+| **ANCHORED** | `/manifold:m3-anchor` | Backward reasoning from outcome | Goal-Driven Planning (Psychological Science) |
+| **GENERATED** | `/manifold:m4-generate` | Create artifacts with traceability | Shift-Left Economics & Traceability |
+| **VERIFIED** | `/manifold:m5-verify` | Validate against constraints | Evidence-Based Verification & Theory of Constraints |
 
 ---
 
@@ -19,7 +19,7 @@ Each Manifold phase maps to established research in software engineering, cognit
 
 ### INITIALIZED: Constraint Satisfaction Problems
 
-**Command**: `/m0-init`
+**Command**: `/manifold:m0-init`
 
 **Activity**: Define problem space across 5 constraint categories (business, technical, UX, security, operational)
 
@@ -39,7 +39,7 @@ Each Manifold phase maps to established research in software engineering, cognit
 
 ### CONSTRAINED: Requirements Quality Research
 
-**Command**: `/m1-constrain`
+**Command**: `/manifold:m1-constrain`
 
 **Activity**: Interview-driven discovery making implicit constraints explicit
 
@@ -59,7 +59,7 @@ Each Manifold phase maps to established research in software engineering, cognit
 
 ### TENSIONED: Design Rationale & Cognitive Bias Mitigation
 
-**Command**: `/m2-tension`
+**Command**: `/manifold:m2-tension`
 
 **Activity**: Document conflicts between constraints with explicit resolutions
 
@@ -82,7 +82,7 @@ Each Manifold phase maps to established research in software engineering, cognit
 
 ### ANCHORED: Backward Planning (Strongest Evidence)
 
-**Command**: `/m3-anchor`
+**Command**: `/manifold:m3-anchor`
 
 **Activity**: Reason backward from desired outcome to derive required truths
 
@@ -102,7 +102,7 @@ Each Manifold phase maps to established research in software engineering, cognit
 
 ### GENERATED: Shift-Left Economics & Traceability (Strongest Evidence)
 
-**Command**: `/m4-generate`
+**Command**: `/manifold:m4-generate`
 
 **Activity**: Generate ALL artifacts (code, tests, docs, runbooks, alerts) with constraint traceability
 
@@ -128,7 +128,7 @@ Each Manifold phase maps to established research in software engineering, cognit
 
 ### VERIFIED: Theory of Constraints & Evidence-Based Verification
 
-**Command**: `/m5-verify`
+**Command**: `/manifold:m5-verify`
 
 **Activity**: Validate every artifact traces to constraints with evidence
 

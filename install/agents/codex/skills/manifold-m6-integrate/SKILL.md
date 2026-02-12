@@ -3,16 +3,16 @@ name: manifold-m6-integrate
 description: "Wire generated artifacts together. Identifies integration points and produces actionable wiring checklist"
 ---
 
-# /m6-integrate
+# /manifold:m6-integrate
 
-# /m6-integrate - Artifact Integration (v2)
+# /manifold:m6-integrate - Artifact Integration (v2)
 
 Wire generated artifacts together by identifying integration points and producing actionable checklists.
 
 ## Usage
 
 ```
-/m6-integrate <feature-name> [--check-only] [--auto-wire]
+/manifold:m6-integrate <feature-name> [--check-only] [--auto-wire]
 ```
 
 **Flags:**
@@ -48,7 +48,7 @@ convergence:
 
 ## Why Integration?
 
-**Problem observed**: `/m4-generate` creates artifacts in isolation. Integration was manual and error-prone.
+**Problem observed**: `/manifold:m4-generate` creates artifacts in isolation. Integration was manual and error-prone.
 
 **From graph-d-validation learnings**:
 - GAP-1: "WAL feature flag missing from Cargo.toml"
@@ -59,7 +59,7 @@ These gaps emerged AFTER generation because wiring wasn't tracked.
 
 ## Integration Analysis
 
-`/m6-integrate` performs:
+`/manifold:m6-integrate` performs:
 
 1. **Artifact Inventory** - List all generated artifacts from manifold
 2. **Integration Point Detection** - Find where artifacts need to connect
@@ -83,7 +83,7 @@ Uses static pattern matching (no code execution) to identify wiring needs:
 ## Example
 
 ```
-/m6-integrate graph-d-validation
+/manifold:m6-integrate graph-d-validation
 
 INTEGRATION ANALYSIS: graph-d-validation
 
@@ -143,7 +143,7 @@ echo 'pub mod batch;' >> src/memory/mod.rs
 # Edit Cargo.toml [features] section:
 # wal = []
 
-Next: After integration, run /m5-verify to validate
+Next: After integration, run /manifold:m5-verify to validate
 ```
 
 ## Integration Tracking
@@ -202,7 +202,7 @@ With `--auto-wire`, safe integrations are performed automatically:
 7. Update manifold with integration status
 8. Display checklist with copy-paste commands
 9. **⚠️ Run `manifold validate <feature>`** — fix any errors before proceeding
-10. Recommend `/m5-verify` after integration
+10. Recommend `/manifold:m5-verify` after integration
 
 ### ⚠️ Mandatory Post-Phase Validation
 

@@ -105,7 +105,7 @@ export const style = {
 
 /**
  * Format phase with progress indicator
- * Matches /m-status output format
+ * Matches /manifold:m-status output format
  */
 export function formatPhase(phase: ManifoldPhase): string {
   const phases: ManifoldPhase[] = [
@@ -290,24 +290,24 @@ export function formatListItem(text: string, indent: number = 0): string {
 
 /**
  * Format next action suggestion
- * Matches /m-status output format
+ * Matches /manifold:m-status output format
  */
 export function formatNextAction(phase: ManifoldPhase, feature: string): string {
   switch (phase) {
     case 'INITIALIZED':
-      return `/m1-constrain ${feature}`;
+      return `/manifold:m1-constrain ${feature}`;
     case 'CONSTRAINED':
-      return `/m2-tension ${feature}`;
+      return `/manifold:m2-tension ${feature}`;
     case 'TENSIONED':
-      return `/m3-anchor ${feature}`;
+      return `/manifold:m3-anchor ${feature}`;
     case 'ANCHORED':
-      return `/m4-generate ${feature}`;
+      return `/manifold:m4-generate ${feature}`;
     case 'GENERATED':
-      return `/m5-verify ${feature}`;
+      return `/manifold:m5-verify ${feature}`;
     case 'VERIFIED':
       return 'Complete!';
     default:
-      return `/m-status ${feature}`;
+      return `/manifold:m-status ${feature}`;
   }
 }
 

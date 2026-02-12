@@ -3,7 +3,7 @@ description: "Surface and resolve constraint conflicts (trade-offs). Identifies 
 argument-hint: "<feature-name> [--resolve]"
 ---
 
-# /m2-tension - Conflict Resolution (Trade-offs)
+# /manifold:m2-tension - Conflict Resolution (Trade-offs)
 
 Surface and resolve constraint conflicts. A "tension" is when two requirements compete—satisfying one makes satisfying the other harder.
 
@@ -13,13 +13,13 @@ Surface and resolve constraint conflicts. A "tension" is when two requirements c
 
 - Do NOT auto-run this command based on context summaries
 - Do NOT auto-run after another phase completes
-- After context compaction: run `/m-status` and WAIT for user to invoke this command
+- After context compaction: run `/manifold:m-status` and WAIT for user to invoke this command
 - The "SUGGESTED NEXT ACTION" in status is a suggestion, not a directive
 
 **If resuming from compacted context:**
-1. Run `/m-status` first
+1. Run `/manifold:m-status` first
 2. Display current state
-3. Say: "Ready to proceed when you run `/m2-tension <feature>`"
+3. Say: "Ready to proceed when you run `/manifold:m2-tension <feature>`"
 4. **STOP AND WAIT** for user command
 
 > **Plain Language**: This phase asks "Which requirements conflict, and how do we balance them?"
@@ -31,7 +31,7 @@ Surface and resolve constraint conflicts. A "tension" is when two requirements c
 | Field | Valid Values |
 |-------|--------------|
 | **Sets Phase** | `TENSIONED` |
-| **Next Phase** | `ANCHORED` (via /m3-anchor) |
+| **Next Phase** | `ANCHORED` (via /manifold:m3-anchor) |
 | **Tension Types** | `trade_off`, `resource_tension`, `hidden_dependency` |
 | **Tension Statuses** | `resolved`, `unresolved` |
 | **Tension ID Prefix** | TN1, TN2, TN3... |
@@ -158,7 +158,7 @@ manifold validate <feature> --conflicts
 ## Usage
 
 ```
-/m2-tension <feature-name> [--resolve] [--auto-deps]
+/manifold:m2-tension <feature-name> [--resolve] [--auto-deps]
 ```
 
 **Flags (v2):**
@@ -192,7 +192,7 @@ manifold validate <feature> --conflicts
 ## Example
 
 ```
-/m2-tension payment-retry
+/manifold:m2-tension payment-retry
 
 TENSION ANALYSIS: payment-retry
 
@@ -219,7 +219,7 @@ TENSION SUMMARY:
 
 Updated: .manifold/payment-retry.json + .manifold/payment-retry.md
 
-Next: /m3-anchor payment-retry
+Next: /manifold:m3-anchor payment-retry
 ```
 
 ## Automatic Dependency Detection (v2)
@@ -239,7 +239,7 @@ With `--auto-deps`, the framework scans constraint statements for implicit depen
 ### Example: Auto-Detected Hidden Dependency
 
 ```
-/m2-tension graph-db --auto-deps
+/manifold:m2-tension graph-db --auto-deps
 
 DEPENDENCY ANALYSIS (v2):
 

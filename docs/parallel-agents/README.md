@@ -10,13 +10,13 @@ The parallel-agents feature enables automatic detection and execution of paralle
 
 ```bash
 # Execute tasks in parallel
-/parallel "Add login form" "Add signup form" "Add password reset"
+/manifold:parallel "Add login form" "Add signup form" "Add password reset"
 
 # Analyze without executing (dry run)
-/parallel "task1" "task2" --dry-run
+/manifold:parallel "task1" "task2" --dry-run
 
 # Force parallel with custom settings
-/parallel "task1" "task2" --auto-parallel --max-parallel 3
+/manifold:parallel "task1" "task2" --auto-parallel --max-parallel 3
 ```
 
 ## Architecture
@@ -36,7 +36,7 @@ The parallel-agents feature enables automatic detection and execution of paralle
 - **ProgressReporter**: Provides real-time progress updates and explanations
 
 ### Phase 4: Integration
-- **ParallelCommand**: `/parallel` slash command implementation
+- **ParallelCommand**: `/manifold:parallel` slash command implementation
 - **AutoSuggester**: Hook that automatically suggests parallelization opportunities
 - **ParallelConfig**: Configuration management for parallel execution
 
@@ -73,10 +73,10 @@ includeTests: true
 
 ## Command Reference
 
-### /parallel
+### /manifold:parallel
 
 ```
-/parallel "task1" "task2" "task3" [options]
+/manifold:parallel "task1" "task2" "task3" [options]
 
 OPTIONS:
   --auto-parallel      Enable automatic parallelization

@@ -12,7 +12,7 @@ Add support for Gemini CLI and Codex CLI alongside existing Claude Code and AMP 
 
 #### B1: Full Feature Parity Across All 4 Agents
 
-All 11 Manifold commands (/m0-init through /m-solve, /parallel), the /manifold skill overview, hooks (manifold-context, auto-suggester), the parallel execution library, and the schema reference snippet must be available and functional on Claude Code, AMP, Gemini CLI, and Codex CLI. Any capability gap is a defect.
+All 11 Manifold commands (/manifold:m0-init through /manifold:m-solve, /manifold:parallel), the /manifold skill overview, hooks (manifold-context, auto-suggester), the parallel execution library, and the schema reference snippet must be available and functional on Claude Code, AMP, Gemini CLI, and Codex CLI. Any capability gap is a defect.
 
 > **Rationale:** Users may switch between agents or use multiple agents on the same project. Inconsistent capabilities break the constraint-first workflow and erode trust.
 
@@ -123,7 +123,7 @@ The TypeScript parallel execution library (`install/lib/parallel/`) must work in
 
 #### U1: Unified Command Vocabulary
 
-The commands `/m0-init`, `/m1-constrain`, `/m2-tension`, `/m3-anchor`, `/m4-generate`, `/m5-verify`, `/m6-integrate`, `/m-status`, `/m-solve`, `/parallel`, and `/manifold` must be available in all 4 agents with identical behavior and identical names.
+The commands `/manifold:m0-init`, `/manifold:m1-constrain`, `/manifold:m2-tension`, `/manifold:m3-anchor`, `/manifold:m4-generate`, `/manifold:m5-verify`, `/manifold:m6-integrate`, `/manifold:m-status`, `/manifold:m-solve`, `/manifold:parallel`, and `/manifold` must be available in all 4 agents with identical behavior and identical names.
 
 > **Rationale:** Users who learn Manifold on one agent should be able to use it on any other agent without relearning commands. Command name consistency is the minimum bar for feature parity.
 

@@ -113,11 +113,11 @@ Questions to ask:
 ### Standard Workflow
 
 ```
-1. /m0-init feature-name --template=pm/feature-launch
-2. /m1-constrain feature-name    # Discover all requirements
-3. /m2-tension feature-name      # Surface trade-offs
-4. /m3-anchor feature-name       # Define success criteria
-5. /m4-generate feature-name --prd --stories
+1. /manifold:m0-init feature-name --template=pm/feature-launch
+2. /manifold:m1-constrain feature-name    # Discover all requirements
+3. /manifold:m2-tension feature-name      # Surface trade-offs
+4. /manifold:m3-anchor feature-name       # Define success criteria
+5. /manifold:m4-generate feature-name --prd --stories
    └── Outputs: PRD.md + STORIES.md
 ```
 
@@ -125,12 +125,12 @@ Questions to ask:
 
 | Command | PM Purpose |
 |---------|------------|
-| `/m0-init --template=pm/*` | Start with PM-focused constraints |
-| `/m1-constrain` | Requirements gathering session |
-| `/m2-tension` | Priority and trade-off decisions |
-| `/m4-generate --prd` | Generate PRD from constraints |
-| `/m4-generate --stories` | Generate user stories |
-| `/m-status` | Track feature progress |
+| `/manifold:m0-init --template=pm/*` | Start with PM-focused constraints |
+| `/manifold:m1-constrain` | Requirements gathering session |
+| `/manifold:m2-tension` | Priority and trade-off decisions |
+| `/manifold:m4-generate --prd` | Generate PRD from constraints |
+| `/manifold:m4-generate --stories` | Generate user stories |
+| `/manifold:m-status` | Track feature progress |
 
 ## Terminology Translation
 
@@ -234,7 +234,7 @@ Tensions are where PM judgment adds the most value. Common tension patterns:
 
 ### PRD Generation (`--prd` flag)
 
-When you run `/m4-generate feature --prd`, the framework generates a structured PRD:
+When you run `/manifold:m4-generate feature --prd`, the framework generates a structured PRD:
 
 ```
 docs/feature/PRD.md
@@ -252,7 +252,7 @@ docs/feature/PRD.md
 
 ### User Stories Generation (`--stories` flag)
 
-When you run `/m4-generate feature --stories`:
+When you run `/manifold:m4-generate feature --stories`:
 
 ```
 docs/feature/STORIES.md
@@ -313,17 +313,17 @@ For brand new software products (not features within existing products), use thi
 ### Greenfield Usage Example
 
 ```
-/m0-init wellness-app --template=pm/opportunity-assessment
-/m1-constrain wellness-app   # Validate the opportunity
-/m2-tension wellness-app     # Surface go/no-go tensions
-/m3-anchor wellness-app      # Required truths for the decision
+/manifold:m0-init wellness-app --template=pm/opportunity-assessment
+/manifold:m1-constrain wellness-app   # Validate the opportunity
+/manifold:m2-tension wellness-app     # Surface go/no-go tensions
+/manifold:m3-anchor wellness-app      # Required truths for the decision
 # -> Decision: GO
 
-/m0-init wellness-app-vision --template=pm/product-vision
-/m1-constrain wellness-app-vision
+/manifold:m0-init wellness-app-vision --template=pm/product-vision
+/manifold:m1-constrain wellness-app-vision
 # ... continue through workflow
 
-/m0-init wellness-app-mvp --template=pm/mvp-definition
+/manifold:m0-init wellness-app-mvp --template=pm/mvp-definition
 # ... scope the MVP
 ```
 
@@ -361,11 +361,11 @@ Thirteen PM-focused templates are available:
 
 Usage:
 ```
-/m0-init mobile-checkout --template=pm/feature-launch
-/m0-init pricing-test --template=pm/experiment
-/m0-init legacy-removal --template=pm/deprecation
-/m0-init new-product --template=pm/opportunity-assessment
-/m0-init product-strategy --template=pm/product-vision
+/manifold:m0-init mobile-checkout --template=pm/feature-launch
+/manifold:m0-init pricing-test --template=pm/experiment
+/manifold:m0-init legacy-removal --template=pm/deprecation
+/manifold:m0-init new-product --template=pm/opportunity-assessment
+/manifold:m0-init product-strategy --template=pm/product-vision
 ```
 
 ## Best Practices
@@ -380,7 +380,7 @@ outcome: "Increase checkout conversion by 15% while maintaining support ticket v
 
 ### 2. Involve Stakeholders in Constraint Discovery
 
-Run `/m1-constrain` as a collaborative session:
+Run `/manifold:m1-constrain` as a collaborative session:
 - Engineering: Technical constraints
 - Design: UX constraints
 - Legal: Security/compliance constraints

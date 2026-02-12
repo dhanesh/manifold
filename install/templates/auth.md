@@ -1,6 +1,6 @@
 # Authentication Constraint Template
 
-Use: `/m0-init <feature> --template=auth`
+Use: `/manifold:m0-init <feature> --template=auth`
 Covers: Login, registration, session management, password handling
 
 ## Outcome

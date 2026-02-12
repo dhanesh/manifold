@@ -40,7 +40,7 @@ PM templates use the same constraint categories (business, technical, user_exper
 ### Option 1: Initialize with Template
 
 ```
-/m0-init user-login --template=auth
+/manifold:m0-init user-login --template=auth
 ```
 
 This creates a manifold pre-populated with auth constraints, ready for customization.
@@ -55,12 +55,12 @@ cp install/templates/auth.md .manifold/my-feature.md
 # Edit MD for content changes (statements, rationale, thresholds)
 ```
 
-### Option 3: Reference During /m1-constrain
+### Option 3: Reference During /manifold:m1-constrain
 
-When running `/m1-constrain`, mention which template applies:
+When running `/manifold:m1-constrain`, mention which template applies:
 
 ```
-/m1-constrain user-auth --reference=auth
+/manifold:m1-constrain user-auth --reference=auth
 ```
 
 The AI will use the template as a starting point and prompt you to customize.
@@ -93,7 +93,7 @@ Templates are starting points, not rigid requirements:
 ## When NOT to Use Templates
 
 - **Novel domains**: If no template fits, start from scratch
-- **Simple changes**: Use `/m-quick` instead
+- **Simple changes**: Use `/manifold:m-quick` instead
 - **Complex integrations**: Templates may oversimplify
 - **Compliance-specific**: Regulatory constraints need expert review
 

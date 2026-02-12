@@ -9,7 +9,7 @@
       "status": "ALL_EXIST",
       "details": [
         {
-          "path": "install/commands/m0-init.md",
+          "path": "install/commands/manifold:m0-init.md",
           "exists": true,
           "satisfies": [
             "RT-1",
@@ -21,7 +21,7 @@
           ]
         },
         {
-          "path": "install/commands/m-status.md",
+          "path": "install/commands/manifold:m-status.md",
           "exists": true,
           "satisfies": [
             "RT-1",
@@ -33,7 +33,7 @@
           ]
         },
         {
-          "path": "install/commands/m2-tension.md",
+          "path": "install/commands/manifold:m2-tension.md",
           "exists": true,
           "satisfies": [
             "RT-3"
@@ -44,7 +44,7 @@
           ]
         },
         {
-          "path": "install/commands/m6-integrate.md",
+          "path": "install/commands/manifold:m6-integrate.md",
           "exists": true,
           "satisfies": [
             "RT-2",
@@ -57,7 +57,7 @@
           ]
         },
         {
-          "path": "install/commands/m5-verify.md",
+          "path": "install/commands/manifold:m5-verify.md",
           "exists": true,
           "satisfies": [
             "RT-4"
@@ -86,7 +86,7 @@
             "RT-6"
           ],
           "v2_features": [
-            "/m6-integrate documentation",
+            "/manifold:m6-integrate documentation",
             "v2 flag documentation"
           ]
         },
@@ -156,9 +156,9 @@
         "description": "New commands MUST follow /m* pattern",
         "status": "SATISFIED",
         "evidence": [
-          "New command: /m6-integrate (follows pattern)",
+          "New command: /manifold:m6-integrate (follows pattern)",
           "install.sh: COMMAND_FILES includes m6-integrate.md",
-          "SKILL.md: Documents /m6-integrate"
+          "SKILL.md: Documents /manifold:m6-integrate"
         ]
       }
     },
@@ -295,7 +295,7 @@
         "All 14 constraints addressed",
         "Backward compatibility preserved (v1 manifolds valid)",
         "8 artifacts generated and verified",
-        "New /m6-integrate command fills integration gap",
+        "New /manifold:m6-integrate command fills integration gap",
         "Gap-to-action automation reduces manual interpretation"
       ],
       "v2_features_verified": [
@@ -304,7 +304,7 @@
         "convergence{} for detecting completion",
         "--auto-deps for dependency detection",
         "--actions for gap automation",
-        "/m6-integrate for artifact wiring"
+        "/manifold:m6-integrate for artifact wiring"
       ],
       "gaps": [],
       "recommendation": "Ready for release"
@@ -385,7 +385,7 @@
       {
         "id": "U1",
         "type": "GOAL",
-        "statement": "/m-status should show iteration history and convergence",
+        "statement": "/manifold:m-status should show iteration history and convergence",
         "docs": true,
         "example": true,
         "status": "SATISFIED"

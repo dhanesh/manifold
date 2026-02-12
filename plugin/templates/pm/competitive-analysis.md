@@ -1,6 +1,6 @@
 # Competitive Analysis Constraint Template
 
-Use: `/m0-init <feature> --template=pm/competitive-analysis`
+Use: `/manifold:m0-init <feature> --template=pm/competitive-analysis`
 Covers: Market positioning analysis, competitive strategy, feature benchmarking
 
 ## Outcome

@@ -45,14 +45,14 @@ Specialized agents for constraint-first development. Each agent handles a specif
 
 ## 1. Constraint Discovery Agent
 
-**Command:** `/m1-constrain <feature>`
+**Command:** `/manifold:m1-constrain <feature>`
 
 **Purpose:** Elicit and document ALL constraints across 5 categories before any implementation begins.
 
 ### Activation Triggers
 
 - Phase is `INITIALIZED`
-- User invokes `/m1-constrain`
+- User invokes `/manifold:m1-constrain`
 - New feature needs constraints identified
 
 ### Behavior
@@ -131,7 +131,7 @@ Technical:
 
 Updated: .manifold/<feature>.json + .manifold/<feature>.md (N constraints)
 
-Next: /m2-tension <feature>
+Next: /manifold:m2-tension <feature>
 ```
 
 ### Schema Compliance
@@ -144,14 +144,14 @@ Next: /m2-tension <feature>
 
 ## 2. Tension Analysis Agent
 
-**Command:** `/m2-tension <feature> [--resolve] [--auto-deps]`
+**Command:** `/manifold:m2-tension <feature> [--resolve] [--auto-deps]`
 
 **Purpose:** Surface conflicts between constraints and propose resolutions before implementation.
 
 ### Activation Triggers
 
 - Phase is `CONSTRAINED`
-- User invokes `/m2-tension`
+- User invokes `/manifold:m2-tension`
 - Constraints updated that may conflict
 
 ### Behavior
@@ -224,7 +224,7 @@ TENSION SUMMARY:
 
 Updated: .manifold/<feature>.json + .md
 
-Next: /m3-anchor <feature>
+Next: /manifold:m3-anchor <feature>
 ```
 
 ### Schema Compliance
@@ -237,14 +237,14 @@ Next: /m3-anchor <feature>
 
 ## 3. Anchor Agent
 
-**Command:** `/m3-anchor <feature> [--outcome="<statement>"]`
+**Command:** `/manifold:m3-anchor <feature> [--outcome="<statement>"]`
 
 **Purpose:** Reason backward from desired outcome to derive required truths and solution space.
 
 ### Activation Triggers
 
 - Phase is `TENSIONED`
-- User invokes `/m3-anchor`
+- User invokes `/manifold:m3-anchor`
 - Outcome needs clarification
 
 ### Behavior
@@ -315,7 +315,7 @@ RECOMMENDATION: Option <X>
 
 Updated: .manifold/<feature>.json + .md
 
-Next: /m4-generate <feature> --option=<X>
+Next: /manifold:m4-generate <feature> --option=<X>
 ```
 
 ### Schema Compliance
@@ -327,14 +327,14 @@ Next: /m4-generate <feature> --option=<X>
 
 ## 4. Generation Agent
 
-**Command:** `/m4-generate <feature> [--option=<A|B|C>] [--artifacts=<list>]`
+**Command:** `/manifold:m4-generate <feature> [--option=<A|B|C>] [--artifacts=<list>]`
 
 **Purpose:** Generate ALL artifacts simultaneously from the constraint manifold—code, tests, docs, runbooks, alerts.
 
 ### Activation Triggers
 
 - Phase is `ANCHORED`
-- User invokes `/m4-generate`
+- User invokes `/manifold:m4-generate`
 - Solution option selected
 
 ### Behavior
@@ -421,14 +421,14 @@ describe('PaymentRetryClient', () => {
 
 ## 5. Verification Agent
 
-**Command:** `/m5-verify <feature> [--strict] [--actions]`
+**Command:** `/manifold:m5-verify <feature> [--strict] [--actions]`
 
 **Purpose:** Verify ALL artifacts against ALL constraints and produce coverage matrix.
 
 ### Activation Triggers
 
 - Phase is `GENERATED`
-- User invokes `/m5-verify`
+- User invokes `/manifold:m5-verify`
 - After code changes
 
 ### Behavior
@@ -493,14 +493,14 @@ Automatically checked:
 
 ## 6. Integration Agent
 
-**Command:** `/m6-integrate <feature> [--check-only] [--auto-wire]`
+**Command:** `/manifold:m6-integrate <feature> [--check-only] [--auto-wire]`
 
 **Purpose:** Wire generated artifacts together by identifying integration points.
 
 ### Activation Triggers
 
 - Phase is `GENERATED` or `VERIFIED`
-- User invokes `/m6-integrate`
+- User invokes `/manifold:m6-integrate`
 - Artifacts exist but aren't connected
 
 ### Behavior
@@ -512,7 +512,7 @@ Automatically checked:
 5. Verify prerequisites satisfied
 6. If `--auto-wire`, perform safe integrations
 7. Update manifold with integration status
-8. Recommend `/m5-verify` after integration
+8. Recommend `/manifold:m5-verify` after integration
 
 ### Integration Detection Patterns
 
@@ -543,7 +543,7 @@ INTEGRATION CHECKLIST:
 COPY-PASTE COMMANDS:
 echo 'export { PaymentRetryClient } from "./PaymentRetryClient";' >> lib/retry/index.ts
 
-Next: After integration, run /m5-verify <feature>
+Next: After integration, run /manifold:m5-verify <feature>
 ```
 
 ### Safe vs Manual Integrations
@@ -555,15 +555,15 @@ Next: After integration, run /m5-verify <feature>
 
 ## 7. Parallel Execution Agent
 
-**Command:** `/parallel "task1" "task2" "task3" [options]`
+**Command:** `/manifold:parallel "task1" "task2" "task3" [options]`
 
 **Purpose:** Execute independent tasks concurrently using isolated git worktrees.
 
 ### Activation Triggers
 
 - Multiple independent tasks identified
-- `/m4-generate` suggests parallelization
-- User invokes `/parallel`
+- `/manifold:m4-generate` suggests parallelization
+- User invokes `/manifold:parallel`
 
 ### Behavior
 
@@ -633,11 +633,11 @@ Groups:
 
 | Phase | Primary Agent | Allowed Actions |
 |-------|---------------|-----------------|
-| `INITIALIZED` | Constraint Discovery | `/m1-constrain` |
-| `CONSTRAINED` | Tension Analysis | `/m2-tension`, back to `/m1-constrain` |
-| `TENSIONED` | Anchor | `/m3-anchor`, back to `/m2-tension` |
-| `ANCHORED` | Generation | `/m4-generate`, back to `/m3-anchor` |
-| `GENERATED` | Verification, Integration | `/m5-verify`, `/m6-integrate` |
+| `INITIALIZED` | Constraint Discovery | `/manifold:m1-constrain` |
+| `CONSTRAINED` | Tension Analysis | `/manifold:m2-tension`, back to `/manifold:m1-constrain` |
+| `TENSIONED` | Anchor | `/manifold:m3-anchor`, back to `/manifold:m2-tension` |
+| `ANCHORED` | Generation | `/manifold:m4-generate`, back to `/manifold:m3-anchor` |
+| `GENERATED` | Verification, Integration | `/manifold:m5-verify`, `/manifold:m6-integrate` |
 | `VERIFIED` | All | Any (feature complete) |
 
 ### Cross-Agent Communication
@@ -702,39 +702,39 @@ parallel:
 
 | Task | Agent | Command |
 |------|-------|---------|
-| "What constraints exist?" | Constraint Discovery | `/m1-constrain` |
-| "Find conflicts" | Tension Analysis | `/m2-tension` |
-| "What's needed for success?" | Anchor | `/m3-anchor` |
-| "Create the implementation" | Generation | `/m4-generate` |
-| "Is everything complete?" | Verification | `/m5-verify` |
-| "Connect the pieces" | Integration | `/m6-integrate` |
-| "Run tasks simultaneously" | Parallel | `/parallel` |
-| "What's the status?" | Status | `/m-status` |
+| "What constraints exist?" | Constraint Discovery | `/manifold:m1-constrain` |
+| "Find conflicts" | Tension Analysis | `/manifold:m2-tension` |
+| "What's needed for success?" | Anchor | `/manifold:m3-anchor` |
+| "Create the implementation" | Generation | `/manifold:m4-generate` |
+| "Is everything complete?" | Verification | `/manifold:m5-verify` |
+| "Connect the pieces" | Integration | `/manifold:m6-integrate` |
+| "Run tasks simultaneously" | Parallel | `/manifold:parallel` |
+| "What's the status?" | Status | `/manifold:m-status` |
 
 ### Common Workflows
 
 **New Feature:**
 ```
-/m0-init feature-name --outcome="Success criteria"
-/m1-constrain feature-name
-/m2-tension feature-name --resolve
-/m3-anchor feature-name
-/m4-generate feature-name --option=A
-/m5-verify feature-name
+/manifold:m0-init feature-name --outcome="Success criteria"
+/manifold:m1-constrain feature-name
+/manifold:m2-tension feature-name --resolve
+/manifold:m3-anchor feature-name
+/manifold:m4-generate feature-name --option=A
+/manifold:m5-verify feature-name
 ```
 
 **Fix Verification Gaps:**
 ```
-/m5-verify feature-name --actions
+/manifold:m5-verify feature-name --actions
 # Copy-paste the generated actions
-/m5-verify feature-name  # Re-verify
+/manifold:m5-verify feature-name  # Re-verify
 ```
 
 **Parallel Feature Work:**
 ```
-/parallel "Add auth module" "Add logging" "Add tests" --dry-run
+/manifold:parallel "Add auth module" "Add logging" "Add tests" --dry-run
 # Review analysis
-/parallel "Add auth module" "Add logging" "Add tests"
+/manifold:parallel "Add auth module" "Add logging" "Add tests"
 ```
 
 ---

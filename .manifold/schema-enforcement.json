@@ -641,10 +641,10 @@
           "resolution": "Updated m1-constrain.md, m2-tension.md, m3-anchor.md, m6-integrate.md with v3 schema compliance sections",
           "status": "CLOSED",
           "files_changed": [
-            "install/commands/m1-constrain.md",
-            "install/commands/m2-tension.md",
-            "install/commands/m3-anchor.md",
-            "install/commands/m6-integrate.md"
+            "install/commands/manifold:m1-constrain.md",
+            "install/commands/manifold:m2-tension.md",
+            "install/commands/manifold:m3-anchor.md",
+            "install/commands/manifold:m6-integrate.md"
           ]
         },
         {

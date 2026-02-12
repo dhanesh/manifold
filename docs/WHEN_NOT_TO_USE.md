@@ -14,7 +14,7 @@ Is this a...
 │  └─ DON'T use Manifold → Just commit it
 │
 ├─ Small feature (< 3 files, < 1 day)?
-│  └─ MAYBE use /m-quick → Or just build it
+│  └─ MAYBE use /manifold:m-quick → Or just build it
 │
 ├─ New feature with unclear requirements?
 │  └─ USE Manifold → Constraint discovery prevents waste
@@ -41,7 +41,7 @@ Is this a PM task...
 │  └─ DON'T use Manifold → Standard bug triage process
 │
 ├─ Quick A/B test (< 1 week)?
-│  └─ MAYBE use /m-quick → Or standard experiment doc
+│  └─ MAYBE use /manifold:m-quick → Or standard experiment doc
 │
 ├─ New feature with multiple stakeholders?
 │  └─ USE Manifold → Alignment through shared constraints
@@ -59,7 +59,7 @@ Is this a PM task...
 │  └─ USE Manifold → Constraint discovery across domains
 │
 └─ PRD needed for stakeholder alignment?
-   └─ USE Manifold → /m4-generate --prd produces structured PRD
+   └─ USE Manifold → /manifold:m4-generate --prd produces structured PRD
 ```
 
 ---
@@ -189,11 +189,11 @@ git branch -D spike/test-new-api
 
 ---
 
-## When to Use /m-quick Instead
+## When to Use /manifold:m-quick Instead
 
-Light mode (`/m-quick`) is for situations between "don't use Manifold" and "use full Manifold":
+Light mode (`/manifold:m-quick`) is for situations between "don't use Manifold" and "use full Manifold":
 
-| Scenario | Full Manifold | /m-quick | None |
+| Scenario | Full Manifold | /manifold:m-quick | None |
 |----------|---------------|----------|------|
 | Complex new feature | ✓ | | |
 | Medium feature (known requirements) | | ✓ | |
@@ -214,7 +214,7 @@ Watch for these thoughts - they suggest Manifold isn't needed:
 | Thought | Reality |
 |---------|---------|
 | "I already know exactly what to build" | If requirements are clear and simple, just build it |
-| "This should only take an hour" | /m-quick at most, probably nothing |
+| "This should only take an hour" | /manifold:m-quick at most, probably nothing |
 | "There are no stakeholders to consult" | Constraint discovery works best with multiple perspectives |
 | "We need this yesterday" | Speed trumps thoroughness for urgent work |
 | "It's just a small tweak" | Small tweaks don't need constraint analysis |
@@ -243,7 +243,7 @@ Start simple, add rigor as needed:
 ```
 Level 0: Just code it
     ↓ (complexity emerges)
-Level 1: /m-quick (light mode)
+Level 1: /manifold:m-quick (light mode)
     ↓ (requirements multiply)
 Level 2: Full Manifold workflow
 ```
@@ -251,10 +251,10 @@ Level 2: Full Manifold workflow
 **Upgrading is easy:**
 ```bash
 # From nothing to light mode
-/m-quick my-feature
+/manifold:m-quick my-feature
 
 # From light mode to full
-/m0-init my-feature --from-quick
+/manifold:m0-init my-feature --from-quick
 ```
 
 **Downgrading is harder** - if you've done full Manifold discovery and decide it was overkill, you've spent the time. That's okay - the clarity is valuable even if you didn't strictly need it.
@@ -269,7 +269,7 @@ When should you use Manifold vs other approaches?
 |----------|----------|----------|--------------|
 | Just code it | Trivial changes, known patterns | None | None |
 | Comments/TODOs | Simple decisions, future reminders | Low | Low |
-| /m-quick | Medium features, clear requirements | Medium | Medium |
+| /manifold:m-quick | Medium features, clear requirements | Medium | Medium |
 | Full Manifold | Complex features, multiple stakeholders | High | High |
 | RFC/Design Doc | Architecture decisions, team alignment | High | Medium |
 
@@ -291,7 +291,7 @@ When should you use Manifold vs other approaches?
 - You're exploring/prototyping
 - The constraints are already well-known
 
-**Use /m-quick when:**
+**Use /manifold:m-quick when:**
 - It's between trivial and complex
 - Requirements are known but worth documenting
 - You want a lightweight paper trail
@@ -302,4 +302,4 @@ When should you use Manifold vs other approaches?
 
 The goal is **shipping working software that meets stakeholder needs**. Manifold is a tool for achieving that goal in complex situations. It's not a ritual to perform on every change.
 
-If you're asking "Should I use Manifold for this?" and the answer isn't obviously "yes", the answer is probably "no" or "/m-quick".
+If you're asking "Should I use Manifold for this?" and the answer isn't obviously "yes", the answer is probably "no" or "/manifold:m-quick".

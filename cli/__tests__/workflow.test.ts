@@ -1,7 +1,7 @@
 /**
  * Tests for AI Workflow Command Outputs
  *
- * These tests validate the YAML outputs that AI commands (/m0-init, /m1-constrain, etc.)
+ * These tests validate the YAML outputs that AI commands (/manifold:m0-init, /manifold:m1-constrain, etc.)
  * are expected to produce. Since AI commands are prompts, we test their expected outputs.
  *
  * Satisfies: Evaluation recommendation - "Test AI Workflows"
@@ -16,7 +16,7 @@ import type { Manifold } from '../lib/parser.js';
 // =============================================================================
 
 /**
- * Expected output format from /m0-init
+ * Expected output format from /manifold:m0-init
  */
 const m0InitOutput: Manifold = {
   schema_version: 3,
@@ -41,7 +41,7 @@ const m0InitOutput: Manifold = {
 };
 
 /**
- * Expected output format from /m1-constrain
+ * Expected output format from /manifold:m1-constrain
  */
 const m1ConstrainOutput: Manifold = {
   schema_version: 3,
@@ -84,7 +84,7 @@ const m1ConstrainOutput: Manifold = {
 };
 
 /**
- * Expected output format from /m2-tension
+ * Expected output format from /manifold:m2-tension
  */
 const m2TensionOutput: Manifold = {
   schema_version: 3,
@@ -136,7 +136,7 @@ const m2TensionOutput: Manifold = {
 };
 
 /**
- * Expected output format from /m3-anchor
+ * Expected output format from /manifold:m3-anchor
  */
 const m3AnchorOutput: Manifold = {
   schema_version: 3,
@@ -175,7 +175,7 @@ const m3AnchorOutput: Manifold = {
 };
 
 /**
- * Expected output format from /m5-verify (complete)
+ * Expected output format from /manifold:m5-verify (complete)
  */
 const m5VerifyOutputComplete: Manifold = {
   schema_version: 3,
@@ -215,10 +215,10 @@ const m5VerifyOutputComplete: Manifold = {
 };
 
 // =============================================================================
-// Tests: /m0-init Output Validation
+// Tests: /manifold:m0-init Output Validation
 // =============================================================================
 
-describe('/m0-init output validation', () => {
+describe('/manifold:m0-init output validation', () => {
   test('produces valid manifold structure', () => {
     const result = validateManifold(m0InitOutput);
     expect(result.valid).toBe(true);
@@ -247,10 +247,10 @@ describe('/m0-init output validation', () => {
 });
 
 // =============================================================================
-// Tests: /m1-constrain Output Validation
+// Tests: /manifold:m1-constrain Output Validation
 // =============================================================================
 
-describe('/m1-constrain output validation', () => {
+describe('/manifold:m1-constrain output validation', () => {
   test('produces valid manifold structure', () => {
     const result = validateManifold(m1ConstrainOutput);
     expect(result.valid).toBe(true);
@@ -307,10 +307,10 @@ describe('/m1-constrain output validation', () => {
 });
 
 // =============================================================================
-// Tests: /m2-tension Output Validation
+// Tests: /manifold:m2-tension Output Validation
 // =============================================================================
 
-describe('/m2-tension output validation', () => {
+describe('/manifold:m2-tension output validation', () => {
   test('produces valid manifold structure', () => {
     const result = validateManifold(m2TensionOutput);
     expect(result.valid).toBe(true);
@@ -368,10 +368,10 @@ describe('/m2-tension output validation', () => {
 });
 
 // =============================================================================
-// Tests: /m3-anchor Output Validation
+// Tests: /manifold:m3-anchor Output Validation
 // =============================================================================
 
-describe('/m3-anchor output validation', () => {
+describe('/manifold:m3-anchor output validation', () => {
   test('produces valid manifold structure', () => {
     const result = validateManifold(m3AnchorOutput);
     expect(result.valid).toBe(true);
@@ -408,10 +408,10 @@ describe('/m3-anchor output validation', () => {
 });
 
 // =============================================================================
-// Tests: /m5-verify Output Validation
+// Tests: /manifold:m5-verify Output Validation
 // =============================================================================
 
-describe('/m5-verify output validation', () => {
+describe('/manifold:m5-verify output validation', () => {
   test('produces valid manifold structure', () => {
     const result = validateManifold(m5VerifyOutputComplete);
     expect(result.valid).toBe(true);
@@ -501,10 +501,10 @@ describe('phase transition rules', () => {
 });
 
 // =============================================================================
-// Tests: Light Mode (/m-quick) Output Validation
+// Tests: Light Mode (/manifold:m-quick) Output Validation
 // =============================================================================
 
-describe('/m-quick (light mode) output validation', () => {
+describe('/manifold:m-quick (light mode) output validation', () => {
   const lightModeOutput: Manifold = {
     schema_version: 3,
     feature: 'quick-fix',

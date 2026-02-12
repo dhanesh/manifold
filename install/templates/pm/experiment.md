@@ -1,6 +1,6 @@
 # Experiment Constraint Template
 
-Use: `/m0-init <experiment> --template=pm/experiment`
+Use: `/manifold:m0-init <experiment> --template=pm/experiment`
 Covers: A/B tests, feature experiments, pricing experiments, UX experiments
 
 ## Outcome

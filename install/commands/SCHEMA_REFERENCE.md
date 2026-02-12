@@ -18,12 +18,12 @@ description: "Complete Manifold schema reference with all valid phases, types, s
 
 | Phase | Set By | Description |
 |-------|--------|-------------|
-| `INITIALIZED` | /m0-init | Manifold created, feature named |
-| `CONSTRAINED` | /m1-constrain | Constraints discovered and documented |
-| `TENSIONED` | /m2-tension | Tensions identified and resolved |
-| `ANCHORED` | /m3-anchor | Required truths established, option selected |
-| `GENERATED` | /m4-generate | Artifacts created |
-| `VERIFIED` | /m5-verify | Artifacts validated against constraints |
+| `INITIALIZED` | /manifold:m0-init | Manifold created, feature named |
+| `CONSTRAINED` | /manifold:m1-constrain | Constraints discovered and documented |
+| `TENSIONED` | /manifold:m2-tension | Tensions identified and resolved |
+| `ANCHORED` | /manifold:m3-anchor | Required truths established, option selected |
+| `GENERATED` | /manifold:m4-generate | Artifacts created |
+| `VERIFIED` | /manifold:m5-verify | Artifacts validated against constraints |
 
 **Phase Transition Rules:**
 ```
@@ -381,7 +381,7 @@ Both queries are valid and provide complementary views of the same constraint ne
 **From Claude Code Team:**
 
 1. **Surface Tensions Early**
-   - Run `/m2-tension` before implementation
+   - Run `/manifold:m2-tension` before implementation
    - Hidden tensions cause bugs
 
 2. **Document Resolutions Explicitly**
@@ -425,7 +425,7 @@ Both queries are valid and provide complementary views of the same constraint ne
 
 1. **Check for Contradictory Invariants**
    - Two invariants cannot require opposite things
-   - Use the conflict detection in `/m2-tension`
+   - Use the conflict detection in `/manifold:m2-tension`
 
 2. **Resource Budgets**
    - If multiple constraints mention the same resource (time, memory), document the trade-off
@@ -460,8 +460,8 @@ Both queries are valid and provide complementary views of the same constraint ne
 
 | Mistake | Problem | Solution |
 |---------|---------|----------|
-| Skipping `/m1-constrain` | Missing constraints emerge during implementation | Always run full workflow |
-| Leaving tensions unresolved | Contradictory code paths | Resolve before `/m4-generate` |
+| Skipping `/manifold:m1-constrain` | Missing constraints emerge during implementation | Always run full workflow |
+| Leaving tensions unresolved | Contradictory code paths | Resolve before `/manifold:m4-generate` |
 | Inventing new phases | Validation failures | Use ONLY phases from this document |
 | Using `ux` instead of `user_experience` | Deprecated in v2+ | Update to `user_experience` |
 | Absolute paths in evidence | Security risk, portability issues | Use relative paths only |

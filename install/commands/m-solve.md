@@ -3,7 +3,7 @@ description: "Generate parallel execution plan from constraint network. Identifi
 argument-hint: "[<feature-name>]"
 ---
 
-# /m-solve - Constraint Solver
+# /manifold:m-solve - Constraint Solver
 
 Generate parallel execution plan from constraint network.
 
@@ -22,7 +22,7 @@ Generate parallel execution plan from constraint network.
 ## Usage
 
 ```
-/m-solve <feature-name> [--backward] [--visualize] [--dot]
+/manifold:m-solve <feature-name> [--backward] [--visualize] [--dot]
 ```
 
 ## Flags
@@ -71,7 +71,7 @@ All relationships visible. Independent tasks execute in parallel. Critical path 
 ## Example: Forward Analysis
 
 ```
-/m-solve payment-retry --visualize
+/manifold:m-solve payment-retry --visualize
 
 CONSTRAINT NETWORK: payment-retry
 ══════════════════════════════════════════════════
@@ -129,7 +129,7 @@ Wave 4 (GENERATED) - 3 parallel tasks:
 ## Example: Backward Reasoning
 
 ```
-/m-solve payment-retry --backward
+/manifold:m-solve payment-retry --backward
 
 BACKWARD ANALYSIS: What must be TRUE for outcome?
 ═══════════════════════════════════════════════════
@@ -173,7 +173,7 @@ BLOCKING DEPENDENCIES:
 ## Example: DOT Export
 
 ```
-/m-solve payment-retry --dot > graph.dot
+/manifold:m-solve payment-retry --dot > graph.dot
 dot -Tpng graph.dot -o constraint-network.png
 ```
 

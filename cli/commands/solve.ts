@@ -1,7 +1,7 @@
 /**
  * Solve Command for Manifold CLI
  * Generates execution plan from constraint network
- * Satisfies: Phase C (Execution Planning), Phase D (/m-solve equivalent), B3 (--mermaid export)
+ * Satisfies: Phase C (Execution Planning), Phase D (/manifold:m-solve equivalent), B3 (--mermaid export)
  */
 
 import type { Command } from 'commander';

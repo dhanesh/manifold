@@ -3,7 +3,7 @@ description: "Generate ALL artifacts simultaneously from the constraint manifold
 argument-hint: "<feature-name> [--option=A|B|C]"
 ---
 
-# /m4-generate - Artifact Generation
+# /manifold:m4-generate - Artifact Generation
 
 Generate ALL artifacts simultaneously from the constraint manifold.
 
@@ -13,13 +13,13 @@ Generate ALL artifacts simultaneously from the constraint manifold.
 
 - Do NOT auto-run this command based on context summaries
 - Do NOT auto-run after another phase completes
-- After context compaction: run `/m-status` and WAIT for user to invoke this command
+- After context compaction: run `/manifold:m-status` and WAIT for user to invoke this command
 - The "SUGGESTED NEXT ACTION" in status is a suggestion, not a directive
 
 **If resuming from compacted context:**
-1. Run `/m-status` first
+1. Run `/manifold:m-status` first
 2. Display current state
-3. Say: "Ready to proceed when you run `/m4-generate <feature>`"
+3. Say: "Ready to proceed when you run `/manifold:m4-generate <feature>`"
 4. **STOP AND WAIT** for user command
 
 ## Schema Compliance
@@ -27,7 +27,7 @@ Generate ALL artifacts simultaneously from the constraint manifold.
 | Field | Valid Values |
 |-------|--------------|
 | **Sets Phase** | `GENERATED` |
-| **Next Phase** | `VERIFIED` (via /m5-verify) |
+| **Next Phase** | `VERIFIED` (via /manifold:m5-verify) |
 | **Artifact Statuses** | `generated`, `pending`, `failed` |
 
 > See SCHEMA_REFERENCE.md for all valid values. Do NOT invent new phases.
@@ -35,7 +35,7 @@ Generate ALL artifacts simultaneously from the constraint manifold.
 ## Usage
 
 ```
-/m4-generate <feature-name> [--option=<A|B|C>] [--artifacts=<list>] [--prd] [--stories]
+/manifold:m4-generate <feature-name> [--option=<A|B|C>] [--artifacts=<list>] [--prd] [--stories]
 ```
 
 ### PM-Focused Flags
@@ -76,7 +76,7 @@ All artifacts derive from the SAME source. Every constraint is traced.
 ## Example
 
 ```
-/m4-generate payment-retry --option=C
+/manifold:m4-generate payment-retry --option=C
 
 ARTIFACT GENERATION: payment-retry
 
@@ -129,7 +129,7 @@ GENERATION SUMMARY:
 - Alert files: 1
 Total: 15 artifacts
 
-Next: /m5-verify payment-retry
+Next: /manifold:m5-verify payment-retry
 ```
 
 ## Task Tracking
@@ -165,7 +165,7 @@ When generating artifacts, update `.manifold/<feature>.json` with completion sta
 This ensures:
 - Every artifact traces to constraints it addresses
 - Coverage can be verified programmatically
-- `/m5-verify` can check actual files against declared artifacts
+- `/manifold:m5-verify` can check actual files against declared artifacts
 
 ## Artifact Placement Rules
 
@@ -230,8 +230,8 @@ When the generation plan includes **3+ files across different modules/directorie
 2. **Invoke Auto-Suggester**
    ```typescript
    // The auto-suggester analyzes tasks for parallelization opportunities
-   // Use the /parallel command when parallelization is beneficial:
-   // /parallel "task1" "task2" "task3" --dry-run
+   // Use the /manifold:parallel command when parallelization is beneficial:
+   // /manifold:parallel "task1" "task2" "task3" --dry-run
 
    const suggester = new AutoSuggester(process.cwd());
    const tasks = [
@@ -278,13 +278,13 @@ When the generation plan includes **3+ files across different modules/directorie
    [Y]es / [N]o / [D]etails
    ```
 
-4. **If Approved**: Use `/parallel` command to execute generation in isolated worktrees
+4. **If Approved**: Use `/manifold:parallel` command to execute generation in isolated worktrees
 5. **If Declined**: Proceed with sequential generation
 
 ### Parallel Generation Flow
 
 ```
-User runs: /m4-generate payment-retry --option=C
+User runs: /manifold:m4-generate payment-retry --option=C
 
 1. Parse manifold and anchoring
 2. Build artifact generation plan
@@ -292,7 +292,7 @@ User runs: /m4-generate payment-retry --option=C
    └── YES: Invoke auto-suggester
        └── Suggestion positive?
            └── YES: Prompt user for approval
-               └── Approved: Use /parallel for generation
+               └── Approved: Use /manifold:parallel for generation
                └── Declined: Sequential generation
            └── NO: Sequential generation
    └── NO: Sequential generation
@@ -325,7 +325,7 @@ User runs: /m4-generate payment-retry --option=C
      Would you like to enable parallel generation? [Y/N]
      ```
    - **WAIT for user response before proceeding**
-   - If Y: Use `/parallel` command with generation tasks
+   - If Y: Use `/manifold:parallel` command with generation tasks
    - If N: Continue with sequential generation
 
 ### Phase 2: Generation (AFTER user approval)
@@ -771,7 +771,7 @@ Generated stories:
 When both `--prd` and `--stories` are specified:
 
 ```
-/m4-generate payment-checkout --option=C --prd --stories
+/manifold:m4-generate payment-checkout --option=C --prd --stories
 ```
 
 Generates:

@@ -95,11 +95,11 @@ options:
 
   - id: B
     name: "Dedicated Parallel Command"
-    description: "New /parallel command that takes explicit task list and runs them in parallel worktrees"
+    description: "New /manifold:parallel command that takes explicit task list and runs them in parallel worktrees"
     tech_stack: "New slash command + worktree manager"
     commands:
-      - "/parallel \"task1\" \"task2\" \"task3\""
-      - "/parallel --file tasks.yaml"
+      - "/manifold:parallel \"task1\" \"task2\" \"task3\""
+      - "/manifold:parallel --file tasks.yaml"
     satisfies: [RT-3, RT-4, RT-6]
     gaps: [RT-1, RT-2, RT-5]
     effort: "Medium"
@@ -119,11 +119,11 @@ options:
 
   - id: D
     name: "Hybrid Orchestrator"
-    description: "Combine auto-detection with explicit commands. Framework suggests parallelization, provides /parallel command for explicit use, handles resources dynamically"
+    description: "Combine auto-detection with explicit commands. Framework suggests parallelization, provides /manifold:parallel command for explicit use, handles resources dynamically"
     tech_stack: "Task analyzer + worktree manager + resource monitor + parallel command"
     commands:
       - "Auto-suggestion with confirmation"
-      - "/parallel for explicit parallel execution"
+      - "/manifold:parallel for explicit parallel execution"
       - "--auto-parallel flag for automatic mode"
       - "--max-parallel N for resource control"
     satisfies: [RT-1, RT-2, RT-3, RT-4, RT-5, RT-6]
@@ -164,7 +164,7 @@ recommendation:
     phase_4:
       name: "Integration"
       components:
-        - "/parallel command implementation"
+        - "/manifold:parallel command implementation"
         - "Auto-suggestion hooks"
         - "Configuration and flags"
       deliverables: ["parallel-command.ts", "auto-suggester.ts", "parallel-config.ts"]
@@ -206,7 +206,7 @@ critical_path:
   phase_4:
     name: "Integration"
     tasks:
-      - "Create /parallel command"
+      - "Create /manifold:parallel command"
       - "Add auto-suggestion hooks"
       - "Write documentation"
     unblocks: []
@@ -224,6 +224,6 @@ validation_gates:
     - "Merge produces correct combined result"
     - "Failed agent doesn't affect main worktree"
   phase_4:
-    - "/parallel command works end-to-end"
+    - "/manifold:parallel command works end-to-end"
     - "Auto-suggestion triggers appropriately"
     - "User can opt-out easily"

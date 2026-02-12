@@ -14,7 +14,7 @@ This guide walks you through building a complete feature using Manifold, from em
 
 ### Command
 ```
-/m0-init notification-preferences --outcome="Users can configure notification preferences with 99% save success rate"
+/manifold:m0-init notification-preferences --outcome="Users can configure notification preferences with 99% save success rate"
 ```
 
 ### Output
@@ -39,7 +39,7 @@ v3 Features Enabled:
 - Evidence System (reality grounding)
 - Constraint Graph (temporal non-linearity)
 
-Next: /m1-constrain notification-preferences
+Next: /manifold:m1-constrain notification-preferences
 ```
 
 ### What Just Happened
@@ -55,7 +55,7 @@ This is where constraint discovery happens through interactive questioning.
 
 ### Command
 ```
-/m1-constrain notification-preferences
+/manifold:m1-constrain notification-preferences
 ```
 
 ### The Interview (Actual Transcript)
@@ -189,7 +189,7 @@ By Type:
 Updated: .manifold/notification-preferences.yaml
 Phase: CONSTRAINED
 
-Next: /m2-tension notification-preferences
+Next: /manifold:m2-tension notification-preferences
 ```
 
 ---
@@ -200,7 +200,7 @@ Now we look for conflicts between constraints.
 
 ### Command
 ```
-/m2-tension notification-preferences
+/manifold:m2-tension notification-preferences
 ```
 
 ### Output
@@ -287,7 +287,7 @@ TENSION SUMMARY:
 Updated: .manifold/notification-preferences.yaml
 Phase: TENSIONED
 
-Next: /m3-anchor notification-preferences
+Next: /manifold:m3-anchor notification-preferences
 ```
 
 ---
@@ -298,7 +298,7 @@ Backward reasoning from outcome to required truths.
 
 ### Command
 ```
-/m3-anchor notification-preferences
+/manifold:m3-anchor notification-preferences
 ```
 
 ### Output
@@ -367,7 +367,7 @@ Rationale:
 Created: .manifold/notification-preferences.anchor.yaml
 Phase: ANCHORED
 
-Next: /m4-generate notification-preferences --option=C
+Next: /manifold:m4-generate notification-preferences --option=C
 ```
 
 ---
@@ -378,7 +378,7 @@ Generate all artifacts simultaneously.
 
 ### Command
 ```
-/m4-generate notification-preferences --option=C
+/manifold:m4-generate notification-preferences --option=C
 ```
 
 ### Output (Summary)
@@ -434,7 +434,7 @@ GENERATION SUMMARY:
 
 Phase: GENERATED
 
-Next: /m5-verify notification-preferences
+Next: /manifold:m5-verify notification-preferences
 ```
 
 ---
@@ -445,7 +445,7 @@ Verify all constraints are satisfied.
 
 ### Command
 ```
-/m5-verify notification-preferences
+/manifold:m5-verify notification-preferences
 ```
 
 ### Output
@@ -566,5 +566,5 @@ Now that you've seen a complete walkthrough:
 
 1. **Try it yourself** - Pick a small feature and run through the phases
 2. **Use templates** - See `install/templates/` for common patterns
-3. **Light mode** - Use `/m-quick` for simpler changes
+3. **Light mode** - Use `/manifold:m-quick` for simpler changes
 4. **Read the glossary** - See `docs/GLOSSARY.md` for terminology

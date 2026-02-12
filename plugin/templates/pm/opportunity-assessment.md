@@ -1,6 +1,6 @@
 # Opportunity Assessment Constraint Template
 
-Use: `/m0-init <feature> --template=pm/opportunity-assessment`
+Use: `/manifold:m0-init <feature> --template=pm/opportunity-assessment`
 Covers: Go/no-go decisions, opportunity evaluation, new product exploration
 
 ## Outcome

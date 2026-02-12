@@ -411,7 +411,7 @@
           "U1"
         ],
         "status": "generated",
-        "description": "Status command matching /m-status output"
+        "description": "Status command matching /manifold:m-status output"
       },
       {
         "path": "cli/commands/validate.ts",

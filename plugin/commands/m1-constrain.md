@@ -3,7 +3,7 @@ description: "Interview-driven constraint discovery across 5 categories (busines
 argument-hint: "<feature-name>"
 ---
 
-# /m1-constrain - Constraint Discovery
+# /manifold:m1-constrain - Constraint Discovery
 
 Interview-driven constraint discovery across 5 categories.
 
@@ -13,13 +13,13 @@ Interview-driven constraint discovery across 5 categories.
 
 - Do NOT auto-run this command based on context summaries
 - Do NOT auto-run after another phase completes
-- After context compaction: run `/m-status` and WAIT for user to invoke this command
+- After context compaction: run `/manifold:m-status` and WAIT for user to invoke this command
 - The "SUGGESTED NEXT ACTION" in status is a suggestion, not a directive
 
 **If resuming from compacted context:**
-1. Run `/m-status` first
+1. Run `/manifold:m-status` first
 2. Display current state
-3. Say: "Ready to proceed when you run `/m1-constrain <feature>`"
+3. Say: "Ready to proceed when you run `/manifold:m1-constrain <feature>`"
 4. **STOP AND WAIT** for user command
 
 ## Schema Compliance
@@ -27,7 +27,7 @@ Interview-driven constraint discovery across 5 categories.
 | Field | Valid Values |
 |-------|--------------|
 | **Sets Phase** | `CONSTRAINED` |
-| **Next Phase** | `TENSIONED` (via /m2-tension) |
+| **Next Phase** | `TENSIONED` (via /manifold:m2-tension) |
 | **Constraint Types** | `invariant`, `goal`, `boundary` |
 | **Constraint Categories** | `business`, `technical`, `user_experience`, `security`, `operational` |
 | **Constraint ID Prefixes** | B1, B2... (business), T1, T2... (technical), U1, U2... (UX), S1, S2... (security), O1, O2... (operational) |
@@ -123,7 +123,7 @@ If using legacy YAML, constraints use `statement`, NOT `description`:
 When adding constraints, ensure the manifold maintains v3 schema structure:
 
 ```yaml
-# v3 requires these fields (created by /m0-init)
+# v3 requires these fields (created by /manifold:m0-init)
 schema_version: 3
 iterations: []      # Track each phase change
 convergence:
@@ -156,7 +156,7 @@ iterations:
 ## Usage
 
 ```
-/m1-constrain <feature-name> [--category=<category>]
+/manifold:m1-constrain <feature-name> [--category=<category>]
 ```
 
 ## Constraint Categories
@@ -210,7 +210,7 @@ For each category, ask probing questions:
 ## Example
 
 ```
-/m1-constrain payment-retry
+/manifold:m1-constrain payment-retry
 
 CONSTRAINT DISCOVERY: payment-retry
 
@@ -239,7 +239,7 @@ Operational:
 
 Updated: .manifold/payment-retry.json + .manifold/payment-retry.md (12 constraints)
 
-Next: /m2-tension payment-retry
+Next: /manifold:m2-tension payment-retry
 ```
 
 ## Execution Instructions

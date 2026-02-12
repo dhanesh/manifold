@@ -1,6 +1,6 @@
 # Payment Processing Constraint Template
 
-Use: `/m0-init <feature> --template=payment`
+Use: `/manifold:m0-init <feature> --template=payment`
 Covers: Payment processing, refunds, subscriptions, financial transactions
 
 ## Outcome

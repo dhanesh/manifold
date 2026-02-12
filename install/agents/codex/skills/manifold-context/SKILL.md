@@ -49,11 +49,11 @@ Read all files in the `.manifold/` directory of the current project. For each fe
 ### Phase → Next Action Mapping
 | Phase | Next Command |
 |-------|-------------|
-| INITIALIZED | `/m1-constrain <feature>` |
-| CONSTRAINED | `/m2-tension <feature>` |
-| TENSIONED | `/m3-anchor <feature>` |
-| ANCHORED | `/m4-generate <feature>` |
-| GENERATED | `/m5-verify <feature>` |
+| INITIALIZED | `/manifold:m1-constrain <feature>` |
+| CONSTRAINED | `/manifold:m2-tension <feature>` |
+| TENSIONED | `/manifold:m3-anchor <feature>` |
+| ANCHORED | `/manifold:m4-generate <feature>` |
+| GENERATED | `/manifold:m5-verify <feature>` |
 | VERIFIED | Complete! |
 
 If no `.manifold/` directory exists, output: "No manifold found in this project."

@@ -143,14 +143,14 @@ Which Manifold commands work for non-programming decisions?
 
 | Command | Applicable? | Notes |
 |---------|-------------|-------|
-| `/m0-init` | ✓ Yes | Initialize any decision manifold |
-| `/m1-constrain` | ✓ Yes | Discover constraints across 5 categories |
-| `/m2-tension` | ✓ Yes | Surface conflicts between constraints |
-| `/m3-anchor` | ✓ Yes | Backward reasoning works for any outcome |
-| `/m4-generate` | ◐ Partial | Generates analysis, not code |
-| `/m5-verify` | ◐ Partial | Verifies completeness, not code coverage |
-| `/m6-integrate` | ✗ No | Code-specific wiring |
-| `/m-status` | ✓ Yes | Track decision progress |
+| `/manifold:m0-init` | ✓ Yes | Initialize any decision manifold |
+| `/manifold:m1-constrain` | ✓ Yes | Discover constraints across 5 categories |
+| `/manifold:m2-tension` | ✓ Yes | Surface conflicts between constraints |
+| `/manifold:m3-anchor` | ✓ Yes | Backward reasoning works for any outcome |
+| `/manifold:m4-generate` | ◐ Partial | Generates analysis, not code |
+| `/manifold:m5-verify` | ◐ Partial | Verifies completeness, not code coverage |
+| `/manifold:m6-integrate` | ✗ No | Code-specific wiring |
+| `/manifold:m-status` | ✓ Yes | Track decision progress |
 
 **Key Insight**: The conceptual phases (constrain → tension → anchor) translate fully. The artifact phases (generate → verify → integrate) need adaptation since they're designed for code artifacts.
 

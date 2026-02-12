@@ -21,7 +21,7 @@ required_truths:
 
   - id: RT3
     statement: "YAML schema uses 'user_experience' not 'ux'"
-    gap: "install/commands/m0-init.md uses 'ux' in schema"
+    gap: "install/commands/manifold:m0-init.md uses 'ux' in schema"
     action: "Update m0-init.md schema to use 'user_experience'"
     satisfies: [T1, T3]
 

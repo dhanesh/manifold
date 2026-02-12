@@ -3,14 +3,14 @@ description: "Execute tasks in parallel using git worktrees. Analyzes dependenci
 argument-hint: "\"task1\" \"task2\" [\"task3\"] [--dry-run] [--max-parallel=N]"
 ---
 
-# /parallel - Parallel Task Execution
+# /manifold:parallel - Parallel Task Execution
 
 Execute multiple tasks in parallel using isolated git worktrees.
 
 ## Usage
 
 ```
-/parallel "task1" "task2" "task3" [options]
+/manifold:parallel "task1" "task2" "task3" [options]
 ```
 
 ## Options
@@ -46,7 +46,7 @@ Execute multiple tasks in parallel using isolated git worktrees.
 ## Example
 
 ```
-User: /parallel "Add login form" "Add signup form" "Add password reset" --dry-run
+User: /manifold:parallel "Add login form" "Add signup form" "Add password reset" --dry-run
 
 Response:
 🔄 Analyzing tasks for parallelization...
@@ -121,8 +121,8 @@ When this command is invoked:
 
 ## Related Commands
 
-- `/m0-init` - Initialize a constraint manifold
-- `/m-status` - Show current manifold state
+- `/manifold:m0-init` - Initialize a constraint manifold
+- `/manifold:m-status` - Show current manifold state
 
 ## See Also
 

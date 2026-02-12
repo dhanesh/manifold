@@ -207,7 +207,7 @@ convergence:
     - "Phased rollout plan approved"
     - "Support training complete"
 
-# Generation tracking (added after /m4-generate --prd --stories)
+# Generation tracking (added after /manifold:m4-generate --prd --stories)
 generation:
   timestamp: "2026-01-15T10:30:00Z"
   artifacts:

@@ -1,6 +1,6 @@
 # Lean Canvas Constraint Template
 
-Use: `/m0-init <product> --template=pm/lean-canvas`
+Use: `/manifold:m0-init <product> --template=pm/lean-canvas`
 Covers: Lean startup canvas, business model validation, early-stage product definition
 
 ## Outcome

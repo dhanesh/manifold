@@ -1,6 +1,6 @@
 # Product Vision & Strategy Constraint Template
 
-Use: `/m0-init <product> --template=pm/product-vision`
+Use: `/manifold:m0-init <product> --template=pm/product-vision`
 Covers: New product foundations, product strategy, vision documentation
 
 ## Outcome

@@ -39,7 +39,7 @@ Pre-built constraint patterns for common PM workflows. These templates reduce th
 ### Option 1: Initialize with Template
 
 ```
-/m0-init mobile-checkout --template=pm/feature-launch
+/manifold:m0-init mobile-checkout --template=pm/feature-launch
 ```
 
 Creates a manifold pre-populated with PM-focused constraints, ready for customization.
@@ -54,10 +54,10 @@ cp install/templates/pm/feature-launch.md .manifold/my-feature.md
 # Edit MD for content changes (statements, rationale, thresholds)
 ```
 
-### Option 3: Reference During /m1-constrain
+### Option 3: Reference During /manifold:m1-constrain
 
 ```
-/m1-constrain checkout-redesign --reference=pm/feature-launch
+/manifold:m1-constrain checkout-redesign --reference=pm/feature-launch
 ```
 
 The AI will use the template as a starting point and prompt you to customize.
@@ -332,11 +332,11 @@ The markdown file contains:
 These templates are designed to work with the `--prd` and `--stories` flags:
 
 ```
-/m0-init new-feature --template=pm/feature-launch
-/m1-constrain new-feature
-/m2-tension new-feature
-/m3-anchor new-feature
-/m4-generate new-feature --prd --stories
+/manifold:m0-init new-feature --template=pm/feature-launch
+/manifold:m1-constrain new-feature
+/manifold:m2-tension new-feature
+/manifold:m3-anchor new-feature
+/manifold:m4-generate new-feature --prd --stories
 ```
 
 This workflow produces:

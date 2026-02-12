@@ -3,9 +3,9 @@ name: manifold-m-status
 description: "Show current Manifold state, constraint summary, workflow progress, and next action"
 ---
 
-# /m-status
+# /manifold:m-status
 
-# /m-status - Manifold Status
+# /manifold:m-status - Manifold Status
 
 Show current Manifold state and next recommended action.
 
@@ -24,7 +24,7 @@ Show current Manifold state and next recommended action.
 ## Usage
 
 ```
-/m-status [<feature-name>] [--history] [--diff]
+/manifold:m-status [<feature-name>] [--history] [--diff]
 ```
 
 If no feature specified, shows all active manifolds.
@@ -37,17 +37,17 @@ If no feature specified, shows all active manifolds.
 
 | Phase | Description | Next Action |
 |-------|-------------|-------------|
-| INITIALIZED | Manifold created | /m1-constrain |
-| CONSTRAINED | Constraints discovered | /m2-tension |
-| TENSIONED | Conflicts analyzed | /m3-anchor |
-| ANCHORED | Solution space defined | /m4-generate |
-| GENERATED | Artifacts created | /m5-verify |
+| INITIALIZED | Manifold created | /manifold:m1-constrain |
+| CONSTRAINED | Constraints discovered | /manifold:m2-tension |
+| TENSIONED | Conflicts analyzed | /manifold:m3-anchor |
+| ANCHORED | Solution space defined | /manifold:m4-generate |
+| GENERATED | Artifacts created | /manifold:m5-verify |
 | VERIFIED | All constraints verified | Complete! |
 
 ## Example: Single Feature
 
 ```
-/m-status payment-retry
+/manifold:m-status payment-retry
 
 MANIFOLD STATUS: payment-retry
 
@@ -80,12 +80,12 @@ SOLUTION SPACE:
 └── Option C: Hybrid Approach (Medium complexity) ← Recommended
 
 WORKFLOW PROGRESS:
-[✓] /m0-init        - Manifold initialized
-[✓] /m1-constrain   - 12 constraints discovered
-[✓] /m2-tension     - 2 tensions found, 1 resolved
-[✓] /m3-anchor      - 3 solution options generated
-[ ] /m4-generate    - Pending
-[ ] /m5-verify      - Pending
+[✓] /manifold:m0-init        - Manifold initialized
+[✓] /manifold:m1-constrain   - 12 constraints discovered
+[✓] /manifold:m2-tension     - 2 tensions found, 1 resolved
+[✓] /manifold:m3-anchor      - 3 solution options generated
+[ ] /manifold:m4-generate    - Pending
+[ ] /manifold:m5-verify      - Pending
 
 FORMAT: JSON+Markdown Hybrid
 FILES:
@@ -94,7 +94,7 @@ FILES:
 └── .manifold/payment-retry.verify.json  (if verified)
 
 SUGGESTED NEXT ACTION (run when ready):
-→ /m4-generate payment-retry --option=C
+→ /manifold:m4-generate payment-retry --option=C
 
 ⏸️ Waiting for your command...
 ```
@@ -105,7 +105,7 @@ SUGGESTED NEXT ACTION (run when ready):
 ## Example: With Iteration History (v2)
 
 ```
-/m-status payment-retry --history
+/manifold:m-status payment-retry --history
 
 MANIFOLD STATUS: payment-retry
 
@@ -145,16 +145,16 @@ A manifold is considered **CONVERGED** when:
 ## Example: All Features
 
 ```
-/m-status
+/manifold:m-status
 
 MANIFOLD STATUS: All Features
 
 ┌──────────────────┬─────────────┬─────────────┬──────────────────────────┐
 │ Feature          │ Phase       │ Updated     │ Next Action              │
 ├──────────────────┼─────────────┼─────────────┼──────────────────────────┤
-│ payment-retry    │ ANCHORED    │ 2 hours ago │ /m4-generate --option=C  │
+│ payment-retry    │ ANCHORED    │ 2 hours ago │ /manifold:m4-generate --option=C  │
 ├──────────────────┼─────────────┼─────────────┼──────────────────────────┤
-│ user-auth        │ CONSTRAINED │ 1 day ago   │ /m2-tension user-auth    │
+│ user-auth        │ CONSTRAINED │ 1 day ago   │ /manifold:m2-tension user-auth    │
 ├──────────────────┼─────────────┼─────────────┼──────────────────────────┤
 │ analytics-export │ VERIFIED    │ 3 days ago  │ Complete!                │
 └──────────────────┴─────────────┴─────────────┴──────────────────────────┘

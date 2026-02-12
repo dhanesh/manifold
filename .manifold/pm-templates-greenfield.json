@@ -464,7 +464,7 @@
         "type": "documentation"
       },
       {
-        "path": "install/commands/m0-init.md",
+        "path": "install/commands/manifold:m0-init.md",
         "satisfies": [
           "O1"
         ],

@@ -3,7 +3,7 @@ description: "Initialize a constraint manifold for a feature. Creates .manifold/
 argument-hint: "<feature-name> [--template=auth|crud|payment|api|pm/feature-launch|pm/experiment|pm/deprecation|pm/opportunity-assessment|pm/product-vision|pm/lean-canvas|pm/pr-faq|pm/mvp-definition|pm/competitive-analysis|pm/user-persona|pm/go-to-market|pm/product-roadmap|pm/shape-up-pitch] [--outcome='...']"
 ---
 
-# /m0-init - Initialize Constraint Manifold
+# /manifold:m0-init - Initialize Constraint Manifold
 
 Initialize a new constraint manifold for a feature.
 
@@ -12,14 +12,14 @@ Initialize a new constraint manifold for a feature.
 | Field | Valid Values |
 |-------|--------------|
 | **Sets Phase** | `INITIALIZED` |
-| **Next Phase** | `CONSTRAINED` (via /m1-constrain) |
+| **Next Phase** | `CONSTRAINED` (via /manifold:m1-constrain) |
 
 > See SCHEMA_REFERENCE.md for all valid values. Do NOT invent new phases.
 
 ## Usage
 
 ```
-/m0-init <feature-name> [--outcome="<desired outcome>"]
+/manifold:m0-init <feature-name> [--outcome="<desired outcome>"]
 ```
 
 ## Process
@@ -189,7 +189,7 @@ constraint_graph:
 ## Example
 
 ```
-User: /m0-init payment-retry --outcome="95% retry success for transient failures"
+User: /manifold:m0-init payment-retry --outcome="95% retry success for transient failures"
 
 Response:
 MANIFOLD INITIALIZED: payment-retry
@@ -215,7 +215,7 @@ v3 Features Enabled:
 - Evidence System (reality grounding)
 - Constraint Graph (temporal non-linearity)
 
-Next: /m1-constrain payment-retry
+Next: /manifold:m1-constrain payment-retry
 ```
 
 ## Execution Instructions

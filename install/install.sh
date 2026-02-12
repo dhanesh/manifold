@@ -305,7 +305,7 @@ install_manifold_native() {
     fi
     print_success "Installed /manifold skill to $skills_dir/manifold/"
 
-    # Install commands (for /m0-init, /m1-constrain, etc.)
+    # Install commands (for /manifold:m0-init, /manifold:m1-constrain, etc.)
     for cmd_file in "${COMMAND_FILES[@]}"; do
         if [[ -n "$LOCAL_INSTALL" ]]; then
             cp "$SCRIPT_DIR/commands/$cmd_file" "$commands_dir/$cmd_file"
@@ -315,7 +315,7 @@ install_manifold_native() {
     done
     print_success "Installed ${#COMMAND_FILES[@]} commands to $commands_dir/"
 
-    # Install parallel library (for /parallel command)
+    # Install parallel library (for /manifold:parallel command)
     for lib_file in "${PARALLEL_LIB_FILES[@]}"; do
         if [[ -n "$LOCAL_INSTALL" ]]; then
             cp "$SCRIPT_DIR/lib/parallel/$lib_file" "$lib_dir/parallel/$lib_file"
@@ -606,14 +606,14 @@ main() {
     echo ""
     echo -e "${BOLD}AI Agent Commands:${NC}"
     echo ""
-    echo "  /m0-init my-feature        # Initialize manifold"
-    echo "  /m1-constrain my-feature   # Discover constraints"
-    echo "  /m2-tension my-feature     # Surface conflicts"
-    echo "  /m3-anchor my-feature      # Backward reasoning"
-    echo "  /m4-generate my-feature    # Create all artifacts"
-    echo "  /m6-integrate my-feature   # Wire artifacts together"
-    echo "  /m5-verify my-feature      # Validate constraints"
-    echo "  /m-status                  # Show current state"
+    echo "  /manifold:m0-init my-feature        # Initialize manifold"
+    echo "  /manifold:m1-constrain my-feature   # Discover constraints"
+    echo "  /manifold:m2-tension my-feature     # Surface conflicts"
+    echo "  /manifold:m3-anchor my-feature      # Backward reasoning"
+    echo "  /manifold:m4-generate my-feature    # Create all artifacts"
+    echo "  /manifold:m6-integrate my-feature   # Wire artifacts together"
+    echo "  /manifold:m5-verify my-feature      # Validate constraints"
+    echo "  /manifold:m-status                  # Show current state"
     echo ""
     echo -e "${BOLD}Supported Agents:${NC}"
     [[ -n "$claude_dir" ]] && echo "  Claude Code  — native .md commands in ~/.claude/commands/"
@@ -622,7 +622,7 @@ main() {
     [[ -n "$codex_dir" ]]  && echo "  Codex CLI    — SKILL.md files in ~/.agents/skills/"
     echo ""
     echo -e "${BOLD}Parallel Execution:${NC}"
-    echo "  /parallel \"task1\" \"task2\"  # Execute tasks in parallel worktrees"
+    echo "  /manifold:parallel \"task1\" \"task2\"  # Execute tasks in parallel worktrees"
     echo ""
     if [[ $cli_installed -eq 1 ]]; then
         echo -e "${BOLD}CLI Commands (fast, deterministic, no AI):${NC}"

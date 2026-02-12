@@ -166,7 +166,7 @@
         "phase_b": "Intelligence Layer - dependency detection + convergence"
       },
       {
-        "phase_c": "Automation Layer - /m6-integrate + gap-to-action"
+        "phase_c": "Automation Layer - /manifold:m6-integrate + gap-to-action"
       }
     ]
   },
@@ -227,7 +227,7 @@
     "iteration": 1,
     "artifacts": [
       {
-        "path": "install/commands/m0-init.md",
+        "path": "install/commands/manifold:m0-init.md",
         "type": "documentation",
         "satisfies": [
           "RT-1",
@@ -238,7 +238,7 @@
         "description": "Updated with schema_version and iterations[] section"
       },
       {
-        "path": "install/commands/m-status.md",
+        "path": "install/commands/manifold:m-status.md",
         "type": "documentation",
         "satisfies": [
           "RT-1",
@@ -249,7 +249,7 @@
         "description": "Added --history flag and convergence display"
       },
       {
-        "path": "install/commands/m2-tension.md",
+        "path": "install/commands/manifold:m2-tension.md",
         "type": "documentation",
         "satisfies": [
           "RT-3"
@@ -259,7 +259,7 @@
         "description": "Added --auto-deps for dependency detection"
       },
       {
-        "path": "install/commands/m6-integrate.md",
+        "path": "install/commands/manifold:m6-integrate.md",
         "type": "documentation",
         "satisfies": [
           "RT-2",
@@ -270,7 +270,7 @@
         "description": "New command for artifact integration"
       },
       {
-        "path": "install/commands/m5-verify.md",
+        "path": "install/commands/manifold:m5-verify.md",
         "type": "documentation",
         "satisfies": [
           "RT-4"
@@ -298,7 +298,7 @@
         ],
         "status": "generated",
         "phase": "C",
-        "description": "Updated with v2 features and /m6-integrate"
+        "description": "Updated with v2 features and /manifold:m6-integrate"
       },
       {
         "path": "examples/manifold-v2-example.yaml",

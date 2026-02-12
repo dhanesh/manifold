@@ -1,6 +1,6 @@
 # Go-to-Market Strategy Constraint Template
 
-Use: `/m0-init <feature> --template=pm/go-to-market`
+Use: `/manifold:m0-init <feature> --template=pm/go-to-market`
 Covers: GTM planning, product launches, market entry strategy, sales enablement
 
 ## Outcome

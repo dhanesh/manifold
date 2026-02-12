@@ -14,7 +14,7 @@ as an on-demand capability.
 
 ## When to Use
 - When you have 2+ tasks that might be parallelizable
-- Before executing a multi-task plan from `/m4-generate`
+- Before executing a multi-task plan from `/manifold:m4-generate`
 - When planning implementation of multiple artifacts
 
 ## Instructions

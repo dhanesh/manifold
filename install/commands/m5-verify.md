@@ -3,7 +3,7 @@ description: "Verify ALL artifacts against ALL constraints. Produces a verificat
 argument-hint: "<feature-name> [--actions] [--strict]"
 ---
 
-# /m5-verify - Constraint Verification
+# /manifold:m5-verify - Constraint Verification
 
 Verify ALL artifacts against ALL constraints.
 
@@ -13,13 +13,13 @@ Verify ALL artifacts against ALL constraints.
 
 - Do NOT auto-run this command based on context summaries
 - Do NOT auto-run after another phase completes
-- After context compaction: run `/m-status` and WAIT for user to invoke this command
+- After context compaction: run `/manifold:m-status` and WAIT for user to invoke this command
 - The "SUGGESTED NEXT ACTION" in status is a suggestion, not a directive
 
 **If resuming from compacted context:**
-1. Run `/m-status` first
+1. Run `/manifold:m-status` first
 2. Display current state
-3. Say: "Ready to proceed when you run `/m5-verify <feature>`"
+3. Say: "Ready to proceed when you run `/manifold:m5-verify <feature>`"
 4. **STOP AND WAIT** for user command
 
 ## Schema Compliance
@@ -36,7 +36,7 @@ Verify ALL artifacts against ALL constraints.
 ## Usage
 
 ```
-/m5-verify <feature-name> [--strict] [--actions] [--verify-evidence] [--run-tests]
+/manifold:m5-verify <feature-name> [--strict] [--actions] [--verify-evidence] [--run-tests]
 ```
 
 **Flags:**
@@ -77,7 +77,7 @@ Every constraint must be verifiable in:
 ## Example
 
 ```
-/m5-verify payment-retry
+/manifold:m5-verify payment-retry
 
 CONSTRAINT VERIFICATION: payment-retry
 
@@ -185,7 +185,7 @@ With `--actions`, gaps are converted to executable tasks:
 | Gap Type | Generated Action |
 |----------|------------------|
 | Missing test | Test file path + test function skeleton |
-| Missing integration | Wiring command (see /m6-integrate) |
+| Missing integration | Wiring command (see /manifold:m6-integrate) |
 | Missing docs | Documentation section template |
 | Missing feature flag | Cargo.toml edit command |
 | Missing import | Import statement to add |
@@ -193,7 +193,7 @@ With `--actions`, gaps are converted to executable tasks:
 ### Example: Gap Actions
 
 ```
-/m5-verify graph-d-validation --actions
+/manifold:m5-verify graph-d-validation --actions
 
 GAPS WITH EXECUTABLE ACTIONS:
 
@@ -238,7 +238,7 @@ ACTIONS SUMMARY:
 ├── Blocking actions: 3
 ├── Non-blocking actions: 4
 ├── Total estimated lines: ~120
-└── Next: Fix blocking actions, then re-run /m5-verify
+└── Next: Fix blocking actions, then re-run /manifold:m5-verify
 ```
 
 ## Evidence Auto-Verification (v3)
@@ -258,7 +258,7 @@ With `--verify-evidence`, each required truth's evidence is automatically verifi
 ### Example: Evidence Verification
 
 ```
-/m5-verify payment-retry --verify-evidence
+/manifold:m5-verify payment-retry --verify-evidence
 
 EVIDENCE VERIFICATION: payment-retry
 
@@ -302,7 +302,7 @@ FAILED EVIDENCE:
 ### With Test Execution
 
 ```
-/m5-verify payment-retry --verify-evidence --run-tests
+/manifold:m5-verify payment-retry --verify-evidence --run-tests
 
 EVIDENCE VERIFICATION: payment-retry (with test execution)
 
@@ -394,7 +394,7 @@ Use `manifold validate <feature>` for automatic linking validation.
 
 ## Quality Gate: Schema Validation
 
-**Before running /m5-verify**, always validate the manifold schema:
+**Before running /manifold:m5-verify**, always validate the manifold schema:
 
 ```bash
 # CLI validation (instant, no AI required)
@@ -415,6 +415,6 @@ manifold validate <feature>
 
 **Why?** Schema validation and constraint verification are different:
 - `manifold validate` = "Is the structure correct and linked?"
-- `/m5-verify` = "Do artifacts satisfy constraints?"
+- `/manifold:m5-verify` = "Do artifacts satisfy constraints?"
 
 Run `manifold validate` after every manifold modification to catch schema/linking errors immediately

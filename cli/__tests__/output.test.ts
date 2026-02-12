@@ -104,23 +104,23 @@ describe('formatTensionSummary', () => {
 
 describe('formatNextAction', () => {
   test('returns constrain for INITIALIZED', () => {
-    expect(formatNextAction('INITIALIZED', 'test')).toBe('/m1-constrain test');
+    expect(formatNextAction('INITIALIZED', 'test')).toBe('/manifold:m1-constrain test');
   });
 
   test('returns tension for CONSTRAINED', () => {
-    expect(formatNextAction('CONSTRAINED', 'test')).toBe('/m2-tension test');
+    expect(formatNextAction('CONSTRAINED', 'test')).toBe('/manifold:m2-tension test');
   });
 
   test('returns anchor for TENSIONED', () => {
-    expect(formatNextAction('TENSIONED', 'test')).toBe('/m3-anchor test');
+    expect(formatNextAction('TENSIONED', 'test')).toBe('/manifold:m3-anchor test');
   });
 
   test('returns generate for ANCHORED', () => {
-    expect(formatNextAction('ANCHORED', 'test')).toBe('/m4-generate test');
+    expect(formatNextAction('ANCHORED', 'test')).toBe('/manifold:m4-generate test');
   });
 
   test('returns verify for GENERATED', () => {
-    expect(formatNextAction('GENERATED', 'test')).toBe('/m5-verify test');
+    expect(formatNextAction('GENERATED', 'test')).toBe('/manifold:m5-verify test');
   });
 
   test('returns Complete for VERIFIED', () => {

@@ -42,17 +42,17 @@ The installer auto-detects which AI coding agents are present and installs Manif
 | Command | Description |
 |---------|-------------|
 | `/manifold` | Show framework overview |
-| `/m0-init` | Initialize constraint manifold |
-| `/m1-constrain` | Discover constraints (interview-driven) |
-| `/m2-tension` | Surface constraint conflicts |
-| `/m3-anchor` | Backward reasoning from outcome |
-| `/m4-generate` | Create all artifacts |
-| `/m5-verify` | Validate against constraints |
-| `/m6-integrate` | Wire artifacts together |
-| `/m-status` | Show current state |
-| `/m-solve` | Generate parallel execution plan |
-| `/m-quick` | Light mode (3-phase workflow) |
-| `/parallel` | Execute tasks in parallel worktrees |
+| `/manifold:m0-init` | Initialize constraint manifold |
+| `/manifold:m1-constrain` | Discover constraints (interview-driven) |
+| `/manifold:m2-tension` | Surface constraint conflicts |
+| `/manifold:m3-anchor` | Backward reasoning from outcome |
+| `/manifold:m4-generate` | Create all artifacts |
+| `/manifold:m5-verify` | Validate against constraints |
+| `/manifold:m6-integrate` | Wire artifacts together |
+| `/manifold:m-status` | Show current state |
+| `/manifold:m-solve` | Generate parallel execution plan |
+| `/manifold:m-quick` | Light mode (3-phase workflow) |
+| `/manifold:parallel` | Execute tasks in parallel worktrees |
 
 ## Build Pipeline
 

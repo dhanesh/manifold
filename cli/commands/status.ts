@@ -1,6 +1,6 @@
 /**
  * Status Command for Manifold CLI
- * Satisfies: RT-2 (Output matching AI equivalents), U1 (mirrors /m-status)
+ * Satisfies: RT-2 (Output matching AI equivalents), U1 (mirrors /manifold:m-status)
  */
 
 import type { Command } from 'commander';
@@ -198,7 +198,7 @@ function formatFeatureJSON(data: FeatureData, includeHistory?: boolean): Record<
 
 /**
  * Print feature status to console
- * Matches /m-status output format exactly
+ * Matches /manifold:m-status output format exactly
  */
 function printFeatureStatus(data: FeatureData, includeHistory?: boolean): void {
   const manifold = data.manifold!;

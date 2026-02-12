@@ -32,7 +32,7 @@ The CLI runs fast (<100ms) without AI for:
 
 ## Why It Matters
 
-Several Manifold commands (/m0-init, /m1-constrain, /m2-tension, /m3-anchor, /m5-verify, /m6-integrate) run `manifold validate` as a post-step to catch schema errors immediately. Without the CLI, these validation steps are skipped.
+Several Manifold commands (/manifold:m0-init, /manifold:m1-constrain, /manifold:m2-tension, /manifold:m3-anchor, /manifold:m5-verify, /manifold:m6-integrate) run `manifold validate` as a post-step to catch schema errors immediately. Without the CLI, these validation steps are skipped.
 
 ## Manual Installation
 

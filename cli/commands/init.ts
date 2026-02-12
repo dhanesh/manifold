@@ -1,6 +1,6 @@
 /**
  * Init Command for Manifold CLI
- * Satisfies: U1 (mirrors /m0-init), RT-5 (Edge case handling)
+ * Satisfies: U1 (mirrors /manifold:m0-init), RT-5 (Edge case handling)
  *
  * Generates JSON+Markdown hybrid format (preferred) by default.
  */
@@ -140,14 +140,14 @@ async function initCommand(feature: string, options: InitOptions): Promise<numbe
         json: jsonPath,
         md: mdPath
       },
-      nextAction: `/m1-constrain ${feature}`
+      nextAction: `/manifold:m1-constrain ${feature}`
     }));
   } else {
     println(`${style.check()} Created manifold: ${style.feature(feature)}`);
     println(`  JSON: ${jsonPath}`);
     println(`  MD:   ${mdPath}`);
     println();
-    println(`  ${style.dim('Next:')} /m1-constrain ${feature}`);
+    println(`  ${style.dim('Next:')} /manifold:m1-constrain ${feature}`);
   }
 
   return 0;
@@ -182,7 +182,7 @@ function generateManifoldTemplate(feature: string, outcome?: string): ManifoldTe
     phase: 'INITIALIZED',
     created: date,
 
-    // Constraints placeholder (populated by /m1-constrain)
+    // Constraints placeholder (populated by /manifold:m1-constrain)
     constraints: {
       business: [],
       technical: [],
@@ -191,7 +191,7 @@ function generateManifoldTemplate(feature: string, outcome?: string): ManifoldTe
       operational: []
     },
 
-    // Tensions placeholder (populated by /m2-tension)
+    // Tensions placeholder (populated by /manifold:m2-tension)
     tensions: [],
     tension_summary: {
       trade_offs: 0,
@@ -202,7 +202,7 @@ function generateManifoldTemplate(feature: string, outcome?: string): ManifoldTe
       unresolved: 0
     },
 
-    // Anchors placeholder (populated by /m3-anchor)
+    // Anchors placeholder (populated by /manifold:m3-anchor)
     anchors: {
       required_truths: [],
       implementation_phases: []
@@ -254,7 +254,7 @@ ${outcomeText}
 
 ### Business
 
-_No business constraints defined yet. Run \`/m1-constrain ${feature}\` to discover constraints._
+_No business constraints defined yet. Run \`/manifold:m1-constrain ${feature}\` to discover constraints._
 
 ### Technical
 
@@ -276,13 +276,13 @@ _No operational constraints defined yet._
 
 ## Tensions
 
-_No tensions identified yet. Run \`/m2-tension ${feature}\` after defining constraints._
+_No tensions identified yet. Run \`/manifold:m2-tension ${feature}\` after defining constraints._
 
 ---
 
 ## Required Truths
 
-_No required truths anchored yet. Run \`/m3-anchor ${feature}\` after resolving tensions._
+_No required truths anchored yet. Run \`/manifold:m3-anchor ${feature}\` after resolving tensions._
 `;
 
   return { structure, markdown };

@@ -1,6 +1,6 @@
 # Feature Launch Constraint Template
 
-Use: `/m0-init <feature> --template=pm/feature-launch`
+Use: `/manifold:m0-init <feature> --template=pm/feature-launch`
 Covers: New features, product launches, major enhancements
 
 ## Outcome

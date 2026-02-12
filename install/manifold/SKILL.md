@@ -1,6 +1,6 @@
 ---
 name: manifold
-description: Constraint-first development framework overview. USE WHEN learning about Manifold or checking available commands. Individual commands are separate skills - use /m0-init, /m1-constrain, etc. directly.
+description: Constraint-first development framework overview. USE WHEN learning about Manifold or checking available commands. Individual commands are separate skills - use /manifold:m0-init, /manifold:m1-constrain, etc. directly.
 ---
 
 # Manifold
@@ -12,32 +12,32 @@ Constraint-first development framework that makes ALL constraints visible BEFORE
 Each command is a separate skill. Use them directly:
 
 ```
-/m0-init my-feature           # Initialize manifold
-/m1-constrain my-feature      # Discover constraints
-/m2-tension my-feature        # Surface conflicts
-/m3-anchor my-feature         # Backward reasoning
-/m4-generate my-feature       # Create all artifacts
-/m5-verify my-feature         # Validate constraints
-/m-status                     # Show current state
+/manifold:m0-init my-feature           # Initialize manifold
+/manifold:m1-constrain my-feature      # Discover constraints
+/manifold:m2-tension my-feature        # Surface conflicts
+/manifold:m3-anchor my-feature         # Backward reasoning
+/manifold:m4-generate my-feature       # Create all artifacts
+/manifold:m5-verify my-feature         # Validate constraints
+/manifold:m-status                     # Show current state
 ```
 
 **Available Skills:**
-- `/m0-init` - Initialize a constraint manifold
-- `/m1-constrain` - Interview-driven constraint discovery
-- `/m2-tension` - Surface and resolve conflicts (`--auto-deps` for v2 dependency detection)
-- `/m3-anchor` - Backward reasoning from outcome
-- `/m4-generate` - Generate all artifacts
-- `/m6-integrate` - Wire artifacts together (v2)
-- `/m5-verify` - Verify constraints coverage (`--actions` for v2 gap automation)
-- `/m-status` - Show current state (`--history` for v2 iteration tracking)
+- `/manifold:m0-init` - Initialize a constraint manifold
+- `/manifold:m1-constrain` - Interview-driven constraint discovery
+- `/manifold:m2-tension` - Surface and resolve conflicts (`--auto-deps` for v2 dependency detection)
+- `/manifold:m3-anchor` - Backward reasoning from outcome
+- `/manifold:m4-generate` - Generate all artifacts
+- `/manifold:m6-integrate` - Wire artifacts together (v2)
+- `/manifold:m5-verify` - Verify constraints coverage (`--actions` for v2 gap automation)
+- `/manifold:m-status` - Show current state (`--history` for v2 iteration tracking)
 
 ## Commands
 
-### /m0-init
+### /manifold:m0-init
 
 Initialize a constraint manifold for a feature.
 
-**Usage:** `/m0-init <feature-name> [--outcome="<desired outcome>"]`
+**Usage:** `/manifold:m0-init <feature-name> [--outcome="<desired outcome>"]`
 
 **What it does:**
 - Creates `.manifold/<feature-name>.yaml`
@@ -45,16 +45,16 @@ Initialize a constraint manifold for a feature.
 
 **Example:**
 ```
-/m0-init payment-retry --outcome="95% retry success for transient failures"
+/manifold:m0-init payment-retry --outcome="95% retry success for transient failures"
 ```
 
 ---
 
-### /m1-constrain
+### /manifold:m1-constrain
 
 Interview-driven constraint discovery across 5 categories.
 
-**Usage:** `/m1-constrain <feature-name> [--category=<category>]`
+**Usage:** `/manifold:m1-constrain <feature-name> [--category=<category>]`
 
 **Constraint Categories:**
 1. **Business** - Revenue, compliance, stakeholders
@@ -70,7 +70,7 @@ Interview-driven constraint discovery across 5 categories.
 
 **Example:**
 ```
-/m1-constrain payment-retry
+/manifold:m1-constrain payment-retry
 
 Discovered:
 - B1: No duplicate payments (INVARIANT)
@@ -80,11 +80,11 @@ Discovered:
 
 ---
 
-### /m2-tension
+### /manifold:m2-tension
 
 Surface and resolve constraint conflicts.
 
-**Usage:** `/m2-tension <feature-name> [--resolve]`
+**Usage:** `/manifold:m2-tension <feature-name> [--resolve]`
 
 **Tension Types:**
 1. **Direct Conflicts** - Contradictory constraints
@@ -99,7 +99,7 @@ Surface and resolve constraint conflicts.
 
 **Example:**
 ```
-/m2-tension payment-retry
+/manifold:m2-tension payment-retry
 
 TENSION DETECTED:
 - T1: "API response < 200ms"
@@ -109,11 +109,11 @@ TENSION DETECTED:
 
 ---
 
-### /m3-anchor
+### /manifold:m3-anchor
 
 Backward reasoning from desired outcome.
 
-**Usage:** `/m3-anchor <feature-name> [--outcome="<statement>"]`
+**Usage:** `/manifold:m3-anchor <feature-name> [--outcome="<statement>"]`
 
 **Process:**
 1. Start with desired outcome
@@ -134,7 +134,7 @@ Backward reasoning from desired outcome.
 
 **Example:**
 ```
-/m3-anchor payment-retry --outcome="95% retry success"
+/manifold:m3-anchor payment-retry --outcome="95% retry success"
 
 For 95% success, what MUST be true?
 - RT-1: Can distinguish transient from permanent failures
@@ -149,11 +149,11 @@ C. Hybrid approach
 
 ---
 
-### /m4-generate
+### /manifold:m4-generate
 
 Generate ALL artifacts simultaneously from the constraint manifold.
 
-**Usage:** `/m4-generate <feature-name> [--option=<A|B|C>] [--artifacts=<list>]`
+**Usage:** `/manifold:m4-generate <feature-name> [--option=<A|B|C>] [--artifacts=<list>]`
 
 **Artifacts Generated:**
 - **Code** - Implementation with constraint traceability
@@ -167,7 +167,7 @@ Generate ALL artifacts simultaneously from the constraint manifold.
 
 **Example:**
 ```
-/m4-generate payment-retry --option=B
+/manifold:m4-generate payment-retry --option=B
 
 Generated:
 - src/retry/payment-retry.ts
@@ -180,11 +180,11 @@ Generated:
 
 ---
 
-### /m5-verify
+### /manifold:m5-verify
 
 Verify ALL artifacts against ALL constraints.
 
-**Usage:** `/m5-verify <feature-name> [--strict]`
+**Usage:** `/manifold:m5-verify <feature-name> [--strict]`
 
 **Verification Matrix:**
 | Constraint | Code | Test | Docs | Ops | Status |
@@ -194,7 +194,7 @@ Verify ALL artifacts against ALL constraints.
 
 **Example:**
 ```
-/m5-verify payment-retry
+/manifold:m5-verify payment-retry
 
 Constraint Coverage:
 - INVARIANTS: 3/3 (100%)
@@ -206,21 +206,21 @@ Gaps: Add test for ErrorClassifier.classify()
 
 ---
 
-### /m6-integrate (v2)
+### /manifold:m6-integrate (v2)
 
 Wire generated artifacts together.
 
-**Usage:** `/m6-integrate <feature-name> [--check-only] [--auto-wire]`
+**Usage:** `/manifold:m6-integrate <feature-name> [--check-only] [--auto-wire]`
 
 **Flags:**
 - `--check-only` - Show integration checklist without making changes
 - `--auto-wire` - Attempt automatic integration where safe
 
-**Why this exists:** `/m4-generate` creates artifacts in isolation. Integration (wiring modules together, adding feature flags, updating imports) was manual and error-prone. This command identifies integration points and produces actionable checklists.
+**Why this exists:** `/manifold:m4-generate` creates artifacts in isolation. Integration (wiring modules together, adding feature flags, updating imports) was manual and error-prone. This command identifies integration points and produces actionable checklists.
 
 **Example:**
 ```
-/m6-integrate graph-d-validation
+/manifold:m6-integrate graph-d-validation
 
 INTEGRATION CHECKLIST:
 
@@ -238,11 +238,11 @@ INTEGRATION CHECKLIST:
 
 ---
 
-### /m-status
+### /manifold:m-status
 
 Show current Manifold state and next recommended action.
 
-**Usage:** `/m-status [<feature-name>] [--history] [--diff]`
+**Usage:** `/manifold:m-status [<feature-name>] [--history] [--diff]`
 
 **Flags (v2):**
 - `--history` - Show full iteration history
@@ -250,7 +250,7 @@ Show current Manifold state and next recommended action.
 
 **Example:**
 ```
-/m-status
+/manifold:m-status
 
 MANIFOLD STATUS
 
@@ -266,14 +266,14 @@ Constraint Summary:
 - Solution Space: 3 options
 
 Workflow Progress:
-[✓] /m0-init
-[✓] /m1-constrain
-[✓] /m2-tension
-[✓] /m3-anchor
-[ ] /m4-generate
-[ ] /m5-verify
+[✓] /manifold:m0-init
+[✓] /manifold:m1-constrain
+[✓] /manifold:m2-tension
+[✓] /manifold:m3-anchor
+[ ] /manifold:m4-generate
+[ ] /manifold:m5-verify
 
-Next: /m4-generate payment-retry --option=B
+Next: /manifold:m4-generate payment-retry --option=B
 ```
 
 ---
@@ -295,7 +295,7 @@ All data stored in `.manifold/` using JSON+Markdown hybrid format:
 
 Manifold ensures tasks are completed through **constraint traceability**:
 
-### Generation Tracking (`/m4-generate`)
+### Generation Tracking (`/manifold:m4-generate`)
 Every generated artifact is recorded with the constraints it satisfies:
 ```json
 {
@@ -315,7 +315,7 @@ Every generated artifact is recorded with the constraints it satisfies:
 }
 ```
 
-### Verification Matrix (`/m5-verify`)
+### Verification Matrix (`/manifold:m5-verify`)
 Each constraint is checked across all artifacts:
 ```json
 {

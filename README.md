@@ -36,7 +36,7 @@ curl -fsSL https://raw.githubusercontent.com/dhanesh/manifold/main/install/insta
 ```
 
 This installs:
-- **Slash commands** (`/m0-init`, `/m1-constrain`, etc.) for Claude Code and AMP
+- **Slash commands** (`/manifold:m0-init`, `/manifold:m1-constrain`, etc.) for Claude Code and AMP
 - **Parallel execution library** for git worktree-based concurrency
 - **Context preservation hooks** for session continuity
 - **Native CLI** (`manifold`) for fast, deterministic operations
@@ -67,17 +67,17 @@ chmod +x manifold
 
 | Command | Purpose | Phase |
 |---------|---------|-------|
-| `/m0-init` | Initialize constraint manifold | INITIALIZED |
-| `/m1-constrain` | Discover constraints (interview-driven) | CONSTRAINED |
-| `/m2-tension` | Surface constraint conflicts | TENSIONED |
-| `/m3-anchor` | Backward reasoning from outcome | ANCHORED |
-| `/m4-generate` | Create all artifacts simultaneously | GENERATED |
-| `/m5-verify` | Validate against constraints | VERIFIED |
-| `/m6-integrate` | Wire artifacts together | - |
-| `/m-status` | Show current state | - |
-| `/m-solve` | Generate parallel execution plan | - |
-| `/m-quick` | Light mode: 3-phase workflow for simple changes | - |
-| `/parallel` | Execute tasks in parallel worktrees | - |
+| `/manifold:m0-init` | Initialize constraint manifold | INITIALIZED |
+| `/manifold:m1-constrain` | Discover constraints (interview-driven) | CONSTRAINED |
+| `/manifold:m2-tension` | Surface constraint conflicts | TENSIONED |
+| `/manifold:m3-anchor` | Backward reasoning from outcome | ANCHORED |
+| `/manifold:m4-generate` | Create all artifacts simultaneously | GENERATED |
+| `/manifold:m5-verify` | Validate against constraints | VERIFIED |
+| `/manifold:m6-integrate` | Wire artifacts together | - |
+| `/manifold:m-status` | Show current state | - |
+| `/manifold:m-solve` | Generate parallel execution plan | - |
+| `/manifold:m-quick` | Light mode: 3-phase workflow for simple changes | - |
+| `/manifold:parallel` | Execute tasks in parallel worktrees | - |
 
 ### Native CLI
 
@@ -101,12 +101,12 @@ manifold verify [feature]      # Verify artifacts exist
 ## Quick Start
 
 ```bash
-/m0-init payment-retry --outcome="95% retry success"
-/m1-constrain payment-retry        # Discovers constraints across 5 categories
-/m2-tension payment-retry          # Surfaces conflicts: latency vs idempotency
-/m3-anchor payment-retry           # Generates solution options via backward reasoning
-/m4-generate payment-retry         # Creates code, tests, docs, runbooks, alerts
-/m5-verify payment-retry           # Validates all artifacts against constraints
+/manifold:m0-init payment-retry --outcome="95% retry success"
+/manifold:m1-constrain payment-retry        # Discovers constraints across 5 categories
+/manifold:m2-tension payment-retry          # Surfaces conflicts: latency vs idempotency
+/manifold:m3-anchor payment-retry           # Generates solution options via backward reasoning
+/manifold:m4-generate payment-retry         # Creates code, tests, docs, runbooks, alerts
+/manifold:m5-verify payment-retry           # Validates all artifacts against constraints
 ```
 
 ### Using Templates
@@ -114,10 +114,10 @@ manifold verify [feature]      # Verify artifacts exist
 Pre-built constraint patterns for common scenarios:
 
 ```bash
-/m0-init user-auth --template=auth        # Authentication flows
-/m0-init user-crud --template=crud        # CRUD operations
-/m0-init payment-flow --template=payment  # Payment processing
-/m0-init api-endpoint --template=api      # API endpoints
+/manifold:m0-init user-auth --template=auth        # Authentication flows
+/manifold:m0-init user-crud --template=crud        # CRUD operations
+/manifold:m0-init payment-flow --template=payment  # Payment processing
+/manifold:m0-init api-endpoint --template=api      # API endpoints
 ```
 
 See [Constraint Templates](install/templates/README.md) for all available templates.
@@ -127,7 +127,7 @@ See [Constraint Templates](install/templates/README.md) for all available templa
 For simple changes that don't need full constraint analysis:
 
 ```bash
-/m-quick fix-login-bug --outcome="Fix 504 timeout on login"
+/manifold:m-quick fix-login-bug --outcome="Fix 504 timeout on login"
 ```
 
 Light mode uses 3 phases: Constrain → Generate → Verify. See [When NOT to Use Manifold](docs/WHEN_NOT_TO_USE.md) for guidance on when simpler approaches work better.
@@ -138,10 +138,10 @@ Light mode uses 3 phases: Constrain → Generate → Verify. See [When NOT to Us
 ┌─────────────────────────────────────────────────────────────────────┐
 │                    PHASE 1: INITIALIZE & CONSTRAIN                  │
 ├─────────────────────────────────────────────────────────────────────┤
-│  /m0-init feature-name --outcome="Success criteria"                 │
+│  /manifold:m0-init feature-name --outcome="Success criteria"                 │
 │      └─→ Creates constraint manifold                                │
 │                                                                     │
-│  /m1-constrain feature-name                                         │
+│  /manifold:m1-constrain feature-name                                         │
 │      └─→ Interview-driven constraint discovery                      │
 │      └─→ 5 categories: Business, Technical, UX, Security, Ops       │
 └─────────────────────────────────────────────────────────────────────┘
@@ -150,7 +150,7 @@ Light mode uses 3 phases: Constrain → Generate → Verify. See [When NOT to Us
 ┌─────────────────────────────────────────────────────────────────────┐
 │                      PHASE 2: TENSION ANALYSIS                      │
 ├─────────────────────────────────────────────────────────────────────┤
-│  /m2-tension feature-name --resolve                                 │
+│  /manifold:m2-tension feature-name --resolve                                 │
 │      └─→ Surfaces constraint conflicts                              │
 │      └─→ Types: Direct, Resource, Trade-off, Hidden                 │
 │      └─→ Suggests resolutions                                       │
@@ -160,7 +160,7 @@ Light mode uses 3 phases: Constrain → Generate → Verify. See [When NOT to Us
 ┌─────────────────────────────────────────────────────────────────────┐
 │                      PHASE 3: OUTCOME ANCHORING                     │
 ├─────────────────────────────────────────────────────────────────────┤
-│  /m3-anchor feature-name --outcome="Success criteria"               │
+│  /manifold:m3-anchor feature-name --outcome="Success criteria"               │
 │      └─→ Reasons BACKWARD from desired outcome                      │
 │      └─→ Derives required truths                                    │
 │      └─→ Identifies gaps                                            │
@@ -171,7 +171,7 @@ Light mode uses 3 phases: Constrain → Generate → Verify. See [When NOT to Us
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     PHASE 4: GENERATE & VERIFY                      │
 ├─────────────────────────────────────────────────────────────────────┤
-│  /m4-generate feature-name --option=A                               │
+│  /manifold:m4-generate feature-name --option=A                               │
 │      └─→ Generates ALL artifacts simultaneously:                    │
 │          • Code (with constraint traceability)                      │
 │          • Tests (verify constraints, not code)                     │
@@ -179,11 +179,11 @@ Light mode uses 3 phases: Constrain → Generate → Verify. See [When NOT to Us
 │          • Runbooks (handles failure modes)                         │
 │          • Dashboards & Alerts (monitors constraints)               │
 │                                                                     │
-│  /m5-verify feature-name                                            │
+│  /manifold:m5-verify feature-name                                            │
 │      └─→ Verifies ALL artifacts against ALL constraints             │
 │      └─→ Reports coverage and gaps                                  │
 │                                                                     │
-│  /m6-integrate feature-name                                         │
+│  /manifold:m6-integrate feature-name                                         │
 │      └─→ Identifies integration points                              │
 │      └─→ Produces wiring checklist                                  │
 └─────────────────────────────────────────────────────────────────────┘
@@ -194,7 +194,7 @@ Light mode uses 3 phases: Constrain → Generate → Verify. See [When NOT to Us
 Run independent tasks concurrently using isolated git worktrees:
 
 ```bash
-/parallel "implement auth module" "add logging middleware" "create user tests"
+/manifold:parallel "implement auth module" "add logging middleware" "create user tests"
 ```
 
 The parallel system:
@@ -222,7 +222,7 @@ mergeStrategy: sequential  # sequential, squash, rebase
 
 ### Auto-Suggestion
 
-The `/m4-generate` command automatically suggests parallel execution when generating 3+ artifacts across different modules.
+The `/manifold:m4-generate` command automatically suggests parallel execution when generating 3+ artifacts across different modules.
 
 ## Autonomous Development with Ralph
 
@@ -259,15 +259,15 @@ Study `.manifold/<FEATURE>.yaml` for all requirements.
 Every constraint must be SATISFIED before completion.
 
 ## Workflow
-1. Run `/m-status <FEATURE>` to understand current phase
+1. Run `/manifold:m-status <FEATURE>` to understand current phase
 2. Execute the next phase command based on status:
-   - INITIALIZED → `/m1-constrain <FEATURE>`
-   - CONSTRAINED → `/m2-tension <FEATURE> --resolve`
-   - TENSIONED → `/m3-anchor <FEATURE>`
-   - ANCHORED → `/m4-generate <FEATURE>`
-   - GENERATED → `/m5-verify <FEATURE>`
+   - INITIALIZED → `/manifold:m1-constrain <FEATURE>`
+   - CONSTRAINED → `/manifold:m2-tension <FEATURE> --resolve`
+   - TENSIONED → `/manifold:m3-anchor <FEATURE>`
+   - ANCHORED → `/manifold:m4-generate <FEATURE>`
+   - GENERATED → `/manifold:m5-verify <FEATURE>`
 3. After each phase, commit changes
-4. If VERIFIED phase with gaps, run `/m4-generate` to fix gaps, then re-verify
+4. If VERIFIED phase with gaps, run `/manifold:m4-generate` to fix gaps, then re-verify
 
 ## Completion Criteria
 Run: `manifold verify <FEATURE> --json`
@@ -290,12 +290,12 @@ Output: <promise>MANIFOLD_COMPLETE</promise>
 
 ```bash
 # Initialize the feature first
-/m0-init payment-retry --outcome="95% retry success rate"
+/manifold:m0-init payment-retry --outcome="95% retry success rate"
 
 # Then let Ralph handle the rest
 /ralph-loop "Build payment-retry following Manifold workflow.
 Study .manifold/payment-retry.yaml for constraints.
-Run /m-status payment-retry, execute next phase.
+Run /manifold:m-status payment-retry, execute next phase.
 Repeat until VERIFIED with CONVERGED status.
 Output <promise>MANIFOLD_COMPLETE</promise> when done." \
   --max-iterations 50 \
@@ -524,11 +524,11 @@ See [Non-Programming Guide](docs/non-programming/guide.md) for detailed document
 Manifold can generate PRDs and user stories with constraint traceability:
 
 ```bash
-/m0-init mobile-checkout --template=pm/feature-launch
-/m1-constrain mobile-checkout
-/m2-tension mobile-checkout
-/m3-anchor mobile-checkout
-/m4-generate mobile-checkout --prd --stories
+/manifold:m0-init mobile-checkout --template=pm/feature-launch
+/manifold:m1-constrain mobile-checkout
+/manifold:m2-tension mobile-checkout
+/manifold:m3-anchor mobile-checkout
+/manifold:m4-generate mobile-checkout --prd --stories
 ```
 
 **Outputs:**

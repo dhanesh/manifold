@@ -66,9 +66,9 @@ Integration phase should auto-detect wiring points
 
 ### User Experience
 
-#### U1: /m-status should show iteration history and convergence
+#### U1: /manifold:m-status should show iteration history and convergence
 
-/m-status should show iteration history and convergence
+/manifold:m-status should show iteration history and convergence
 
 > **Rationale:** Visibility into multi-pass progress
 
@@ -134,9 +134,9 @@ Copy-paste executable actions may require shell syntax that clutters YAML
 
 > **Resolution:** Actions stored in separate 'actions' section with YAML multiline strings; human-readable summary in main flow
 
-### TN4: /m6-integrate needs iteration context to know what was generated when
+### TN4: /manifold:m6-integrate needs iteration context to know what was generated when
 
-/m6-integrate needs iteration context to know what was generated when
+/manifold:m6-integrate needs iteration context to know what was generated when
 
 > **Resolution:** Iteration tracking (U1) must be implemented BEFORE integration phase (T5)
 
@@ -184,4 +184,4 @@ Existing manifolds MUST remain valid
 
 New commands MUST follow /m* pattern
 
-**Evidence:** /m6-integrate follows pattern
+**Evidence:** /manifold:m6-integrate follows pattern

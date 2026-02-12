@@ -1,6 +1,6 @@
 # Verification Report: manifold-cli
 # Generated: 2026-01-15
-# Command: /m5-verify manifold-cli --artifacts
+# Command: /manifold:m5-verify manifold-cli --artifacts
 # Iteration: 5
 
 verification:
@@ -36,7 +36,7 @@ verification:
         exists: true
         satisfies: [RT-2, U1]
         type: command
-        description: "Status command matching /m-status output"
+        description: "Status command matching /manifold:m-status output"
 
       - path: "cli/commands/validate.ts"
         exists: true
@@ -100,7 +100,7 @@ verification:
       description: "Command output must match AI equivalents exactly"
       status: SATISFIED
       evidence:
-        - "cli/commands/status.ts: Output format mirrors /m-status"
+        - "cli/commands/status.ts: Output format mirrors /manifold:m-status"
         - "Verified against manifold-v2, framework-consolidation, manifold-cli"
         - "Iteration history table matches AI output"
 
@@ -289,7 +289,7 @@ summary:
     - "39 tests passing"
     - "68ms response time (32% under 100ms target)"
     - "6/6 required truths satisfied"
-    - "Output matches /m-status exactly"
+    - "Output matches /manifold:m-status exactly"
     - "Distribution complete: install.sh + GitHub Action"
 
   gaps: []

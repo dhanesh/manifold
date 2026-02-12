@@ -1,6 +1,6 @@
 # Deprecation Constraint Template
 
-Use: `/m0-init <feature> --template=pm/deprecation`
+Use: `/manifold:m0-init <feature> --template=pm/deprecation`
 Covers: Feature sunset, legacy migration, breaking changes, user migration
 
 ## Outcome

@@ -1,6 +1,6 @@
 # CRUD Operations Constraint Template
 
-Use: `/m0-init <feature> --template=crud`
+Use: `/manifold:m0-init <feature> --template=crud`
 Covers: Create, Read, Update, Delete operations on data entities
 
 ## Outcome

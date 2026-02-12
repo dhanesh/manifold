@@ -341,7 +341,7 @@ export class AutoSuggester {
             message:
               `💡 ${groupsWithMultiple.length} task(s) can be parallelized ` +
               `(${suggestion.estimatedSpeedup.toFixed(1)}x estimated speedup). ` +
-              `Run with --auto-parallel or use /parallel command.`,
+              `Run with --auto-parallel or use /manifold:parallel command.`,
           };
         }
       }

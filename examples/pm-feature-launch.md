@@ -174,7 +174,7 @@ All stakeholders aligned on success criteria and timeline.
 
 ## Generation
 
-Artifacts generated via `/m4-generate --prd --stories`:
+Artifacts generated via `/manifold:m4-generate --prd --stories`:
 - `docs/mobile-checkout-redesign/PRD.md` — Structured PRD (covers 14 constraints)
 - `docs/mobile-checkout-redesign/STORIES.md` — User stories (covers U1-U4)
 - Coverage: 17/17 constraints (100%)

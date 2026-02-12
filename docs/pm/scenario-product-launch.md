@@ -18,7 +18,7 @@ Using Manifold, we'll surface all constraints before committing to a launch stra
 ## Manifold Setup
 
 ```bash
-/m0-init mobile-checkout-launch --template=pm/feature-launch
+/manifold:m0-init mobile-checkout-launch --template=pm/feature-launch
 ```
 
 ## Constraints Discovered
@@ -146,7 +146,7 @@ Using Manifold, we'll surface all constraints before committing to a launch stra
 
 ## Generated PRD
 
-Using `/m4-generate mobile-checkout-launch --prd`:
+Using `/manifold:m4-generate mobile-checkout-launch --prd`:
 
 ```markdown
 # PRD: Mobile Checkout Launch
@@ -206,7 +206,7 @@ _Traces: B1-B4, T1-T4, U1-U4, S1-S4, O1-O4_
 
 ## Generated User Stories
 
-Using `/m4-generate mobile-checkout-launch --stories`:
+Using `/manifold:m4-generate mobile-checkout-launch --stories`:
 
 ```markdown
 # User Stories: Mobile Checkout Launch

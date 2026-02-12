@@ -288,7 +288,7 @@
       "solution_options_evaluated": 4,
       "recommended_option": "D - Hybrid Orchestrator",
       "key_decisions": [
-        "Hybrid approach: auto-detection + explicit /parallel command",
+        "Hybrid approach: auto-detection + explicit /manifold:parallel command",
         "4-phase implementation: Foundation → Analysis → Orchestration → Integration",
         "Resource monitoring with dynamic concurrency (default max 4)",
         "User confirmation by default, --auto-parallel for hands-free"
@@ -318,7 +318,7 @@
         "lib/parallel/parallel-executor.ts - Concurrent execution",
         "lib/parallel/merge-orchestrator.ts - Result merging",
         "lib/parallel/progress-reporter.ts - Progress visibility",
-        "commands/parallel.ts - /parallel command",
+        "commands/parallel.ts - /manifold:parallel command",
         "hooks/auto-suggester.ts - Auto-suggestion hook"
       ],
       "result": "generated"
@@ -394,7 +394,7 @@
         "Created install/hooks/auto-suggester.ts with dynamic imports from ~/.claude/lib/parallel/",
         "Updated install.sh to install parallel library (11 files)",
         "Updated install.sh to install auto-suggester.ts hook",
-        "Added /parallel command to install.sh help output"
+        "Added /manifold:parallel command to install.sh help output"
       ],
       "distribution_structure": {
         "installed_paths": [
@@ -410,7 +410,7 @@
       "number": 9,
       "phase": "hook-integration",
       "timestamp": "2026-01-16T12:00:00Z",
-      "issue": "Parallel execution hooks not being invoked during /m4-generate",
+      "issue": "Parallel execution hooks not being invoked during /manifold:m4-generate",
       "changes": [
         "Added 'Parallel Execution Integration' section to m4-generate.md",
         "Added parallelization check as step 5 in execution instructions",
@@ -554,7 +554,7 @@
           "RT-6"
         ],
         "status": "generated",
-        "description": "/parallel command implementation"
+        "description": "/manifold:parallel command implementation"
       },
       {
         "path": "install/commands/parallel.md",
@@ -564,7 +564,7 @@
           "U4"
         ],
         "status": "generated",
-        "description": "/parallel Claude Code skill file"
+        "description": "/manifold:parallel Claude Code skill file"
       },
       {
         "path": "hooks/auto-suggester.ts",

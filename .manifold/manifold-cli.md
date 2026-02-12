@@ -91,9 +91,9 @@ YAML output must round-trip without data loss
 
 ### User Experience
 
-#### U1: Command structure mirrors /m* commands (manifold status ≈ /m-status)
+#### U1: Command structure mirrors /m* commands (manifold status ≈ /manifold:m-status)
 
-Command structure mirrors /m* commands (manifold status ≈ /m-status)
+Command structure mirrors /m* commands (manifold status ≈ /manifold:m-status)
 
 > **Rationale:** Familiar mental model for existing users
 
@@ -221,7 +221,7 @@ YAML parsing must be fast and safe
 
 Command output must match AI equivalents exactly
 
-**Evidence:** Status output format matches /m-status, tested against existing manifolds
+**Evidence:** Status output format matches /manifold:m-status, tested against existing manifolds
 
 ### RT-3: Exit codes must enable CI/CD automation
 

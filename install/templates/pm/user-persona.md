@@ -1,6 +1,6 @@
 # User Persona Constraint Template
 
-Use: `/m0-init <feature> --template=pm/user-persona`
+Use: `/manifold:m0-init <feature> --template=pm/user-persona`
 Covers: User persona definition, jobs-to-be-done analysis, behavioral pattern documentation
 
 ## Outcome

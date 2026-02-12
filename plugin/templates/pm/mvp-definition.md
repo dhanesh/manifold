@@ -1,6 +1,6 @@
 # MVP Definition Constraint Template
 
-Use: `/m0-init <product> --template=pm/mvp-definition`
+Use: `/manifold:m0-init <product> --template=pm/mvp-definition`
 Covers: Minimum viable product scoping, MoSCoW prioritization, build-measure-learn cycle definition
 
 ## Outcome

@@ -1,6 +1,6 @@
 # Product Roadmap Constraint Template
 
-Use: `/m0-init <feature> --template=pm/product-roadmap`
+Use: `/manifold:m0-init <feature> --template=pm/product-roadmap`
 Covers: Now-Next-Later roadmaps, outcome-based planning, strategic alignment
 
 ## Outcome

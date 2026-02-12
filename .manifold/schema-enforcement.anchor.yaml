@@ -145,7 +145,7 @@ recommendation_rationale: |
   2. Implements conflict detection (addresses TN6 Phase 1)
   3. Extends proven schema.ts and solver.ts patterns
   4. No Zod dependency keeps bundle size minimal
-  5. Implements all 7 tension resolutions from /m2-tension
+  5. Implements all 7 tension resolutions from /manifold:m2-tension
 
   The only partial coverage (RT-5: AI command enforcement) is acceptable because:
   - AI commands are markdown prompts, not code
@@ -170,7 +170,7 @@ implementation_plan:
     tasks:
       - "Add detectSemanticConflicts() to solver.ts"
       - "Generate explanatory conflict messages"
-      - "Integrate with /m2-tension analysis"
+      - "Integrate with /manifold:m2-tension analysis"
     files: ["cli/lib/solver.ts"]
     satisfies: [RT-4]
 

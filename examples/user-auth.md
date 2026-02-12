@@ -1,6 +1,6 @@
 # user-auth
 
-Basic Manifold Example - Matches /m0-init output schema.
+Basic Manifold Example - Matches /manifold:m0-init output schema.
 This example shows the standard structure created by Manifold commands.
 
 ## Outcome

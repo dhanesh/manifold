@@ -23,10 +23,10 @@ Manifold's design is grounded in research from multiple domains:
 
 | Research Area | Key Finding | Impact on Manifold |
 |---------------|-------------|-------------------|
-| Backward Planning | Clearer step anticipation, better outcomes | `/m3-anchor` phase design |
+| Backward Planning | Clearer step anticipation, better outcomes | `/manifold:m3-anchor` phase design |
 | Traceability | 24% faster, 50% more correct | Artifact traceability requirement |
 | Shift-Left | 10-100x cost reduction | Early constraint discovery |
-| Design Rationale | Higher quality from explicit reasoning | `/m2-tension` phase design |
+| Design Rationale | Higher quality from explicit reasoning | `/manifold:m2-tension` phase design |
 
 ## See Also
 

@@ -1,6 +1,6 @@
 # PR/FAQ Constraint Template
 
-Use: `/m0-init <product> --template=pm/pr-faq`
+Use: `/manifold:m0-init <product> --template=pm/pr-faq`
 Covers: Amazon Working Backwards methodology, customer-centric product definition, press release driven development
 
 ## Outcome

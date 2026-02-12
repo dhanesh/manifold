@@ -1,6 +1,6 @@
 # API Endpoint Constraint Template
 
-Use: `/m0-init <feature> --template=api`
+Use: `/manifold:m0-init <feature> --template=api`
 Covers: REST, GraphQL, or RPC API design and implementation
 
 ## Outcome

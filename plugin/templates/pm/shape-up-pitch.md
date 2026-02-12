@@ -1,6 +1,6 @@
 # Shape Up Pitch Constraint Template
 
-Use: `/m0-init <feature> --template=pm/shape-up-pitch`
+Use: `/manifold:m0-init <feature> --template=pm/shape-up-pitch`
 Covers: Shaped pitches for betting table decisions, fixed-appetite projects, de-risked solutions
 
 ## Outcome

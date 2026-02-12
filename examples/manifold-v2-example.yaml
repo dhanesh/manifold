@@ -123,7 +123,7 @@ generation:
     percentage: 100
 
 # Integration tracking (v2)
-# Populated by /m6-integrate command
+# Populated by /manifold:m6-integrate command
 integration:
   timestamp: "2026-01-14T11:15:00Z"
   iteration: 3

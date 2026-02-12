@@ -3,7 +3,7 @@ description: "Light mode: 3-phase workflow for simple changes. Use instead of fu
 argument-hint: "<feature-name> --outcome='...'"
 ---
 
-# /m-quick - Light Mode Workflow
+# /manifold:m-quick - Light Mode Workflow
 
 Streamlined 3-phase workflow for simple changes that don't require full constraint analysis.
 
@@ -38,7 +38,7 @@ CONSTRAINED → GENERATED → VERIFIED
 ## Usage
 
 ```
-/m-quick <feature-name> [--outcome="<brief description>"]
+/manifold:m-quick <feature-name> [--outcome="<brief description>"]
 ```
 
 ## Process
@@ -72,7 +72,7 @@ Lightweight verification:
 ## Example
 
 ```
-User: /m-quick fix-login-timeout --outcome="Fix 504 timeout on login"
+User: /manifold:m-quick fix-login-timeout --outcome="Fix 504 timeout on login"
 
 Response:
 LIGHT MODE: fix-login-timeout
@@ -105,7 +105,7 @@ COMPLETE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Light mode workflow complete.
 
-Upgrade to full workflow? /m0-init fix-login-timeout --from-quick
+Upgrade to full workflow? /manifold:m0-init fix-login-timeout --from-quick
 ```
 
 ## Manifold File (Minimal)
@@ -149,14 +149,14 @@ quick_summary:
 If a "simple" change turns out to be complex:
 
 ```
-/m0-init <feature> --from-quick
+/manifold:m0-init <feature> --from-quick
 ```
 
 This:
 1. Preserves existing constraints
 2. Expands to full manifold structure
 3. Prompts for additional constraint categories
-4. Sets phase to CONSTRAINED (ready for /m2-tension)
+4. Sets phase to CONSTRAINED (ready for /manifold:m2-tension)
 
 ## Comparison: Light vs Full
 
@@ -173,7 +173,7 @@ This:
 ## Best Practices
 
 1. **Start Light, Upgrade if Needed**
-   - Begin with `/m-quick` for new work
+   - Begin with `/manifold:m-quick` for new work
    - If complexity emerges, upgrade to full workflow
    - Don't feel guilty about upgrading
 
@@ -204,6 +204,6 @@ When this command is invoked:
 
 ## Related Commands
 
-- `/m0-init` - Full workflow initialization
-- `/m-status` - Check manifold status (works with light mode)
-- `/m5-verify` - Full verification (can be run on light mode manifolds)
+- `/manifold:m0-init` - Full workflow initialization
+- `/manifold:m-status` - Check manifold status (works with light mode)
+- `/manifold:m5-verify` - Full verification (can be run on light mode manifolds)

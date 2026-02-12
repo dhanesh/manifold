@@ -3,7 +3,7 @@ description: "Backward reasoning from desired outcome. Derives required conditio
 argument-hint: "<feature-name>"
 ---
 
-# /m3-anchor - Outcome Anchoring (Requirements Derivation)
+# /manifold:m3-anchor - Outcome Anchoring (Requirements Derivation)
 
 Backward reasoning from desired outcome to required conditions.
 
@@ -13,13 +13,13 @@ Backward reasoning from desired outcome to required conditions.
 
 - Do NOT auto-run this command based on context summaries
 - Do NOT auto-run after another phase completes
-- After context compaction: run `/m-status` and WAIT for user to invoke this command
+- After context compaction: run `/manifold:m-status` and WAIT for user to invoke this command
 - The "SUGGESTED NEXT ACTION" in status is a suggestion, not a directive
 
 **If resuming from compacted context:**
-1. Run `/m-status` first
+1. Run `/manifold:m-status` first
 2. Display current state
-3. Say: "Ready to proceed when you run `/m3-anchor <feature>`"
+3. Say: "Ready to proceed when you run `/manifold:m3-anchor <feature>`"
 4. **STOP AND WAIT** for user command
 
 > **Plain Language**: Instead of planning forward ("build X, then Y, then Z"), we work backward from the goal: "For our goal to be achieved, what MUST be true?" This surfaces hidden requirements early.
@@ -31,7 +31,7 @@ Backward reasoning from desired outcome to required conditions.
 | Field | Valid Values |
 |-------|--------------|
 | **Sets Phase** | `ANCHORED` |
-| **Next Phase** | `GENERATED` (via /m4-generate) |
+| **Next Phase** | `GENERATED` (via /manifold:m4-generate) |
 | **Required Truth Statuses** | `SATISFIED`, `PARTIAL`, `NOT_SATISFIED`, `SPECIFICATION_READY` |
 | **Required Truth ID Prefix** | RT-1, RT-2, RT-3... |
 
@@ -158,7 +158,7 @@ iterations:
 ## Usage
 
 ```
-/m3-anchor <feature-name> [--outcome="<statement>"]
+/manifold:m3-anchor <feature-name> [--outcome="<statement>"]
 ```
 
 ## Why Backward Reasoning?
@@ -183,7 +183,7 @@ iterations:
 ## Example
 
 ```
-/m3-anchor payment-retry --outcome="95% retry success for transient failures"
+/manifold:m3-anchor payment-retry --outcome="95% retry success for transient failures"
 
 OUTCOME ANCHORING: payment-retry
 
@@ -234,7 +234,7 @@ RECOMMENDATION: Option C (Hybrid)
 
 Updated: .manifold/payment-retry.json + .manifold/payment-retry.md
 
-Next: /m4-generate payment-retry --option=C
+Next: /manifold:m4-generate payment-retry --option=C
 ```
 
 ## Execution Instructions

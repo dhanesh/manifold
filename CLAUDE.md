@@ -23,17 +23,17 @@ Forward reasoning                    Backward from outcome
 
 | Command | Phase | Purpose |
 |---------|-------|---------|
-| `/m0-init <feature>` | INITIALIZED | Create constraint manifold |
-| `/m1-constrain <feature>` | CONSTRAINED | Interview-driven constraint discovery |
-| `/m2-tension <feature>` | TENSIONED | Surface conflicts (trade-offs) between constraints |
-| `/m3-anchor <feature>` | ANCHORED | Backward reasoning from outcome |
-| `/m4-generate <feature>` | GENERATED | Create ALL artifacts simultaneously |
-| `/m5-verify <feature>` | VERIFIED | Validate against constraints |
-| `/m6-integrate <feature>` | - | Wire artifacts together |
-| `/m-status` | - | Show current state and next action |
-| `/m-solve` | - | Generate parallel execution plan |
-| `/m-quick <feature>` | - | **Light mode**: 3-phase workflow for simple changes |
-| `/parallel` | - | Execute tasks in parallel worktrees |
+| `/manifold:m0-init <feature>` | INITIALIZED | Create constraint manifold |
+| `/manifold:m1-constrain <feature>` | CONSTRAINED | Interview-driven constraint discovery |
+| `/manifold:m2-tension <feature>` | TENSIONED | Surface conflicts (trade-offs) between constraints |
+| `/manifold:m3-anchor <feature>` | ANCHORED | Backward reasoning from outcome |
+| `/manifold:m4-generate <feature>` | GENERATED | Create ALL artifacts simultaneously |
+| `/manifold:m5-verify <feature>` | VERIFIED | Validate against constraints |
+| `/manifold:m6-integrate <feature>` | - | Wire artifacts together |
+| `/manifold:m-status` | - | Show current state and next action |
+| `/manifold:m-solve` | - | Generate parallel execution plan |
+| `/manifold:m-quick <feature>` | - | **Light mode**: 3-phase workflow for simple changes |
+| `/manifold:parallel` | - | Execute tasks in parallel worktrees |
 
 ### Phase Progression
 
@@ -133,21 +133,31 @@ tests/                          # Test files (Bun test)
 examples/                       # Example manifolds
 ```
 
-**Plugin Sync**: The `plugin/` directory is synced from `install/` (canonical source) using `bun scripts/sync-plugin.ts`. CI enforces sync via the diff-guard workflow. Edit files in `install/` only; `plugin/` is auto-generated.
+**Plugin Sync**: The `plugin/` directory contains real file copies (not symlinks) synced from `install/` using `bun scripts/sync-plugin.ts`. Claude Code plugin system doesn't follow symlinks, requiring real files for marketplace distribution. The sync script automatically removes any existing symlinks before copying. CI enforces sync via the diff-guard workflow. Edit files in `install/` only; `plugin/` is auto-generated.
+
+**Multi-Agent Support**: Manifold supports multiple AI agents beyond Claude Code:
+- **Gemini CLI**: Command translations in `install/agents/gemini/commands/*.toml`
+- **Codex CLI**: Skill definitions in `install/agents/codex/skills/*/SKILL.md`
+- **Uninstaller**: `install/uninstall.sh` removes Manifold from all detected agents (Claude Code, AMP, Gemini, Codex)
+- Build commands automatically regenerate agent-specific artifacts
 
 **Build Commands**:
 ```bash
 bun run build:commands        # Rebuild command translations for Gemini/Codex
 bun run build:parallel-bundle # Bundle parallel execution library
-bun run sync:plugin           # Sync install/ → plugin/
+bun run sync:plugin           # Sync install/ → plugin/ (removes symlinks first)
 bun run build:all             # Run all build steps
 ```
 
-**Release Automation**: Semantic release automatically:
+**Release Automation**: Semantic release (`.releaserc.json`) automatically:
 - Bumps version in `cli/package.json`, `plugin/plugin.json`, `.claude-plugin/marketplace.json`
-- Syncs plugin files via `sync:plugin` script
+- Syncs plugin files via `bun scripts/sync-plugin.ts` during prepareCmd step
 - Generates CHANGELOG.md with conventional commits
 - Creates git tags (format: `v${version}`)
+- Builds CLI binaries for 4 platforms (darwin-arm64, darwin-x64, linux-x64, linux-arm64)
+- Uploads binaries to GitHub release
+- Uses conventional commits for release type detection (feat=minor, fix=patch, perf/refactor=patch)
+- Non-release types (docs, style, test, build, ci, chore) don't trigger releases
 
 ## Coding Conventions
 
@@ -161,10 +171,13 @@ bun run build:all             # Run all build steps
 ### Distribution Model
 
 - **Canonical source**: `install/` directory contains single source of truth
-- **Plugin sync**: `plugin/` contains synced copies (Claude Code doesn't follow symlinks)
-- **Sync script**: `bun scripts/sync-plugin.ts` copies `install/` → `plugin/`
-- **CI validation**: Diff-guard workflow ensures sync is current
+- **Plugin sync**: `plugin/` contains real file copies (not symlinks) synced from `install/`
+- **Sync script**: `bun scripts/sync-plugin.ts` copies files preserving plugin-only files (setup.md, hooks.json, session-start.sh)
+- **Sync removes symlinks**: Script automatically removes any existing symlinks before copying to ensure clean state
+- **CI validation**: Diff-guard workflow (`.github/workflows/manifold-diff-guard.yml`) rebuilds artifacts and verifies plugin sync on every push
 - **Edit location**: Always edit in `install/`, never in `plugin/`
+- **Why real files**: Claude Code plugin system doesn't follow symlinks; marketplace distribution requires real files
+- **Git attributes**: `.gitattributes` documents canonical source locations and sync requirements
 
 ### Constraint Traceability
 
@@ -285,11 +298,11 @@ convergence:
 
 - **Never auto-continue** to the next phase after completing one
 - After any phase completes, show status and **WAIT** for user command
-- After context compaction, run `/m-status` and **WAIT** - do not auto-continue
+- After context compaction, run `/manifold:m-status` and **WAIT** - do not auto-continue
 - The "SUGGESTED NEXT ACTION" in status output is a **suggestion**, not a directive
 
 **Post-compaction recovery pattern:**
-1. Run `/m-status` to understand current state
+1. Run `/manifold:m-status` to understand current state
 2. Display: "Current phase: X. Suggested next action: Y. Waiting for your command."
 3. **STOP** and wait for user input
 
@@ -297,9 +310,9 @@ convergence:
 
 ### DO
 
-1. **Always run `/m-status` first** to understand current phase
-2. **Discover ALL constraints before coding** — use `/m1-constrain`
-3. **Surface tensions explicitly** — use `/m2-tension`
+1. **Always run `/manifold:m-status` first** to understand current phase
+2. **Discover ALL constraints before coding** — use `/manifold:m1-constrain`
+3. **Surface tensions explicitly** — use `/manifold:m2-tension`
 4. **Generate ALL artifacts together** — code, tests, docs, runbooks, alerts
 5. **Trace every artifact to constraints** — use comments like `// Satisfies: B1`
 6. **Validate schema after changes** — `manifold validate <feature>`
@@ -319,7 +332,7 @@ convergence:
 When generating 3+ artifacts across different modules, consider parallel execution:
 
 ```bash
-/parallel "implement auth module" "add logging" "create tests" --dry-run
+/manifold:parallel "implement auth module" "add logging" "create tests" --dry-run
 ```
 
 The system:
@@ -331,8 +344,14 @@ The system:
 
 **Options:**
 - `--dry-run` — Analyze only, no execution
+- `--auto-parallel` — Enable automatic parallelization without confirmation
 - `--max-parallel N` — Limit concurrent tasks (default: 4)
 - `--timeout N` — Seconds per task (default: 300)
+- `--verbose, -v` — Show detailed output
+- `--deep` — Use deep analysis (slower but more accurate)
+- `--strategy TYPE` — Merge strategy: sequential, squash, rebase
+- `--no-cleanup` — Don't cleanup worktrees after completion
+- `--file, -f FILE` — Load tasks from YAML file
 
 **Configuration:** `.parallel.yaml` in project root
 
@@ -342,7 +361,7 @@ The system:
 |---------------|----------|---------|
 | Library code | `lib/<feature>/` | `lib/retry/PaymentRetryClient.ts` |
 | CLI commands | `cli/commands/` | `cli/commands/status.ts` |
-| Claude skills | `install/commands/<name>.md` | `install/commands/m1-constrain.md` |
+| Claude skills | `install/commands/<name>.md` | `install/commands/manifold:m1-constrain.md` |
 | Tests | `tests/<feature>/` | `tests/retry/PaymentRetryClient.test.ts` |
 | Documentation | `docs/<feature>/` | `docs/payment-retry/README.md` |
 | Runbooks | `ops/runbooks/` | `ops/runbooks/payment-retry-failure.md` |
@@ -354,12 +373,12 @@ The system:
 ### Start New Feature (Full Workflow)
 
 ```bash
-/m0-init my-feature --outcome="Success criteria here"
-/m1-constrain my-feature
-/m2-tension my-feature --resolve
-/m3-anchor my-feature
-/m4-generate my-feature --option=A
-/m5-verify my-feature
+/manifold:m0-init my-feature --outcome="Success criteria here"
+/manifold:m1-constrain my-feature
+/manifold:m2-tension my-feature --resolve
+/manifold:m3-anchor my-feature
+/manifold:m4-generate my-feature --option=A
+/manifold:m5-verify my-feature
 ```
 
 ### Quick Changes (Light Mode)
@@ -367,7 +386,7 @@ The system:
 For simple changes that don't need full constraint analysis:
 
 ```bash
-/m-quick fix-login-bug --outcome="Fix 504 timeout on login"
+/manifold:m-quick fix-login-bug --outcome="Fix 504 timeout on login"
 ```
 
 Light mode uses 3 phases: Constrain → Generate → Verify. See [When NOT to Use](docs/WHEN_NOT_TO_USE.md) for guidance.
@@ -377,10 +396,10 @@ Light mode uses 3 phases: Constrain → Generate → Verify. See [When NOT to Us
 Pre-built constraint patterns for common scenarios:
 
 ```bash
-/m0-init user-auth --template=auth
-/m0-init user-crud --template=crud
-/m0-init payment-flow --template=payment
-/m0-init api-endpoint --template=api
+/manifold:m0-init user-auth --template=auth
+/manifold:m0-init user-crud --template=crud
+/manifold:m0-init payment-flow --template=payment
+/manifold:m0-init api-endpoint --template=api
 ```
 
 ### PM Workflow (Product Managers)
@@ -388,11 +407,11 @@ Pre-built constraint patterns for common scenarios:
 For PRD and user story generation:
 
 ```bash
-/m0-init mobile-checkout --template=pm/feature-launch
-/m1-constrain mobile-checkout
-/m2-tension mobile-checkout
-/m3-anchor mobile-checkout
-/m4-generate mobile-checkout --prd --stories
+/manifold:m0-init mobile-checkout --template=pm/feature-launch
+/manifold:m1-constrain mobile-checkout
+/manifold:m2-tension mobile-checkout
+/manifold:m3-anchor mobile-checkout
+/manifold:m4-generate mobile-checkout --prd --stories
 ```
 
 Outputs:
@@ -404,17 +423,17 @@ PM templates available: `pm/feature-launch`, `pm/experiment`, `pm/deprecation`
 ### Check Status
 
 ```bash
-/m-status                  # All features
-/m-status my-feature       # Single feature
+/manifold:m-status                  # All features
+/manifold:m-status my-feature       # Single feature
 manifold status            # Fast CLI check
 ```
 
 ### Fix Verification Gaps
 
 ```bash
-/m5-verify my-feature --actions    # Get actionable fix commands
+/manifold:m5-verify my-feature --actions    # Get actionable fix commands
 # Apply the generated actions
-/m5-verify my-feature              # Re-verify
+/manifold:m5-verify my-feature              # Re-verify
 ```
 
 ### Validate Schema
@@ -427,7 +446,8 @@ manifold validate my-feature    # Exits 2 on failure
 
 - [README.md](README.md) — Project overview
 - [AGENTS.md](AGENTS.md) — Agent specifications
-- [SCHEMA_REFERENCE.md](install/commands/SCHEMA_REFERENCE.md) — Valid values
+- [SCHEMA_REFERENCE.md](install/commands/SCHEMA_REFERENCE.md) — Valid values (complete reference)
+- [SCHEMA_QUICK_REFERENCE.md](install/commands/SCHEMA_QUICK_REFERENCE.md) — Field name lookup (prevents confusion)
 - [Parallel Agents](docs/parallel-agents/README.md) — Parallel execution guide
 - [Practical Walkthrough](docs/walkthrough/README.md) — End-to-end feature example
 - [Glossary](docs/GLOSSARY.md) — Plain-language terminology explanations

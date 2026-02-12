@@ -1,6 +1,6 @@
 /**
  * Verify Command for Manifold CLI
- * Satisfies: U1 (mirrors /m5-verify), RT-2 (Output matching AI equivalents)
+ * Satisfies: U1 (mirrors /manifold:m5-verify), RT-2 (Output matching AI equivalents)
  */
 
 import type { Command } from 'commander';
