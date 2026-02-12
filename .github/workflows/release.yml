@@ -67,9 +67,6 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Install dependencies
-        run: bun install
-
       - name: Run semantic-release
         id: semantic
         uses: cycjimmy/semantic-release-action@v4
