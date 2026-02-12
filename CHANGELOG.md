@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.23.3](https://github.com/dhanesh/manifold/compare/v2.23.2...v2.23.3) (2026-02-12)
+
+### Bug Fixes
+
+* redirect uninstall status messages to stderr ([9c30e16](https://github.com/dhanesh/manifold/commit/9c30e16d6212da5653cca9566d963c467df9a5df))
+
 ## [2.23.2](https://github.com/dhanesh/manifold/compare/v2.23.1...v2.23.2) (2026-02-12)
 
 ### Bug Fixes
