@@ -1,6 +1,6 @@
 {
   "name": "manifold",
-  "version": "2.23.3",
+  "version": "2.23.4",
   "description": "Constraint-first development framework. Makes ALL constraints visible BEFORE implementation through structured phases: initialize, constrain, tension, anchor, generate, verify.",
   "author": {
     "name": "Dhanesh",
