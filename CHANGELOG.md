@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.24.0](https://github.com/dhanesh/manifold/compare/v2.23.4...v2.24.0) (2026-02-13)
+
+### Features
+
+* add --template flag to cli init, fix uninstall/verify/test issues ([348b4bf](https://github.com/dhanesh/manifold/commit/348b4bf5e296ae84fdbef3ee85c53ddf592b985c))
+
 ## [2.23.4](https://github.com/dhanesh/manifold/compare/v2.23.3...v2.23.4) (2026-02-12)
 
 ### Refactoring
