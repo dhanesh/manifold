@@ -84,7 +84,7 @@ checklist:
     priority: MEDIUM
     status: pending
     source: cli/lib/solver.ts
-    target: install/commands/manifold:m2-tension.md
+    target: install/commands/m2-tension.md
     action: "Document CLI usage of conflict detection in skill file"
     details:
       - "m2-tension skill should mention CLI conflict detection"
@@ -171,7 +171,7 @@ actions:
 
   optional:
     - id: ACTION-2
-      target: install/commands/manifold:m2-tension.md
+      target: install/commands/m2-tension.md
       description: "Add CLI conflict detection reference"
       content: |
         ## CLI Conflict Detection

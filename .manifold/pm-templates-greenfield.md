@@ -67,7 +67,7 @@ Template `[CUSTOMIZE: ...]` examples must not include real company names, real f
 ### Operational
 
 #### O1: Documentation Coverage
-All 4 documentation touchpoints must be updated: `install/templates/pm/README.md`, `install/templates/README.md`, `docs/pm/guide.md`, and `install/commands/manifold:m0-init.md` argument hint.
+All 4 documentation touchpoints must be updated: `install/templates/pm/README.md`, `install/templates/README.md`, `docs/pm/guide.md`, and `install/commands/m0-init.md` argument hint.
 > **Rationale:** Undocumented templates don't exist for users. The docs are the discovery mechanism.
 
 #### O2: Greenfield Workflow Guide
@@ -134,7 +134,7 @@ All constraint IDs referenced in tensions' `between` arrays and required truths'
 ### RT-6: Discoverability
 All 10 new templates must be discoverable via shell tab-completion (bash, zsh, fish) and documented in all 4 documentation touchpoints.
 **Maps to:** T4 (Shell Completion Coverage), O1 (Documentation Coverage)
-**Gap:** `completion.ts` hard-coded lists need 10 new entries. `install/templates/pm/README.md`, `install/templates/README.md`, `docs/pm/guide.md`, and `install/commands/manifold:m0-init.md` all need updates.
+**Gap:** `completion.ts` hard-coded lists need 10 new entries. `install/templates/pm/README.md`, `install/templates/README.md`, `docs/pm/guide.md`, and `install/commands/m0-init.md` all need updates.
 
 ---
 

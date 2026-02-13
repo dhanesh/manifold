@@ -9,7 +9,7 @@
       "status": "ALL_EXIST",
       "details": [
         {
-          "path": "install/commands/manifold:m0-init.md",
+          "path": "install/commands/m0-init.md",
           "exists": true,
           "satisfies": [
             "RT-1",
@@ -21,7 +21,7 @@
           ]
         },
         {
-          "path": "install/commands/manifold:m-status.md",
+          "path": "install/commands/m-status.md",
           "exists": true,
           "satisfies": [
             "RT-1",
@@ -33,7 +33,7 @@
           ]
         },
         {
-          "path": "install/commands/manifold:m2-tension.md",
+          "path": "install/commands/m2-tension.md",
           "exists": true,
           "satisfies": [
             "RT-3"
@@ -44,7 +44,7 @@
           ]
         },
         {
-          "path": "install/commands/manifold:m6-integrate.md",
+          "path": "install/commands/m6-integrate.md",
           "exists": true,
           "satisfies": [
             "RT-2",
@@ -57,7 +57,7 @@
           ]
         },
         {
-          "path": "install/commands/manifold:m5-verify.md",
+          "path": "install/commands/m5-verify.md",
           "exists": true,
           "satisfies": [
             "RT-4"

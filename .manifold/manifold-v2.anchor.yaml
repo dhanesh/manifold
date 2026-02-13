@@ -152,8 +152,8 @@ recommendation:
         - "New manifolds track iteration state"
         - "/manifold:m-status shows iteration history"
       files:
-        - "install/commands/manifold:m0-init.md (schema template)"
-        - "install/commands/manifold:m-status.md (iteration display)"
+        - "install/commands/m0-init.md (schema template)"
+        - "install/commands/m-status.md (iteration display)"
         - "install/manifold/SKILL.md (documentation)"
 
     - phase: B
@@ -169,9 +169,9 @@ recommendation:
         - "Parallel opportunities surfaced"
         - "Convergence status calculated"
       files:
-        - "install/commands/manifold:m2-tension.md (dependency detection)"
-        - "install/commands/manifold:m3-anchor.md (parallel tracks)"
-        - "install/commands/manifold:m-status.md (convergence)"
+        - "install/commands/m2-tension.md (dependency detection)"
+        - "install/commands/m3-anchor.md (parallel tracks)"
+        - "install/commands/m-status.md (convergence)"
 
     - phase: C
       name: "Automation Layer"
@@ -186,9 +186,9 @@ recommendation:
         - "Gaps produce executable actions"
         - "/manifold:m6-integrate wires artifacts"
       files:
-        - "install/commands/manifold:m6-integrate.md (new command)"
-        - "install/commands/manifold:m4-generate.md (integration hints)"
-        - "install/commands/manifold:m5-verify.md (gap-to-action)"
+        - "install/commands/m6-integrate.md (new command)"
+        - "install/commands/m4-generate.md (integration hints)"
+        - "install/commands/m5-verify.md (gap-to-action)"
         - "install/install.sh (new command)"
 
 # Validation gates per phase
@@ -211,16 +211,16 @@ critical_path:
   step_1:
     action: "Add schema_version field and iterations[] section"
     unblocks: [RT-2, RT-3, RT-4]
-    files: ["install/commands/manifold:m0-init.md"]
+    files: ["install/commands/m0-init.md"]
   step_2:
     action: "Implement dependency detection in /manifold:m2-tension"
     requires: [step_1]
-    files: ["install/commands/manifold:m2-tension.md"]
+    files: ["install/commands/m2-tension.md"]
   step_3:
     action: "Create /manifold:m6-integrate command"
     requires: [step_1, step_2]
-    files: ["install/commands/manifold:m6-integrate.md", "install/install.sh"]
+    files: ["install/commands/m6-integrate.md", "install/install.sh"]
   step_4:
     action: "Add gap-to-action automation in /manifold:m5-verify"
     requires: [step_1]
-    files: ["install/commands/manifold:m5-verify.md"]
+    files: ["install/commands/m5-verify.md"]

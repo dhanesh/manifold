@@ -6,8 +6,8 @@
  */
 
 import type { Command } from 'commander';
-import { existsSync, mkdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
+import { join, dirname } from 'path';
 import { findManifoldDir } from '../lib/parser.js';
 import {
   println,
@@ -20,6 +20,7 @@ interface InitOptions {
   json?: boolean;
   outcome?: string;
   force?: boolean;
+  template?: string;
 }
 
 /**
@@ -32,6 +33,7 @@ export function registerInitCommand(program: Command): void {
     .option('--json', 'Output as JSON')
     .option('-o, --outcome <outcome>', 'Set the outcome statement')
     .option('-f, --force', 'Overwrite existing manifold')
+    .option('-t, --template <template>', 'Use a constraint template (auth, crud, payment, api, pm/*)')
     .action(async (feature: string, options: InitOptions) => {
       const exitCode = await initCommand(feature, options);
       process.exit(exitCode);
@@ -101,8 +103,24 @@ async function initCommand(feature: string, options: InitOptions): Promise<numbe
     return 1;
   }
 
+  // Load template if specified, otherwise generate blank manifold
+  const templateResult = options.template
+    ? loadTemplate(feature, options.template, options.outcome)
+    : null;
+
+  if (templateResult && templateResult.error) {
+    if (options.json) {
+      println(toJSON({ error: templateResult.error }));
+    } else {
+      printError(templateResult.error);
+    }
+    return 1;
+  }
+
   // Generate manifold content (JSON+MD format)
-  const { structure, markdown } = generateManifoldTemplate(feature, options.outcome);
+  const { structure, markdown } = templateResult
+    ? templateResult
+    : generateManifoldTemplate(feature, options.outcome);
 
   // Write JSON structure file
   try {
@@ -136,6 +154,7 @@ async function initCommand(feature: string, options: InitOptions): Promise<numbe
       success: true,
       feature,
       format: 'json-md',
+      ...(options.template ? { template: options.template } : {}),
       paths: {
         json: jsonPath,
         md: mdPath
@@ -144,6 +163,9 @@ async function initCommand(feature: string, options: InitOptions): Promise<numbe
     }));
   } else {
     println(`${style.check()} Created manifold: ${style.feature(feature)}`);
+    if (options.template) {
+      println(`  Template: ${options.template}`);
+    }
     println(`  JSON: ${jsonPath}`);
     println(`  MD:   ${mdPath}`);
     println();
@@ -286,4 +308,131 @@ _No required truths anchored yet. Run \`/manifold:m3-anchor ${feature}\` after r
 `;
 
   return { structure, markdown };
+}
+
+/**
+ * Resolve template directory from multiple candidate locations.
+ * Works for: local development, installed CLI, plugin context.
+ */
+function resolveTemplateDir(): string | null {
+  const candidates = [
+    // Relative to this file (cli/commands/init.ts -> install/templates)
+    join(dirname(dirname(__dirname)), 'install', 'templates'),
+    // Relative to cli dist (cli/dist -> install/templates)
+    join(dirname(dirname(dirname(__dirname))), 'install', 'templates'),
+    // Installed as plugin (plugin -> plugin/templates)
+    join(dirname(dirname(__dirname)), 'plugin', 'templates'),
+    // Peer templates directory
+    join(dirname(dirname(__dirname)), 'templates'),
+  ];
+
+  for (const dir of candidates) {
+    if (existsSync(dir)) {
+      return dir;
+    }
+  }
+  return null;
+}
+
+interface TemplateResult extends ManifoldTemplate {
+  error?: string;
+}
+
+/**
+ * Load a template and customize it for the given feature.
+ * Templates are JSON+MD pairs in install/templates/.
+ */
+function loadTemplate(feature: string, templateName: string, outcome?: string): TemplateResult {
+  const templateDir = resolveTemplateDir();
+
+  if (!templateDir) {
+    return { structure: {}, markdown: '', error: 'Template directory not found. Templates may not be installed.' };
+  }
+
+  // Resolve template path (supports "payment" and "pm/feature-launch" formats)
+  const jsonPath = join(templateDir, `${templateName}.json`);
+  const mdPath = join(templateDir, `${templateName}.md`);
+
+  if (!existsSync(jsonPath)) {
+    // List available templates for the error message
+    const available = listAvailableTemplates(templateDir);
+    return {
+      structure: {},
+      markdown: '',
+      error: `Template "${templateName}" not found. Available: ${available.join(', ')}`
+    };
+  }
+
+  if (!existsSync(mdPath)) {
+    return { structure: {}, markdown: '', error: `Template "${templateName}" is missing its .md file` };
+  }
+
+  // Load and customize JSON structure
+  const now = new Date().toISOString();
+  const date = now.split('T')[0];
+  let structureRaw: string;
+  try {
+    structureRaw = readFileSync(jsonPath, 'utf-8');
+  } catch {
+    return { structure: {}, markdown: '', error: `Failed to read template JSON: ${jsonPath}` };
+  }
+
+  let structure: Record<string, unknown>;
+  try {
+    structure = JSON.parse(structureRaw);
+  } catch {
+    return { structure: {}, markdown: '', error: `Invalid JSON in template: ${jsonPath}` };
+  }
+
+  // Customize the structure for this feature
+  structure.feature = feature;
+  structure.created = date;
+  delete structure.$schema; // Remove relative $schema reference from template
+
+  // Add iteration tracking
+  structure.iterations = [
+    { number: 0, phase: 'init', timestamp: now, result: `initialized from template:${templateName}` }
+  ];
+
+  // Load and customize markdown content
+  let markdown: string;
+  try {
+    markdown = readFileSync(mdPath, 'utf-8');
+  } catch {
+    return { structure: {}, markdown: '', error: `Failed to read template markdown: ${mdPath}` };
+  }
+
+  // Replace outcome placeholder if provided
+  if (outcome) {
+    markdown = markdown.replace(
+      /\[CUSTOMIZE:.*?\]/,
+      outcome
+    );
+  }
+
+  return { structure, markdown };
+}
+
+/**
+ * List available template names from the templates directory.
+ */
+function listAvailableTemplates(templateDir: string): string[] {
+  const templates: string[] = [];
+  const { readdirSync, statSync } = require('fs');
+
+  for (const entry of readdirSync(templateDir)) {
+    const entryPath = join(templateDir, entry);
+    if (entry.endsWith('.json') && entry !== 'README.md') {
+      templates.push(entry.replace('.json', ''));
+    } else if (statSync(entryPath).isDirectory() && entry !== 'node_modules') {
+      // Check subdirectories (e.g., pm/)
+      for (const sub of readdirSync(entryPath)) {
+        if (sub.endsWith('.json')) {
+          templates.push(`${entry}/${sub.replace('.json', '')}`);
+        }
+      }
+    }
+  }
+
+  return templates.sort();
 }
