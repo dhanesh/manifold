@@ -250,7 +250,7 @@ Within-feature conflict detection must identify contradictory constraints
 
 AI commands (/m0-m6) must generate valid v3 YAML
 
-**Evidence:** install/commands/manifold:m1-constrain.md, install/commands/manifold:m3-anchor.md
+**Evidence:** install/commands/m1-constrain.md, install/commands/m3-anchor.md
 
 ### RT-6: Best practices must be documented with source attribution
 

@@ -21,13 +21,13 @@ required_truths:
 
   - id: RT3
     statement: "YAML schema uses 'user_experience' not 'ux'"
-    gap: "install/commands/manifold:m0-init.md uses 'ux' in schema"
+    gap: "install/commands/m0-init.md uses 'ux' in schema"
     action: "Update m0-init.md schema to use 'user_experience'"
     satisfies: [T1, T3]
 
   - id: RT4
     statement: "Example file uses same schema as m0-init creates"
-    gap: "examples/payment-retry-v2.cms.yaml has different structure"
+    gap: "examples/payment-retry-v2.yaml has different structure"
     action: "Update example to match standard schema structure"
     satisfies: [U3, T1]
 

@@ -138,6 +138,14 @@ uninstall_gemini() {
         print_success "Removed Gemini hooks"
     fi
 
+    # Remove parallel library
+    local lib_dir="$base_dir/lib/parallel"
+    if [[ -d "$lib_dir" ]]; then
+        rm -rf "$lib_dir"
+        print_success "Removed parallel library"
+        ((removed++))
+    fi
+
     # Remove schema reference from GEMINI.md
     local gemini_md="$base_dir/GEMINI.md"
     if [[ -f "$gemini_md" ]] && grep -q "# Manifold Schema Quick Reference" "$gemini_md" 2>/dev/null; then
@@ -178,6 +186,14 @@ uninstall_codex() {
             print_success "Removed $skill_removed Codex skill directories"
             ((removed++))
         fi
+    fi
+
+    # Remove parallel library
+    local lib_dir="$base_dir/lib/parallel"
+    if [[ -d "$lib_dir" ]]; then
+        rm -rf "$lib_dir"
+        print_success "Removed parallel library"
+        ((removed++))
     fi
 
     # Remove schema reference from AGENTS.md
