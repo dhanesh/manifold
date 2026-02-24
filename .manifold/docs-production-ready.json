@@ -119,7 +119,7 @@
       },
       {
         "id": "RT-7",
-        "status": "PARTIAL",
+        "status": "SATISFIED",
         "maps_to": ["S2", "B2"]
       },
       {

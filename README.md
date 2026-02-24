@@ -47,11 +47,24 @@ Forward reasoning                    Backward from outcome
 curl -fsSL https://raw.githubusercontent.com/dhanesh/manifold/main/install/install.sh | bash
 ```
 
-This installs:
-- **Slash commands** (`/manifold:m0-init`, `/manifold:m1-constrain`, etc.) for Claude Code and AMP
-- **Native CLI** (`manifold`) for fast, deterministic operations
-- **Parallel execution library** for git worktree-based concurrency
-- **Context preservation hooks** for session continuity
+The installer auto-detects which AI agents you have and installs per-agent:
+
+| Agent | What Gets Installed | Location |
+|-------|-------------------|----------|
+| **Claude Code** | 12 slash commands (`.md`), parallel library, hooks, schema snippet in `CLAUDE.md` | `~/.claude/commands/`, `lib/`, `hooks/` |
+| **AMP** | Same as Claude Code | `~/.amp/commands/`, `lib/`, `hooks/` |
+| **Gemini CLI** | Translated `.toml` commands, parallel bundle (`.js`), schema snippet in `GEMINI.md` | `~/.gemini/commands/`, `lib/` |
+| **Codex CLI** | `SKILL.md` skill dirs, hook skills, parallel bundle, schema snippet in `AGENTS.md` | `~/.agents/skills/manifold-*/`, `~/.codex/lib/` |
+| **CLI binary** | `manifold` binary for your platform (darwin/linux, arm64/x64) | `/usr/local/bin/` or `~/.local/bin/` |
+
+**Specifically, the installer creates:**
+- `commands/` — 12 Manifold slash command files (m0-init through parallel, plus SCHEMA_REFERENCE)
+- `lib/parallel/` — 11 TypeScript modules for git worktree-based parallel execution
+- `hooks/` — 2 hooks: `manifold-context.ts` (context preservation) and `auto-suggester.ts` (parallel suggestions)
+- `skills/manifold/SKILL.md` — Overview skill for `/manifold` command
+- Schema snippet appended to your agent's instruction file (CLAUDE.md, GEMINI.md, or AGENTS.md)
+
+The installer is idempotent — running it again updates existing files without duplication. Run `install.sh --validate` to check what was installed. See [Uninstall](#uninstall) to remove.
 
 Verify it worked:
 

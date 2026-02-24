@@ -30,13 +30,11 @@
     },
     "gaps": [],
     "required_truths": {
-      "satisfied": 11,
-      "partial": 1,
+      "satisfied": 12,
+      "partial": 0,
       "not_satisfied": 0,
       "total": 12,
-      "details": [
-        {"id": "RT-7", "status": "PARTIAL", "gap": "Installation transparency section could be more detailed about what install.sh creates"}
-      ]
+      "details": []
     }
   }
 }

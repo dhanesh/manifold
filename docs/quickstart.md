@@ -16,7 +16,15 @@ Verify it worked:
 manifold --version
 ```
 
-This installs: slash commands for Claude Code/AMP, the `manifold` CLI binary, parallel execution library, and context preservation hooks. See [what gets installed](../README.md#install) for details.
+The installer detects which AI agents you have (Claude Code, AMP, Gemini CLI, Codex CLI) and installs agent-specific files:
+
+- **12 slash commands** — `/manifold:m0-init` through `/manifold:parallel` (format varies by agent)
+- **Parallel library** — 11 modules for git worktree-based concurrent execution
+- **2 hooks** — Context preservation across sessions + parallel auto-suggestions
+- **CLI binary** — `manifold` for fast operations without AI round-trips
+- **Schema snippet** — Appended to your agent's instruction file (CLAUDE.md/GEMINI.md/AGENTS.md)
+
+Files are placed in your agent's config directory (e.g., `~/.claude/commands/`, `~/.claude/lib/`, `~/.claude/hooks/`). The installer is idempotent — safe to run again. See [what gets installed](../README.md#install) for the full per-agent breakdown.
 
 ## Phase Workflow
 
