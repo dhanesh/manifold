@@ -1,0 +1,286 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dhanesh/manifold/main/install/manifold-structure.schema.json",
+  "schema_version": 3,
+  "feature": "docs-production-ready",
+  "phase": "VERIFIED",
+  "created": "2026-02-25T00:00:00Z",
+  "constraints": {
+    "business": [
+      {"id": "B1", "type": "invariant"},
+      {"id": "B2", "type": "goal"},
+      {"id": "B3", "type": "goal"},
+      {"id": "B4", "type": "boundary"}
+    ],
+    "technical": [
+      {"id": "T1", "type": "invariant"},
+      {"id": "T2", "type": "invariant"},
+      {"id": "T3", "type": "boundary"},
+      {"id": "T4", "type": "goal"},
+      {"id": "T5", "type": "boundary"}
+    ],
+    "user_experience": [
+      {"id": "U1", "type": "invariant"},
+      {"id": "U2", "type": "boundary"},
+      {"id": "U3", "type": "goal"},
+      {"id": "U4", "type": "goal"},
+      {"id": "U5", "type": "boundary"}
+    ],
+    "security": [
+      {"id": "S1", "type": "invariant"},
+      {"id": "S2", "type": "invariant"}
+    ],
+    "operational": [
+      {"id": "O1", "type": "invariant"},
+      {"id": "O2", "type": "goal"},
+      {"id": "O3", "type": "boundary"}
+    ]
+  },
+  "tensions": [
+    {
+      "id": "TN1",
+      "type": "trade_off",
+      "between": ["B1", "B2"],
+      "status": "resolved",
+      "resolution": "Layered documentation architecture: thin README -> quickstart -> full CLI reference -> deep dives",
+      "decision": "A"
+    },
+    {
+      "id": "TN2",
+      "type": "resource_tension",
+      "between": ["T3", "O3"],
+      "status": "resolved",
+      "resolution": "Create docs/cli-reference.md as single source; README and CLAUDE.md link with summary table only",
+      "decision": "A"
+    },
+    {
+      "id": "TN3",
+      "type": "trade_off",
+      "between": ["U5", "B3"],
+      "status": "resolved",
+      "resolution": "Primary developer example (notification-preferences) + audience-specific examples in separate guides",
+      "decision": "A"
+    },
+    {
+      "id": "TN4",
+      "type": "resource_tension",
+      "between": ["T1", "B4"],
+      "status": "resolved",
+      "resolution": "Prioritized waves: high-impact features first with verified examples, lower-impact follow. Ship wave 1 for release.",
+      "decision": "A"
+    },
+    {
+      "id": "TN5",
+      "type": "hidden_dependency",
+      "between": ["O1", "O2"],
+      "status": "resolved",
+      "resolution": "Warning-level drift detection in CI + PR template checklist. Escalate to fail-level once doc structure stabilizes.",
+      "decision": "A"
+    },
+    {
+      "id": "TN6",
+      "type": "resource_tension",
+      "between": ["U4", "O1"],
+      "status": "resolved",
+      "resolution": "Mermaid-in-Markdown only, leveraging existing CLI --mermaid output as source of truth. No image files.",
+      "decision": "A"
+    }
+  ],
+  "anchors": {
+    "required_truths": [
+      {
+        "id": "RT-1",
+        "status": "SATISFIED",
+        "maps_to": ["B2", "U1", "U2"]
+      },
+      {
+        "id": "RT-2",
+        "status": "SATISFIED",
+        "maps_to": ["T3", "O3"]
+      },
+      {
+        "id": "RT-3",
+        "status": "SATISFIED",
+        "maps_to": ["B1", "B4"]
+      },
+      {
+        "id": "RT-4",
+        "status": "SATISFIED",
+        "maps_to": ["T1", "T2", "U5"]
+      },
+      {
+        "id": "RT-5",
+        "status": "SATISFIED",
+        "maps_to": ["B2", "U1"]
+      },
+      {
+        "id": "RT-6",
+        "status": "SATISFIED",
+        "maps_to": ["T1", "T2"]
+      },
+      {
+        "id": "RT-7",
+        "status": "PARTIAL",
+        "maps_to": ["S2", "B2"]
+      },
+      {
+        "id": "RT-8",
+        "status": "SATISFIED",
+        "maps_to": ["U3"]
+      },
+      {
+        "id": "RT-9",
+        "status": "SATISFIED",
+        "maps_to": ["T5", "B3"]
+      },
+      {
+        "id": "RT-10",
+        "status": "SATISFIED",
+        "maps_to": ["B3", "U2"]
+      },
+      {
+        "id": "RT-11",
+        "status": "SATISFIED",
+        "maps_to": ["U4"]
+      },
+      {
+        "id": "RT-12",
+        "status": "SATISFIED",
+        "maps_to": ["O2"]
+      }
+    ],
+    "recommended_option": "A"
+  },
+  "generation": {
+    "option": "A",
+    "timestamp": "2026-02-25T00:03:00Z",
+    "artifacts": [
+      {
+        "path": "docs/quickstart.md",
+        "type": "docs",
+        "satisfies": ["RT-1"],
+        "status": "generated"
+      },
+      {
+        "path": "docs/cli-reference.md",
+        "type": "docs",
+        "satisfies": ["RT-2"],
+        "status": "generated"
+      },
+      {
+        "path": "docs/evidence-system.md",
+        "type": "docs",
+        "satisfies": ["RT-3"],
+        "status": "generated"
+      },
+      {
+        "path": "docs/troubleshooting.md",
+        "type": "docs",
+        "satisfies": ["RT-8"],
+        "status": "generated"
+      },
+      {
+        "path": "CONTRIBUTING.md",
+        "type": "docs",
+        "satisfies": ["RT-12"],
+        "status": "generated"
+      },
+      {
+        "path": "README.md",
+        "type": "docs",
+        "satisfies": ["RT-5", "RT-6", "RT-10"],
+        "status": "generated"
+      },
+      {
+        "path": "docs/walkthrough/README.md",
+        "type": "docs",
+        "satisfies": ["RT-4"],
+        "status": "generated"
+      },
+      {
+        "path": "docs/GLOSSARY.md",
+        "type": "docs",
+        "satisfies": ["RT-6"],
+        "status": "generated"
+      },
+      {
+        "path": "install/templates/README.md",
+        "type": "docs",
+        "satisfies": ["RT-9"],
+        "status": "generated"
+      }
+    ],
+    "coverage": {
+      "constraints_addressed": 19,
+      "constraints_total": 19,
+      "percentage": 100
+    }
+  },
+  "iterations": [
+    {
+      "number": 1,
+      "phase": "constrain",
+      "timestamp": "2026-02-25T00:00:00Z",
+      "result": "Discovered 19 constraints across 5 categories from codebase gap analysis",
+      "constraints_added": 19,
+      "by_category": {
+        "business": 4,
+        "technical": 5,
+        "user_experience": 5,
+        "security": 2,
+        "operational": 3
+      }
+    },
+    {
+      "number": 2,
+      "phase": "tension",
+      "timestamp": "2026-02-25T00:01:00Z",
+      "result": "Found 6 tensions (2 trade-offs, 3 resource tensions, 1 hidden dependency), all resolved",
+      "tensions_found": 6,
+      "tensions_resolved": 6,
+      "by_type": {
+        "trade_offs": 2,
+        "resource_tensions": 3,
+        "hidden_dependencies": 1
+      }
+    },
+    {
+      "number": 3,
+      "phase": "anchor",
+      "timestamp": "2026-02-25T00:02:00Z",
+      "result": "Derived 12 required truths via backward reasoning. 6 NOT_SATISFIED, 5 PARTIAL, 0 SATISFIED. Recommended Option A: Full restructure with 3-wave delivery.",
+      "required_truths": 12,
+      "by_status": {
+        "SATISFIED": 0,
+        "PARTIAL": 5,
+        "NOT_SATISFIED": 6,
+        "SPECIFICATION_READY": 0
+      },
+      "solution_options": 3,
+      "selected_option": "Option A: Full Restructure + New Docs (3-wave delivery)"
+    },
+    {
+      "number": 4,
+      "phase": "generate",
+      "timestamp": "2026-02-25T00:03:00Z",
+      "result": "Generated 9 documentation artifacts across 3 waves. 11/12 required truths SATISFIED, 1 PARTIAL (RT-7: install transparency deferred to follow-up)."
+    },
+    {
+      "number": 5,
+      "phase": "verify",
+      "timestamp": "2026-02-25T00:04:00Z",
+      "result": "Verified 19 constraints across 9 artifacts. 18/19 SATISFIED, 1 PARTIAL (O1: fixed by adding diff-guard to CONTRIBUTING.md). All INVARIANTs satisfied. Convergence: CONVERGED."
+    }
+  ],
+  "convergence": {
+    "status": "CONVERGED"
+  },
+  "constraint_graph": {
+    "version": 1,
+    "nodes": {},
+    "edges": {
+      "dependencies": [],
+      "conflicts": [],
+      "satisfies": []
+    }
+  }
+}

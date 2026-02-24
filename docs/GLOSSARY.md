@@ -20,7 +20,7 @@ Plain-language explanations of Manifold concepts with alternative terminology.
 ### Manifold
 **Also known as**: Constraint document, requirements specification, design document
 
-**Plain language**: A single YAML file that captures everything needed to build a feature correctly.
+**Plain language**: A pair of files (JSON for structure + Markdown for content) that capture everything needed to build a feature correctly. Legacy YAML single-file format is also supported.
 
 **Why this name**: In mathematics, a manifold is a space where constraints can be satisfied. The feature "lives" in this constraint space.
 

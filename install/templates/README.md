@@ -35,6 +35,37 @@ PM templates use the same constraint categories (business, technical, user_exper
 
 > **Note:** Legacy `.yaml` templates are still available for backward compatibility but new projects should use the JSON+MD format.
 
+## Which Template Should I Use?
+
+```
+What are you building?
+│
+├── User-facing feature?
+│   ├── Has login/signup? ─────────── auth
+│   ├── Create/read/update/delete? ── crud
+│   ├── Handles money? ───────────── payment
+│   └── External API? ────────────── api
+│
+├── PM deliverable?
+│   ├── New feature launch? ──────── pm/feature-launch
+│   ├── A/B test? ────────────────── pm/experiment
+│   ├── Sunsetting a feature? ────── pm/deprecation
+│   ├── Go/no-go decision? ──────── pm/opportunity-assessment
+│   ├── Product vision? ──────────── pm/product-vision
+│   ├── Business model? ──────────── pm/lean-canvas
+│   ├── Working backwards? ───────── pm/pr-faq
+│   ├── MVP scoping? ────────────── pm/mvp-definition
+│   ├── Competitive landscape? ──── pm/competitive-analysis
+│   ├── User research? ──────────── pm/user-persona
+│   ├── Launch strategy? ─────────── pm/go-to-market
+│   ├── Roadmap planning? ────────── pm/product-roadmap
+│   └── Shape Up pitch? ─────────── pm/shape-up-pitch
+│
+├── Simple bug fix or tweak? ──────── Skip templates, use /manifold:m-quick
+│
+└── None of these fit? ────────────── Start from scratch with /manifold:m0-init
+```
+
 ## Usage
 
 ### Option 1: Initialize with Template

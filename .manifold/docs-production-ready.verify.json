@@ -1,0 +1,42 @@
+{
+  "verification": {
+    "timestamp": "2026-02-25T00:04:00Z",
+    "result": "SATISFIED",
+    "matrix": [
+      {"constraint": "B1", "type": "invariant", "code": true, "test": true, "docs": true, "ops": true, "status": "SATISFIED"},
+      {"constraint": "B2", "type": "goal", "code": true, "test": true, "docs": true, "ops": true, "status": "SATISFIED"},
+      {"constraint": "B3", "type": "goal", "code": true, "test": true, "docs": true, "ops": true, "status": "SATISFIED"},
+      {"constraint": "B4", "type": "boundary", "code": true, "test": true, "docs": true, "ops": true, "status": "SATISFIED"},
+      {"constraint": "T1", "type": "invariant", "code": true, "test": true, "docs": true, "ops": true, "status": "SATISFIED"},
+      {"constraint": "T2", "type": "invariant", "code": true, "test": true, "docs": true, "ops": true, "status": "SATISFIED"},
+      {"constraint": "T3", "type": "boundary", "code": true, "test": true, "docs": true, "ops": true, "status": "SATISFIED"},
+      {"constraint": "T4", "type": "goal", "code": true, "test": true, "docs": true, "ops": true, "status": "SATISFIED"},
+      {"constraint": "T5", "type": "boundary", "code": true, "test": true, "docs": true, "ops": true, "status": "SATISFIED"},
+      {"constraint": "U1", "type": "invariant", "code": true, "test": true, "docs": true, "ops": true, "status": "SATISFIED"},
+      {"constraint": "U2", "type": "boundary", "code": true, "test": true, "docs": true, "ops": true, "status": "SATISFIED"},
+      {"constraint": "U3", "type": "goal", "code": true, "test": true, "docs": true, "ops": true, "status": "SATISFIED"},
+      {"constraint": "U4", "type": "goal", "code": true, "test": true, "docs": true, "ops": true, "status": "SATISFIED"},
+      {"constraint": "U5", "type": "boundary", "code": true, "test": true, "docs": true, "ops": true, "status": "SATISFIED"},
+      {"constraint": "S1", "type": "invariant", "code": true, "test": true, "docs": true, "ops": true, "status": "SATISFIED"},
+      {"constraint": "S2", "type": "invariant", "code": true, "test": true, "docs": true, "ops": true, "status": "SATISFIED"},
+      {"constraint": "O1", "type": "invariant", "code": true, "test": true, "docs": true, "ops": true, "status": "SATISFIED"},
+      {"constraint": "O2", "type": "goal", "code": true, "test": true, "docs": true, "ops": true, "status": "SATISFIED"},
+      {"constraint": "O3", "type": "boundary", "code": true, "test": true, "docs": true, "ops": true, "status": "SATISFIED"}
+    ],
+    "coverage": {
+      "invariants": {"satisfied": 8, "total": 8, "percentage": 100},
+      "boundaries": {"satisfied": 6, "total": 6, "percentage": 100},
+      "goals": {"satisfied": 5, "total": 5, "percentage": 100}
+    },
+    "gaps": [],
+    "required_truths": {
+      "satisfied": 11,
+      "partial": 1,
+      "not_satisfied": 0,
+      "total": 12,
+      "details": [
+        {"id": "RT-7", "status": "PARTIAL", "gap": "Installation transparency section could be more detailed about what install.sh creates"}
+      ]
+    }
+  }
+}

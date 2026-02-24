@@ -24,7 +24,13 @@ MANIFOLD INITIALIZED: notification-preferences
 Schema Version: 3
 Outcome: Users can configure notification preferences with 99% save success rate
 
-Created: .manifold/notification-preferences.yaml
+Format: JSON+Markdown Hybrid
+Schema Version: 3
+Outcome: Users can configure notification preferences with 99% save success rate
+
+Files Created:
+├── .manifold/notification-preferences.json  (structure)
+└── .manifold/notification-preferences.md    (content)
 
 Constraint Categories Ready:
 - [ ] Business
@@ -43,7 +49,8 @@ Next: /manifold:m1-constrain notification-preferences
 ```
 
 ### What Just Happened
-- Created `.manifold/notification-preferences.yaml`
+- Created `.manifold/notification-preferences.json` (structure: IDs, types, phases)
+- Created `.manifold/notification-preferences.md` (content: statements, rationale)
 - Set phase to `INITIALIZED`
 - Established outcome as our success criteria
 
@@ -186,7 +193,7 @@ By Type:
 ├── BOUNDARY: 7 (hard limits)
 └── GOAL: 2 (optimize toward)
 
-Updated: .manifold/notification-preferences.yaml
+Updated: .manifold/notification-preferences.json + .manifold/notification-preferences.md
 Phase: CONSTRAINED
 
 Next: /manifold:m2-tension notification-preferences
@@ -284,7 +291,7 @@ TENSION SUMMARY:
 - Resource Tensions: 1 (resolved)
 - Total: 3 (all resolved)
 
-Updated: .manifold/notification-preferences.yaml
+Updated: .manifold/notification-preferences.json + .manifold/notification-preferences.md
 Phase: TENSIONED
 
 Next: /manifold:m3-anchor notification-preferences
@@ -364,7 +371,7 @@ Rationale:
 - Allows future extraction if scale demands
 - Integrates with existing auth and database
 
-Created: .manifold/notification-preferences.anchor.yaml
+Updated: .manifold/notification-preferences.json + .manifold/notification-preferences.md
 Phase: ANCHORED
 
 Next: /manifold:m4-generate notification-preferences --option=C
@@ -537,9 +544,9 @@ Feature notification-preferences is COMPLETE.
 ### Files Created
 ```
 .manifold/
-├── notification-preferences.yaml
-├── notification-preferences.anchor.yaml
-└── notification-preferences.verify.json
+├── notification-preferences.json          # Structure (IDs, types, phases)
+├── notification-preferences.md            # Content (statements, rationale)
+└── notification-preferences.verify.json   # Verification results
 
 src/preferences/
 ├── schema.sql
@@ -564,7 +571,9 @@ ops/
 
 Now that you've seen a complete walkthrough:
 
-1. **Try it yourself** - Pick a small feature and run through the phases
-2. **Use templates** - See `install/templates/` for common patterns
-3. **Light mode** - Use `/manifold:m-quick` for simpler changes
-4. **Read the glossary** - See `docs/GLOSSARY.md` for terminology
+1. **Try it yourself** — Pick a small feature and run through the phases
+2. **Use templates** — See [Constraint Templates](../install/templates/README.md) for common patterns
+3. **Light mode** — Use `/manifold:m-quick` for simpler changes
+4. **Read the glossary** — See [Glossary](../docs/GLOSSARY.md) for terminology
+5. **CLI reference** — See [CLI Reference](../docs/cli-reference.md) for all commands and flags
+6. **Evidence system** — See [Evidence System](../docs/evidence-system.md) for verification details
