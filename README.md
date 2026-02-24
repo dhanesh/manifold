@@ -43,6 +43,22 @@ Forward reasoning                    Backward from outcome
 
 ## Install
 
+### Claude Code Plugin (Recommended for Claude Code users)
+
+```bash
+claude plugin:install github:dhanesh/manifold#plugin
+```
+
+This installs Manifold as a native Claude Code plugin, giving you:
+- 12 slash commands (`/manifold:m0-init` through `/manifold:parallel`)
+- 2 hooks (context preservation across compaction + schema injection at session start)
+- Constraint templates (auth, CRUD, API, payment, + 13 PM templates)
+- `/manifold:setup` command to install the native CLI binary
+
+After installing the plugin, run `/manifold:setup` inside Claude Code to get the fast CLI binary.
+
+### Shell Installer (All Agents)
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/dhanesh/manifold/main/install/install.sh | bash
 ```

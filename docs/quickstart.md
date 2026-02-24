@@ -6,6 +6,22 @@ Get from zero to a verified feature in 15 minutes.
 
 ## Install
 
+### Option A: Claude Code Plugin (Recommended)
+
+```bash
+claude plugin:install github:dhanesh/manifold#plugin
+```
+
+Then inside Claude Code, install the native CLI:
+
+```
+/manifold:setup
+```
+
+This gives you all 12 slash commands, hooks, templates, and the fast CLI binary.
+
+### Option B: Shell Installer (All Agents)
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/dhanesh/manifold/main/install/install.sh | bash
 ```
