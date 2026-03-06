@@ -50,10 +50,14 @@ for (const file of readdirSync(commandsSrc)) {
   }
 }
 
-// 2. Hook: install/hooks/manifold-context.ts -> plugin/hooks/
+// 2. Hooks: install/hooks/*.ts -> plugin/hooks/
 syncFile(
   join(install, "hooks", "manifold-context.ts"),
   join(plugin, "hooks", "manifold-context.ts")
+);
+syncFile(
+  join(install, "hooks", "prompt-enforcer.ts"),
+  join(plugin, "hooks", "prompt-enforcer.ts")
 );
 
 // 3. Parallel bundle: install/lib/parallel/parallel.bundle.js -> plugin/lib/parallel/

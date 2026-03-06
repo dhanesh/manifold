@@ -1,5 +1,5 @@
 {
-  "description": "Manifold plugin hooks for context preservation and schema injection",
+  "description": "Manifold plugin hooks for context preservation, schema injection, and interaction enforcement",
   "hooks": {
     "PreCompact": [
       {
@@ -18,6 +18,17 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run ${CLAUDE_PLUGIN_ROOT}/hooks/prompt-enforcer.ts",
+            "timeout": 5
           }
         ]
       }

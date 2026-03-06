@@ -325,13 +325,15 @@ install_manifold_native() {
     done
     print_success "Installed parallel library to $lib_dir/parallel/"
 
-    # Install hooks (for context preservation and auto-suggest)
+    # Install hooks (for context preservation, auto-suggest, and interaction enforcement)
     if [[ -n "$LOCAL_INSTALL" ]]; then
         cp "$SCRIPT_DIR/hooks/manifold-context.ts" "$hooks_dir/manifold-context.ts"
         cp "$SCRIPT_DIR/hooks/auto-suggester.ts" "$hooks_dir/auto-suggester.ts"
+        cp "$SCRIPT_DIR/hooks/prompt-enforcer.ts" "$hooks_dir/prompt-enforcer.ts"
     else
         curl -fsSL "$REPO/install/hooks/manifold-context.ts" -o "$hooks_dir/manifold-context.ts"
         curl -fsSL "$REPO/install/hooks/auto-suggester.ts" -o "$hooks_dir/auto-suggester.ts"
+        curl -fsSL "$REPO/install/hooks/prompt-enforcer.ts" -o "$hooks_dir/prompt-enforcer.ts"
     fi
     print_success "Installed hooks to $hooks_dir/"
 
@@ -381,8 +383,12 @@ install_manifold_gemini() {
         if [[ -f "$SCRIPT_DIR/agents/gemini/hooks/manifold-context.ts" ]]; then
             cp "$SCRIPT_DIR/agents/gemini/hooks/manifold-context.ts" "$hooks_dir/manifold-context.ts"
         fi
+        if [[ -f "$SCRIPT_DIR/agents/gemini/hooks/prompt-enforcer.ts" ]]; then
+            cp "$SCRIPT_DIR/agents/gemini/hooks/prompt-enforcer.ts" "$hooks_dir/prompt-enforcer.ts"
+        fi
     else
         curl -fsSL "$REPO/install/agents/gemini/hooks/manifold-context.ts" -o "$hooks_dir/manifold-context.ts" 2>/dev/null || true
+        curl -fsSL "$REPO/install/agents/gemini/hooks/prompt-enforcer.ts" -o "$hooks_dir/prompt-enforcer.ts" 2>/dev/null || true
     fi
     print_success "Installed hooks to $hooks_dir/"
 
@@ -675,7 +681,7 @@ validate_installation() {
     done
 
     # Check hooks
-    local hooks=("manifold-context.ts" "auto-suggester.ts")
+    local hooks=("manifold-context.ts" "auto-suggester.ts" "prompt-enforcer.ts")
     for hook_file in "${hooks[@]}"; do
         if [[ ! -f "$base_dir/hooks/$hook_file" ]]; then
             print_error "Missing: hooks/$hook_file"

@@ -1,0 +1,200 @@
+{
+  "verification": {
+    "timestamp": "2026-03-07T00:00:00Z",
+    "result": "SATISFIED",
+    "matrix": [
+      {
+        "constraint": "B1",
+        "type": "invariant",
+        "code": true,
+        "test": false,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "notes": "Enforced via skill file footers + agent interaction-rules.md across all 4 agents"
+      },
+      {
+        "constraint": "B2",
+        "type": "goal",
+        "code": true,
+        "test": false,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "notes": "Gemini hook + build:commands propagation covers multi-agent reach"
+      },
+      {
+        "constraint": "B3",
+        "type": "invariant",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "notes": "Advisory-only — hook outputs additionalContext, never blocks"
+      },
+      {
+        "constraint": "T1",
+        "type": "boundary",
+        "code": true,
+        "test": true,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED",
+        "notes": "UserPromptSubmit hook registered in hooks.json with 5s timeout"
+      },
+      {
+        "constraint": "T2",
+        "type": "invariant",
+        "code": true,
+        "test": true,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED",
+        "notes": "Hook uses Bun/TypeScript — cross-platform (macOS, Linux, Windows)"
+      },
+      {
+        "constraint": "T3",
+        "type": "boundary",
+        "code": true,
+        "test": true,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED",
+        "notes": "Static string output, no fs reads beyond existsSync — well under 200ms"
+      },
+      {
+        "constraint": "T4",
+        "type": "goal",
+        "code": true,
+        "test": false,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "notes": "build:commands auto-propagates skill footers to Gemini TOML and Codex SKILL.md"
+      },
+      {
+        "constraint": "T5",
+        "type": "boundary",
+        "code": true,
+        "test": false,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED",
+        "notes": "additionalContext is ~200 bytes static JSON — minimal token overhead"
+      },
+      {
+        "constraint": "U1",
+        "type": "invariant",
+        "code": true,
+        "test": false,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "notes": "Skill footers include concrete next command template in every phase"
+      },
+      {
+        "constraint": "U2",
+        "type": "goal",
+        "code": true,
+        "test": false,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "notes": "Skill footers + hook both remind to use AskUserQuestion"
+      },
+      {
+        "constraint": "U3",
+        "type": "boundary",
+        "code": true,
+        "test": true,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED",
+        "notes": "Hook only activates when .manifold/ directory exists"
+      },
+      {
+        "constraint": "U4",
+        "type": "goal",
+        "code": true,
+        "test": false,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "notes": "Agent-specific interaction-rules.md: AskUserQuestion (Claude/AMP), numbered options (Gemini), inline bold labels (Codex)"
+      },
+      {
+        "constraint": "S1",
+        "type": "invariant",
+        "code": true,
+        "test": false,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED",
+        "notes": "Hook outputs static text only — no user data, no stdin reading"
+      },
+      {
+        "constraint": "S2",
+        "type": "boundary",
+        "code": true,
+        "test": false,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED",
+        "notes": "No network calls, no environment variable access, no file content reading"
+      },
+      {
+        "constraint": "O1",
+        "type": "goal",
+        "code": true,
+        "test": true,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED",
+        "notes": "install.sh includes prompt-enforcer.ts in hooks array and verification"
+      },
+      {
+        "constraint": "O2",
+        "type": "boundary",
+        "code": true,
+        "test": false,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED",
+        "notes": "sync-plugin.ts explicitly syncs prompt-enforcer.ts; CI diff-guard validates"
+      },
+      {
+        "constraint": "O3",
+        "type": "goal",
+        "code": true,
+        "test": true,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED",
+        "notes": "6 dedicated tests in tests/hooks/prompt-enforcer.test.ts, all passing"
+      }
+    ],
+    "coverage": {
+      "invariants": { "satisfied": 6, "total": 6, "percentage": 100 },
+      "goals": { "satisfied": 5, "total": 5, "percentage": 100 },
+      "boundaries": { "satisfied": 3, "total": 3, "percentage": 100 }
+    },
+    "required_truths": [
+      { "id": "RT-1", "status": "SATISFIED", "evidence": "All 10 skill files contain Interaction Rules footer with next-step template" },
+      { "id": "RT-2", "status": "SATISFIED", "evidence": "build:commands propagates skill content to Gemini TOML and Codex SKILL.md" },
+      { "id": "RT-3", "status": "SATISFIED", "evidence": "All 10 skill files contain AskUserQuestion instruction with labeled choices" },
+      { "id": "RT-4", "status": "SATISFIED", "evidence": "3 agent-specific interaction-rules.md files with appropriate language per agent" },
+      { "id": "RT-5", "status": "SATISFIED", "evidence": "install/hooks/prompt-enforcer.ts outputs additionalContext JSON via UserPromptSubmit" },
+      { "id": "RT-6", "status": "SATISFIED", "evidence": "Hook checks existsSync('.manifold/') before outputting — silent exit otherwise" },
+      { "id": "RT-7", "status": "SATISFIED", "evidence": "install/agents/gemini/hooks/prompt-enforcer.ts + install.sh Gemini hook copy" },
+      { "id": "RT-8", "status": "SATISFIED", "evidence": "build:commands already propagates full .md content to all agent formats" }
+    ],
+    "tests": {
+      "total": 6,
+      "passed": 6,
+      "failed": 0,
+      "file": "tests/hooks/prompt-enforcer.test.ts"
+    },
+    "gaps": []
+  }
+}

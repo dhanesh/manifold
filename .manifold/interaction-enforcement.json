@@ -1,0 +1,300 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dhanesh/manifold/main/install/manifold-structure.schema.json",
+  "schema_version": 3,
+  "feature": "interaction-enforcement",
+  "phase": "VERIFIED",
+  "created": "2026-03-06T00:00:00Z",
+  "constraints": {
+    "business": [
+      {"id": "B1", "type": "invariant"},
+      {"id": "B2", "type": "goal"},
+      {"id": "B3", "type": "invariant"}
+    ],
+    "technical": [
+      {"id": "T1", "type": "boundary"},
+      {"id": "T2", "type": "invariant"},
+      {"id": "T3", "type": "boundary"},
+      {"id": "T4", "type": "goal"},
+      {"id": "T5", "type": "boundary"}
+    ],
+    "user_experience": [
+      {"id": "U1", "type": "invariant"},
+      {"id": "U2", "type": "goal"},
+      {"id": "U3", "type": "boundary"},
+      {"id": "U4", "type": "goal"}
+    ],
+    "security": [
+      {"id": "S1", "type": "invariant"},
+      {"id": "S2", "type": "boundary"}
+    ],
+    "operational": [
+      {"id": "O1", "type": "goal"},
+      {"id": "O2", "type": "boundary"},
+      {"id": "O3", "type": "goal"}
+    ]
+  },
+  "tensions": [
+    {
+      "id": "TN1",
+      "type": "trade_off",
+      "between": ["T2", "U1"],
+      "status": "resolved"
+    },
+    {
+      "id": "TN2",
+      "type": "resource_tension",
+      "between": ["B1", "U4"],
+      "status": "resolved"
+    },
+    {
+      "id": "TN3",
+      "type": "trade_off",
+      "between": ["T3", "U3"],
+      "status": "resolved"
+    },
+    {
+      "id": "TN4",
+      "type": "hidden_dependency",
+      "between": ["B2", "T1"],
+      "status": "resolved"
+    }
+  ],
+  "anchors": {
+    "required_truths": [
+      {
+        "id": "RT-1",
+        "status": "SATISFIED",
+        "maps_to": ["U1", "B1"]
+      },
+      {
+        "id": "RT-2",
+        "status": "SATISFIED",
+        "maps_to": ["T4", "B2"]
+      },
+      {
+        "id": "RT-3",
+        "status": "SATISFIED",
+        "maps_to": ["U2", "U4", "B1"]
+      },
+      {
+        "id": "RT-4",
+        "status": "SATISFIED",
+        "maps_to": ["U4", "TN2"]
+      },
+      {
+        "id": "RT-5",
+        "status": "SATISFIED",
+        "maps_to": ["T2", "T3", "T5"]
+      },
+      {
+        "id": "RT-6",
+        "status": "SATISFIED",
+        "maps_to": ["U3", "TN3"]
+      },
+      {
+        "id": "RT-7",
+        "status": "SATISFIED",
+        "maps_to": ["B2", "TN4"]
+      },
+      {
+        "id": "RT-8",
+        "status": "SATISFIED",
+        "maps_to": ["B1", "T4"]
+      }
+    ],
+    "recommended_option": "A"
+  },
+  "iterations": [
+    {
+      "number": 1,
+      "phase": "constrain",
+      "timestamp": "2026-03-06T00:00:00Z",
+      "result": "14 constraints discovered across 5 categories",
+      "constraints_added": 14,
+      "by_category": {
+        "business": 3,
+        "technical": 5,
+        "user_experience": 4,
+        "security": 2,
+        "operational": 3
+      }
+    },
+    {
+      "number": 2,
+      "phase": "tension",
+      "timestamp": "2026-03-06T00:00:00Z",
+      "result": "4 tensions found, all resolved",
+      "tensions_found": 4,
+      "tensions_resolved": 4,
+      "by_type": {
+        "trade_offs": 2,
+        "resource_tensions": 1,
+        "hidden_dependencies": 1
+      }
+    },
+    {
+      "number": 3,
+      "phase": "anchor",
+      "timestamp": "2026-03-06T00:00:00Z",
+      "result": "8 required truths derived, 1 already satisfied",
+      "required_truths": 8,
+      "by_status": {
+        "SATISFIED": 1,
+        "PARTIAL": 0,
+        "NOT_SATISFIED": 7,
+        "SPECIFICATION_READY": 0
+      },
+      "solution_options": 1,
+      "selected_option": "Option A: Instruction-first with advisory hooks"
+    },
+    {
+      "number": 4,
+      "phase": "generate",
+      "timestamp": "2026-03-06T00:00:00Z",
+      "result": "18 artifacts generated across hooks, skills, agents, and tests"
+    },
+    {
+      "number": 5,
+      "phase": "verify",
+      "timestamp": "2026-03-07T00:00:00Z",
+      "result": "All 14 constraints SATISFIED, 8/8 required truths SATISFIED, 0 gaps"
+    },
+    {
+      "number": 6,
+      "phase": "integrate",
+      "timestamp": "2026-03-07T00:00:00Z",
+      "result": "All integration points already wired — no additional wiring needed"
+    }
+  ],
+  "generation": {
+    "option": "A",
+    "timestamp": "2026-03-06T00:00:00Z",
+    "artifacts": [
+      {
+        "path": "install/hooks/prompt-enforcer.ts",
+        "type": "hook",
+        "satisfies": ["RT-5", "RT-6", "T1", "T2", "T3", "T5", "S1", "S2"],
+        "status": "generated"
+      },
+      {
+        "path": "install/agents/gemini/hooks/prompt-enforcer.ts",
+        "type": "hook",
+        "satisfies": ["RT-7", "B2"],
+        "status": "generated"
+      },
+      {
+        "path": "install/agents/interaction-rules.md",
+        "type": "docs",
+        "satisfies": ["RT-4", "U4", "B1"],
+        "status": "generated"
+      },
+      {
+        "path": "install/agents/gemini/interaction-rules.md",
+        "type": "docs",
+        "satisfies": ["RT-4", "U4"],
+        "status": "generated"
+      },
+      {
+        "path": "install/agents/codex/interaction-rules.md",
+        "type": "docs",
+        "satisfies": ["RT-4", "U4"],
+        "status": "generated"
+      },
+      {
+        "path": "plugin/hooks/hooks.json",
+        "type": "config",
+        "satisfies": ["T1", "T2"],
+        "status": "generated"
+      },
+      {
+        "path": "install/commands/m0-init.md",
+        "type": "skill",
+        "satisfies": ["RT-1", "RT-3", "U1", "U2"],
+        "status": "generated"
+      },
+      {
+        "path": "install/commands/m1-constrain.md",
+        "type": "skill",
+        "satisfies": ["RT-1", "RT-3", "U1", "U2"],
+        "status": "generated"
+      },
+      {
+        "path": "install/commands/m2-tension.md",
+        "type": "skill",
+        "satisfies": ["RT-1", "RT-3", "U1", "U2"],
+        "status": "generated"
+      },
+      {
+        "path": "install/commands/m3-anchor.md",
+        "type": "skill",
+        "satisfies": ["RT-1", "RT-3", "U1", "U2"],
+        "status": "generated"
+      },
+      {
+        "path": "install/commands/m4-generate.md",
+        "type": "skill",
+        "satisfies": ["RT-1", "RT-3", "U1", "U2"],
+        "status": "generated"
+      },
+      {
+        "path": "install/commands/m5-verify.md",
+        "type": "skill",
+        "satisfies": ["RT-1", "RT-3", "U1", "U2"],
+        "status": "generated"
+      },
+      {
+        "path": "install/commands/m6-integrate.md",
+        "type": "skill",
+        "satisfies": ["RT-1", "RT-3", "U1", "U2"],
+        "status": "generated"
+      },
+      {
+        "path": "install/commands/m-quick.md",
+        "type": "skill",
+        "satisfies": ["RT-1", "RT-3", "U1", "U2"],
+        "status": "generated"
+      },
+      {
+        "path": "install/commands/m-status.md",
+        "type": "skill",
+        "satisfies": ["RT-1", "RT-3", "U1", "U2"],
+        "status": "generated"
+      },
+      {
+        "path": "install/commands/m-solve.md",
+        "type": "skill",
+        "satisfies": ["RT-1", "RT-3", "U1", "U2"],
+        "status": "generated"
+      },
+      {
+        "path": "install/install.sh",
+        "type": "script",
+        "satisfies": ["RT-2", "RT-7", "O1"],
+        "status": "generated"
+      },
+      {
+        "path": "tests/hooks/prompt-enforcer.test.ts",
+        "type": "test",
+        "validates": ["RT-5", "RT-6", "T1", "T2", "O1"],
+        "status": "generated"
+      }
+    ],
+    "coverage": {
+      "constraints_addressed": 14,
+      "constraints_total": 14,
+      "percentage": 100
+    }
+  },
+  "convergence": {
+    "status": "CONVERGED"
+  },
+  "constraint_graph": {
+    "version": 1,
+    "nodes": {},
+    "edges": {
+      "dependencies": [],
+      "conflicts": [],
+      "satisfies": []
+    }
+  }
+}

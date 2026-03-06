@@ -420,3 +420,11 @@ manifold validate <feature>
 - `/manifold:m5-verify` = "Do artifacts satisfy constraints?"
 
 Run `manifold validate` after every manifold modification to catch schema/linking errors immediately
+
+
+## Interaction Rules (MANDATORY)
+<!-- Satisfies: RT-1 (next-step templates), RT-3 (structured input), U1 (suggest next), U2 (AskUserQuestion) -->
+
+1. **Questions → AskUserQuestion**: When you need user input during this phase, use the `AskUserQuestion` tool with structured options. NEVER ask questions as plain text without options.
+2. **Phase complete → Suggest next**: After completing this phase, ALWAYS include the concrete next command (`/manifold:mN-xxx <feature>`) and a one-line explanation of what the next phase does.
+3. **Trade-offs → Labeled options**: When presenting alternatives, use `AskUserQuestion` with labeled choices (A, B, C) and descriptions.

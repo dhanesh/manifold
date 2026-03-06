@@ -207,3 +207,11 @@ When this command is invoked:
 - `/manifold:m0-init` - Full workflow initialization
 - `/manifold:m-status` - Check manifold status (works with light mode)
 - `/manifold:m5-verify` - Full verification (can be run on light mode manifolds)
+
+
+## Interaction Rules (MANDATORY)
+<!-- Satisfies: RT-1 (next-step templates), RT-3 (structured input), U1 (suggest next), U2 (AskUserQuestion) -->
+
+1. **Questions → AskUserQuestion**: When you need user input during this phase, use the `AskUserQuestion` tool with structured options. NEVER ask questions as plain text without options.
+2. **Phase complete → Suggest next**: After completing this phase, ALWAYS include the concrete next command (`/manifold:mN-xxx <feature>`) and a one-line explanation of what the next phase does.
+3. **Trade-offs → Labeled options**: When presenting alternatives, use `AskUserQuestion` with labeled choices (A, B, C) and descriptions.
