@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.25.0](https://github.com/dhanesh/manifold/compare/v2.24.0...v2.25.0) (2026-03-06)
+
+### Features
+
+* enforce structured input and next-step suggestions across all agents ([bdde201](https://github.com/dhanesh/manifold/commit/bdde201f69da53994ca6f3760e97f935f9d7125e))
+
 ## [2.24.0](https://github.com/dhanesh/manifold/compare/v2.23.4...v2.24.0) (2026-02-13)
 
 ### Features
