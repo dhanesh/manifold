@@ -1,0 +1,323 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dhanesh/manifold/main/install/manifold-structure.schema.json",
+  "schema_version": 3,
+  "feature": "framework-gap-remediation",
+  "phase": "VERIFIED",
+  "created": "2026-03-12T16:54:00Z",
+  "constraints": {
+    "business": [
+      {"id": "B1", "type": "invariant"},
+      {"id": "B2", "type": "invariant"},
+      {"id": "B3", "type": "goal"}
+    ],
+    "technical": [
+      {"id": "T1", "type": "boundary"},
+      {"id": "T2", "type": "boundary"},
+      {"id": "T3", "type": "boundary"},
+      {"id": "T4", "type": "goal"},
+      {"id": "T5", "type": "goal"},
+      {"id": "T6", "type": "goal"},
+      {"id": "T7", "type": "boundary"}
+    ],
+    "user_experience": [
+      {"id": "U1", "type": "boundary"},
+      {"id": "U2", "type": "goal"}
+    ],
+    "security": [
+      {"id": "S1", "type": "goal"},
+      {"id": "S2", "type": "goal"},
+      {"id": "S3", "type": "goal"}
+    ],
+    "operational": [
+      {"id": "O1", "type": "goal"},
+      {"id": "O2", "type": "goal"},
+      {"id": "O3", "type": "goal"},
+      {"id": "O4", "type": "goal"}
+    ]
+  },
+  "tensions": [
+    {
+      "id": "TN1",
+      "type": "trade_off",
+      "between": ["B1", "T1"],
+      "status": "resolved"
+    },
+    {
+      "id": "TN2",
+      "type": "trade_off",
+      "between": ["U1", "B2"],
+      "status": "resolved"
+    },
+    {
+      "id": "TN3",
+      "type": "trade_off",
+      "between": ["S1", "S2", "O1", "O2", "O3", "O4"],
+      "status": "resolved"
+    },
+    {
+      "id": "TN4",
+      "type": "resource_tension",
+      "between": ["T1", "T2"],
+      "status": "resolved"
+    },
+    {
+      "id": "TN5",
+      "type": "trade_off",
+      "between": ["T7", "U1"],
+      "status": "resolved"
+    },
+    {
+      "id": "TN6",
+      "type": "hidden_dependency",
+      "between": ["T2", "T3", "B2", "U1"],
+      "status": "resolved"
+    }
+  ],
+  "anchors": {
+    "required_truths": [
+      {
+        "id": "RT-1",
+        "status": "SATISFIED",
+        "maps_to": ["B1", "T1"]
+      },
+      {
+        "id": "RT-2",
+        "status": "SATISFIED",
+        "maps_to": ["T2", "T6", "T7", "U2"]
+      },
+      {
+        "id": "RT-3",
+        "status": "SATISFIED",
+        "maps_to": ["T1", "T2"]
+      },
+      {
+        "id": "RT-4",
+        "status": "SATISFIED",
+        "maps_to": ["B3"]
+      },
+      {
+        "id": "RT-5",
+        "status": "SATISFIED",
+        "maps_to": ["T7"]
+      },
+      {
+        "id": "RT-6",
+        "status": "SATISFIED",
+        "maps_to": ["S1", "S2", "S3", "O1", "O2", "O3", "O4", "T4", "T5"]
+      },
+      {
+        "id": "RT-7",
+        "status": "SATISFIED",
+        "maps_to": ["S1", "S2", "O1", "O2", "O3", "O4"]
+      },
+      {
+        "id": "RT-8",
+        "status": "SATISFIED",
+        "maps_to": ["U1", "B2"]
+      }
+    ],
+    "recommended_option": "B"
+  },
+  "iterations": [
+    {
+      "number": 1,
+      "phase": "constrain",
+      "timestamp": "2026-03-13T00:55:00Z",
+      "result": "19 constraints discovered across 5 categories",
+      "constraints_added": 19,
+      "by_category": {
+        "business": 3,
+        "technical": 7,
+        "user_experience": 2,
+        "security": 3,
+        "operational": 4
+      }
+    },
+    {
+      "number": 2,
+      "phase": "tension",
+      "timestamp": "2026-03-13T01:10:00Z",
+      "result": "6 tensions found and resolved (4 trade_off, 1 resource_tension, 1 hidden_dependency)",
+      "tensions_found": 6,
+      "tensions_resolved": 6,
+      "by_type": {
+        "trade_offs": 4,
+        "resource_tensions": 1,
+        "hidden_dependencies": 1
+      }
+    },
+    {
+      "number": 3,
+      "phase": "anchor",
+      "timestamp": "2026-03-13T01:30:00Z",
+      "result": "8 required truths derived (0 SATISFIED, 4 PARTIAL, 4 NOT_SATISFIED). Option B recommended.",
+      "required_truths": 8,
+      "by_status": {
+        "SATISFIED": 0,
+        "PARTIAL": 4,
+        "NOT_SATISFIED": 4,
+        "SPECIFICATION_READY": 0
+      },
+      "solution_options": 3,
+      "selected_option": "B: Verification-First (Critical Path)"
+    },
+    {
+      "number": 4,
+      "phase": "generate",
+      "timestamp": "2026-03-13T19:45:00Z",
+      "result": "10 artifacts generated across 4 groups (schema, evidence, CLI, skills). Option B. All 329 existing tests pass.",
+      "option": "B",
+      "artifacts_generated": 10,
+      "by_group": {
+        "schema": 2,
+        "evidence": 2,
+        "cli": 3,
+        "skills": 3
+      }
+    },
+    {
+      "number": 5,
+      "phase": "verify",
+      "timestamp": "2026-03-13T20:30:00Z",
+      "result": "PARTIAL: 16/19 constraints satisfied (84%). 4 gaps identified — 1 blocking (B2 invariant needs test coverage). All 329 existing tests pass.",
+      "constraints_satisfied": 16,
+      "constraints_total": 19,
+      "by_status": {
+        "SATISFIED": 16,
+        "PARTIAL": 3,
+        "MISSING": 0
+      },
+      "gaps": 4,
+      "blocking_gaps": 1,
+      "required_truths_by_status": {
+        "SATISFIED": 5,
+        "PARTIAL": 3,
+        "NOT_SATISFIED": 0
+      }
+    },
+    {
+      "number": 6,
+      "phase": "verify",
+      "timestamp": "2026-03-13T21:15:00Z",
+      "result": "SATISFIED: 19/19 constraints satisfied (100%). All 4 gaps resolved. 79 new tests added (408 total). parseTestAnnotations bug fixed (pending buffer pattern). All 8 required truths SATISFIED.",
+      "constraints_satisfied": 19,
+      "constraints_total": 19,
+      "by_status": {
+        "SATISFIED": 19,
+        "PARTIAL": 0,
+        "MISSING": 0
+      },
+      "gaps": 0,
+      "blocking_gaps": 0,
+      "required_truths_by_status": {
+        "SATISFIED": 8,
+        "PARTIAL": 0,
+        "NOT_SATISFIED": 0
+      },
+      "tests_added": 79,
+      "tests_total": 408,
+      "bug_fixed": "parseTestAnnotations: changed from current-context to pending-buffer model so annotations precede tests"
+    }
+  ],
+  "generation": {
+    "option": "B",
+    "timestamp": "2026-03-13T19:45:00Z",
+    "artifacts": [
+      {
+        "path": "cli/lib/structure-schema.ts",
+        "type": "code",
+        "satisfies": ["RT-1", "RT-2"],
+        "status": "generated",
+        "artifact_class": "substantive"
+      },
+      {
+        "path": "install/manifold-structure.schema.json",
+        "type": "schema",
+        "satisfies": ["RT-1"],
+        "status": "generated",
+        "artifact_class": "substantive"
+      },
+      {
+        "path": "cli/lib/config.ts",
+        "type": "code",
+        "satisfies": ["RT-3", "RT-6"],
+        "status": "generated",
+        "artifact_class": "substantive"
+      },
+      {
+        "path": "cli/lib/evidence.ts",
+        "type": "code",
+        "satisfies": ["RT-3", "RT-5"],
+        "status": "generated",
+        "artifact_class": "substantive"
+      },
+      {
+        "path": "cli/commands/drift.ts",
+        "type": "code",
+        "satisfies": ["RT-7"],
+        "status": "generated",
+        "artifact_class": "substantive"
+      },
+      {
+        "path": "cli/commands/verify.ts",
+        "type": "code",
+        "satisfies": ["RT-3", "RT-4", "RT-7"],
+        "status": "generated",
+        "artifact_class": "substantive"
+      },
+      {
+        "path": "cli/index.ts",
+        "type": "code",
+        "satisfies": ["RT-7"],
+        "status": "generated",
+        "artifact_class": "structural"
+      },
+      {
+        "path": "install/commands/m1-constrain.md",
+        "type": "skill",
+        "satisfies": ["RT-6", "RT-8"],
+        "status": "generated",
+        "artifact_class": "substantive"
+      },
+      {
+        "path": "install/commands/m2-tension.md",
+        "type": "skill",
+        "satisfies": ["RT-6", "RT-8"],
+        "status": "generated",
+        "artifact_class": "substantive"
+      },
+      {
+        "path": "install/commands/m5-verify.md",
+        "type": "skill",
+        "satisfies": ["RT-3", "RT-4", "RT-7"],
+        "status": "generated",
+        "artifact_class": "substantive"
+      }
+    ],
+    "coverage": {
+      "constraints_addressed": 19,
+      "constraints_total": 19,
+      "required_truths_addressed": 8,
+      "required_truths_total": 8,
+      "percentage": 100
+    }
+  },
+  "convergence": {
+    "status": "CONVERGED",
+    "progress": "19/19 constraints satisfied (100%). All 8 required truths SATISFIED. 408 tests passing (79 new). Phase: VERIFIED."
+  },
+  "constraint_graph": {
+    "version": 1,
+    "nodes": {},
+    "edges": {
+      "dependencies": [
+        {"from": "T2", "to": "T1", "type": "requires"},
+        {"from": "T3", "to": "T2", "type": "requires"},
+        {"from": "B2", "to": "U1", "type": "requires"},
+        {"from": "U1", "to": "T2", "type": "requires"}
+      ],
+      "conflicts": [],
+      "satisfies": []
+    }
+  }
+}
