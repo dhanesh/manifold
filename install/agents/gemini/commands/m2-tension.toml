@@ -191,6 +191,54 @@ manifold validate <feature> --conflicts
 - **Accept** - Document the trade-off and move forward
 - **Invalidate** - Remove a constraint if it's not actually required
 
+## Failure Cascade Analysis (GAP-06)
+
+When a tension resolution introduces a fallback path (e.g., "Kafka fails → DLQ"), you MUST recursively ask:
+
+> "What if the fallback also fails?"
+
+Continue until reaching one of:
+- **Explicit accept-loss decision**: Document that data loss is accepted under these conditions
+- **Human intervention**: Define the escalation path and runbook
+- **Redundant fallback**: Another independent fallback exists
+
+This prevents undocumented failure modes where simultaneous outages cause silent data loss.
+
+### Example
+
+```
+TN1 Resolution: Kafka fail → SQS DLQ fallback
+  └── Q: "What if SQS also fails?"
+      └── A: Log to local disk + CloudWatch alarm → human intervention
+          └── Constraint added: O6 (DLQ failure alerting)
+```
+
+## Tension Resolution Validation Criteria (GAP-08)
+
+Each resolved tension MUST declare testable validation criteria in the JSON:
+
+```json
+{
+  "id": "TN1",
+  "type": "trade_off",
+  "between": ["B1", "T1"],
+  "status": "resolved",
+  "validation_criteria": [
+    "Strategy pattern dispatches to correct handler class",
+    "Fallback path activates when primary fails"
+  ]
+}
+```
+
+During `/manifold:m5-verify`, these criteria are checked programmatically.
+
+## Cache Invalidation Sub-Constraints (GAP-16)
+
+When tensions involve caching, generate sub-constraints for invalidation triggers beyond TTL:
+- On validation failure, should the cache be refreshed before rejecting?
+- What happens during key/credential rotation?
+- Is there a forced invalidation mechanism?
+
 ## Example
 
 ```

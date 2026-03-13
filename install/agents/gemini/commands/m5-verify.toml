@@ -38,7 +38,7 @@ Verify ALL artifacts against ALL constraints.
 ## Usage
 
 ```
-/manifold:m5-verify <feature-name> [--strict] [--actions] [--verify-evidence] [--run-tests]
+/manifold:m5-verify <feature-name> [--strict] [--actions] [--verify-evidence] [--run-tests] [--execute] [--levels]
 ```
 
 **Flags:**
@@ -46,6 +46,88 @@ Verify ALL artifacts against ALL constraints.
 - `--actions` - Generate copy-paste executable actions for gaps (v2)
 - `--verify-evidence` - Verify concrete evidence for required truths (v3)
 - `--run-tests` - Execute test evidence verification (requires --verify-evidence) (v3)
+- `--execute` - Run configured test_runner subprocess for real pass/fail results (v3.1, GAP-01). Requires `.manifold/config.json` with `test_runner` field
+- `--levels` - Show satisfaction level breakdown: DOCUMENTED → IMPLEMENTED → TESTED → VERIFIED (v3.1, GAP-05)
+
+## Satisfaction Levels (v3.1)
+
+Constraints are classified by verification depth, not just pass/fail:
+
+| Level | Meaning | Evidence Required |
+|-------|---------|-------------------|
+| `DOCUMENTED` | Constraint acknowledged in docs/specs | manual_review evidence |
+| `IMPLEMENTED` | Code exists that addresses constraint | file_exists evidence |
+| `TESTED` | Tests verify constraint behavior | test_passes evidence with VERIFIED or STALE status |
+| `VERIFIED` | Automated verification confirms | test_passes + status VERIFIED |
+
+**Invariant-type constraints SHOULD reach at least TESTED level.** The `--levels` flag shows this breakdown.
+
+**Critical distinction for test_passes status:**
+- A `test_passes` evidence item with status `PENDING` means the test file exists and contains the named test, but the test has NOT been executed. This counts as `IMPLEMENTED`, not `TESTED`.
+- Only `test_passes` evidence with status `VERIFIED` or `STALE` counts toward the `TESTED` level, because those statuses confirm the test was actually run and passed.
+- This prevents inflating satisfaction scores for tests that have not actually been executed.
+
+## Test Tier Classification (v3.1, GAP-02)
+
+Evidence items can declare their test tier: `unit`, `integration`, or `e2e`.
+
+Constraints involving external systems (databases, APIs, message queues) should require at least `integration` tier evidence. Mocked unit tests prove code structure, not runtime behavior.
+
+```json
+{
+  "type": "test_passes",
+  "path": "tests/kafka.integration.ts",
+  "test_name": "produces message to real Kafka",
+  "test_tier": "integration"
+}
+```
+
+## Drift Detection (v3.1, GAP-07)
+
+After verification, use `manifold drift <feature>` to detect post-verification changes:
+
+```bash
+manifold drift my-feature          # Check for changes since last verify
+manifold drift my-feature --json   # Machine-readable output
+manifold drift my-feature --update # Recompute and store current hashes
+```
+
+File hashes are stored at verify time. When files change after verification, drift is flagged with affected constraint IDs.
+
+## Configuration (v3.1)
+
+Create `.manifold/config.json` to configure test execution:
+
+```json
+{
+  "test_runner": "bun test",
+  "test_args": ["--timeout", "30000"],
+  "test_tier_patterns": {
+    "unit": ["*.test.ts", "*.spec.ts"],
+    "integration": ["*.integration.ts"],
+    "e2e": ["*.e2e.ts"]
+  },
+  "drift_hooks": {
+    "on_drift": "echo 'Drift detected!'"
+  }
+}
+```
+
+## Traceability Matrix (v3.1, GAP-12)
+
+Annotate test functions with constraint IDs for automatic traceability:
+
+```typescript
+// In your test files:
+describe('IdempotencyService', () => {
+  // @constraint B1
+  it('rejects duplicate payment attempts', async () => {
+    // Satisfies: B1 (no duplicates)
+  });
+});
+```
+
+The verify command parses `@constraint` and `// Satisfies:` annotations to build a matrix: `{constraint_id → [test_file:test_function]}`.
 
 ## Verification Matrix
 
@@ -335,6 +417,65 @@ manifold verify payment-retry --verify-evidence --run-tests
 manifold verify payment-retry --verify-evidence --json
 ```
 
+### Evidence Propagation: RT to Constraint
+
+Evidence lives on Required Truths, not directly on constraints. The verification chain flows from evidence through required truths to constraints via `maps_to` mappings.
+
+**The chain:** `RT.evidence` --> `RT.maps_to` --> Constraint satisfaction
+
+**Example:**
+
+```
+RT-1 has evidence: [file_exists src/auth.ts, test_passes tests/auth.test.ts]
+RT-1 maps_to: [B1, T1]
+--> B1 inherits RT-1's evidence for satisfaction level computation
+--> T1 inherits RT-1's evidence for satisfaction level computation
+```
+
+A constraint's satisfaction level is determined by the COMBINED evidence from all RTs that map to it. When multiple RTs map to the same constraint, aggregate their evidence before computing the level.
+
+| Evidence combination | Satisfaction Level | Meaning |
+|---------------------|-------------------|---------|
+| No evidence | DOCUMENTED | Constraint stated but not implemented |
+| file_exists or content_match | IMPLEMENTED | Code exists but not test-verified |
+| test_passes (PENDING) | IMPLEMENTED | Test exists but has not been executed |
+| test_passes (VERIFIED or STALE) | TESTED | Test has been executed and passed |
+| All evidence VERIFIED + test passed | VERIFIED | Fully verified with evidence |
+
+**Critical rule:** A `test_passes` evidence item with `PENDING` status means the test FILE exists and contains the test name, but the test has not been executed. This is `IMPLEMENTED`, not `TESTED`. Only `VERIFIED` or `STALE` statuses on `test_passes` evidence count toward the `TESTED` level. This distinction is essential to prevent reporting a constraint as tested when the test has never actually run.
+
+**Propagation algorithm:**
+
+1. For each constraint, collect all RTs where `maps_to` includes that constraint ID
+2. Gather all evidence items from those RTs
+3. Apply the satisfaction level table above using the highest applicable level
+4. If any RT mapped to the constraint has failed evidence, the constraint cannot exceed `IMPLEMENTED`
+
+### Post-Verification: Drift Baseline
+
+After successful verification, capture file hashes for drift detection:
+
+```bash
+manifold drift <feature> --update
+```
+
+This records SHA-256 hashes of all artifacts referenced in `.manifold/<feature>.verify.json`. Subsequent `manifold drift <feature>` commands compare current hashes against the baseline to detect post-verification changes.
+
+When drift is detected, the output shows:
+- Which files changed since the baseline was captured
+- Which constraint IDs are affected (via artifact `satisfies` arrays)
+- Recommendation to re-verify affected constraints
+
+**Include drift baseline capture in the verification workflow:**
+
+1. Run `manifold verify <feature> --verify-evidence` to verify all evidence
+2. Fix any failed evidence items
+3. Re-run verification until all evidence passes
+4. Run `manifold drift <feature> --update` to capture the baseline
+5. Phase set to VERIFIED
+
+Skipping the drift baseline step means post-verification changes will go undetected until the next full verification cycle. Always capture the baseline immediately after a successful verify pass.
+
 ## Execution Instructions
 
 ### For JSON+Markdown Format (Default)
@@ -354,12 +495,15 @@ manifold verify payment-retry --verify-evidence --json
     - `test_passes`: Run test if `--run-tests` flag is set
     - `metric_value`: Check runtime metric threshold
     - `manual_review`: Skip, mark as pending
-11. **If `--actions` (v2)**, generate executable actions for each gap
-12. If `--strict` mode, fail verification on any gaps or failed evidence
-13. **Record iteration** in JSON `iterations[]` (v2)
-14. **Calculate convergence status** (v2)
-15. **Update `.manifold/<feature>.verify.json`** with full results including evidence status
-16. Set phase to VERIFIED in JSON (or keep GENERATED if gaps exist)
+11. Compute satisfaction levels for each constraint by propagating evidence from required truths via `maps_to` mappings (see "Evidence Propagation: RT to Constraint")
+12. **If `--levels` flag**: display satisfaction level breakdown (DOCUMENTED/IMPLEMENTED/TESTED/VERIFIED) for each constraint using the propagated evidence
+13. **If `--actions` (v2)**, generate executable actions for each gap
+14. If `--strict` mode, fail verification on any gaps or failed evidence
+15. **Record iteration** in JSON `iterations[]` (v2)
+16. **Calculate convergence status** (v2)
+17. **Update `.manifold/<feature>.verify.json`** with full results including evidence status
+18. Capture drift baseline: record file hashes for all artifacts via `manifold drift <feature> --update`
+19. Set phase to VERIFIED in JSON (or keep GENERATED if gaps exist)
 
 ### Linking Validation
 
@@ -387,12 +531,15 @@ Use `manifold validate <feature>` for automatic linking validation.
    - `test_passes`: Run test if `--run-tests` flag is set
    - `metric_value`: Check runtime metric threshold
    - `manual_review`: Skip, mark as pending
-9. **If `--actions` (v2)**, generate executable actions for each gap
-10. If `--strict` mode, fail verification on any gaps or failed evidence
-11. **Record iteration** in `iterations[]` (v2)
-12. **Calculate convergence status** (v2)
-13. **Update `.manifold/<feature>.verify.json`** with full results including evidence status
-14. Set phase to VERIFIED (or keep GENERATED if gaps exist)
+9. Compute satisfaction levels for each constraint by propagating evidence from required truths via `maps_to` mappings (see "Evidence Propagation: RT to Constraint")
+10. **If `--levels` flag**: display satisfaction level breakdown (DOCUMENTED/IMPLEMENTED/TESTED/VERIFIED) for each constraint using the propagated evidence
+11. **If `--actions` (v2)**, generate executable actions for each gap
+12. If `--strict` mode, fail verification on any gaps or failed evidence
+13. **Record iteration** in `iterations[]` (v2)
+14. **Calculate convergence status** (v2)
+15. **Update `.manifold/<feature>.verify.json`** with full results including evidence status
+16. Capture drift baseline: record file hashes for all artifacts via `manifold drift <feature> --update`
+17. Set phase to VERIFIED (or keep GENERATED if gaps exist)
 
 ## Quality Gate: Schema Validation
 

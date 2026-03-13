@@ -146,13 +146,24 @@ When generating artifacts, update `.manifold/<feature>.json` with completion sta
     "artifacts": [
       {
         "path": "src/retry/PaymentRetryClient.ts",
+        "type": "code",
         "satisfies": ["RT-1", "RT-3"],
-        "status": "generated"
+        "status": "generated",
+        "artifact_class": "substantive"
+      },
+      {
+        "path": "src/retry/index.ts",
+        "type": "code",
+        "satisfies": ["RT-1"],
+        "status": "generated",
+        "artifact_class": "structural"
       },
       {
         "path": "src/retry/__tests__/PaymentRetryClient.test.ts",
+        "type": "test",
         "validates": ["B1", "B2", "T1", "U2"],
-        "status": "generated"
+        "status": "generated",
+        "artifact_class": "substantive"
       }
     ],
     "coverage": {
@@ -160,12 +171,28 @@ When generating artifacts, update `.manifold/<feature>.json` with completion sta
       "constraints_total": 12,
       "percentage": 100
     }
+  },
+  "anchors": {
+    "required_truths": [
+      {
+        "id": "RT-1",
+        "status": "NOT_SATISFIED",
+        "maps_to": ["B1", "T1"],
+        "evidence": [
+          {"type": "file_exists", "path": "src/retry/PaymentRetryClient.ts", "status": "PENDING"},
+          {"type": "content_match", "path": "src/retry/PaymentRetryClient.ts", "pattern": "classifyError", "status": "PENDING"},
+          {"type": "test_passes", "path": "src/retry/__tests__/PaymentRetryClient.test.ts", "test_name": "classifies transient errors correctly", "status": "PENDING"}
+        ]
+      }
+    ]
   }
 }
 ```
 
 This ensures:
 - Every artifact traces to constraints it addresses
+- Every artifact declares its `artifact_class` (`substantive` or `structural`)
+- Every required truth has concrete, verifiable `evidence` items
 - Coverage can be verified programmatically
 - `/manifold:m5-verify` can check actual files against declared artifacts
 
@@ -211,6 +238,97 @@ After generation, verify:
 - [ ] Claude Code commands have `.md` skill files in `install/commands/`
 - [ ] Install script includes new command files
 - [ ] Hooks are in `install/hooks/` if they need distribution
+
+## Evidence and Traceability (v3)
+
+### Evidence on Required Truths
+
+When generating artifacts, populate `evidence` arrays on each required truth in the JSON structure. Each RT should have concrete, verifiable evidence:
+
+```json
+{
+  "anchors": {
+    "required_truths": [
+      {
+        "id": "RT-1",
+        "status": "NOT_SATISFIED",
+        "maps_to": ["B1", "T1"],
+        "evidence": [
+          {"type": "file_exists", "path": "src/retry/IdempotencyService.ts", "status": "PENDING"},
+          {"type": "content_match", "path": "src/retry/PaymentRetryClient.ts", "pattern": "idempotencyKey", "status": "PENDING"},
+          {"type": "test_passes", "path": "tests/retry/PaymentRetryClient.test.ts", "test_name": "rejects duplicate payment attempts", "status": "PENDING"}
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Evidence type selection guide:**
+
+| When you need to verify... | Use evidence type | Example |
+|---------------------------|-------------------|---------|
+| A file was created | `file_exists` | `{"type": "file_exists", "path": "src/auth.ts"}` |
+| Code contains expected patterns | `content_match` | `{"type": "content_match", "path": "src/auth.ts", "pattern": "validateToken"}` |
+| A specific test exists and can pass | `test_passes` | `{"type": "test_passes", "path": "tests/auth.test.ts", "test_name": "validates JWT tokens"}` |
+| Requires human review | `manual_review` | `{"type": "manual_review", "path": "docs/security-review.md"}` |
+
+**Rules:**
+- Every required truth MUST have at least one evidence item
+- Invariant constraints (via `maps_to`) MUST have `test_passes` evidence
+- All evidence starts with `"status": "PENDING"` -- verification updates status later
+- Evidence paths must be relative to project root
+
+### Artifact Classification
+
+Every artifact in the generation section must include `artifact_class`:
+
+| Class | Meaning | Counts toward satisfaction? | Examples |
+|-------|---------|---------------------------|----------|
+| `substantive` | Contains logic, tests, or assertions | Yes | Implementation files, test files, runbooks |
+| `structural` | Boilerplate, re-exports, config | No | `index.ts` barrel exports, `__init__.py` |
+
+```json
+{
+  "path": "src/retry/index.ts",
+  "type": "code",
+  "satisfies": ["RT-1"],
+  "status": "generated",
+  "artifact_class": "structural"
+}
+```
+
+**Rules:**
+- Every artifact MUST have an `artifact_class` field
+- Only `substantive` artifacts count toward constraint satisfaction in verification
+- `structural` artifacts are tracked but do not satisfy constraints on their own
+- When in doubt, classify as `substantive` -- it is better to over-verify than under-verify
+
+### Constraint Evidence (verified_by)
+
+For constraints that can be directly verified (not just via RT mapping), add `verified_by` to the constraint in the JSON:
+
+```json
+{
+  "constraints": {
+    "business": [
+      {
+        "id": "B1",
+        "type": "invariant",
+        "verified_by": [
+          {"type": "test_passes", "path": "tests/retry/IdempotencyService.test.ts", "test_name": "rejects duplicate payment attempts", "status": "PENDING"}
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Rules:**
+- `verified_by` is optional on constraints but recommended for `invariant` types
+- Invariant constraints SHOULD have direct `verified_by` evidence when possible
+- Evidence format matches the same structure used on required truths
+- This provides a secondary verification path independent of the RT `maps_to` chain
 
 ## STEP 0: Parallel Execution Check (MANDATORY)
 
@@ -310,11 +428,11 @@ User runs: /manifold:m4-generate payment-retry --option=C
 2. Read anchoring from JSON `anchors` section (or `.manifold/<feature>.anchor.yaml` for legacy)
 3. Select solution option (from `--option` or prompt user)
 4. **BUILD ARTIFACT LIST** - List ALL files that will be generated
-5. **⚠️ MANDATORY PARALLELIZATION CHECK** (See "STEP 0" above)
+5. **MANDATORY PARALLELIZATION CHECK** (See "STEP 0" above)
    - Count the artifact groups (code, tests, docs, ops)
    - If ≥3 files across different directories:
      ```
-     🔀 PARALLEL GENERATION OPPORTUNITY
+     PARALLEL GENERATION OPPORTUNITY
 
      I've identified [N] artifacts that could be generated in parallel:
 
@@ -345,8 +463,11 @@ User runs: /manifold:m4-generate payment-retry --option=C
 10. **Update manifold** with generation tracking (artifacts, coverage)
     - JSON+MD: Update `.manifold/<feature>.json` with `generation` section
     - Legacy YAML: Update `.manifold/<feature>.yaml`
-11. Set phase to GENERATED
-12. **⚠️ MANDATORY POST-GENERATION VALIDATION**
+11. **Populate `evidence` arrays** on all required truths with concrete, verifiable evidence items (`file_exists`, `content_match`, `test_passes`, `manual_review`)
+12. **Set `artifact_class`** on every artifact in the generation section (`substantive` or `structural`)
+13. **Verify invariant evidence**: For invariant-type constraints, ensure at least one `test_passes` evidence exists via the RT `maps_to` chain or directly via `verified_by`
+14. Set phase to GENERATED
+15. **MANDATORY POST-GENERATION VALIDATION**
     ```bash
     manifold validate <feature>
     ```
@@ -357,7 +478,7 @@ User runs: /manifold:m4-generate payment-retry --option=C
     - Schema reference: `install/manifold-structure.schema.json`
 
     **Format lock**: If `.manifold/<feature>.json` exists, ALWAYS use JSON+Markdown format. Never create/update `.yaml` when `.json` exists.
-13. Display summary with constraint coverage
+16. Display summary with constraint coverage
 
 ---
 
