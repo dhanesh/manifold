@@ -1,6 +1,72 @@
 {
   "$ref": "#/definitions/ManifoldStructure",
   "definitions": {
+    "EvidenceRef": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "file_exists",
+            "content_match",
+            "test_passes",
+            "metric_value",
+            "manual_review"
+          ]
+        },
+        "path": {
+          "type": "string"
+        },
+        "pattern": {
+          "type": "string"
+        },
+        "test_name": {
+          "type": "string"
+        },
+        "metric_name": {
+          "type": "string"
+        },
+        "threshold": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "VERIFIED",
+            "PENDING",
+            "FAILED",
+            "STALE"
+          ]
+        },
+        "satisfies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "test_tier": {
+          "type": "string",
+          "enum": ["unit", "integration", "e2e"]
+        },
+        "validation_criteria": {
+          "type": "string"
+        },
+        "file_hash": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ],
+      "additionalProperties": false
+    },
     "ManifoldStructure": {
       "type": "object",
       "properties": {
@@ -68,6 +134,11 @@
                       "goal",
                       "boundary"
                     ]
+                  },
+                  "verified_by": {
+                    "type": "array",
+                    "items": { "$ref": "#/definitions/EvidenceRef" },
+                    "description": "Evidence verifying this constraint"
                   }
                 },
                 "required": [
@@ -94,6 +165,11 @@
                       "goal",
                       "boundary"
                     ]
+                  },
+                  "verified_by": {
+                    "type": "array",
+                    "items": { "$ref": "#/definitions/EvidenceRef" },
+                    "description": "Evidence verifying this constraint"
                   }
                 },
                 "required": [
@@ -120,6 +196,11 @@
                       "goal",
                       "boundary"
                     ]
+                  },
+                  "verified_by": {
+                    "type": "array",
+                    "items": { "$ref": "#/definitions/EvidenceRef" },
+                    "description": "Evidence verifying this constraint"
                   }
                 },
                 "required": [
@@ -146,6 +227,11 @@
                       "goal",
                       "boundary"
                     ]
+                  },
+                  "verified_by": {
+                    "type": "array",
+                    "items": { "$ref": "#/definitions/EvidenceRef" },
+                    "description": "Evidence verifying this constraint"
                   }
                 },
                 "required": [
@@ -172,6 +258,11 @@
                       "goal",
                       "boundary"
                     ]
+                  },
+                  "verified_by": {
+                    "type": "array",
+                    "items": { "$ref": "#/definitions/EvidenceRef" },
+                    "description": "Evidence verifying this constraint"
                   }
                 },
                 "required": [
@@ -215,6 +306,12 @@
                   "resolved",
                   "unresolved"
                 ]
+              },
+              "validation_criteria": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               }
             },
             "required": [
@@ -285,6 +382,11 @@
                     "items": {
                       "type": "string"
                     }
+                  },
+                  "evidence": {
+                    "type": "array",
+                    "items": { "$ref": "#/definitions/EvidenceRef" },
+                    "description": "Concrete evidence for this required truth"
                   }
                 },
                 "required": [
@@ -371,6 +473,12 @@
             },
             "timestamp": {
               "type": "string"
+            },
+            "progress": {
+              "type": "string"
+            },
+            "converged_at": {
+              "type": "string"
             }
           },
           "required": [
@@ -409,6 +517,16 @@
                   },
                   "status": {
                     "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "file_hash": {
+                    "type": "string"
+                  },
+                  "artifact_class": {
+                    "type": "string",
+                    "enum": ["substantive", "structural"]
                   }
                 },
                 "required": [
@@ -452,62 +570,7 @@
         },
         "evidence": {
           "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "type": {
-                "type": "string",
-                "enum": [
-                  "file_exists",
-                  "content_match",
-                  "test_passes",
-                  "metric_value",
-                  "manual_review"
-                ]
-              },
-              "path": {
-                "type": "string"
-              },
-              "pattern": {
-                "type": "string"
-              },
-              "test_name": {
-                "type": "string"
-              },
-              "metric_name": {
-                "type": "string"
-              },
-              "threshold": {
-                "type": [
-                  "string",
-                  "number"
-                ]
-              },
-              "status": {
-                "type": "string",
-                "enum": [
-                  "VERIFIED",
-                  "PENDING",
-                  "FAILED",
-                  "STALE"
-                ]
-              },
-              "satisfies": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            },
-            "required": [
-              "id",
-              "type"
-            ],
-            "additionalProperties": false
-          }
+          "items": { "$ref": "#/definitions/EvidenceRef" }
         },
         "constraint_graph": {
           "type": "object",
@@ -617,6 +680,38 @@
             }
           },
           "additionalProperties": false
+        },
+        "suggested_constraints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "category": {
+                "type": "string",
+                "enum": ["business", "technical", "user_experience", "security", "operational"]
+              },
+              "type": {
+                "type": "string",
+                "enum": ["invariant", "goal", "boundary"]
+              },
+              "source_constraint": {
+                "type": "string"
+              },
+              "auto_generated": {
+                "type": "boolean",
+                "const": true
+              },
+              "promoted": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            "required": ["id", "category", "type", "source_constraint", "auto_generated"],
+            "additionalProperties": false
+          }
         },
         "quick_summary": {
           "type": "object",

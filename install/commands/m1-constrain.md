@@ -189,6 +189,11 @@ For each category, ask probing questions:
 - What data consistency guarantees are needed?
 - What's the expected load/scale?
 
+**Core Data Path Analysis** (GAP-03): Identify the primary data flow through the system. For each transition in the flow, ask:
+- Does this transition cross a system boundary (process, network, service)?
+- What integration test constraint should cover this transition?
+- What is the fallback path if this transition fails?
+
 ### User Experience
 - What response times are acceptable?
 - How should errors be communicated?
@@ -201,11 +206,41 @@ For each category, ask probing questions:
 - What needs to be audited?
 - What are the threat vectors?
 
+**Resource Exhaustion Checklist** (GAP-10): For each unauthenticated endpoint or path:
+- Can unauthenticated requests cause unbounded resource consumption?
+- Are there rate limits, negative caching, or input size bounds?
+
+**External Dependency Resilience** (GAP-11): For each external HTTP dependency:
+- Is there a configurable timeout?
+- Is there a circuit breaker or fallback?
+- Is the response cached? What invalidation strategy?
+- Does failure isolate to just this dependency?
+
+**Crypto/Auth Attack Surface** (GAP-09): For constraints involving crypto or authentication:
+- What attack test matrix should be generated? (algorithm confusion, timing, replay, forged signatures)
+- Are IP-based checks tested across IPv4, IPv6, and IPv4-mapped IPv6?
+
 ### Operational
 - What needs monitoring?
 - What are the SLA requirements?
 - What's the incident response process?
 - How will this be deployed/rolled back?
+
+### Input Validation Derivation (GAP-14)
+
+When constraints reference data formats (e.g., "accept any JSON", "valid email"), auto-generate input validation sub-constraints:
+- Content-Type checking
+- Encoding validation
+- Schema validation at boundaries
+
+These are placed in the `suggested_constraints` staging area in the manifold JSON. They don't count toward constraint totals until explicitly promoted by the user.
+
+### Concurrency Considerations (GAP-17)
+
+When constraints involve shared state (caching, connection pools, singletons):
+- Are there thread-safety requirements?
+- Should concurrent request handling tests be generated?
+- What shared-state constraints exist?
 
 ## Example
 

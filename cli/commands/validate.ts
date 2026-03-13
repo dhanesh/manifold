@@ -7,12 +7,14 @@
 
 import type { Command } from 'commander';
 import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import {
   findManifoldDir,
   listFeatures,
+  loadFeature,
   parseYamlSafe,
-  type Manifold
+  type Manifold,
+  type Evidence,
 } from '../lib/parser.js';
 import { validateManifold, type ValidationResult } from '../lib/schema.js';
 import {
@@ -44,6 +46,7 @@ interface ValidateOptions {
   conflicts?: boolean;  // Run semantic conflict detection (INT-1, B2, RT-4)
   crossFeature?: boolean;  // Run cross-feature conflict detection (T4)
   metrics?: boolean;  // Show validation metrics summary (GAP-4)
+  evidence?: boolean;  // Run evidence integrity validation
 }
 
 /**
@@ -211,6 +214,7 @@ export function registerValidateCommand(program: Command): void {
     .option('--conflicts', 'Run semantic conflict detection on constraints')
     .option('--cross-feature', 'Run cross-feature conflict detection (requires no feature arg)')
     .option('--metrics', 'Show validation metrics summary (error breakdown, timing)')
+    .option('--evidence', 'Check evidence integrity (paths exist, invariant test chains, orphaned references)')
     .action(async (feature: string | undefined, options: ValidateOptions) => {
       const exitCode = await validateCommand(feature, options);
       process.exit(exitCode);
@@ -273,6 +277,18 @@ async function validateCommand(feature: string | undefined, options: ValidateOpt
 
       if (!options.json) {
         printValidationOutput(f, result, { showAll: options.all, conflicts: options.conflicts });
+
+        // Evidence integrity validation
+        if (options.evidence) {
+          const evidenceIssues = validateEvidenceIntegrity(manifoldDir, f);
+          if (evidenceIssues.length > 0) {
+            printEvidenceResults(evidenceIssues, { showAll: options.all });
+            if (evidenceIssues.some(i => i.level === 'error')) {
+              hasErrors = true;
+            }
+          }
+        }
+
         println();
       }
     }
@@ -304,6 +320,26 @@ async function validateCommand(feature: string | undefined, options: ValidateOpt
         valid: !hasErrors,
         features: results
       };
+
+      // Include evidence results in JSON output
+      if (options.evidence) {
+        const evidenceByFeature: Record<string, EvidenceResult[]> = {};
+        for (const f of features) {
+          const evidenceIssues = validateEvidenceIntegrity(manifoldDir, f);
+          if (evidenceIssues.length > 0) {
+            evidenceByFeature[f] = evidenceIssues;
+            if (evidenceIssues.some(i => i.level === 'error')) {
+              hasErrors = true;
+            }
+          }
+        }
+        if (Object.keys(evidenceByFeature).length > 0) {
+          jsonResult.evidence = evidenceByFeature;
+        }
+        // Re-evaluate validity after evidence checks
+        jsonResult.valid = !hasErrors;
+      }
+
       // Include cross-feature conflicts in JSON output
       if (crossFeatureResult) {
         jsonResult.crossFeatureConflicts = crossFeatureResult;
@@ -338,8 +374,21 @@ async function validateCommand(feature: string | undefined, options: ValidateOpt
     metrics.endTime = Date.now();
   }
 
+  // Evidence integrity validation for single feature
+  let evidenceIssues: EvidenceResult[] = [];
+  if (options.evidence) {
+    evidenceIssues = validateEvidenceIntegrity(manifoldDir, feature);
+  }
+  const hasEvidenceErrors = evidenceIssues.some(i => i.level === 'error');
+
   if (options.json) {
     const jsonResult: Record<string, unknown> = { ...result.json };
+    if (hasEvidenceErrors) {
+      jsonResult.valid = false;
+    }
+    if (evidenceIssues.length > 0) {
+      jsonResult.evidence = evidenceIssues;
+    }
     if (metrics) {
       jsonResult.metrics = {
         duration: metrics.endTime! - metrics.startTime,
@@ -352,13 +401,17 @@ async function validateCommand(feature: string | undefined, options: ValidateOpt
     println(toJSON(jsonResult));
   } else {
     printValidationOutput(feature, result, { showAll: options.all, conflicts: options.conflicts });
+    if (evidenceIssues.length > 0) {
+      printEvidenceResults(evidenceIssues, { showAll: options.all });
+    }
     if (metrics) {
       println();
       println(formatMetrics(metrics));
     }
   }
 
-  return result.valid ? 0 : 2;
+  const isValid = result.valid && !hasEvidenceErrors;
+  return isValid ? 0 : 2;
 }
 
 interface FeatureValidationResult {
@@ -615,6 +668,265 @@ async function validateJsonOnlyFeature(
       path: jsonPath
     }
   };
+}
+
+// ============================================================
+// Evidence Integrity Validation
+// ============================================================
+
+/**
+ * Evidence validation result entry.
+ * Represents a single finding from evidence integrity checking.
+ */
+export interface EvidenceResult {
+  level: 'error' | 'warning' | 'info';
+  message: string;
+  /** The constraint or RT ID this result relates to */
+  target?: string;
+}
+
+/**
+ * Validate evidence integrity for a single feature manifold.
+ *
+ * Checks performed:
+ * 1. Orphaned maps_to references (error): RT.maps_to_constraints IDs must exist in constraints
+ * 2. Evidence file paths exist on disk (warning): Only checked for GENERATED/VERIFIED phases
+ * 3. Invariant constraints have test_passes evidence chain (warning)
+ * 4. Evidence type completeness (info): Suggestions for improving evidence coverage
+ *
+ * @param manifoldDir - Path to .manifold/ directory
+ * @param feature - Feature name to validate
+ * @returns Array of evidence validation results
+ */
+export function validateEvidenceIntegrity(
+  manifoldDir: string,
+  feature: string
+): EvidenceResult[] {
+  const results: EvidenceResult[] = [];
+
+  // Load the feature using the unified loader
+  const featureData = loadFeature(manifoldDir, feature);
+  if (!featureData?.manifold) return results;
+
+  const manifold = featureData.manifold;
+  const projectRoot = resolve(manifoldDir, '..');
+
+  // Collect all constraint IDs and types
+  const constraintIds = new Set<string>();
+  const invariantIds = new Set<string>();
+  const constraintCategories = ['business', 'technical', 'user_experience', 'security', 'operational'] as const;
+
+  for (const category of constraintCategories) {
+    const constraints = manifold.constraints?.[category] ?? [];
+    for (const constraint of constraints) {
+      if (constraint.id) {
+        constraintIds.add(constraint.id);
+        if (constraint.type === 'invariant') {
+          invariantIds.add(constraint.id);
+        }
+      }
+    }
+  }
+
+  // Also check deprecated 'ux' category (v1 compatibility)
+  const uxConstraints = manifold.constraints?.ux ?? [];
+  for (const constraint of uxConstraints) {
+    if (constraint.id) {
+      constraintIds.add(constraint.id);
+      if (constraint.type === 'invariant') {
+        invariantIds.add(constraint.id);
+      }
+    }
+  }
+
+  // Track which invariant constraints have test_passes evidence via any chain
+  const constraintsWithTestEvidence = new Set<string>();
+
+  // Only check file paths for phases where artifacts should exist
+  const phase = manifold.phase;
+  const checkFilePaths = phase === 'GENERATED' || phase === 'VERIFIED';
+
+  // Check required truths
+  const requiredTruths = manifold.anchors?.required_truths ?? [];
+
+  // No RTs means nothing to validate
+  if (requiredTruths.length === 0) return results;
+
+  for (const rt of requiredTruths) {
+    if (!rt.id) continue;
+
+    const mapsTo = rt.maps_to_constraints ?? [];
+    // Handle both string (v1/v2) and Evidence[] (v3) evidence formats
+    const evidenceArr: Evidence[] = Array.isArray(rt.evidence)
+      ? (rt.evidence as Evidence[])
+      : [];
+
+    // --- Check 1: Orphaned maps_to references (ERROR) ---
+    for (const constraintId of mapsTo) {
+      if (!constraintIds.has(constraintId)) {
+        results.push({
+          level: 'error',
+          message: `${rt.id} maps_to '${constraintId}' but ${constraintId} does not exist in constraints`,
+          target: rt.id,
+        });
+      }
+    }
+
+    // --- Check 2: Evidence file paths exist on disk (WARNING) ---
+    if (checkFilePaths && evidenceArr.length > 0) {
+      for (const ev of evidenceArr) {
+        if (!ev.path) continue;
+
+        // Only check file-based evidence types
+        if (ev.type === 'file_exists' || ev.type === 'content_match' || ev.type === 'test_passes') {
+          const fullPath = resolve(projectRoot, ev.path);
+          if (!existsSync(fullPath)) {
+            results.push({
+              level: 'warning',
+              message: `${rt.id} evidence path does not exist: ${ev.path}`,
+              target: rt.id,
+            });
+          }
+        }
+      }
+    }
+
+    // --- Track test_passes evidence for invariant chain (Check 3) ---
+    const hasTestPasses = evidenceArr.some(ev => ev.type === 'test_passes');
+    if (hasTestPasses) {
+      for (const constraintId of mapsTo) {
+        constraintsWithTestEvidence.add(constraintId);
+      }
+    }
+
+    // --- Check 4: Evidence type completeness (INFO) ---
+    if (evidenceArr.length > 0) {
+      const hasFileExists = evidenceArr.some(ev => ev.type === 'file_exists');
+      const mapsToInvariant = mapsTo.some(id => invariantIds.has(id));
+
+      if (!hasFileExists) {
+        results.push({
+          level: 'info',
+          message: `${rt.id} has no file_exists evidence — consider adding one to prove code exists`,
+          target: rt.id,
+        });
+      }
+
+      if (mapsToInvariant && !hasTestPasses) {
+        results.push({
+          level: 'info',
+          message: `${rt.id} maps to invariant constraint(s) but has no test_passes evidence — consider adding test_passes for higher confidence`,
+          target: rt.id,
+        });
+      }
+    }
+  }
+
+  // Also check direct constraint evidence (verified_by field)
+  for (const category of constraintCategories) {
+    const constraints = manifold.constraints?.[category] ?? [];
+    for (const constraint of constraints) {
+      const directEvidence: Evidence[] = constraint.verified_by ?? [];
+      for (const ev of directEvidence) {
+        if (ev.type === 'test_passes') {
+          constraintsWithTestEvidence.add(constraint.id);
+        }
+        // Check file paths on direct evidence too
+        if (checkFilePaths && ev.path) {
+          const fullPath = resolve(projectRoot, ev.path);
+          if (!existsSync(fullPath)) {
+            results.push({
+              level: 'warning',
+              message: `Constraint ${constraint.id} evidence path does not exist: ${ev.path}`,
+              target: constraint.id,
+            });
+          }
+        }
+      }
+    }
+  }
+
+  // --- Check 3: Invariant constraints without any test_passes evidence chain (WARNING) ---
+  for (const invariantId of invariantIds) {
+    if (!constraintsWithTestEvidence.has(invariantId)) {
+      // Only warn if at least one RT maps to this invariant
+      const hasMappedRT = requiredTruths.some(
+        rt => (rt.maps_to_constraints ?? []).includes(invariantId)
+      );
+
+      if (hasMappedRT) {
+        results.push({
+          level: 'warning',
+          message: `Invariant constraint ${invariantId} has no test_passes evidence chain`,
+          target: invariantId,
+        });
+      }
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Print evidence validation results to console.
+ * Groups results by severity (errors, warnings, info) with truncation support.
+ */
+function printEvidenceResults(results: EvidenceResult[], options: { showAll?: boolean } = {}): void {
+  const { showAll = false } = options;
+
+  const errors = results.filter(r => r.level === 'error');
+  const warnings = results.filter(r => r.level === 'warning');
+  const infos = results.filter(r => r.level === 'info');
+
+  println();
+  println(`  ${style.bold('Evidence Integrity:')}`);
+
+  // Errors
+  if (errors.length > 0) {
+    const errorsToShow = showAll ? errors : errors.slice(0, MAX_ERRORS_DISPLAY);
+    for (const err of errorsToShow) {
+      println(`    ${style.cross()} ${err.message}`);
+    }
+    if (!showAll && errors.length > MAX_ERRORS_DISPLAY) {
+      const hidden = errors.length - MAX_ERRORS_DISPLAY;
+      println(`    ${style.dim(`... and ${hidden} more evidence error${hidden > 1 ? 's' : ''}.`)}`);
+    }
+  }
+
+  // Warnings
+  if (warnings.length > 0) {
+    const warningsToShow = showAll ? warnings : warnings.slice(0, MAX_ERRORS_DISPLAY);
+    for (const warn of warningsToShow) {
+      println(`    ${style.warn()} ${warn.message}`);
+    }
+    if (!showAll && warnings.length > MAX_ERRORS_DISPLAY) {
+      const hidden = warnings.length - MAX_ERRORS_DISPLAY;
+      println(`    ${style.dim(`... and ${hidden} more evidence warning${hidden > 1 ? 's' : ''}.`)}`);
+    }
+  }
+
+  // Info
+  if (infos.length > 0) {
+    const infosToShow = showAll ? infos : infos.slice(0, MAX_ERRORS_DISPLAY);
+    for (const info of infosToShow) {
+      println(`    ${style.info('i')} ${style.dim(info.message)}`);
+    }
+    if (!showAll && infos.length > MAX_ERRORS_DISPLAY) {
+      const hidden = infos.length - MAX_ERRORS_DISPLAY;
+      println(`    ${style.dim(`... and ${hidden} more evidence info message${hidden > 1 ? 's' : ''}.`)}`);
+    }
+  }
+
+  // Summary line
+  const parts: string[] = [];
+  if (errors.length > 0) parts.push(style.error(`${errors.length} error${errors.length !== 1 ? 's' : ''}`));
+  if (warnings.length > 0) parts.push(style.warning(`${warnings.length} warning${warnings.length !== 1 ? 's' : ''}`));
+  if (infos.length > 0) parts.push(style.dim(`${infos.length} info`));
+  if (parts.length > 0) {
+    println(`    ${style.dim('Summary:')} ${parts.join(', ')}`);
+  } else {
+    println(`    ${style.check()} ${style.success('No evidence integrity issues')}`);
+  }
 }
 
 /**

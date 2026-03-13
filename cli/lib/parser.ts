@@ -653,13 +653,14 @@ function loadJsonMdAsManifold(jsonPath: string, mdPath: string): Manifold | null
     if (structure.anchors) {
       manifold.anchors = {
         required_truths: (structure.anchors.required_truths || []).map(
-          (ref: { id: string; status: string; maps_to?: string[] }) => {
+          (ref: { id: string; status: string; maps_to?: string[]; evidence?: any }) => {
             const mdRT = mdSections.requiredTruths.get(ref.id);
             return {
               id: ref.id,
               status: ref.status,
               statement: mdRT?.statement || `[${ref.id}]`,
               maps_to_constraints: ref.maps_to,
+              evidence: ref.evidence,
             } as RequiredTruth;
           }
         ),

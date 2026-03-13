@@ -28,8 +28,13 @@ import {
   verifyAllEvidence,
   normalizeEvidence,
   formatVerificationReport,
-  type VerificationReport
+  aggregateSatisfactionLevel,
+  computeFileHash,
+  type VerificationReport,
+  type ExtendedVerificationReport,
 } from '../lib/evidence.js';
+import { loadConfig } from '../lib/config.js';
+import type { SatisfactionLevel } from '../lib/structure-schema.js';
 
 interface VerifyOptions {
   json?: boolean;
@@ -37,6 +42,8 @@ interface VerifyOptions {
   strict?: boolean;
   verifyEvidence?: boolean;
   runTests?: boolean;
+  execute?: boolean;
+  levels?: boolean;
 }
 
 interface ArtifactVerification {
@@ -78,6 +85,8 @@ export function registerVerifyCommand(program: Command): void {
     .option('--strict', 'Require all artifacts and coverage')
     .option('--verify-evidence', 'Verify concrete evidence for required truths (v3)')
     .option('--run-tests', 'Execute test evidence verification (requires --verify-evidence)')
+    .option('--execute', 'Run configured test_runner subprocess for test evidence (GAP-01)')
+    .option('--levels', 'Show satisfaction level breakdown (DOCUMENTED/IMPLEMENTED/TESTED/VERIFIED)')
     .action(async (feature: string | undefined, options: VerifyOptions) => {
       const exitCode = await verifyCommand(feature, options);
       process.exit(exitCode);
@@ -373,9 +382,14 @@ async function verifyEvidenceForFeature(
     }
   }
 
+  // Load config for test runner support
+  const config = options.execute ? loadConfig(projectRoot) : undefined;
+
   // Verify all evidence
   return verifyAllEvidence(allEvidence, {
     runTests: options.runTests,
+    executeTests: options.execute,
+    config,
     projectRoot
   });
 }
@@ -448,6 +462,32 @@ function printVerificationOutput(result: VerificationResult, options: VerifyOpti
     }
   }
 
+  // Satisfaction levels (--levels flag)
+  if (options.levels && result.coverage) {
+    const manifoldDir = findManifoldDir();
+    if (manifoldDir) {
+      const projectRoot = dirname(manifoldDir);
+      const data = loadFeature(manifoldDir, result.feature);
+      if (data?.manifold) {
+        const levels = computeSatisfactionLevels(data.manifold);
+        if (Object.keys(levels).length > 0) {
+          println();
+          println(`  ${style.dim('Satisfaction Levels:')}`);
+          const counts: Record<string, number> = { DOCUMENTED: 0, IMPLEMENTED: 0, TESTED: 0, VERIFIED: 0 };
+          for (const level of Object.values(levels)) {
+            counts[level] = (counts[level] || 0) + 1;
+          }
+          for (const [level, count] of Object.entries(counts)) {
+            if (count > 0) {
+              const bar = '█'.repeat(count);
+              println(`    ${level.padEnd(12)} ${bar} ${count}`);
+            }
+          }
+        }
+      }
+    }
+  }
+
   // Issues
   if (result.issues.length > 0) {
     println();
@@ -456,4 +496,38 @@ function printVerificationOutput(result: VerificationResult, options: VerifyOpti
       println(`    ${style.warn()} ${issue}`);
     }
   }
+}
+
+/**
+ * Compute satisfaction levels for all constraints in a manifold (GAP-05)
+ * Satisfies: RT-2
+ */
+function computeSatisfactionLevels(manifold: Manifold): Record<string, SatisfactionLevel> {
+  const levels: Record<string, SatisfactionLevel> = {};
+  const constraintCategories = ['business', 'technical', 'user_experience', 'security', 'operational'] as const;
+
+  // Build a map of constraint ID → evidence from required truths
+  const rtEvidenceByConstraint = new Map<string, Evidence[]>();
+  const requiredTruths = manifold.anchors?.required_truths ?? [];
+  for (const rt of requiredTruths) {
+    const rtEvidence = normalizeEvidence(rt.evidence);
+    const mappedConstraints = rt.maps_to_constraints ?? [];
+    for (const constraintId of mappedConstraints) {
+      const existing = rtEvidenceByConstraint.get(constraintId) || [];
+      rtEvidenceByConstraint.set(constraintId, [...existing, ...rtEvidence]);
+    }
+  }
+
+  for (const category of constraintCategories) {
+    const constraints = manifold.constraints?.[category] ?? [];
+    for (const constraint of constraints) {
+      // Combine direct evidence + evidence from mapped required truths
+      const directEvidence: Evidence[] = constraint.verified_by || [];
+      const rtEvidence = rtEvidenceByConstraint.get(constraint.id) || [];
+      const allEvidence = [...directEvidence, ...rtEvidence];
+      levels[constraint.id] = aggregateSatisfactionLevel(allEvidence);
+    }
+  }
+
+  return levels;
 }

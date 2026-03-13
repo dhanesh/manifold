@@ -121,6 +121,45 @@ export const NodeStatusSchema = z.enum([
 export type NodeStatus = z.infer<typeof NodeStatusSchema>;
 
 // ============================================================
+// Evidence Reference (v3)
+// ============================================================
+// NOTE: Defined before Constraint/RequiredTruth refs so they can
+// reference EvidenceRefSchema for verified_by/evidence fields.
+
+// Satisfaction levels: tiered verification depth (GAP-05)
+export const SatisfactionLevelSchema = z.enum([
+  'DOCUMENTED',    // Constraint acknowledged in docs/specs
+  'IMPLEMENTED',   // Code exists that addresses constraint
+  'TESTED',        // Tests verify constraint behavior
+  'VERIFIED'       // Automated verification confirms satisfaction
+]);
+
+export type SatisfactionLevel = z.infer<typeof SatisfactionLevelSchema>;
+
+// Test tier classification (GAP-02)
+export const TestTierSchema = z.enum(['unit', 'integration', 'e2e']);
+
+export type TestTier = z.infer<typeof TestTierSchema>;
+
+export const EvidenceRefSchema = z.object({
+  id: z.string(),
+  type: EvidenceTypeSchema,
+  path: z.string().optional(),
+  pattern: z.string().optional(),
+  test_name: z.string().optional(),
+  metric_name: z.string().optional(),
+  threshold: z.union([z.string(), z.number()]).optional(),
+  status: EvidenceStatusSchema.optional(),
+  satisfies: z.array(z.string()).optional(),
+  // v3.1: Framework gap remediation additions
+  test_tier: TestTierSchema.optional(),              // GAP-02: test tier classification
+  validation_criteria: z.string().optional(),         // GAP-08: tension resolution verification
+  file_hash: z.string().optional(),                   // GAP-07: drift detection baseline
+});
+
+export type EvidenceRef = z.infer<typeof EvidenceRefSchema>;
+
+// ============================================================
 // Constraint Reference (Structure Only - NO text content)
 // ============================================================
 
@@ -140,6 +179,7 @@ export const ConstraintIdSchema = z.string().regex(
 export const ConstraintRefSchema = z.object({
   id: ConstraintIdSchema,
   type: ConstraintTypeSchema,
+  verified_by: z.array(EvidenceRefSchema).optional(),  // v3: evidence verifying this constraint
 });
 
 export type ConstraintRef = z.infer<typeof ConstraintRefSchema>;
@@ -161,6 +201,8 @@ export const TensionRefSchema = z.object({
   type: TensionTypeSchema,
   between: z.array(z.string()).min(2, 'Tension must reference at least 2 constraints'),
   status: TensionStatusSchema,
+  // v3.1: Testable resolution criteria (GAP-08)
+  validation_criteria: z.array(z.string()).optional(),
 });
 
 export type TensionRef = z.infer<typeof TensionRefSchema>;
@@ -181,27 +223,10 @@ export const RequiredTruthRefSchema = z.object({
   id: RequiredTruthIdSchema,
   status: RequiredTruthStatusSchema,
   maps_to: z.array(z.string()).optional(),
+  evidence: z.array(EvidenceRefSchema).optional(),  // v3: evidence for this RT
 });
 
 export type RequiredTruthRef = z.infer<typeof RequiredTruthRefSchema>;
-
-// ============================================================
-// Evidence Reference (v3)
-// ============================================================
-
-export const EvidenceRefSchema = z.object({
-  id: z.string(),
-  type: EvidenceTypeSchema,
-  path: z.string().optional(),
-  pattern: z.string().optional(),
-  test_name: z.string().optional(),
-  metric_name: z.string().optional(),
-  threshold: z.union([z.string(), z.number()]).optional(),
-  status: EvidenceStatusSchema.optional(),
-  satisfies: z.array(z.string()).optional(),
-});
-
-export type EvidenceRef = z.infer<typeof EvidenceRefSchema>;
 
 // ============================================================
 // Constraint Graph (v3)
@@ -315,12 +340,20 @@ export type Iteration = z.infer<typeof IterationSchema>;
 // Generation Section
 // ============================================================
 
+// Artifact classification (GAP-13)
+export const ArtifactClassSchema = z.enum(['substantive', 'structural']);
+
+export type ArtifactClass = z.infer<typeof ArtifactClassSchema>;
+
 export const ArtifactRefSchema = z.object({
   path: z.string(),
   type: z.string(),
   satisfies: z.array(z.string()).optional(),
   status: z.string(),
   description: z.string().optional(),
+  // v3.1: Framework gap remediation additions
+  file_hash: z.string().optional(),                   // GAP-07: drift detection for artifacts
+  artifact_class: ArtifactClassSchema.optional(),      // GAP-13: substantive vs structural
 });
 
 export type ArtifactRef = z.infer<typeof ArtifactRefSchema>;
@@ -341,6 +374,21 @@ export const GenerationSchema = z.object({
 });
 
 export type Generation = z.infer<typeof GenerationSchema>;
+
+// ============================================================
+// Suggested Constraints (TN3: staging area for auto-generated)
+// ============================================================
+
+export const SuggestedConstraintSchema = z.object({
+  id: z.string(),
+  category: z.enum(['business', 'technical', 'user_experience', 'security', 'operational']),
+  type: ConstraintTypeSchema,
+  source_constraint: z.string(),   // ID of constraint that triggered auto-generation
+  auto_generated: z.literal(true),
+  promoted: z.boolean().default(false),
+});
+
+export type SuggestedConstraint = z.infer<typeof SuggestedConstraintSchema>;
 
 // ============================================================
 // Main Manifold Structure Schema
@@ -411,6 +459,9 @@ export const ManifoldStructureSchema = z.object({
 
   // Constraint graph (v3)
   constraint_graph: ConstraintGraphSchema.optional(),
+
+  // Suggested constraints (v3.1: TN3 staging area)
+  suggested_constraints: z.array(SuggestedConstraintSchema).optional(),
 
   // Quick summary for light mode
   quick_summary: z.object({
@@ -586,3 +637,6 @@ export const VALID_EVIDENCE_TYPES = EvidenceTypeSchema.options;
 export const VALID_EVIDENCE_STATUSES = EvidenceStatusSchema.options;
 export const VALID_NODE_TYPES = NodeTypeSchema.options;
 export const VALID_NODE_STATUSES = NodeStatusSchema.options;
+export const VALID_SATISFACTION_LEVELS = SatisfactionLevelSchema.options;
+export const VALID_TEST_TIERS = TestTierSchema.options;
+export const VALID_ARTIFACT_CLASSES = ArtifactClassSchema.options;

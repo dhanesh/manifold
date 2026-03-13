@@ -9,6 +9,8 @@
 import { existsSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 import { Evidence, EvidenceStatus, EvidenceType } from './parser';
+import type { ManifoldConfig } from './config';
+import type { SatisfactionLevel, TestTier } from './structure-schema';
 
 // ============================================================
 // Verification Result Types
@@ -30,6 +32,45 @@ export interface VerificationReport {
   stale: number;
   results: VerificationResult[];
   summary: string;
+}
+
+// ============================================================
+// Drift Detection Types (GAP-07)
+// ============================================================
+
+export interface DriftEntry {
+  path: string;
+  constraint_ids: string[];
+  old_hash: string;
+  new_hash: string;
+}
+
+export interface DriftReport {
+  drifted: DriftEntry[];
+  clean: number;
+  timestamp: string;
+}
+
+// ============================================================
+// Traceability Types (GAP-12)
+// ============================================================
+
+export interface TraceabilityEntry {
+  test_file: string;
+  test_function: string;
+  tier?: TestTier;
+}
+
+export type TraceabilityMatrix = Record<string, TraceabilityEntry[]>;
+
+// ============================================================
+// Extended Verification Report
+// ============================================================
+
+export interface ExtendedVerificationReport extends VerificationReport {
+  traceability?: TraceabilityMatrix;
+  satisfaction_levels?: Record<string, SatisfactionLevel>;
+  drift?: DriftReport;
 }
 
 // ============================================================
@@ -123,9 +164,13 @@ class ContentMatchVerifier implements EvidenceVerifier {
  */
 class TestPassesVerifier implements EvidenceVerifier {
   private runTests: boolean;
+  private executeTests: boolean;
+  private config?: ManifoldConfig;
 
-  constructor(runTests: boolean = false) {
+  constructor(runTests: boolean = false, executeTests: boolean = false, config?: ManifoldConfig) {
     this.runTests = runTests;
+    this.executeTests = executeTests;
+    this.config = config;
   }
 
   async verify(e: Evidence, projectRoot: string): Promise<VerificationResult> {
@@ -151,8 +196,12 @@ class TestPassesVerifier implements EvidenceVerifier {
       };
     }
 
-    // For now, just verify the test file exists and contains the test name
-    // Full test execution would require spawning a test runner
+    // If --execute and config has test_runner, spawn actual test process
+    if (this.executeTests && this.config?.test_runner) {
+      return this.executeTestRunner(e, projectRoot);
+    }
+
+    // Fallback: verify the test file exists and contains the test name
     try {
       const content = readFileSync(fullPath, 'utf-8');
       const testName = e.test_name || '';
@@ -171,6 +220,55 @@ class TestPassesVerifier implements EvidenceVerifier {
         evidence: e,
         passed: false,
         message: `Error reading test file: ${error}`,
+        duration_ms: Date.now() - start,
+      };
+    }
+  }
+
+  /**
+   * Execute actual test runner subprocess (GAP-01: automated verification)
+   * Satisfies: RT-3
+   */
+  private async executeTestRunner(e: Evidence, projectRoot: string): Promise<VerificationResult> {
+    const start = Date.now();
+    const runner = this.config!.test_runner!;
+    const testName = e.test_name || '';
+    const extraArgs = this.config?.test_args || [];
+
+    try {
+      const args = runner.split(/\s+/);
+      const cmd = args[0];
+      const cmdArgs = [...args.slice(1), ...extraArgs];
+
+      // Add filter for specific test name if available
+      if (testName) {
+        cmdArgs.push('--filter', testName);
+      }
+      cmdArgs.push(e.path);
+
+      const proc = Bun.spawn([cmd, ...cmdArgs], {
+        cwd: projectRoot,
+        stdout: 'pipe',
+        stderr: 'pipe',
+      });
+
+      const exitCode = await proc.exited;
+      const stdout = await new Response(proc.stdout).text();
+      const stderr = await new Response(proc.stderr).text();
+
+      return {
+        evidence: e,
+        passed: exitCode === 0,
+        message: exitCode === 0
+          ? `Test passed: "${testName}" via ${runner}`
+          : `Test failed (exit ${exitCode}): "${testName}" — ${stderr.slice(0, 200)}`,
+        duration_ms: Date.now() - start,
+      };
+    } catch (error) {
+      return {
+        evidence: e,
+        passed: false,
+        message: `Test runner error: ${error}`,
         duration_ms: Date.now() - start,
       };
     }
@@ -219,7 +317,7 @@ function getVerifier(type: EvidenceType, options: VerificationOptions = {}): Evi
     case 'content_match':
       return new ContentMatchVerifier();
     case 'test_passes':
-      return new TestPassesVerifier(options.runTests);
+      return new TestPassesVerifier(options.runTests, options.executeTests, options.config);
     case 'manual_review':
       return new ManualReviewVerifier();
     case 'metric_value':
@@ -236,6 +334,8 @@ function getVerifier(type: EvidenceType, options: VerificationOptions = {}): Evi
 
 export interface VerificationOptions {
   runTests?: boolean;
+  executeTests?: boolean;
+  config?: ManifoldConfig;
   maxConcurrency?: number;
   projectRoot?: string;
 }
@@ -325,6 +425,202 @@ export function checkEvidenceStaleness(evidence: Evidence, projectRoot: string):
   } catch {
     return true;
   }
+}
+
+// ============================================================
+// File Hash & Drift Detection (GAP-07)
+// Satisfies: RT-5, RT-7
+// ============================================================
+
+/**
+ * Compute SHA-256 hash of a file's contents
+ */
+export function computeFileHash(filePath: string): string | null {
+  if (!existsSync(filePath)) return null;
+
+  try {
+    const content = readFileSync(filePath);
+    const hasher = new Bun.CryptoHasher('sha256');
+    hasher.update(content);
+    return hasher.digest('hex');
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Detect drift between stored file hashes and current state
+ * Compares hashes from artifacts/evidence against actual files on disk
+ */
+export function detectDrift(
+  artifacts: Array<{ path: string; file_hash?: string; satisfies?: string[] }>,
+  basePath: string
+): DriftReport {
+  const drifted: DriftEntry[] = [];
+  let clean = 0;
+
+  for (const artifact of artifacts) {
+    if (!artifact.file_hash) continue;
+
+    const fullPath = join(basePath, artifact.path);
+    const currentHash = computeFileHash(fullPath);
+
+    if (currentHash === null) {
+      // File deleted — count as drift
+      drifted.push({
+        path: artifact.path,
+        constraint_ids: artifact.satisfies || [],
+        old_hash: artifact.file_hash,
+        new_hash: '<deleted>',
+      });
+    } else if (currentHash !== artifact.file_hash) {
+      drifted.push({
+        path: artifact.path,
+        constraint_ids: artifact.satisfies || [],
+        old_hash: artifact.file_hash,
+        new_hash: currentHash,
+      });
+    } else {
+      clean++;
+    }
+  }
+
+  return {
+    drifted,
+    clean,
+    timestamp: new Date().toISOString(),
+  };
+}
+
+// ============================================================
+// Test Annotation Parsing (GAP-12)
+// Satisfies: RT-3
+// ============================================================
+
+/**
+ * Parse test files for constraint annotations
+ * Looks for patterns like:
+ *   @constraint B1
+ *   // Satisfies: B1, T2
+ *   * Satisfies: RT-1 (description)
+ *   @constraint B1, T2, RT-1
+ */
+export function parseTestAnnotations(filePath: string): Map<string, string[]> {
+  const result = new Map<string, string[]>();
+
+  if (!existsSync(filePath)) return result;
+
+  try {
+    const content = readFileSync(filePath, 'utf-8');
+    const lines = content.split('\n');
+
+    // Buffer annotations and apply to next test (annotations precede tests)
+    let pendingIds: string[] = [];
+
+    for (const line of lines) {
+      // Detect constraint annotations — always buffer
+      const constraintMatch = line.match(/@constraint\s+([\w\s,-]+)/i)
+        || line.match(/Satisfies:\s*([\w\s,()-]+)/i);
+
+      if (constraintMatch) {
+        const ids = constraintMatch[1]
+          .split(/[,\s]+/)
+          .map(id => id.replace(/[()]/g, '').trim())
+          .filter(id => /^[BTUSO]\d+$|^RT-\d+$|^TN\d+$/.test(id));
+        pendingIds.push(...ids);
+      }
+
+      // Detect test function names — apply pending annotations
+      const testMatch = line.match(/(?:it|test|describe)\s*\(\s*['"`]([^'"`]+)['"`]/);
+      if (testMatch && pendingIds.length > 0) {
+        const testName = testMatch[1];
+        const existing = result.get(testName) || [];
+        result.set(testName, [...new Set([...existing, ...pendingIds])]);
+        pendingIds = [];
+      }
+    }
+  } catch {
+    // Silently fail for unreadable files
+  }
+
+  return result;
+}
+
+// ============================================================
+// Traceability Matrix Builder (GAP-12)
+// Satisfies: RT-3
+// ============================================================
+
+/**
+ * Build a traceability matrix mapping constraint IDs to test functions
+ */
+export function buildTraceabilityMatrix(
+  testFiles: string[],
+  basePath: string
+): TraceabilityMatrix {
+  const matrix: TraceabilityMatrix = {};
+
+  for (const testFile of testFiles) {
+    const fullPath = join(basePath, testFile);
+    const annotations = parseTestAnnotations(fullPath);
+
+    for (const [testFunction, constraintIds] of annotations) {
+      for (const constraintId of constraintIds) {
+        if (!matrix[constraintId]) {
+          matrix[constraintId] = [];
+        }
+        matrix[constraintId].push({
+          test_file: testFile,
+          test_function: testFunction,
+        });
+      }
+    }
+  }
+
+  return matrix;
+}
+
+// ============================================================
+// Satisfaction Level Aggregation (GAP-05)
+// Satisfies: RT-2
+// ============================================================
+
+/**
+ * Determine the satisfaction level for a constraint based on its evidence
+ *
+ * Hierarchy (highest to lowest):
+ *   VERIFIED  — has evidence with status VERIFIED + test_passes type
+ *   TESTED    — has test_passes evidence that passed
+ *   IMPLEMENTED — has file_exists evidence that passed
+ *   DOCUMENTED  — has manual_review evidence or just exists in manifold
+ */
+export function aggregateSatisfactionLevel(
+  evidenceItems: Evidence[]
+): SatisfactionLevel {
+  if (evidenceItems.length === 0) return 'DOCUMENTED';
+
+  const hasVerifiedTest = evidenceItems.some(
+    e => e.type === 'test_passes' && e.status === 'VERIFIED'
+  );
+  if (hasVerifiedTest) return 'VERIFIED';
+
+  const hasPassingTest = evidenceItems.some(
+    e => e.type === 'test_passes' && (e.status === 'VERIFIED' || e.status === 'STALE')
+  );
+  if (hasPassingTest) return 'TESTED';
+
+  // PENDING test_passes = test exists but hasn't run → IMPLEMENTED, not TESTED
+  const hasPendingTest = evidenceItems.some(
+    e => e.type === 'test_passes' && e.status === 'PENDING'
+  );
+  if (hasPendingTest) return 'IMPLEMENTED';
+
+  const hasFileEvidence = evidenceItems.some(
+    e => e.type === 'file_exists' || e.type === 'content_match'
+  );
+  if (hasFileEvidence) return 'IMPLEMENTED';
+
+  return 'DOCUMENTED';
 }
 
 /**
