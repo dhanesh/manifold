@@ -28,6 +28,7 @@ The CLI runs fast (<100ms) without AI for:
 | `manifold show [feature]` | Combined JSON+MD view |
 | `manifold graph [feature]` | Constraint dependency graph |
 | `manifold init <feature>` | Initialize new manifold |
+| `manifold drift [feature]` | Detect post-verification file changes |
 | `manifold migrate <feature>` | Convert YAML to JSON+MD |
 
 ## Why It Matters

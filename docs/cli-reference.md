@@ -259,13 +259,66 @@ source <(manifold completion bash)
 
 ---
 
+### `manifold drift [feature]`
+
+Detect post-verification file changes using SHA-256 hash comparison. Reports which verified artifacts have been modified since their last verification.
+
+```bash
+manifold drift                              # Check all features
+manifold drift payment-retry                # Single feature
+manifold drift --json                       # Machine-readable output
+manifold drift --update                     # Update hashes to current state
+```
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--json` | boolean | false | Output as JSON |
+| `--update` | boolean | false | Update recorded hashes to current file state |
+
+**Exit codes:** `0` no drift (clean), `1` error, `2` drift detected
+
+**Example output (clean):**
+```
+DRIFT CHECK
+
+  Feature: payment-retry
+  Files checked: 8
+  Status: CLEAN — no drift detected
+
+All verified artifacts match their recorded hashes.
+```
+
+**Example output (drift detected):**
+```
+DRIFT CHECK
+
+  Feature: payment-retry
+  Files checked: 8
+  Drifted: 2
+
+  ⚠️  lib/retry/PaymentRetryService.ts
+      Verified: 2026-03-10T14:30:00Z
+      Hash changed: a1b2c3... → d4e5f6...
+
+  ⚠️  tests/retry/payment.test.ts
+      Verified: 2026-03-10T14:30:00Z
+      Hash changed: 7g8h9i... → j0k1l2...
+
+Run 'manifold drift --update' to accept current state, or
+re-verify with '/manifold:m5-verify payment-retry'.
+```
+
+See [Evidence System — Drift Detection](evidence-system.md#drift-detection) for how drift detection works.
+
+---
+
 ## Exit Code Summary
 
 | Code | Meaning | Commands |
 |------|---------|----------|
 | `0` | Success | All commands |
 | `1` | Error (missing files, permissions, etc.) | All commands |
-| `2` | Validation/verification failure | `validate`, `verify`, `migrate`, `show --validate` |
+| `2` | Validation/verification failure | `validate`, `verify`, `migrate`, `show --validate`, `drift` |
 
 ## When to Use CLI vs AI Commands
 
@@ -277,6 +330,7 @@ source <(manifold completion bash)
 | Tension analysis | `/manifold:m2-tension` | Requires AI reasoning |
 | Code generation | `/manifold:m4-generate` | Requires AI reasoning |
 | Schema migration | `manifold migrate` | Deterministic transformation |
+| Drift detection | `manifold drift` | Instant hash comparison, no AI needed |
 | Visualization | `manifold graph --mermaid` | Instant, no AI needed |
 
 ## See Also

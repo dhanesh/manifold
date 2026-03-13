@@ -54,6 +54,8 @@ graph LR
     F -.->|iteration| B
 ```
 
+> **Tip:** AI commands now show structured next-step suggestions after each phase, guiding you to the appropriate next command. Just follow the suggestions!
+
 ## Your First Feature (5 commands)
 
 ### 1. Initialize

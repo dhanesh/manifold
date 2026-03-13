@@ -144,8 +144,90 @@ Evidence: 3/5 verified, 1 failed, 1 pending
 4. **Run in CI** — Add `manifold verify --verify-evidence --strict` to your pipeline
 5. **Use `manual_review` for non-code** — Architecture decisions, security audits, compliance
 
+## Drift Detection
+
+After verification, source files can change — introducing **drift** between verified state and current state. The drift detection system uses SHA-256 file hashing to detect post-verification changes.
+
+### How It Works
+
+1. During `manifold verify`, file hashes are recorded in `.manifold/<feature>.verify.json`
+2. `manifold drift` compares current file hashes against recorded hashes
+3. Files with changed hashes are reported as **drifted**
+
+### Usage
+
+```bash
+# Check for drift across all features
+manifold drift
+
+# Check a single feature
+manifold drift payment-retry
+
+# JSON output for CI
+manifold drift --json
+
+# Update recorded hashes to current state (resets drift baseline)
+manifold drift --update
+```
+
+### When to Use
+
+- **Before releases** — Ensure verified artifacts haven't changed since verification
+- **In CI/CD** — Add `manifold drift --json` as a pipeline step after verification
+- **After refactoring** — Detect which verified features were affected by changes
+
+See [CLI Reference — drift command](cli-reference.md#manifold-drift-feature) for full flag documentation.
+
+## Satisfaction Levels
+
+Constraints progress through four satisfaction levels, representing increasing confidence:
+
+| Level | Meaning | How Determined |
+|-------|---------|----------------|
+| **DOCUMENTED** | Constraint exists in the manifold | Constraint has a statement in `.manifold/<feature>.md` |
+| **IMPLEMENTED** | Code artifact exists | `file_exists` or `content_match` evidence is VERIFIED |
+| **TESTED** | Test coverage exists | `test_passes` evidence is VERIFIED |
+| **VERIFIED** | Full verification complete | All evidence for the constraint is VERIFIED |
+
+Levels are cumulative — a VERIFIED constraint has also been DOCUMENTED, IMPLEMENTED, and TESTED. The satisfaction level is determined automatically by the evidence engine based on which evidence types have passed.
+
+## Test Annotations
+
+Test annotations create traceability links between test code and constraints. Two formats are supported:
+
+### `@constraint` Tag (In Test Names)
+
+```typescript
+describe('PaymentRetryService', () => {
+  // @constraint B1
+  it('rejects duplicate payment attempts', async () => {
+    // ...
+  });
+});
+```
+
+### `Satisfies:` Comment (In Implementation)
+
+```typescript
+/**
+ * Classify error as transient or permanent
+ * Satisfies: RT-1, T2
+ */
+classifyError(error: Error): ErrorType {
+  // ...
+}
+```
+
+Both formats are parsed by the evidence engine during verification. The `@constraint` tag in tests links test cases to specific constraint IDs, while `Satisfies:` comments in implementation code establish code-to-constraint traceability.
+
+These annotations feed into:
+- **Verification reports** — Which constraints have test coverage
+- **Satisfaction levels** — Moving constraints from IMPLEMENTED to TESTED
+- **Traceability matrices** — End-to-end mapping from constraint to code to test
+
 ## See Also
 
 - [CLI Reference — verify command](cli-reference.md#manifold-verify-feature) — Full flag documentation
+- [CLI Reference — drift command](cli-reference.md#manifold-drift-feature) — Drift detection documentation
 - [Glossary](GLOSSARY.md) — Terminology explanations
 - [Walkthrough](walkthrough/README.md) — End-to-end example with evidence

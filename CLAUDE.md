@@ -50,6 +50,7 @@ manifold status [feature]      # Show state (no AI required)
 manifold validate [feature]    # Validate YAML schema
 manifold init <feature>        # Initialize manifold
 manifold verify [feature]      # Verify artifacts exist
+manifold drift [feature]       # Detect post-verification file changes
 ```
 
 **Exit Codes**: 0 = Success, 1 = Error, 2 = Validation failure

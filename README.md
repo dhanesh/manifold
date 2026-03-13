@@ -34,6 +34,8 @@ Forward reasoning                    Backward from outcome
 - **Tension Detection** — Find conflicts between constraints early
 - **All-at-Once Generation** — Generate code, tests, docs, runbooks, and alerts from a single source
 - **Evidence System** — Verify constraints with [concrete proof](docs/evidence-system.md)
+- **Drift Detection** — Detect post-verification file changes using SHA-256 hashing
+- **Guided Workflow** — Structured next-step suggestions guide you through each phase
 - **Constraint Templates** — Pre-built patterns for [auth, CRUD, API, payment, and 13 PM templates](install/templates/README.md)
 - **Light Mode** — Simplified 3-phase workflow for quick changes
 - **PM Workflows** — Generate PRDs and user stories with constraint traceability
@@ -158,6 +160,7 @@ manifold graph [feature]           # Visualize constraint network
 manifold show [feature]            # Combined JSON+MD view
 manifold solve [feature]           # Parallel execution plan
 manifold migrate [feature]         # Convert YAML → JSON+MD
+manifold drift [feature]          # Detect post-verification file changes
 manifold completion [shell]        # Shell completions (bash/zsh/fish)
 ```
 
@@ -254,6 +257,9 @@ manifold verify --json
 
 # Evidence verification (strict mode for CI)
 manifold verify --verify-evidence --strict --json
+
+# Check for post-verification drift (exit 2 = drift detected)
+manifold drift --json
 ```
 
 ### GitHub Action

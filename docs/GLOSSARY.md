@@ -12,6 +12,9 @@ Plain-language explanations of Manifold concepts with alternative terminology.
 | Required Truth | Precondition | What MUST be true for success |
 | Manifold | Constraint Document | The file tracking all requirements |
 | Convergence | Completion | When all requirements are met |
+| Drift | File Change Detection | Post-verification change tracking via SHA-256 |
+| Satisfaction Level | Constraint Maturity | DOCUMENTED → IMPLEMENTED → TESTED → VERIFIED |
+| Test Annotation | Traceability Tag | Code comments linking tests to constraints |
 
 ---
 
@@ -102,6 +105,53 @@ Plain-language explanations of Manifold concepts with alternative terminology.
 | ANCHORED | Path Planned | Required truths derived |
 | GENERATED | Built | Code, tests, docs created |
 | VERIFIED | Complete | Everything validated |
+
+---
+
+### Drift / Drift Detection
+**Also known as**: File change detection, post-verification change tracking
+
+**Plain language**: After you verify a feature, files can change — either intentionally (new commits) or accidentally (formatting, refactoring). Drift detection compares SHA-256 hashes of verified files against their current state to catch these changes.
+
+**How it works**: During `manifold verify`, file hashes are recorded. Later, `manifold drift` compares current hashes against those records. Changed files are flagged as "drifted."
+
+**Commands**:
+- `manifold drift` — Check for drifted files
+- `manifold drift --update` — Accept current file state as the new baseline
+
+See [CLI Reference — drift](cli-reference.md#manifold-drift-feature) and [Evidence System — Drift Detection](evidence-system.md#drift-detection).
+
+---
+
+### Satisfaction Level
+**Also known as**: Constraint maturity, verification depth
+
+**Plain language**: How thoroughly a constraint has been checked. Progresses through four tiers:
+
+| Level | Meaning |
+|-------|---------|
+| **DOCUMENTED** | The constraint exists in the manifold |
+| **IMPLEMENTED** | Code satisfying the constraint exists |
+| **TESTED** | Tests covering the constraint exist |
+| **VERIFIED** | All evidence for the constraint passes |
+
+Levels are cumulative — VERIFIED implies all prior levels are met.
+
+See [Evidence System — Satisfaction Levels](evidence-system.md#satisfaction-levels).
+
+---
+
+### Test Annotation
+**Also known as**: Traceability tag, constraint link
+
+**Plain language**: A code comment that links a test or implementation to a specific constraint. Two formats:
+
+- **`@constraint B1`** — In test code, links a test to constraint B1
+- **`// Satisfies: B1, T2`** — In implementation code, declares which constraints a function satisfies
+
+These annotations are parsed by the evidence engine to build traceability matrices and determine satisfaction levels.
+
+See [Evidence System — Test Annotations](evidence-system.md#test-annotations).
 
 ---
 

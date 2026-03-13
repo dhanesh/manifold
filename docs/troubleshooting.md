@@ -128,6 +128,48 @@ manifold verify <feature> --verify-evidence
 manifold verify <feature> --verify-evidence --run-tests
 ```
 
+## Drift Issues
+
+### "Drift detected" after reformatting
+
+**Cause:** Code formatters (Prettier, ESLint --fix) change file contents without changing behavior, which triggers drift detection.
+
+**Fix:** Update the drift baseline to accept the reformatted state:
+```bash
+manifold drift --update
+```
+
+Then re-verify if needed:
+```bash
+/manifold:m5-verify <feature>
+```
+
+### "No file hashes recorded"
+
+**Cause:** Drift detection requires hashes from a prior verification run. If you've never run `manifold verify` or `manifold drift --update`, there are no hashes to compare against.
+
+**Fix:** Run verification first to establish the baseline:
+```bash
+manifold verify <feature> --verify-evidence
+```
+
+Or record current hashes without full verification:
+```bash
+manifold drift --update
+```
+
+### CLI auto-update failed at session start
+
+**Cause:** The session-start hook tried to auto-update the CLI binary but failed (network issues, permission denied, or GitHub rate limit).
+
+**Fix:**
+1. Check network connectivity
+2. Check write permissions on the binary location (`which manifold`)
+3. Manually update: run `/manifold:setup` inside Claude Code
+4. Or download directly from [Releases](https://github.com/dhanesh/manifold/releases)
+
+The auto-update only covers the CLI binary. Plugin command/hook updates require re-installing the plugin with `claude plugin:install`.
+
 ## Installation Issues
 
 ### "manifold: command not found"
