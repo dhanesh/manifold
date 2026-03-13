@@ -63,3 +63,6 @@ build/
 
 # Serena MCP local config
 .serena/
+
+# Claude Code local session data
+.claude/
