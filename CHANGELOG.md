@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.26.0](https://github.com/dhanesh/manifold/compare/v2.25.0...v2.26.0) (2026-03-13)
+
+### Features
+
+* add evidence engine, drift detection, and evidence integrity validation ([c4d30ff](https://github.com/dhanesh/manifold/commit/c4d30ff70cdace9f0be12308baee826c4c78883b))
+
 ## [2.25.0](https://github.com/dhanesh/manifold/compare/v2.24.0...v2.25.0) (2026-03-06)
 
 ### Features
