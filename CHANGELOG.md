@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.27.0](https://github.com/dhanesh/manifold/compare/v2.26.0...v2.27.0) (2026-03-14)
+
+### Features
+
+* add mandatory context lookup via WebSearch to m1, m2, m3 phases ([68f544b](https://github.com/dhanesh/manifold/commit/68f544b5db00398439fe363b8d8e1daa88778d82))
+
 ## [2.26.0](https://github.com/dhanesh/manifold/compare/v2.25.0...v2.26.0) (2026-03-13)
 
 ### Features
