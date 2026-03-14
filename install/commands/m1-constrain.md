@@ -156,7 +156,7 @@ iterations:
 ## Usage
 
 ```
-/manifold:m1-constrain <feature-name> [--category=<category>]
+/manifold:m1-constrain <feature-name> [--category=<category>] [--skip-lookup]
 ```
 
 ## Constraint Categories
@@ -277,30 +277,68 @@ Updated: .manifold/payment-retry.json + .manifold/payment-retry.md (12 constrain
 Next: /manifold:m2-tension payment-retry
 ```
 
+## Context Lookup (MANDATORY)
+
+**Before starting constraint discovery**, research the feature's domain to ground the interview in current facts. AI training data may be outdated—constraints based on stale information lead to rework.
+
+### Steps
+
+1. **Extract domain topics** from the feature name, outcome statement, and any user-provided context (e.g., feature `payment-retry` → topics: payment processing, retry strategies, idempotency, PCI compliance)
+2. **Use `WebSearch`** to look up:
+   - Current best practices and industry standards for the domain
+   - Recent API changes, deprecations, or version updates for relevant technologies
+   - Current regulatory or compliance requirements (if applicable)
+   - Known pitfalls or failure modes documented by practitioners
+3. **Summarize findings** in a brief "Domain Context" block shown to the user before the interview begins:
+
+```
+DOMAIN CONTEXT (via web search):
+- [Key finding 1 with source]
+- [Key finding 2 with source]
+- [Key finding 3 with source]
+```
+
+4. **Use these findings to inform** the constraint interview—ask sharper questions and propose constraints that reflect current reality rather than assumptions
+
+### When to Skip
+
+- `--skip-lookup` flag is passed
+- The feature is purely internal with no external dependencies or domain standards (e.g., refactoring an internal utility)
+
+### Why This Matters
+
+Without context lookup, the AI may:
+- Propose constraints based on outdated API behaviors or deprecated standards
+- Miss recent security advisories or compliance changes
+- Overlook newer, better approaches that didn't exist at training time
+- Force the user to repeatedly correct factual errors during the interview
+
 ## Execution Instructions
 
 ### For JSON+Markdown Format (Default)
 
-1. Read existing structure from `.manifold/<feature>.json`
-2. Read existing content from `.manifold/<feature>.md`
-3. If `--category` specified, focus on that category only
-4. For each category, ask probing questions and classify responses
-5. Assign constraint IDs (B1, T1, U1, S1, O1, etc.)
-6. **Update TWO files:**
+1. **Run Context Lookup** (see above) — research the feature domain via `WebSearch`
+2. Read existing structure from `.manifold/<feature>.json`
+3. Read existing content from `.manifold/<feature>.md`
+4. If `--category` specified, focus on that category only
+5. For each category, ask probing questions and classify responses
+6. Assign constraint IDs (B1, T1, U1, S1, O1, etc.)
+7. **Update TWO files:**
    - `.manifold/<feature>.json` — Add `{"id": "B1", "type": "invariant"}` to constraints
    - `.manifold/<feature>.md` — Add `#### B1: Title` + statement + rationale
-7. Set phase to CONSTRAINED in JSON
-8. Display summary and next step
+8. Set phase to CONSTRAINED in JSON
+9. Display summary and next step
 
 ### For Legacy YAML Format
 
-1. Read existing manifold from `.manifold/<feature>.yaml`
-2. If `--category` specified, focus on that category only
-3. For each category, ask probing questions and classify responses
-4. Assign constraint IDs (B1, T1, U1, S1, O1, etc.)
-5. Update the manifold YAML with discovered constraints
-6. Set phase to CONSTRAINED
-7. Display summary and next step
+1. **Run Context Lookup** (see above) — research the feature domain via `WebSearch`
+2. Read existing manifold from `.manifold/<feature>.yaml`
+3. If `--category` specified, focus on that category only
+4. For each category, ask probing questions and classify responses
+5. Assign constraint IDs (B1, T1, U1, S1, O1, etc.)
+6. Update the manifold YAML with discovered constraints
+7. Set phase to CONSTRAINED
+8. Display summary and next step
 
 ### Format Detection & Lock
 

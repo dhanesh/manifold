@@ -158,7 +158,7 @@ manifold validate <feature> --conflicts
 ## Usage
 
 ```
-/manifold:m2-tension <feature-name> [--resolve] [--auto-deps]
+/manifold:m2-tension <feature-name> [--resolve] [--auto-deps] [--skip-lookup]
 ```
 
 **Flags (v2):**
@@ -311,15 +311,74 @@ AUTO-DETECTED DEPENDENCIES:
 - O3 → B2 (verification requires CI)
 ```
 
+## Context Lookup (MANDATORY)
+
+**Before analyzing tensions**, research the feature's domain to ensure conflict analysis reflects current reality. Tensions grounded in outdated assumptions produce wrong trade-offs.
+
+### Steps
+
+1. **Extract tension-relevant topics** from the discovered constraints—identify technologies, standards, and external systems referenced in constraint statements
+2. **Use `WebSearch`** to look up:
+   - Current capabilities and limitations of referenced technologies (e.g., database consistency models, API rate limits, provider SLAs)
+   - Known trade-off patterns and resolution strategies used by practitioners in this domain
+   - Recent incidents, post-mortems, or advisories that reveal real-world tensions
+3. **Summarize findings** in a brief "Domain Context" block shown to the user before tension analysis:
+
+```
+DOMAIN CONTEXT (via web search):
+- [Key finding 1 with source]
+- [Key finding 2 with source]
+- [Key finding 3 with source]
+```
+
+4. **Use these findings to inform** tension analysis—identify real conflicts based on current system behaviors, not assumed ones
+
+### When to Skip
+
+- `--skip-lookup` flag is passed
+- Context lookup was already performed in m1-constrain within the same session and the domain context is still in the conversation
+
+### Why This Matters
+
+Without context lookup, the AI may:
+- Declare tensions that don't actually exist given current technology capabilities
+- Miss real tensions caused by recent API changes or deprecations
+- Propose resolution strategies that rely on outdated system behaviors
+- Force the user to correct false trade-offs during the analysis
+
 ## Execution Instructions
 
 ### For JSON+Markdown Format (Default)
 
-1. Read structure from `.manifold/<feature>.json`
-2. Read content from `.manifold/<feature>.md`
+1. **Run Context Lookup** (see above) — research the feature domain via `WebSearch` unless already done in m1
+2. Read structure from `.manifold/<feature>.json`
+3. Read content from `.manifold/<feature>.md`
+4. For each pair of constraints, check for conflicts
+5. **If `--auto-deps` (v2):**
+   - Extract keywords from constraint content in Markdown
+   - Map keywords to dependency patterns
+   - Identify hidden dependencies automatically
+   - Flag blocking dependencies with elevated priority
+6. For each tension found:
+   - Describe the conflict
+   - Generate resolution options (A, B, C)
+   - Recommend based on constraint types (INVARIANT > BOUNDARY > GOAL)
+7. If `--resolve` flag, prompt user to choose resolutions
+8. **Update TWO files:**
+   - `.manifold/<feature>.json` — Add tension objects with id, type, between, status
+   - `.manifold/<feature>.md` — Add `### TN1: Title` + description + resolution
+9. **Record iteration** in JSON `iterations[]`
+10. Set phase to TENSIONED in JSON
+11. **⚠️ Run `manifold validate <feature>`** — fix any errors before proceeding
+12. Display summary and next step
+
+### For Legacy YAML Format
+
+1. **Run Context Lookup** (see above) — research the feature domain via `WebSearch` unless already done in m1
+2. Read manifold from `.manifold/<feature>.yaml`
 3. For each pair of constraints, check for conflicts
 4. **If `--auto-deps` (v2):**
-   - Extract keywords from constraint content in Markdown
+   - Extract keywords from constraint statements
    - Map keywords to dependency patterns
    - Identify hidden dependencies automatically
    - Flag blocking dependencies with elevated priority
@@ -328,32 +387,10 @@ AUTO-DETECTED DEPENDENCIES:
    - Generate resolution options (A, B, C)
    - Recommend based on constraint types (INVARIANT > BOUNDARY > GOAL)
 6. If `--resolve` flag, prompt user to choose resolutions
-7. **Update TWO files:**
-   - `.manifold/<feature>.json` — Add tension objects with id, type, between, status
-   - `.manifold/<feature>.md` — Add `### TN1: Title` + description + resolution
-8. **Record iteration** in JSON `iterations[]`
-9. Set phase to TENSIONED in JSON
-10. **⚠️ Run `manifold validate <feature>`** — fix any errors before proceeding
-11. Display summary and next step
-
-### For Legacy YAML Format
-
-1. Read manifold from `.manifold/<feature>.yaml`
-2. For each pair of constraints, check for conflicts
-3. **If `--auto-deps` (v2):**
-   - Extract keywords from constraint statements
-   - Map keywords to dependency patterns
-   - Identify hidden dependencies automatically
-   - Flag blocking dependencies with elevated priority
-4. For each tension found:
-   - Describe the conflict
-   - Generate resolution options (A, B, C)
-   - Recommend based on constraint types (INVARIANT > BOUNDARY > GOAL)
-5. If `--resolve` flag, prompt user to choose resolutions
-6. Update manifold with tensions and resolutions
-7. **Record iteration** in `iterations[]` (v2)
-8. Set phase to TENSIONED
-9. Display summary and next step
+7. Update manifold with tensions and resolutions
+8. **Record iteration** in `iterations[]` (v2)
+9. Set phase to TENSIONED
+10. Display summary and next step
 
 ### ⚠️ Mandatory Post-Phase Validation
 
