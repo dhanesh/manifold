@@ -231,7 +231,7 @@ class TestPassesVerifier implements EvidenceVerifier {
    */
   private async executeTestRunner(e: Evidence, projectRoot: string): Promise<VerificationResult> {
     const start = Date.now();
-    const runner = this.config!.test_runner!;
+    const runner = this.config?.test_runner ?? '';
     const testName = e.test_name || '';
     const extraArgs = this.config?.test_args || [];
 
