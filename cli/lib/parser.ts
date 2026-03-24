@@ -255,7 +255,7 @@ export interface Artifact {
   status: string;
   description?: string;
   file_hash?: string;
-  artifact_class?: 'substantive' | 'structural' | 'operational';
+  artifact_class?: 'substantive' | 'structural';
 }
 
 export interface Coverage {
