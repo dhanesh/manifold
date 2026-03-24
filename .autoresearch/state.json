@@ -1,0 +1,57 @@
+{
+  "scope": "full-project",
+  "branch": "autoresearch/20260325T025358-full-project",
+  "max_iterations": 20,
+  "time_box_seconds": 120,
+  "started_at": "2026-03-25T02:53:58-08:00",
+  "commands": [
+    {
+      "name": "typecheck",
+      "command": "cd /Users/dhanesh/code/xp/manifold/cli && bun run typecheck",
+      "hash": "n/a-bun-run",
+      "weight": 0.30,
+      "scoring": "max(0, 100 - errors * 5)"
+    },
+    {
+      "name": "cli_tests",
+      "command": "cd /Users/dhanesh/code/xp/manifold/cli && bun test",
+      "hash": "ef6b51f380734ee81a9fa180d7c28ccb19ec1525d532c3b1b5e2ecc44f273bca",
+      "weight": 0.35,
+      "scoring": "pass_rate * 100"
+    },
+    {
+      "name": "lib_tests",
+      "command": "cd /Users/dhanesh/code/xp/manifold && bun test tests/",
+      "hash": "8fbf66f48f4bd9a6b6f0c1751781f59a1110e41f949e0d2d57e02660c19aa173",
+      "weight": 0.20,
+      "scoring": "pass_rate * 100"
+    },
+    {
+      "name": "llm_quality",
+      "command": "llm-eval",
+      "hash": "n/a-llm",
+      "weight": 0.15,
+      "scoring": "llm_score 0-100",
+      "sample_every": 3
+    }
+  ],
+  "baseline": {
+    "typecheck": { "errors": 10, "score": 50 },
+    "cli_tests": { "passed": 410, "failed": 0, "total": 410, "score": 100 },
+    "lib_tests": { "passed": 84, "failed": 0, "total": 84, "score": 100 },
+    "llm_quality": { "score": 50 },
+    "composite": 74.5
+  },
+  "best": {
+    "typecheck": 50,
+    "cli_tests": 100,
+    "lib_tests": 100,
+    "llm_quality": 50,
+    "composite": 74.5
+  },
+  "iterations": [],
+  "current_iteration": 0,
+  "plateau_counter": 0,
+  "plateau_window": 3,
+  "scope_proposals": []
+}
