@@ -13,7 +13,6 @@ const noColorEnv = 'NO_COLOR' in process.env;
 
 // Global color state
 let colorEnabled = isTTY && !noColorEnv;
-let forceColor = false;
 
 /**
  * Configure color output
@@ -23,16 +22,13 @@ export function setColorMode(mode: 'auto' | 'always' | 'never'): void {
   switch (mode) {
     case 'always':
       colorEnabled = true;
-      forceColor = true;
       break;
     case 'never':
       colorEnabled = false;
-      forceColor = false;
       break;
     case 'auto':
     default:
       colorEnabled = isTTY && !noColorEnv;
-      forceColor = false;
       break;
   }
 }
