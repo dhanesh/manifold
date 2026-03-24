@@ -795,7 +795,7 @@ function parseMarkdownSections(md: string): MdSections {
     }
 
     // Section headers reset context
-    if (line.startsWith('## ') || line.startsWith('### ') && !cmatch && !tmatch && !rtmatch) {
+    if ((line.startsWith('## ') || line.startsWith('### ')) && !cmatch && !tmatch && !rtmatch) {
       flush();
       currentId = null;
       currentType = null;
