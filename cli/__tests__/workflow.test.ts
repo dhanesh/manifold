@@ -445,18 +445,22 @@ describe('/manifold:m5-verify output validation', () => {
   test('evidence has valid types', () => {
     const validTypes = ['file_exists', 'content_match', 'test_passes', 'metric_value', 'manual_review'];
     m5VerifyOutputComplete.anchors?.required_truths?.forEach(rt => {
-      rt.evidence?.forEach(e => {
-        expect(validTypes).toContain(e.type);
-      });
+      if (Array.isArray(rt.evidence)) {
+        rt.evidence.forEach((e: { type: string }) => {
+          expect(validTypes).toContain(e.type);
+        });
+      }
     });
   });
 
   test('evidence has valid statuses', () => {
     const validStatuses = ['VERIFIED', 'PENDING', 'FAILED', 'STALE'];
     m5VerifyOutputComplete.anchors?.required_truths?.forEach(rt => {
-      rt.evidence?.forEach(e => {
-        expect(validStatuses).toContain(e.status);
-      });
+      if (Array.isArray(rt.evidence)) {
+        rt.evidence.forEach((e: { status: string }) => {
+          expect(validStatuses).toContain(e.status);
+        });
+      }
     });
   });
 });

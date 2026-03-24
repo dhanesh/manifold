@@ -111,6 +111,8 @@ describe('detectSchemaVersion', () => {
       phase: 'INITIALIZED',
       constraint_graph: {
         version: 1,
+        generated_at: '2026-01-01T00:00:00Z',
+        feature: 'test',
         nodes: {},
         edges: { dependencies: [], conflicts: [], satisfies: [] }
       }
