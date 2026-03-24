@@ -170,6 +170,9 @@ export interface Manifold {
     verify_document?: string;
   };
 
+  // v3: Evidence records
+  evidence?: Evidence[];
+
   // v3: Constraint graph (computed from constraints, tensions, required truths)
   constraint_graph?: ConstraintGraph;
 }
@@ -251,14 +254,17 @@ export interface Artifact {
   satisfies?: string[];
   status: string;
   description?: string;
+  file_hash?: string;
+  artifact_class?: 'substantive' | 'structural' | 'operational';
 }
 
 export interface Coverage {
-  constraints_addressed: number;
-  constraints_total: number;
-  required_truths_addressed: number;
-  required_truths_total: number;
-  percentage: number;
+  constraints_addressed?: number;
+  constraints_total?: number;
+  required_truths_addressed?: number;
+  required_truths_total?: number;
+  percentage?: number;
+  [key: string]: unknown;
 }
 
 export interface Integration {
