@@ -236,24 +236,24 @@ export class ParallelExecutor extends EventEmitter {
       const taskDescription = execTask.task.description || `Execute task ${taskId}`;
 
       // Spawn the agent process
-      const process = spawn(
+      const childProcess = spawn(
         this.config.agentCommand,
         ['--print', '--no-tty', taskDescription],
         {
           cwd: worktree.path,
           shell: true,
           env: {
-            ...process.env,
+            ...globalThis.process.env,
             PARALLEL_TASK_ID: taskId,
             PARALLEL_WORKTREE: worktree.path,
           },
         }
       );
 
-      this.runningProcesses.set(taskId, process);
+      this.runningProcesses.set(taskId, childProcess);
 
       // Handle stdout
-      process.stdout?.on('data', (data) => {
+      childProcess.stdout?.on('data', (data) => {
         output += data.toString();
         this.emitProgress({
           type: 'output',
@@ -263,12 +263,12 @@ export class ParallelExecutor extends EventEmitter {
       });
 
       // Handle stderr
-      process.stderr?.on('data', (data) => {
+      childProcess.stderr?.on('data', (data) => {
         error += data.toString();
       });
 
       // Handle process completion
-      process.on('close', (exitCode) => {
+      childProcess.on('close', (exitCode) => {
         this.runningProcesses.delete(taskId);
 
         resolve({
@@ -283,7 +283,7 @@ export class ParallelExecutor extends EventEmitter {
       });
 
       // Handle process error
-      process.on('error', (err) => {
+      childProcess.on('error', (err) => {
         this.runningProcesses.delete(taskId);
 
         resolve({
@@ -300,7 +300,7 @@ export class ParallelExecutor extends EventEmitter {
       // Handle timeout
       setTimeout(() => {
         if (this.runningProcesses.has(taskId)) {
-          process.kill('SIGTERM');
+          childProcess.kill('SIGTERM');
           error = 'Task timed out';
         }
       }, this.config.timeout);

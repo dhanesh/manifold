@@ -231,7 +231,7 @@ class TestPassesVerifier implements EvidenceVerifier {
    */
   private async executeTestRunner(e: Evidence, projectRoot: string): Promise<VerificationResult> {
     const start = Date.now();
-    const runner = this.config!.test_runner!;
+    const runner = this.config?.test_runner ?? '';
     const testName = e.test_name || '';
     const extraArgs = this.config?.test_args || [];
 
@@ -365,13 +365,17 @@ export async function verifyAllEvidence(
     results.push(...batchResults);
   }
 
-  // Calculate summary
+  // Calculate summary (mutually exclusive categories)
   const verified = results.filter((r) => r.passed).length;
-  const failed = results.filter((r) => !r.passed && r.evidence.status !== 'PENDING').length;
+  const stale = results.filter((r) => !r.passed && r.evidence.status === 'STALE').length;
   const pending = results.filter(
-    (r) => !r.passed && (r.evidence.type === 'test_passes' || r.evidence.type === 'manual_review')
+    (r) => !r.passed && r.evidence.status !== 'STALE' &&
+      (r.evidence.type === 'test_passes' || r.evidence.type === 'manual_review')
   ).length;
-  const stale = results.filter((r) => r.evidence.status === 'STALE').length;
+  const failed = results.filter(
+    (r) => !r.passed && r.evidence.status !== 'STALE' &&
+      r.evidence.type !== 'test_passes' && r.evidence.type !== 'manual_review'
+  ).length;
 
   const report: VerificationReport = {
     timestamp: new Date().toISOString(),

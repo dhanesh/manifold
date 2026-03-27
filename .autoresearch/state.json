@@ -1,0 +1,78 @@
+{
+  "scope": "full-project",
+  "branch": "autoresearch/20260325T025358-full-project",
+  "max_iterations": 20,
+  "time_box_seconds": 120,
+  "started_at": "2026-03-25T02:53:58-08:00",
+  "completed_at": "2026-03-25T03:13:25-08:00",
+  "stop_reason": "plateau_detected",
+  "commands": [
+    {
+      "name": "typecheck",
+      "command": "cd /Users/dhanesh/code/xp/manifold/cli && bun run typecheck",
+      "hash": "n/a-bun-run",
+      "weight": 0.30,
+      "scoring": "max(0, 100 - errors * 5)"
+    },
+    {
+      "name": "cli_tests",
+      "command": "cd /Users/dhanesh/code/xp/manifold/cli && bun test",
+      "hash": "ef6b51f380734ee81a9fa180d7c28ccb19ec1525d532c3b1b5e2ecc44f273bca",
+      "weight": 0.35,
+      "scoring": "pass_rate * 100"
+    },
+    {
+      "name": "lib_tests",
+      "command": "cd /Users/dhanesh/code/xp/manifold && bun test tests/",
+      "hash": "8fbf66f48f4bd9a6b6f0c1751781f59a1110e41f949e0d2d57e02660c19aa173",
+      "weight": 0.20,
+      "scoring": "pass_rate * 100"
+    },
+    {
+      "name": "llm_quality",
+      "command": "llm-eval",
+      "hash": "n/a-llm",
+      "weight": 0.15,
+      "scoring": "llm_score 0-100",
+      "sample_every": 3
+    }
+  ],
+  "baseline": {
+    "typecheck": { "errors": 10, "score": 50 },
+    "cli_tests": { "passed": 410, "failed": 0, "total": 410, "score": 100 },
+    "lib_tests": { "passed": 84, "failed": 0, "total": 84, "score": 100 },
+    "llm_quality": { "score": 50 },
+    "composite": 74.5
+  },
+  "final": {
+    "typecheck": { "errors": 0, "score": 100 },
+    "cli_tests": { "passed": 410, "failed": 0, "total": 410, "score": 100 },
+    "lib_tests": { "passed": 84, "failed": 0, "total": 84, "score": 100 },
+    "llm_quality": { "score": 85 },
+    "composite": 97.75
+  },
+  "best": {
+    "typecheck": 100,
+    "cli_tests": 100,
+    "lib_tests": 100,
+    "llm_quality": 85,
+    "composite": 97.75
+  },
+  "iterations": [
+    { "iteration": 1, "commit": "c91376f", "description": "align parser interfaces with structure-schema types", "typecheck": 70, "cli_tests": 100, "lib_tests": 100, "llm_quality": 55, "composite": 84.25, "delta": 9.75, "status": "improved" },
+    { "iteration": 2, "commit": "5a21cb0", "description": "resolve migrate.ts type errors and correct artifact_class union", "typecheck": 80, "cli_tests": 100, "lib_tests": 100, "llm_quality": 55, "composite": 87.25, "delta": 3.0, "status": "improved" },
+    { "iteration": 3, "commit": "b81deaf", "description": "resolve all remaining type errors in test files", "typecheck": 100, "cli_tests": 100, "lib_tests": 100, "llm_quality": 60, "composite": 94.0, "delta": 6.75, "status": "improved" },
+    { "iteration": 4, "commit": "8a2afde", "description": "resolve process variable shadowing in parallel-executor", "typecheck": 100, "cli_tests": 100, "lib_tests": 100, "llm_quality": 65, "composite": 94.75, "delta": 0.75, "status": "improved" },
+    { "iteration": 5, "commit": "38ba6a5", "description": "correct operator precedence in markdown section header check", "typecheck": 100, "cli_tests": 100, "lib_tests": 100, "llm_quality": 65, "composite": 94.75, "delta": 0.0, "status": "improved" },
+    { "iteration": 6, "commit": "60a9152", "description": "make evidence counting categories mutually exclusive", "typecheck": 100, "cli_tests": 100, "lib_tests": 100, "llm_quality": 70, "composite": 95.5, "delta": 0.75, "status": "improved" },
+    { "iteration": 7, "commit": "d1c49ed", "description": "remove dead code and replace require() with static imports", "typecheck": 100, "cli_tests": 100, "lib_tests": 100, "llm_quality": 75, "composite": 96.25, "delta": 0.75, "status": "improved" },
+    { "iteration": 8, "commit": "e0b915b", "description": "eliminate redundant directory lookup in verify command", "typecheck": 100, "cli_tests": 100, "lib_tests": 100, "llm_quality": 75, "composite": 96.25, "delta": 0.0, "status": "improved" },
+    { "iteration": 9, "commit": "d3ef535", "description": "consolidate validation constants to single source of truth", "typecheck": 100, "cli_tests": 100, "lib_tests": 100, "llm_quality": 80, "composite": 97.0, "delta": 0.75, "status": "improved" },
+    { "iteration": 10, "commit": "47e5413", "description": "use structured warning output in solver module", "typecheck": 100, "cli_tests": 100, "lib_tests": 100, "llm_quality": 80, "composite": 97.0, "delta": 0.0, "status": "improved" },
+    { "iteration": 11, "commit": "39d9c28", "description": "replace non-null assertions with safe optional chaining", "typecheck": 100, "cli_tests": 100, "lib_tests": 100, "llm_quality": 85, "composite": 97.75, "delta": 0.75, "status": "improved" }
+  ],
+  "current_iteration": 11,
+  "plateau_counter": 3,
+  "plateau_window": 3,
+  "scope_proposals": []
+}

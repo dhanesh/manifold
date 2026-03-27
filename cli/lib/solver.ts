@@ -21,6 +21,7 @@ import {
   ManifoldPhase,
   AnchorDocument,
 } from './parser';
+import { printWarning } from './output';
 
 // Re-export types for command modules
 export type { ConstraintGraph, ConstraintNode, ExecutionPlan, Wave, ParallelTask };
@@ -421,7 +422,7 @@ export class ConstraintSolver {
 
       if (ready.length === 0 && remaining.size > 0) {
         // Circular dependency detected - break the cycle
-        console.warn(`Circular dependency detected. Remaining: ${[...remaining].join(', ')}`);
+        printWarning(`Circular dependency detected. Remaining: ${[...remaining].join(', ')}`);
         // Take the first remaining item to break the cycle
         ready.push([...remaining][0]);
       }

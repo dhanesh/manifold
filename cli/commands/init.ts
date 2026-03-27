@@ -6,7 +6,7 @@
  */
 
 import type { Command } from 'commander';
-import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
+import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { findManifoldDir } from '../lib/parser.js';
 import {
@@ -418,7 +418,7 @@ function loadTemplate(feature: string, templateName: string, outcome?: string): 
  */
 function listAvailableTemplates(templateDir: string): string[] {
   const templates: string[] = [];
-  const { readdirSync, statSync } = require('fs');
+  // readdirSync and statSync imported at top level
 
   for (const entry of readdirSync(templateDir)) {
     const entryPath = join(templateDir, entry);

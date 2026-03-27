@@ -301,6 +301,7 @@ function extractStructure(manifold: Manifold): ManifoldStructure {
     created: manifold.created,
     template: manifold.template,
     template_version: manifold.template_version,
+    tensions: [],
   };
 
   // Extract constraint references (IDs and types only)
@@ -345,7 +346,27 @@ function extractStructure(manifold: Manifold): ManifoldStructure {
 
   // Extract generation
   if (manifold.generation) {
-    structure.generation = manifold.generation;
+    structure.generation = {
+      timestamp: manifold.generation.timestamp,
+      option: manifold.generation.option,
+      iteration: manifold.generation.iteration,
+      artifacts: manifold.generation.artifacts?.map(a => ({
+        type: a.type,
+        status: a.status,
+        path: a.path,
+        description: a.description,
+        satisfies: a.satisfies,
+        file_hash: a.file_hash,
+        artifact_class: a.artifact_class,
+      })),
+      coverage: manifold.generation.coverage ? {
+        constraints_addressed: manifold.generation.coverage.constraints_addressed,
+        constraints_total: manifold.generation.coverage.constraints_total,
+        required_truths_addressed: manifold.generation.coverage.required_truths_addressed,
+        required_truths_total: manifold.generation.coverage.required_truths_total,
+        percentage: manifold.generation.coverage.percentage,
+      } : undefined,
+    };
   }
 
   // Extract constraint graph

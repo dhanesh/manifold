@@ -135,7 +135,7 @@ async function verifyCommand(feature: string | undefined, options: VerifyOptions
       }
 
       if (!options.json) {
-        printVerificationOutput(result, options);
+        printVerificationOutput(result, options, manifoldDir);
         println();
       }
     }
@@ -167,7 +167,7 @@ async function verifyCommand(feature: string | undefined, options: VerifyOptions
   if (options.json) {
     println(toJSON(result));
   } else {
-    printVerificationOutput(result, options);
+    printVerificationOutput(result, options, manifoldDir);
   }
 
   return result.result === 'PASS' ? 0 : 2;
@@ -397,7 +397,7 @@ async function verifyEvidenceForFeature(
 /**
  * Print verification output to console
  */
-function printVerificationOutput(result: VerificationResult, options: VerifyOptions): void {
+function printVerificationOutput(result: VerificationResult, options: VerifyOptions, manifoldDir?: string): void {
   // Header with result
   const resultColor = result.result === 'PASS'
     ? style.success(result.result)
@@ -464,10 +464,10 @@ function printVerificationOutput(result: VerificationResult, options: VerifyOpti
 
   // Satisfaction levels (--levels flag)
   if (options.levels && result.coverage) {
-    const manifoldDir = findManifoldDir();
-    if (manifoldDir) {
-      const projectRoot = dirname(manifoldDir);
-      const data = loadFeature(manifoldDir, result.feature);
+    const resolvedDir = manifoldDir ?? findManifoldDir();
+    if (resolvedDir) {
+      const projectRoot = dirname(resolvedDir);
+      const data = loadFeature(resolvedDir, result.feature);
       if (data?.manifold) {
         const levels = computeSatisfactionLevels(data.manifold);
         if (Object.keys(levels).length > 0) {

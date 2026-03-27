@@ -9,7 +9,7 @@
  * 4. Content quality is sufficient (no empty statements/descriptions)
  */
 
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import {
   ManifoldStructureSchema,
@@ -418,7 +418,7 @@ export function listFeaturesWithFormat(manifoldDir: string): Array<{
 }> {
   if (!existsSync(manifoldDir)) return [];
 
-  const { readdirSync } = require('fs');
+  // readdirSync imported at top level
   const files = readdirSync(manifoldDir) as string[];
   const features = new Set<string>();
 

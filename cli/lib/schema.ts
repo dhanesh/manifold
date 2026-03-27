@@ -15,6 +15,18 @@ import type {
   Iteration,
   Convergence
 } from './parser.js';
+import {
+  VALID_PHASES,
+  VALID_CONSTRAINT_TYPES,
+  VALID_TENSION_TYPES,
+  VALID_TENSION_STATUSES,
+  VALID_REQUIRED_TRUTH_STATUSES,
+  VALID_CONVERGENCE_STATUSES,
+  VALID_EVIDENCE_TYPES,
+  VALID_EVIDENCE_STATUSES,
+  VALID_NODE_TYPES,
+  VALID_NODE_STATUSES,
+} from './structure-schema.js';
 
 // Validation result
 export interface ValidationResult {
@@ -36,43 +48,7 @@ export interface ValidationWarning {
   suggestion?: string;
 }
 
-// Valid phases
-const VALID_PHASES: ManifoldPhase[] = [
-  'INITIALIZED',
-  'CONSTRAINED',
-  'TENSIONED',
-  'ANCHORED',
-  'GENERATED',
-  'VERIFIED'
-];
-
-// Valid constraint types
-const VALID_CONSTRAINT_TYPES = ['invariant', 'goal', 'boundary'] as const;
-
-// Valid tension types
-const VALID_TENSION_TYPES = ['trade_off', 'resource_tension', 'hidden_dependency'] as const;
-
-// Valid tension statuses
-const VALID_TENSION_STATUSES = ['resolved', 'unresolved'] as const;
-
-// Valid required truth statuses
-const VALID_REQUIRED_TRUTH_STATUSES = ['SATISFIED', 'PARTIAL', 'NOT_SATISFIED', 'SPECIFICATION_READY'] as const;
-
-// Valid convergence statuses
-const VALID_CONVERGENCE_STATUSES = ['NOT_STARTED', 'IN_PROGRESS', 'CONVERGED'] as const;
-
-// v3: Valid evidence types
-// Satisfies: T1 (v3 evidence validation), RT-2
-const VALID_EVIDENCE_TYPES = ['file_exists', 'content_match', 'test_passes', 'metric_value', 'manual_review'] as const;
-
-// v3: Valid evidence statuses
-const VALID_EVIDENCE_STATUSES = ['VERIFIED', 'PENDING', 'FAILED', 'STALE'] as const;
-
-// v3: Valid constraint node types
-const VALID_NODE_TYPES = ['constraint', 'tension', 'required_truth', 'artifact'] as const;
-
-// v3: Valid constraint node statuses
-const VALID_NODE_STATUSES = ['UNKNOWN', 'REQUIRED', 'SATISFIED', 'BLOCKED', 'CONFLICTED'] as const;
+// Validation constants imported from structure-schema.ts (single source of truth)
 
 /**
  * Validate a manifold against schema rules
