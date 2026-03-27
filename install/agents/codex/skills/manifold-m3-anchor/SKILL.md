@@ -160,7 +160,7 @@ iterations:
 ## Usage
 
 ```
-/manifold:m3-anchor <feature-name> [--outcome="<statement>"]
+/manifold:m3-anchor <feature-name> [--outcome="<statement>"] [--skip-lookup]
 ```
 
 ## Why Backward Reasoning?
@@ -239,35 +239,73 @@ Updated: .manifold/payment-retry.json + .manifold/payment-retry.md
 Next: /manifold:m4-generate payment-retry --option=C
 ```
 
+## Context Lookup (MANDATORY)
+
+**Before anchoring**, research the feature's domain to ensure backward reasoning and solution options reflect current reality. Required truths derived from stale assumptions create implementation gaps that surface late.
+
+### Steps
+
+1. **Extract solution-relevant topics** from the outcome statement and discovered constraints—identify technologies, architectural patterns, and external services that will shape the solution space
+2. **Use `WebSearch`** to look up:
+   - Current architectural patterns and implementation approaches for this type of feature
+   - Recent library/framework versions, migration guides, or breaking changes relevant to the solution space
+   - Production experiences and lessons learned from similar implementations (blog posts, post-mortems, conference talks)
+   - Current pricing, limits, or SLAs of external services that may constrain solution options
+3. **Summarize findings** in a brief "Domain Context" block shown to the user before anchoring:
+
+```
+DOMAIN CONTEXT (via web search):
+- [Key finding 1 with source]
+- [Key finding 2 with source]
+- [Key finding 3 with source]
+```
+
+4. **Use these findings to inform** required truth derivation and solution option generation—propose options that use current best practices and available tools
+
+### When to Skip
+
+- `--skip-lookup` flag is passed
+- Context lookup was already performed in m1-constrain or m2-tension within the same session and the domain context is still in the conversation
+
+### Why This Matters
+
+Without context lookup, the AI may:
+- Propose solution options using deprecated libraries or outdated architectural patterns
+- Miss better approaches that have emerged since training
+- Set required truths based on incorrect assumptions about current system capabilities
+- Generate a solution space that the user must extensively correct
+
 ## Execution Instructions
 
 ### For JSON+Markdown Format (Default)
 
-1. Read structure from `.manifold/<feature>.json`
-2. Read content from `.manifold/<feature>.md`
-3. Get outcome from `--outcome` flag or Markdown `## Outcome` section
+1. **Run Context Lookup** (see above) — research the feature domain via `WebSearch` unless already done in m1/m2
+2. Read structure from `.manifold/<feature>.json`
+3. Read content from `.manifold/<feature>.md`
+4. Get outcome from `--outcome` flag or Markdown `## Outcome` section
+5. For the outcome, recursively ask "What must be TRUE?"
+6. Each truth becomes an RT-N (Required Truth)
+7. Identify gaps between current state and requirement
+8. Generate 2-4 solution options
+9. Recommend best option with rationale
+10. **Update TWO files:**
+   - `.manifold/<feature>.json` — Add required truths to `anchors.required_truths` with id, status, maps_to
+   - `.manifold/<feature>.md` — Add `### RT-1: Title` + statement + gap under `## Required Truths`
+11. Set phase to ANCHORED in JSON
+12. **⚠️ Run `manifold validate <feature>`** — fix any errors before proceeding
+
+### For Legacy YAML Format
+
+1. **Run Context Lookup** (see above) — research the feature domain via `WebSearch` unless already done in m1/m2
+2. Read manifold from `.manifold/<feature>.yaml`
+3. Get outcome from `--outcome` flag or manifold file
 4. For the outcome, recursively ask "What must be TRUE?"
 5. Each truth becomes an RT-N (Required Truth)
 6. Identify gaps between current state and requirement
 7. Generate 2-4 solution options
 8. Recommend best option with rationale
-9. **Update TWO files:**
-   - `.manifold/<feature>.json` — Add required truths to `anchors.required_truths` with id, status, maps_to
-   - `.manifold/<feature>.md` — Add `### RT-1: Title` + statement + gap under `## Required Truths`
-10. Set phase to ANCHORED in JSON
-11. **⚠️ Run `manifold validate <feature>`** — fix any errors before proceeding
-
-### For Legacy YAML Format
-
-1. Read manifold from `.manifold/<feature>.yaml`
-2. Get outcome from `--outcome` flag or manifold file
-3. For the outcome, recursively ask "What must be TRUE?"
-4. Each truth becomes an RT-N (Required Truth)
-5. Identify gaps between current state and requirement
-6. Generate 2-4 solution options
-7. Recommend best option with rationale
-8. Save to `.manifold/<feature>.anchor.yaml`
-9. Set phase to ANCHORED
+9. Save to `.manifold/<feature>.anchor.yaml`
+10. Set phase to ANCHORED
 
 ### ⚠️ Mandatory Post-Phase Validation
 
