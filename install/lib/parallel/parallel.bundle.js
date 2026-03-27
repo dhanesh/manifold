@@ -1,1620 +1,6 @@
 import { createRequire } from "node:module";
-var __defProp = Object.defineProperty;
 var __commonJS = (cb, mod) => () => (mod || cb((mod = { exports: {} }).exports, mod), mod.exports);
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, {
-      get: all[name],
-      enumerable: true,
-      configurable: true,
-      set: (newValue) => all[name] = () => newValue
-    });
-};
-var __esm = (fn, res) => () => (fn && (res = fn(fn = 0)), res);
 var __require = /* @__PURE__ */ createRequire(import.meta.url);
-
-// install/lib/parallel/worktree-manager.ts
-import { exec } from "child_process";
-import { existsSync, rmSync, mkdirSync } from "fs";
-import { join } from "path";
-import { promisify } from "util";
-
-class WorktreeManager {
-  config;
-  activeWorktrees = new Map;
-  constructor(config) {
-    this.config = {
-      baseDir: config.baseDir,
-      worktreeDir: config.worktreeDir ?? join(config.baseDir, ".parallel-worktrees"),
-      maxWorktrees: config.maxWorktrees ?? 4,
-      cleanupOnExit: config.cleanupOnExit ?? true
-    };
-    if (!existsSync(this.config.worktreeDir)) {
-      mkdirSync(this.config.worktreeDir, { recursive: true });
-    }
-    if (this.config.cleanupOnExit) {
-      process.on("exit", () => this.cleanupAll());
-      process.on("SIGINT", () => {
-        this.cleanupAll();
-        process.exit(130);
-      });
-      process.on("SIGTERM", () => {
-        this.cleanupAll();
-        process.exit(143);
-      });
-    }
-  }
-  async isCleanState() {
-    try {
-      const { stdout } = await execAsync("git status --porcelain", {
-        cwd: this.config.baseDir
-      });
-      if (stdout.trim()) {
-        return {
-          clean: false,
-          reason: "Uncommitted changes detected. Please commit or stash before creating worktrees."
-        };
-      }
-      return { clean: true };
-    } catch (error) {
-      return {
-        clean: false,
-        reason: `Failed to check git status: ${error}`
-      };
-    }
-  }
-  async getCurrentBranch() {
-    const { stdout } = await execAsync("git branch --show-current", {
-      cwd: this.config.baseDir
-    });
-    return stdout.trim();
-  }
-  async getCurrentCommit() {
-    const { stdout } = await execAsync("git rev-parse HEAD", {
-      cwd: this.config.baseDir
-    });
-    return stdout.trim();
-  }
-  async create(options) {
-    const { taskId, baseBranch, branchPrefix = "parallel" } = options;
-    const cleanCheck = await this.isCleanState();
-    if (!cleanCheck.clean) {
-      throw new Error(`Cannot create worktree: ${cleanCheck.reason}`);
-    }
-    if (this.activeWorktrees.size >= this.config.maxWorktrees) {
-      throw new Error(`Maximum worktrees (${this.config.maxWorktrees}) reached. ` + `Complete or remove existing worktrees first.`);
-    }
-    const branchName = `${branchPrefix}/${taskId}`;
-    const worktreePath = join(this.config.worktreeDir, taskId);
-    const base = baseBranch ?? await this.getCurrentBranch();
-    const commit = await this.getCurrentCommit();
-    try {
-      await execAsync(`git worktree add -b "${branchName}" "${worktreePath}" "${base}"`, { cwd: this.config.baseDir });
-      const info = {
-        path: worktreePath,
-        branch: branchName,
-        commit,
-        taskId,
-        createdAt: new Date,
-        status: "active"
-      };
-      this.activeWorktrees.set(taskId, info);
-      return info;
-    } catch (error) {
-      await this.forceRemove(taskId).catch(() => {});
-      throw new Error(`Failed to create worktree: ${error}`);
-    }
-  }
-  async remove(taskId) {
-    const info = this.activeWorktrees.get(taskId);
-    if (!info) {
-      throw new Error(`Worktree not found: ${taskId}`);
-    }
-    info.status = "cleaning";
-    try {
-      await execAsync(`git worktree remove "${info.path}" --force`, {
-        cwd: this.config.baseDir
-      });
-      await execAsync(`git branch -D "${info.branch}"`, {
-        cwd: this.config.baseDir
-      }).catch(() => {});
-      this.activeWorktrees.delete(taskId);
-    } catch (error) {
-      await this.forceRemove(taskId);
-    }
-  }
-  async forceRemove(taskId) {
-    const info = this.activeWorktrees.get(taskId);
-    const worktreePath = info?.path ?? join(this.config.worktreeDir, taskId);
-    const branchName = info?.branch ?? `parallel/${taskId}`;
-    await execAsync(`git worktree remove "${worktreePath}" --force`, {
-      cwd: this.config.baseDir
-    }).catch(() => {});
-    await execAsync("git worktree prune", {
-      cwd: this.config.baseDir
-    }).catch(() => {});
-    if (existsSync(worktreePath)) {
-      rmSync(worktreePath, { recursive: true, force: true });
-    }
-    await execAsync(`git branch -D "${branchName}"`, {
-      cwd: this.config.baseDir
-    }).catch(() => {});
-    this.activeWorktrees.delete(taskId);
-  }
-  list() {
-    return Array.from(this.activeWorktrees.values());
-  }
-  get(taskId) {
-    return this.activeWorktrees.get(taskId);
-  }
-  has(taskId) {
-    return this.activeWorktrees.has(taskId);
-  }
-  count() {
-    return this.activeWorktrees.size;
-  }
-  canCreate() {
-    return this.activeWorktrees.size < this.config.maxWorktrees;
-  }
-  remainingCapacity() {
-    return this.config.maxWorktrees - this.activeWorktrees.size;
-  }
-  markCompleted(taskId) {
-    const info = this.activeWorktrees.get(taskId);
-    if (info) {
-      info.status = "completed";
-    }
-  }
-  markFailed(taskId) {
-    const info = this.activeWorktrees.get(taskId);
-    if (info) {
-      info.status = "failed";
-    }
-  }
-  getCompleted() {
-    return Array.from(this.activeWorktrees.values()).filter((w) => w.status === "completed");
-  }
-  getFailed() {
-    return Array.from(this.activeWorktrees.values()).filter((w) => w.status === "failed");
-  }
-  async cleanupAll() {
-    const taskIds = Array.from(this.activeWorktrees.keys());
-    for (const taskId of taskIds) {
-      await this.forceRemove(taskId).catch((error) => {
-        console.error(`Failed to cleanup worktree ${taskId}:`, error);
-      });
-    }
-  }
-  async sync() {
-    try {
-      const { stdout } = await execAsync("git worktree list --porcelain", {
-        cwd: this.config.baseDir
-      });
-      const lines = stdout.split(`
-`);
-      let currentPath = "";
-      let currentBranch = "";
-      let currentCommit = "";
-      for (const line of lines) {
-        if (line.startsWith("worktree ")) {
-          currentPath = line.slice(9);
-        } else if (line.startsWith("HEAD ")) {
-          currentCommit = line.slice(5);
-        } else if (line.startsWith("branch ")) {
-          currentBranch = line.slice(7);
-          if (currentPath.startsWith(this.config.worktreeDir)) {
-            const taskId = currentPath.split("/").pop() || "";
-            if (taskId && !this.activeWorktrees.has(taskId)) {
-              this.activeWorktrees.set(taskId, {
-                path: currentPath,
-                branch: currentBranch.replace("refs/heads/", ""),
-                commit: currentCommit,
-                taskId,
-                createdAt: new Date,
-                status: "active"
-              });
-            }
-          }
-          currentPath = "";
-          currentBranch = "";
-          currentCommit = "";
-        }
-      }
-    } catch (error) {
-      console.error("Failed to sync worktrees:", error);
-    }
-  }
-}
-var execAsync;
-var init_worktree_manager = __esm(() => {
-  execAsync = promisify(exec);
-});
-
-// install/lib/parallel/resource-monitor.ts
-var exports_resource_monitor = {};
-__export(exports_resource_monitor, {
-  default: () => resource_monitor_default,
-  ResourceMonitor: () => ResourceMonitor
-});
-import { execSync as execSync2 } from "child_process";
-import * as os from "os";
-
-class ResourceMonitor {
-  thresholds;
-  baseDir;
-  constructor(baseDir, thresholds = {}) {
-    this.baseDir = baseDir;
-    this.thresholds = { ...DEFAULT_THRESHOLDS, ...thresholds };
-  }
-  async getStatus() {
-    const disk = await this.getDiskStatus();
-    const memory = this.getMemoryStatus();
-    const cpu = this.getCpuStatus();
-    const overall = this.calculateOverall(disk, memory, cpu);
-    return { disk, memory, cpu, overall };
-  }
-  async getDiskStatus() {
-    try {
-      const output = execSync2(`df -k "${this.baseDir}"`, { encoding: "utf-8" });
-      const lines = output.trim().split(`
-`);
-      if (lines.length < 2) {
-        throw new Error("Unexpected df output");
-      }
-      const parts = lines[1].split(/\s+/);
-      const totalKB = parseInt(parts[1], 10);
-      const usedKB = parseInt(parts[2], 10);
-      const availableKB = parseInt(parts[3], 10);
-      const total = totalKB * 1024;
-      const available = availableKB * 1024;
-      const usedPercent = usedKB / totalKB * 100;
-      const minRequired = this.thresholds.minDiskGB * 1024 * 1024 * 1024;
-      const sufficient = available >= minRequired && usedPercent <= this.thresholds.maxDiskUsagePercent;
-      return { available, total, usedPercent, sufficient };
-    } catch (error) {
-      console.warn("Failed to check disk status:", error);
-      return {
-        available: 10 * 1024 * 1024 * 1024,
-        total: 100 * 1024 * 1024 * 1024,
-        usedPercent: 50,
-        sufficient: true
-      };
-    }
-  }
-  getMemoryStatus() {
-    const total = os.totalmem();
-    const free = os.freemem();
-    const available = free;
-    const usedPercent = (total - free) / total * 100;
-    const minRequired = this.thresholds.minMemoryGB * 1024 * 1024 * 1024;
-    const sufficient = available >= minRequired && usedPercent <= this.thresholds.maxMemoryUsagePercent;
-    return { available, total, usedPercent, sufficient };
-  }
-  getCpuStatus() {
-    const loadAverage = os.loadavg();
-    const cores = os.cpus().length;
-    const loadPercent = loadAverage[0] / cores * 100;
-    const sufficient = loadPercent <= this.thresholds.maxCpuLoadPercent;
-    return { loadAverage, cores, loadPercent, sufficient };
-  }
-  calculateOverall(disk, memory, cpu) {
-    if (!disk.sufficient || !memory.sufficient || !cpu.sufficient) {
-      const reasons = [];
-      if (!disk.sufficient)
-        reasons.push("insufficient disk space");
-      if (!memory.sufficient)
-        reasons.push("insufficient memory");
-      if (!cpu.sufficient)
-        reasons.push("high CPU load");
-      return {
-        canParallelize: false,
-        recommendedConcurrency: 1,
-        reason: `Resource constraints: ${reasons.join(", ")}`
-      };
-    }
-    const worktreeSizeBytes = this.thresholds.worktreeSizeEstimateMB * 1024 * 1024;
-    const diskBasedConcurrency = Math.floor(disk.available / worktreeSizeBytes);
-    const memoryPerAgent = 200 * 1024 * 1024;
-    const memoryBasedConcurrency = Math.floor(memory.available / memoryPerAgent);
-    const availableCpuPercent = this.thresholds.maxCpuLoadPercent - cpu.loadPercent;
-    const cpuBasedConcurrency = Math.max(1, Math.floor(availableCpuPercent / 100 * cpu.cores));
-    const recommended = Math.min(diskBasedConcurrency, memoryBasedConcurrency, cpuBasedConcurrency, 4);
-    return {
-      canParallelize: recommended > 1,
-      recommendedConcurrency: Math.max(1, recommended)
-    };
-  }
-  async canAddWorktree(currentCount) {
-    const status = await this.getStatus();
-    if (!status.overall.canParallelize) {
-      return {
-        allowed: false,
-        reason: status.overall.reason || "Resources insufficient for parallelization"
-      };
-    }
-    if (currentCount >= status.overall.recommendedConcurrency) {
-      return {
-        allowed: false,
-        reason: `Maximum recommended concurrency (${status.overall.recommendedConcurrency}) reached`
-      };
-    }
-    return { allowed: true };
-  }
-  async getSummary() {
-    const status = await this.getStatus();
-    const formatBytes = (bytes) => {
-      const gb = bytes / (1024 * 1024 * 1024);
-      return `${gb.toFixed(1)}GB`;
-    };
-    const lines = [
-      "Resource Status:",
-      `  Disk: ${formatBytes(status.disk.available)} available (${status.disk.usedPercent.toFixed(1)}% used) ${status.disk.sufficient ? "✓" : "✗"}`,
-      `  Memory: ${formatBytes(status.memory.available)} available (${status.memory.usedPercent.toFixed(1)}% used) ${status.memory.sufficient ? "✓" : "✗"}`,
-      `  CPU: ${status.cpu.loadPercent.toFixed(1)}% load (${status.cpu.cores} cores) ${status.cpu.sufficient ? "✓" : "✗"}`,
-      `  Recommended concurrency: ${status.overall.recommendedConcurrency}`
-    ];
-    if (status.overall.reason) {
-      lines.push(`  Note: ${status.overall.reason}`);
-    }
-    return lines.join(`
-`);
-  }
-  startWatching(onWarning, intervalMs = 30000) {
-    let lastStatus = null;
-    const check = async () => {
-      const status = await this.getStatus();
-      if (lastStatus) {
-        if (lastStatus.disk.sufficient && !status.disk.sufficient) {
-          onWarning("Disk space running low - consider reducing parallelism");
-        }
-        if (lastStatus.memory.sufficient && !status.memory.sufficient) {
-          onWarning("Memory running low - consider reducing parallelism");
-        }
-        if (lastStatus.cpu.sufficient && !status.cpu.sufficient) {
-          onWarning("CPU load high - consider reducing parallelism");
-        }
-      }
-      lastStatus = status;
-    };
-    const intervalId = setInterval(check, intervalMs);
-    check();
-    return () => clearInterval(intervalId);
-  }
-}
-var DEFAULT_THRESHOLDS, resource_monitor_default;
-var init_resource_monitor = __esm(() => {
-  DEFAULT_THRESHOLDS = {
-    minDiskGB: 2,
-    maxDiskUsagePercent: 90,
-    minMemoryGB: 1,
-    maxMemoryUsagePercent: 85,
-    maxCpuLoadPercent: 80,
-    worktreeSizeEstimateMB: 500
-  };
-  resource_monitor_default = ResourceMonitor;
-});
-
-// install/lib/parallel/task-analyzer.ts
-var exports_task_analyzer = {};
-__export(exports_task_analyzer, {
-  default: () => task_analyzer_default,
-  TaskAnalyzer: () => TaskAnalyzer
-});
-
-class TaskAnalyzer {
-  analyze(tasks) {
-    const graph = this.buildGraph(tasks);
-    const parallelGroups = this.findParallelGroups(graph);
-    const sequentialTasks = this.findSequentialTasks(graph);
-    const parallelizableTasks = parallelGroups.reduce((sum, group) => sum + group.tasks.length, 0);
-    const maxParallelism = Math.max(1, ...parallelGroups.map((g) => g.tasks.length));
-    const sequentialTime = tasks.length;
-    const parallelTime = parallelGroups.length + sequentialTasks.length;
-    const estimatedSpeedup = parallelTime > 0 ? sequentialTime / parallelTime : 1;
-    return {
-      graph,
-      parallelGroups,
-      sequentialTasks,
-      analysis: {
-        totalTasks: tasks.length,
-        parallelizableTasks,
-        sequentialTasks: sequentialTasks.length,
-        maxParallelism,
-        estimatedSpeedup: Math.round(estimatedSpeedup * 100) / 100
-      }
-    };
-  }
-  buildGraph(tasks) {
-    const nodes = new Map;
-    for (const task of tasks) {
-      nodes.set(task.id, {
-        task,
-        dependencies: new Set(task.dependencies || []),
-        dependents: new Set,
-        predictedFiles: new Set(task.estimatedFiles || [])
-      });
-    }
-    for (const [id, node] of nodes) {
-      for (const depId of node.dependencies) {
-        const depNode = nodes.get(depId);
-        if (depNode) {
-          depNode.dependents.add(id);
-        }
-      }
-    }
-    const parallelizable = this.identifyParallelizableGroups(nodes);
-    const sequential = this.identifySequentialTasks(nodes);
-    return { nodes, parallelizable, sequential };
-  }
-  identifyParallelizableGroups(nodes) {
-    const groups = [];
-    const processed = new Set;
-    const levels = this.topologicalLevels(nodes);
-    for (const level of levels) {
-      if (level.length > 1) {
-        groups.push(level);
-      }
-      level.forEach((id) => processed.add(id));
-    }
-    return groups;
-  }
-  identifySequentialTasks(nodes) {
-    const sequential = [];
-    for (const [id, node] of nodes) {
-      if (node.dependencies.size > 0 && node.dependents.size > 0) {
-        sequential.push(id);
-      }
-    }
-    return sequential;
-  }
-  topologicalLevels(nodes) {
-    const levels = [];
-    const inDegree = new Map;
-    const remaining = new Set;
-    for (const [id, node] of nodes) {
-      inDegree.set(id, node.dependencies.size);
-      remaining.add(id);
-    }
-    while (remaining.size > 0) {
-      const level = [];
-      for (const id of remaining) {
-        if ((inDegree.get(id) ?? 0) === 0) {
-          level.push(id);
-        }
-      }
-      if (level.length === 0) {
-        console.warn("Circular dependency detected in task graph");
-        levels.push(Array.from(remaining));
-        break;
-      }
-      for (const id of level) {
-        remaining.delete(id);
-        const node = nodes.get(id);
-        if (node) {
-          for (const dependentId of node.dependents) {
-            const currentDegree = inDegree.get(dependentId) ?? 0;
-            inDegree.set(dependentId, currentDegree - 1);
-          }
-        }
-      }
-      levels.push(level);
-    }
-    return levels;
-  }
-  findParallelGroups(graph) {
-    const groups = [];
-    for (let i = 0;i < graph.parallelizable.length; i++) {
-      const taskIds = graph.parallelizable[i];
-      const tasks = taskIds.map((id) => graph.nodes.get(id)?.task).filter((t) => t !== undefined);
-      const predictedFiles = taskIds.flatMap((id) => Array.from(graph.nodes.get(id)?.predictedFiles || []));
-      groups.push({
-        id: `group-${i}`,
-        tasks,
-        predictedFiles,
-        canRunWith: []
-      });
-    }
-    return groups;
-  }
-  findSequentialTasks(graph) {
-    return graph.sequential.map((id) => graph.nodes.get(id)?.task).filter((t) => t !== undefined);
-  }
-  parseTaskDescriptions(descriptions) {
-    return descriptions.map((desc, index) => {
-      const task = {
-        id: `task-${index + 1}`,
-        description: desc,
-        type: this.inferTaskType(desc)
-      };
-      const fileMatches = desc.match(/[\w\-./]+\.(tsx|jsx|ts|js|css|scss|less|json|yaml|yml|md|html)/gi);
-      if (fileMatches) {
-        task.estimatedFiles = fileMatches;
-      }
-      const dependencyHints = this.extractDependencyHints(desc, index);
-      if (dependencyHints.length > 0) {
-        task.dependencies = dependencyHints;
-      }
-      return task;
-    });
-  }
-  inferTaskType(description) {
-    const lowerDesc = description.toLowerCase();
-    if (lowerDesc.includes("module") || lowerDesc.includes("component") || lowerDesc.includes("service") || lowerDesc.includes("class")) {
-      return "module";
-    }
-    if (lowerDesc.includes("feature") || lowerDesc.includes("implement") || lowerDesc.includes("add") || lowerDesc.includes("create")) {
-      return "feature";
-    }
-    return "file";
-  }
-  extractDependencyHints(description, currentIndex) {
-    const hints = [];
-    const lowerDesc = description.toLowerCase();
-    const afterMatch = lowerDesc.match(/after\s+task[s]?\s*(\d+)/i);
-    if (afterMatch) {
-      hints.push(`task-${afterMatch[1]}`);
-    }
-    const dependsMatch = lowerDesc.match(/depends\s+on\s+task[s]?\s*(\d+)/i);
-    if (dependsMatch) {
-      hints.push(`task-${dependsMatch[1]}`);
-    }
-    if (lowerDesc.includes("then") && currentIndex > 0) {
-      hints.push(`task-${currentIndex}`);
-    }
-    return hints;
-  }
-  generateSummary(result) {
-    const { analysis, parallelGroups, sequentialTasks } = result;
-    const lines = [
-      "## Task Analysis Summary",
-      "",
-      `Total tasks: ${analysis.totalTasks}`,
-      `Parallelizable: ${analysis.parallelizableTasks} (${Math.round(analysis.parallelizableTasks / analysis.totalTasks * 100)}%)`,
-      `Sequential: ${analysis.sequentialTasks}`,
-      `Maximum parallelism: ${analysis.maxParallelism}`,
-      `Estimated speedup: ${analysis.estimatedSpeedup}x`,
-      "",
-      "### Parallel Groups"
-    ];
-    for (const group of parallelGroups) {
-      lines.push(`- ${group.id}: ${group.tasks.map((t) => t.id).join(", ")}`);
-      if (group.predictedFiles.length > 0) {
-        lines.push(`  Files: ${group.predictedFiles.slice(0, 5).join(", ")}${group.predictedFiles.length > 5 ? "..." : ""}`);
-      }
-    }
-    if (sequentialTasks.length > 0) {
-      lines.push("", "### Sequential Tasks");
-      for (const task of sequentialTasks) {
-        lines.push(`- ${task.id}: ${task.description.slice(0, 50)}...`);
-      }
-    }
-    return lines.join(`
-`);
-  }
-}
-var task_analyzer_default;
-var init_task_analyzer = __esm(() => {
-  task_analyzer_default = TaskAnalyzer;
-});
-
-// install/lib/parallel/file-predictor.ts
-var exports_file_predictor = {};
-__export(exports_file_predictor, {
-  default: () => file_predictor_default,
-  FilePredictor: () => FilePredictor
-});
-import { execSync as execSync3 } from "child_process";
-import { existsSync as existsSync2 } from "fs";
-import { join as join2, dirname as dirname2, basename, extname } from "path";
-
-class FilePredictor {
-  config;
-  fileCache = new Map;
-  gitPatterns = new Map;
-  constructor(config) {
-    this.config = {
-      ...DEFAULT_CONFIG,
-      ...config
-    };
-    if (this.config.useGitHistory) {
-      this.loadGitPatterns();
-    }
-  }
-  predict(taskId, description) {
-    const predictions = [];
-    const explicitFiles = this.extractExplicitFiles(description);
-    if (explicitFiles.length > 0) {
-      predictions.push({
-        files: explicitFiles,
-        confidence: 0.95,
-        method: "explicit"
-      });
-    }
-    const patternFiles = this.matchPatterns(description);
-    if (patternFiles.length > 0) {
-      predictions.push({
-        files: patternFiles,
-        confidence: 0.8,
-        method: "pattern"
-      });
-    }
-    const moduleFiles = this.inferModuleFiles(description);
-    if (moduleFiles.length > 0) {
-      predictions.push({
-        files: moduleFiles,
-        confidence: 0.7,
-        method: "module"
-      });
-    }
-    if (this.config.useGitHistory) {
-      const historyFiles = this.predictFromHistory(description);
-      if (historyFiles.length > 0) {
-        predictions.push({
-          files: historyFiles,
-          confidence: 0.6,
-          method: "git_history"
-        });
-      }
-    }
-    const heuristicFiles = this.applyHeuristics(description);
-    if (heuristicFiles.length > 0) {
-      predictions.push({
-        files: heuristicFiles,
-        confidence: 0.5,
-        method: "heuristic"
-      });
-    }
-    const combined = this.combinePredictions(predictions);
-    return {
-      taskId,
-      predictedFiles: combined.files,
-      confidence: combined.confidence,
-      method: combined.method,
-      reasoning: this.generateReasoning(predictions)
-    };
-  }
-  predictAll(tasks) {
-    return tasks.map((task) => this.predict(task.id, task.description));
-  }
-  extractExplicitFiles(description) {
-    const files = [];
-    const fileRegex = /[\w\-./]+\.(ts|tsx|js|jsx|json|yaml|yml|md|css|scss|html)/gi;
-    const matches = description.match(fileRegex) || [];
-    for (const match of matches) {
-      const fullPath = join2(this.config.baseDir, match);
-      if (existsSync2(fullPath)) {
-        files.push(match);
-      } else {
-        const similar = this.findSimilarFiles(match);
-        files.push(...similar);
-      }
-    }
-    if (this.config.includeRelated) {
-      files.push(...this.findRelatedFiles(files));
-    }
-    return [...new Set(files)];
-  }
-  matchPatterns(description) {
-    const files = [];
-    const lowerDesc = description.toLowerCase();
-    if (lowerDesc.includes("all test") || lowerDesc.includes("every test")) {
-      files.push(...this.findFilesByPattern("**/*.test.{ts,tsx,js,jsx}"));
-    }
-    if (lowerDesc.includes("all component") || lowerDesc.includes("every component")) {
-      files.push(...this.findFilesByPattern("**/components/**/*.{ts,tsx}"));
-    }
-    const dirMatch = description.match(/(?:in|under|within)\s+([\w\-./]+)(?:\s+directory)?/i);
-    if (dirMatch) {
-      files.push(...this.findFilesByPattern(`${dirMatch[1]}/**/*`));
-    }
-    return [...new Set(files)];
-  }
-  inferModuleFiles(description) {
-    const files = [];
-    const moduleRegex = /\b([A-Z][a-zA-Z0-9]+(?:Service|Component|Controller|Manager|Handler|Provider|Module|Store|Reducer|Action|Hook)?)\b/g;
-    const matches = [...description.matchAll(moduleRegex)];
-    for (const match of matches) {
-      const moduleName = match[1];
-      const variants = [
-        moduleName,
-        this.toKebabCase(moduleName),
-        this.toCamelCase(moduleName),
-        this.toSnakeCase(moduleName)
-      ];
-      for (const variant of variants) {
-        const found = this.findFilesByPattern(`**/${variant}.*`);
-        files.push(...found);
-        const indexFound = this.findFilesByPattern(`**/${variant}/index.*`);
-        files.push(...indexFound);
-      }
-    }
-    return [...new Set(files)];
-  }
-  predictFromHistory(description) {
-    const files = [];
-    const keywords = this.extractKeywords(description);
-    for (const keyword of keywords) {
-      const pattern = this.gitPatterns.get(keyword.toLowerCase());
-      if (pattern) {
-        files.push(...pattern);
-      }
-    }
-    return [...new Set(files)];
-  }
-  applyHeuristics(description) {
-    const files = [];
-    const lowerDesc = description.toLowerCase();
-    if (lowerDesc.includes("auth") || lowerDesc.includes("login") || lowerDesc.includes("session")) {
-      files.push(...this.findFilesByPattern("**/*auth*"));
-      files.push(...this.findFilesByPattern("**/*login*"));
-      files.push(...this.findFilesByPattern("**/*session*"));
-    }
-    if (lowerDesc.includes("api") || lowerDesc.includes("endpoint") || lowerDesc.includes("route")) {
-      files.push(...this.findFilesByPattern("**/routes/**/*"));
-      files.push(...this.findFilesByPattern("**/api/**/*"));
-      files.push(...this.findFilesByPattern("**/*.route.*"));
-    }
-    if (lowerDesc.includes("database") || lowerDesc.includes("schema") || lowerDesc.includes("model")) {
-      files.push(...this.findFilesByPattern("**/models/**/*"));
-      files.push(...this.findFilesByPattern("**/schemas/**/*"));
-      files.push(...this.findFilesByPattern("**/*.model.*"));
-    }
-    if (lowerDesc.includes("style") || lowerDesc.includes("css") || lowerDesc.includes("ui")) {
-      files.push(...this.findFilesByPattern("**/*.css"));
-      files.push(...this.findFilesByPattern("**/*.scss"));
-      files.push(...this.findFilesByPattern("**/styles/**/*"));
-    }
-    if (lowerDesc.includes("config") || lowerDesc.includes("setting")) {
-      files.push(...this.findFilesByPattern("**/*.config.*"));
-      files.push(...this.findFilesByPattern("**/config/**/*"));
-    }
-    return [...new Set(files)];
-  }
-  combinePredictions(predictions) {
-    if (predictions.length === 0) {
-      return { files: [], confidence: 0, method: "heuristic" };
-    }
-    predictions.sort((a, b) => b.confidence - a.confidence);
-    const best = predictions[0];
-    const allFiles = new Set;
-    for (const pred of predictions) {
-      pred.files.forEach((f) => allFiles.add(f));
-    }
-    return {
-      files: Array.from(allFiles),
-      confidence: best.confidence,
-      method: best.method
-    };
-  }
-  loadGitPatterns() {
-    try {
-      const output = execSync3(`git log --name-only --pretty=format:"COMMIT:%s" -${this.config.historyDepth}`, { cwd: this.config.baseDir, encoding: "utf-8" });
-      let currentMessage = "";
-      const commitFiles = new Map;
-      for (const line of output.split(`
-`)) {
-        if (line.startsWith("COMMIT:")) {
-          currentMessage = line.slice(7).toLowerCase();
-          if (!commitFiles.has(currentMessage)) {
-            commitFiles.set(currentMessage, []);
-          }
-        } else if (line.trim() && currentMessage) {
-          commitFiles.get(currentMessage)?.push(line.trim());
-        }
-      }
-      for (const [message, files] of commitFiles) {
-        const keywords = this.extractKeywords(message);
-        for (const keyword of keywords) {
-          const existing = this.gitPatterns.get(keyword) || [];
-          this.gitPatterns.set(keyword, [...new Set([...existing, ...files])]);
-        }
-      }
-    } catch (error) {}
-  }
-  findFilesByPattern(pattern) {
-    try {
-      const output = execSync3(`find . -type f -path "${pattern.replace("**", "*")}" 2>/dev/null | head -20`, { cwd: this.config.baseDir, encoding: "utf-8" });
-      return output.split(`
-`).filter(Boolean).map((f) => f.replace(/^\.\//, ""));
-    } catch {
-      return [];
-    }
-  }
-  findSimilarFiles(path) {
-    const name = basename(path, extname(path));
-    return this.findFilesByPattern(`**/*${name}*`).slice(0, 5);
-  }
-  findRelatedFiles(files) {
-    const related = [];
-    for (const file of files) {
-      const ext = extname(file);
-      const base = basename(file, ext);
-      const dir = dirname2(file);
-      if (this.config.includeTests) {
-        related.push(...this.findFilesByPattern(`${dir}/${base}.test${ext}`));
-        related.push(...this.findFilesByPattern(`${dir}/__tests__/${base}${ext}`));
-      }
-      if (ext === ".ts" || ext === ".tsx") {
-        related.push(...this.findFilesByPattern(`${dir}/${base}.d.ts`));
-      }
-      related.push(...this.findFilesByPattern(`${dir}/index${ext}`));
-    }
-    return related;
-  }
-  extractKeywords(text) {
-    const stopWords = new Set([
-      "the",
-      "a",
-      "an",
-      "and",
-      "or",
-      "but",
-      "in",
-      "on",
-      "at",
-      "to",
-      "for",
-      "of",
-      "with",
-      "by",
-      "from",
-      "as",
-      "is",
-      "was",
-      "are",
-      "been",
-      "be",
-      "have",
-      "has",
-      "had",
-      "do",
-      "does",
-      "did",
-      "will",
-      "would",
-      "could",
-      "should",
-      "may",
-      "might",
-      "must",
-      "shall",
-      "can",
-      "need",
-      "dare",
-      "ought",
-      "used",
-      "fix",
-      "add",
-      "update",
-      "remove",
-      "change",
-      "make"
-    ]);
-    return text.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((word) => word.length > 2 && !stopWords.has(word));
-  }
-  generateReasoning(predictions) {
-    if (predictions.length === 0) {
-      return "No files could be predicted for this task.";
-    }
-    const parts = predictions.map((p) => `${p.method}: ${p.files.length} files (${Math.round(p.confidence * 100)}% confidence)`);
-    return `Predictions based on: ${parts.join(", ")}`;
-  }
-  toKebabCase(str) {
-    return str.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
-  }
-  toCamelCase(str) {
-    return str.charAt(0).toLowerCase() + str.slice(1);
-  }
-  toSnakeCase(str) {
-    return str.replace(/([a-z])([A-Z])/g, "$1_$2").toLowerCase();
-  }
-}
-var DEFAULT_CONFIG, file_predictor_default;
-var init_file_predictor = __esm(() => {
-  DEFAULT_CONFIG = {
-    useGitHistory: true,
-    historyDepth: 50,
-    includeTests: true,
-    includeRelated: true
-  };
-  file_predictor_default = FilePredictor;
-});
-
-// install/lib/parallel/overlap-detector.ts
-var exports_overlap_detector = {};
-__export(exports_overlap_detector, {
-  default: () => overlap_detector_default,
-  OverlapDetector: () => OverlapDetector
-});
-
-class OverlapDetector {
-  detect(predictions) {
-    const overlapPairs = [];
-    const fileToTasks = new Map;
-    for (const prediction of predictions) {
-      for (const file of prediction.predictedFiles) {
-        const existing = fileToTasks.get(file) || [];
-        existing.push(prediction.taskId);
-        fileToTasks.set(file, existing);
-      }
-    }
-    const overlappingFiles = [];
-    for (const [file, tasks] of fileToTasks) {
-      if (tasks.length > 1) {
-        overlappingFiles.push(file);
-        for (let i = 0;i < tasks.length; i++) {
-          for (let j = i + 1;j < tasks.length; j++) {
-            const existingPair = overlapPairs.find((p) => p.task1 === tasks[i] && p.task2 === tasks[j] || p.task1 === tasks[j] && p.task2 === tasks[i]);
-            if (existingPair) {
-              existingPair.overlappingFiles.push(file);
-            } else {
-              overlapPairs.push({
-                task1: tasks[i],
-                task2: tasks[j],
-                overlappingFiles: [file],
-                severity: this.assessSeverity(file)
-              });
-            }
-          }
-        }
-      }
-    }
-    const safeGroups = this.buildSafeGroups(predictions, overlapPairs);
-    return {
-      hasOverlap: overlappingFiles.length > 0,
-      overlappingFiles,
-      taskPairs: overlapPairs,
-      safeGroups
-    };
-  }
-  canRunInParallel(prediction1, prediction2) {
-    const overlapping = this.findOverlap(prediction1.predictedFiles, prediction2.predictedFiles);
-    if (overlapping.length === 0) {
-      return { canParallelize: true };
-    }
-    return {
-      canParallelize: false,
-      reason: `Tasks would modify ${overlapping.length} common file(s)`,
-      overlappingFiles: overlapping
-    };
-  }
-  analyze(predictions) {
-    const result = this.detect(predictions);
-    const overlapMatrix = new Map;
-    const recommendations = [];
-    for (const pair of result.taskPairs) {
-      const set1 = overlapMatrix.get(pair.task1) || new Set;
-      set1.add(pair.task2);
-      overlapMatrix.set(pair.task1, set1);
-      const set2 = overlapMatrix.get(pair.task2) || new Set;
-      set2.add(pair.task1);
-      overlapMatrix.set(pair.task2, set2);
-    }
-    const blocked = new Set;
-    for (const pair of result.taskPairs) {
-      if (pair.severity === "critical") {
-        blocked.add(pair.task1);
-        blocked.add(pair.task2);
-      }
-    }
-    const parallelizable = predictions.length - blocked.size;
-    if (result.hasOverlap) {
-      recommendations.push("Consider splitting tasks to avoid file overlaps for better parallelization.");
-      const fileConflictCounts = new Map;
-      for (const pair of result.taskPairs) {
-        for (const file of pair.overlappingFiles) {
-          fileConflictCounts.set(file, (fileConflictCounts.get(file) || 0) + 1);
-        }
-      }
-      const topConflicting = Array.from(fileConflictCounts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 3);
-      if (topConflicting.length > 0) {
-        recommendations.push(`Most conflicting files: ${topConflicting.map(([f]) => f).join(", ")}`);
-      }
-    } else {
-      recommendations.push("All tasks can be safely parallelized.");
-    }
-    if (result.safeGroups.length > 0) {
-      const maxGroupSize = Math.max(...result.safeGroups.map((g) => g.taskIds.length));
-      recommendations.push(`Maximum parallel group size: ${maxGroupSize} tasks`);
-    }
-    return {
-      totalTasks: predictions.length,
-      parallelizable,
-      blocked: blocked.size,
-      overlapMatrix,
-      recommendations
-    };
-  }
-  buildSafeGroups(predictions, overlapPairs) {
-    const groups = [];
-    const assigned = new Set;
-    const conflicts = new Map;
-    for (const prediction of predictions) {
-      conflicts.set(prediction.taskId, new Set);
-    }
-    for (const pair of overlapPairs) {
-      conflicts.get(pair.task1)?.add(pair.task2);
-      conflicts.get(pair.task2)?.add(pair.task1);
-    }
-    let groupId = 0;
-    for (const prediction of predictions) {
-      if (assigned.has(prediction.taskId))
-        continue;
-      const group = {
-        id: `safe-group-${groupId++}`,
-        taskIds: [prediction.taskId],
-        files: [...prediction.predictedFiles],
-        canRunInParallel: true
-      };
-      assigned.add(prediction.taskId);
-      for (const other of predictions) {
-        if (assigned.has(other.taskId))
-          continue;
-        const hasConflict = group.taskIds.some((taskId) => conflicts.get(taskId)?.has(other.taskId));
-        if (!hasConflict) {
-          group.taskIds.push(other.taskId);
-          group.files.push(...other.predictedFiles);
-          assigned.add(other.taskId);
-        }
-      }
-      group.files = [...new Set(group.files)];
-      groups.push(group);
-    }
-    return groups;
-  }
-  findOverlap(files1, files2) {
-    const set1 = new Set(files1);
-    return files2.filter((f) => set1.has(f));
-  }
-  assessSeverity(file) {
-    if (file.match(/\.(ts|tsx|js|jsx|py|java|go|rs|rb)$/)) {
-      return "critical";
-    }
-    if (file.match(/\.(json|yaml|yml|toml|xml)$/)) {
-      return "warning";
-    }
-    return "info";
-  }
-  generateReport(predictions) {
-    const result = this.detect(predictions);
-    const analysis = this.analyze(predictions);
-    const lines = [
-      "## File Overlap Analysis",
-      "",
-      `Total tasks: ${analysis.totalTasks}`,
-      `Parallelizable: ${analysis.parallelizable}`,
-      `Blocked by overlaps: ${analysis.blocked}`,
-      ""
-    ];
-    if (result.hasOverlap) {
-      lines.push("### Overlapping File Pairs");
-      lines.push("");
-      for (const pair of result.taskPairs) {
-        const icon = pair.severity === "critical" ? "\uD83D\uDD34" : pair.severity === "warning" ? "\uD83D\uDFE1" : "\uD83D\uDFE2";
-        lines.push(`${icon} ${pair.task1} ↔ ${pair.task2}`);
-        lines.push(`   Files: ${pair.overlappingFiles.join(", ")}`);
-      }
-      lines.push("");
-    }
-    lines.push("### Safe Parallel Groups");
-    lines.push("");
-    for (const group of result.safeGroups) {
-      lines.push(`- ${group.id}: ${group.taskIds.join(", ")}`);
-    }
-    lines.push("");
-    lines.push("### Recommendations");
-    lines.push("");
-    for (const rec of analysis.recommendations) {
-      lines.push(`- ${rec}`);
-    }
-    return lines.join(`
-`);
-  }
-  isConflictFree(predictions) {
-    const result = this.detect(predictions);
-    return !result.hasOverlap || result.taskPairs.every((p) => p.severity !== "critical");
-  }
-  getMaxParallelization(predictions) {
-    const result = this.detect(predictions);
-    return Math.max(...result.safeGroups.map((g) => g.taskIds.length), 1);
-  }
-}
-var overlap_detector_default;
-var init_overlap_detector = __esm(() => {
-  overlap_detector_default = OverlapDetector;
-});
-
-// install/lib/parallel/parallel-executor.ts
-var exports_parallel_executor = {};
-__export(exports_parallel_executor, {
-  default: () => parallel_executor_default,
-  ParallelExecutor: () => ParallelExecutor
-});
-import { spawn } from "child_process";
-import { EventEmitter } from "events";
-var DEFAULT_CONFIG2, ParallelExecutor, parallel_executor_default;
-var init_parallel_executor = __esm(() => {
-  init_worktree_manager();
-  init_resource_monitor();
-  DEFAULT_CONFIG2 = {
-    maxConcurrent: 4,
-    timeout: 300000,
-    agentCommand: "npx claude-code"
-  };
-  ParallelExecutor = class ParallelExecutor extends EventEmitter {
-    config;
-    worktreeManager;
-    resourceMonitor;
-    executionTasks = new Map;
-    runningProcesses = new Map;
-    cancelled = false;
-    constructor(config) {
-      super();
-      this.config = {
-        ...DEFAULT_CONFIG2,
-        ...config
-      };
-      this.worktreeManager = new WorktreeManager({
-        baseDir: config.baseDir,
-        maxWorktrees: this.config.maxConcurrent
-      });
-      this.resourceMonitor = new ResourceMonitor(config.baseDir);
-    }
-    async execute(group) {
-      this.cancelled = false;
-      const results = [];
-      const resourceStatus = await this.resourceMonitor.getStatus();
-      if (!resourceStatus.overall.canParallelize) {
-        throw new Error(`Cannot parallelize: ${resourceStatus.overall.reason}`);
-      }
-      const maxConcurrent = Math.min(this.config.maxConcurrent, resourceStatus.overall.recommendedConcurrency, group.taskIds.length);
-      for (const taskId of group.taskIds) {
-        this.executionTasks.set(taskId, {
-          task: { id: taskId, description: "", type: "feature" },
-          status: "pending"
-        });
-      }
-      const taskQueue = [...group.taskIds];
-      const running = [];
-      while (taskQueue.length > 0 || running.length > 0) {
-        if (this.cancelled) {
-          await this.cancelAll();
-          break;
-        }
-        while (taskQueue.length > 0 && running.length < maxConcurrent) {
-          const taskId = taskQueue.shift();
-          const promise = this.executeTask(taskId);
-          running.push(promise);
-        }
-        if (running.length > 0) {
-          const completedIndex = await Promise.race(running.map((p, i) => p.then(() => i)));
-          const result = await running[completedIndex];
-          results.push(result);
-          running.splice(completedIndex, 1);
-        }
-      }
-      return results;
-    }
-    async executeTask(taskId) {
-      const execTask = this.executionTasks.get(taskId);
-      execTask.status = "running";
-      execTask.startTime = new Date;
-      this.emitProgress({
-        type: "started",
-        taskId,
-        message: `Starting task ${taskId}`
-      });
-      let worktree;
-      try {
-        worktree = await this.worktreeManager.create({ taskId });
-        execTask.worktree = worktree;
-        const result = await this.runAgentInWorktree(taskId, worktree);
-        execTask.status = result.success ? "completed" : "failed";
-        execTask.endTime = new Date;
-        execTask.output = result.output;
-        execTask.exitCode = result.exitCode;
-        if (result.success) {
-          this.worktreeManager.markCompleted(taskId);
-          this.emitProgress({
-            type: "completed",
-            taskId,
-            message: `Task ${taskId} completed successfully`
-          });
-        } else {
-          this.worktreeManager.markFailed(taskId);
-          execTask.error = result.error;
-          this.emitProgress({
-            type: "failed",
-            taskId,
-            message: `Task ${taskId} failed: ${result.error}`
-          });
-        }
-        return result;
-      } catch (error) {
-        execTask.status = "failed";
-        execTask.endTime = new Date;
-        execTask.error = String(error);
-        if (worktree) {
-          this.worktreeManager.markFailed(taskId);
-        }
-        this.emitProgress({
-          type: "failed",
-          taskId,
-          message: `Task ${taskId} failed: ${error}`
-        });
-        return {
-          taskId,
-          success: false,
-          output: "",
-          error: String(error),
-          exitCode: 1,
-          duration: execTask.startTime ? Date.now() - execTask.startTime.getTime() : 0,
-          worktreePath: worktree?.path ?? ""
-        };
-      }
-    }
-    async runAgentInWorktree(taskId, worktree) {
-      return new Promise((resolve) => {
-        const startTime = Date.now();
-        let output = "";
-        let error = "";
-        const execTask = this.executionTasks.get(taskId);
-        const taskDescription = execTask.task.description || `Execute task ${taskId}`;
-        const childProcess = spawn(this.config.agentCommand, ["--print", "--no-tty", taskDescription], {
-          cwd: worktree.path,
-          shell: true,
-          env: {
-            ...globalThis.process.env,
-            PARALLEL_TASK_ID: taskId,
-            PARALLEL_WORKTREE: worktree.path
-          }
-        });
-        this.runningProcesses.set(taskId, childProcess);
-        childProcess.stdout?.on("data", (data) => {
-          output += data.toString();
-          this.emitProgress({
-            type: "output",
-            taskId,
-            message: data.toString()
-          });
-        });
-        childProcess.stderr?.on("data", (data) => {
-          error += data.toString();
-        });
-        childProcess.on("close", (exitCode) => {
-          this.runningProcesses.delete(taskId);
-          resolve({
-            taskId,
-            success: exitCode === 0,
-            output,
-            error: error || undefined,
-            exitCode: exitCode ?? 1,
-            duration: Date.now() - startTime,
-            worktreePath: worktree.path
-          });
-        });
-        childProcess.on("error", (err) => {
-          this.runningProcesses.delete(taskId);
-          resolve({
-            taskId,
-            success: false,
-            output,
-            error: err.message,
-            exitCode: 1,
-            duration: Date.now() - startTime,
-            worktreePath: worktree.path
-          });
-        });
-        setTimeout(() => {
-          if (this.runningProcesses.has(taskId)) {
-            childProcess.kill("SIGTERM");
-            error = "Task timed out";
-          }
-        }, this.config.timeout);
-      });
-    }
-    async cancel() {
-      this.cancelled = true;
-      await this.cancelAll();
-    }
-    async cancelAll() {
-      for (const [taskId, process2] of this.runningProcesses) {
-        try {
-          process2.kill("SIGTERM");
-          const execTask = this.executionTasks.get(taskId);
-          if (execTask) {
-            execTask.status = "cancelled";
-            execTask.endTime = new Date;
-          }
-          this.emitProgress({
-            type: "cancelled",
-            taskId,
-            message: `Task ${taskId} cancelled`
-          });
-        } catch {}
-      }
-      this.runningProcesses.clear();
-    }
-    getStatus() {
-      let running = 0;
-      let completed = 0;
-      let failed = 0;
-      let pending = 0;
-      for (const task of this.executionTasks.values()) {
-        switch (task.status) {
-          case "running":
-            running++;
-            break;
-          case "completed":
-            completed++;
-            break;
-          case "failed":
-            failed++;
-            break;
-          case "pending":
-            pending++;
-            break;
-        }
-      }
-      return {
-        total: this.executionTasks.size,
-        running,
-        completed,
-        failed,
-        pending
-      };
-    }
-    getCompletedWorktrees() {
-      return this.worktreeManager.getCompleted();
-    }
-    getFailedWorktrees() {
-      return this.worktreeManager.getFailed();
-    }
-    getWorktreeManager() {
-      return this.worktreeManager;
-    }
-    async cleanup() {
-      await this.worktreeManager.cleanupAll();
-      this.executionTasks.clear();
-    }
-    emitProgress(event) {
-      this.emit("progress", event);
-      if (this.config.onProgress) {
-        this.config.onProgress(event);
-      }
-    }
-  };
-  parallel_executor_default = ParallelExecutor;
-});
-
-// install/lib/parallel/merge-orchestrator.ts
-var exports_merge_orchestrator = {};
-__export(exports_merge_orchestrator, {
-  default: () => merge_orchestrator_default,
-  MergeOrchestrator: () => MergeOrchestrator
-});
-import { execSync as execSync4, exec as exec2 } from "child_process";
-import { promisify as promisify2 } from "util";
-
-class MergeOrchestrator {
-  baseDir;
-  targetBranch;
-  constructor(baseDir, targetBranch) {
-    this.baseDir = baseDir;
-    this.targetBranch = targetBranch || this.getCurrentBranch();
-  }
-  async mergeAll(worktrees, strategy = { type: "sequential" }) {
-    const merged = [];
-    const failed = [];
-    const skipped = [];
-    let totalCommits = 0;
-    const allFilesChanged = new Set;
-    const completedWorktrees = worktrees.filter((w) => w.status === "completed");
-    const failedWorktrees = worktrees.filter((w) => w.status === "failed");
-    for (const worktree of failedWorktrees) {
-      skipped.push(worktree.taskId);
-    }
-    for (const worktree of completedWorktrees) {
-      const canMerge = await this.canMergeSafely(worktree);
-      if (!canMerge.safe) {
-        failed.push({
-          taskId: worktree.taskId,
-          success: false,
-          branch: worktree.branch,
-          commits: 0,
-          filesChanged: [],
-          error: canMerge.reason
-        });
-        continue;
-      }
-      try {
-        const result = await this.mergeBranch(worktree, strategy);
-        if (result.success) {
-          merged.push(result);
-          totalCommits += result.commits;
-          result.filesChanged.forEach((f) => allFilesChanged.add(f));
-        } else {
-          failed.push(result);
-        }
-      } catch (error) {
-        failed.push({
-          taskId: worktree.taskId,
-          success: false,
-          branch: worktree.branch,
-          commits: 0,
-          filesChanged: [],
-          error: String(error)
-        });
-      }
-    }
-    return {
-      success: failed.length === 0,
-      merged,
-      failed,
-      skipped,
-      totalCommits,
-      totalFilesChanged: Array.from(allFilesChanged)
-    };
-  }
-  async mergeBranch(worktree, strategy) {
-    const { branch, taskId } = worktree;
-    try {
-      const commitInfo = await this.getCommitInfo(branch);
-      if (commitInfo.commits === 0) {
-        return {
-          taskId,
-          success: true,
-          branch,
-          commits: 0,
-          filesChanged: []
-        };
-      }
-      switch (strategy.type) {
-        case "squash":
-          await this.squashMerge(branch, strategy.message || `Merge parallel task: ${taskId}`);
-          break;
-        case "rebase":
-          await this.rebaseMerge(branch);
-          break;
-        case "sequential":
-        default:
-          await this.sequentialMerge(branch);
-          break;
-      }
-      return {
-        taskId,
-        success: true,
-        branch,
-        commits: commitInfo.commits,
-        filesChanged: commitInfo.filesChanged
-      };
-    } catch (error) {
-      await this.abortMerge().catch(() => {});
-      return {
-        taskId,
-        success: false,
-        branch,
-        commits: 0,
-        filesChanged: [],
-        error: String(error)
-      };
-    }
-  }
-  async canMergeSafely(worktree) {
-    try {
-      await execAsync2(`git merge --no-commit --no-ff "${worktree.branch}"`, { cwd: this.baseDir });
-      await execAsync2("git merge --abort", { cwd: this.baseDir });
-      return { safe: true };
-    } catch (error) {
-      await execAsync2("git merge --abort", { cwd: this.baseDir }).catch(() => {});
-      const errorMsg = String(error);
-      if (errorMsg.includes("CONFLICT")) {
-        return {
-          safe: false,
-          reason: "Merge would result in conflicts. File overlap detection may have missed some files."
-        };
-      }
-      return {
-        safe: false,
-        reason: `Merge check failed: ${errorMsg}`
-      };
-    }
-  }
-  async sequentialMerge(branch) {
-    await execAsync2(`git merge --no-ff "${branch}" -m "Merge parallel task: ${branch}"`, { cwd: this.baseDir });
-  }
-  async squashMerge(branch, message) {
-    await execAsync2(`git merge --squash "${branch}"`, { cwd: this.baseDir });
-    await execAsync2(`git commit -m "${message}"`, { cwd: this.baseDir });
-  }
-  async rebaseMerge(branch) {
-    await execAsync2(`git rebase "${branch}"`, { cwd: this.baseDir });
-  }
-  async abortMerge() {
-    await execAsync2("git merge --abort", { cwd: this.baseDir });
-  }
-  async getCommitInfo(branch) {
-    try {
-      const { stdout: countOutput } = await execAsync2(`git rev-list --count "${this.targetBranch}..${branch}"`, { cwd: this.baseDir });
-      const commits = parseInt(countOutput.trim(), 10);
-      const { stdout: filesOutput } = await execAsync2(`git diff --name-only "${this.targetBranch}...${branch}"`, { cwd: this.baseDir });
-      const filesChanged = filesOutput.trim().split(`
-`).filter(Boolean);
-      return { commits, filesChanged };
-    } catch {
-      return { commits: 0, filesChanged: [] };
-    }
-  }
-  getCurrentBranch() {
-    try {
-      return execSync4("git branch --show-current", {
-        cwd: this.baseDir,
-        encoding: "utf-8"
-      }).trim();
-    } catch {
-      return "main";
-    }
-  }
-  async rollback(commits = 1) {
-    await execAsync2(`git reset --hard HEAD~${commits}`, { cwd: this.baseDir });
-  }
-  generateSummary(result) {
-    const lines = [
-      "## Merge Summary",
-      "",
-      `Status: ${result.success ? "✅ Success" : "❌ Failed"}`,
-      `Total commits merged: ${result.totalCommits}`,
-      `Files changed: ${result.totalFilesChanged.length}`,
-      ""
-    ];
-    if (result.merged.length > 0) {
-      lines.push("### Successfully Merged");
-      for (const m of result.merged) {
-        lines.push(`- ${m.taskId}: ${m.commits} commits, ${m.filesChanged.length} files`);
-      }
-      lines.push("");
-    }
-    if (result.failed.length > 0) {
-      lines.push("### Failed to Merge");
-      for (const f of result.failed) {
-        lines.push(`- ${f.taskId}: ${f.error}`);
-      }
-      lines.push("");
-    }
-    if (result.skipped.length > 0) {
-      lines.push("### Skipped (Failed Tasks)");
-      for (const s of result.skipped) {
-        lines.push(`- ${s}`);
-      }
-      lines.push("");
-    }
-    if (result.totalFilesChanged.length > 0) {
-      lines.push("### Files Changed");
-      for (const f of result.totalFilesChanged.slice(0, 20)) {
-        lines.push(`- ${f}`);
-      }
-      if (result.totalFilesChanged.length > 20) {
-        lines.push(`... and ${result.totalFilesChanged.length - 20} more`);
-      }
-    }
-    return lines.join(`
-`);
-  }
-  async cleanupBranches(worktreeManager, results) {
-    for (const result of results) {
-      if (result.success) {
-        await worktreeManager.remove(result.taskId).catch((error) => {
-          console.error(`Failed to cleanup worktree for ${result.taskId}:`, error);
-        });
-      }
-    }
-  }
-}
-var execAsync2, merge_orchestrator_default;
-var init_merge_orchestrator = __esm(() => {
-  execAsync2 = promisify2(exec2);
-  merge_orchestrator_default = MergeOrchestrator;
-});
 
 // node_modules/.bun/yaml@2.8.2/node_modules/yaml/dist/nodes/identity.js
 var require_identity = __commonJS((exports) => {
@@ -8518,15 +6904,1542 @@ var require_public_api = __commonJS((exports) => {
   exports.stringify = stringify;
 });
 
-// install/lib/parallel/index.ts
-init_worktree_manager();
-init_resource_monitor();
-init_task_analyzer();
-init_file_predictor();
-init_overlap_detector();
-init_parallel_executor();
-init_merge_orchestrator();
+// install/lib/parallel/worktree-manager.ts
+import { exec } from "child_process";
+import { existsSync, rmSync, mkdirSync } from "fs";
+import { join } from "path";
+import { promisify } from "util";
+var execAsync = promisify(exec);
 
+class WorktreeManager {
+  config;
+  activeWorktrees = new Map;
+  constructor(config) {
+    this.config = {
+      baseDir: config.baseDir,
+      worktreeDir: config.worktreeDir ?? join(config.baseDir, ".parallel-worktrees"),
+      maxWorktrees: config.maxWorktrees ?? 4,
+      cleanupOnExit: config.cleanupOnExit ?? true
+    };
+    if (!existsSync(this.config.worktreeDir)) {
+      mkdirSync(this.config.worktreeDir, { recursive: true });
+    }
+    if (this.config.cleanupOnExit) {
+      process.on("exit", () => this.cleanupAll());
+      process.on("SIGINT", () => {
+        this.cleanupAll();
+        process.exit(130);
+      });
+      process.on("SIGTERM", () => {
+        this.cleanupAll();
+        process.exit(143);
+      });
+    }
+  }
+  async isCleanState() {
+    try {
+      const { stdout } = await execAsync("git status --porcelain", {
+        cwd: this.config.baseDir
+      });
+      if (stdout.trim()) {
+        return {
+          clean: false,
+          reason: "Uncommitted changes detected. Please commit or stash before creating worktrees."
+        };
+      }
+      return { clean: true };
+    } catch (error) {
+      return {
+        clean: false,
+        reason: `Failed to check git status: ${error}`
+      };
+    }
+  }
+  async getCurrentBranch() {
+    const { stdout } = await execAsync("git branch --show-current", {
+      cwd: this.config.baseDir
+    });
+    return stdout.trim();
+  }
+  async getCurrentCommit() {
+    const { stdout } = await execAsync("git rev-parse HEAD", {
+      cwd: this.config.baseDir
+    });
+    return stdout.trim();
+  }
+  async create(options) {
+    const { taskId, baseBranch, branchPrefix = "parallel" } = options;
+    const cleanCheck = await this.isCleanState();
+    if (!cleanCheck.clean) {
+      throw new Error(`Cannot create worktree: ${cleanCheck.reason}`);
+    }
+    if (this.activeWorktrees.size >= this.config.maxWorktrees) {
+      throw new Error(`Maximum worktrees (${this.config.maxWorktrees}) reached. ` + `Complete or remove existing worktrees first.`);
+    }
+    const branchName = `${branchPrefix}/${taskId}`;
+    const worktreePath = join(this.config.worktreeDir, taskId);
+    const base = baseBranch ?? await this.getCurrentBranch();
+    const commit = await this.getCurrentCommit();
+    try {
+      await execAsync(`git worktree add -b "${branchName}" "${worktreePath}" "${base}"`, { cwd: this.config.baseDir });
+      const info = {
+        path: worktreePath,
+        branch: branchName,
+        commit,
+        taskId,
+        createdAt: new Date,
+        status: "active"
+      };
+      this.activeWorktrees.set(taskId, info);
+      return info;
+    } catch (error) {
+      await this.forceRemove(taskId).catch(() => {});
+      throw new Error(`Failed to create worktree: ${error}`);
+    }
+  }
+  async remove(taskId) {
+    const info = this.activeWorktrees.get(taskId);
+    if (!info) {
+      throw new Error(`Worktree not found: ${taskId}`);
+    }
+    info.status = "cleaning";
+    try {
+      await execAsync(`git worktree remove "${info.path}" --force`, {
+        cwd: this.config.baseDir
+      });
+      await execAsync(`git branch -D "${info.branch}"`, {
+        cwd: this.config.baseDir
+      }).catch(() => {});
+      this.activeWorktrees.delete(taskId);
+    } catch (error) {
+      await this.forceRemove(taskId);
+    }
+  }
+  async forceRemove(taskId) {
+    const info = this.activeWorktrees.get(taskId);
+    const worktreePath = info?.path ?? join(this.config.worktreeDir, taskId);
+    const branchName = info?.branch ?? `parallel/${taskId}`;
+    await execAsync(`git worktree remove "${worktreePath}" --force`, {
+      cwd: this.config.baseDir
+    }).catch(() => {});
+    await execAsync("git worktree prune", {
+      cwd: this.config.baseDir
+    }).catch(() => {});
+    if (existsSync(worktreePath)) {
+      rmSync(worktreePath, { recursive: true, force: true });
+    }
+    await execAsync(`git branch -D "${branchName}"`, {
+      cwd: this.config.baseDir
+    }).catch(() => {});
+    this.activeWorktrees.delete(taskId);
+  }
+  list() {
+    return Array.from(this.activeWorktrees.values());
+  }
+  get(taskId) {
+    return this.activeWorktrees.get(taskId);
+  }
+  has(taskId) {
+    return this.activeWorktrees.has(taskId);
+  }
+  count() {
+    return this.activeWorktrees.size;
+  }
+  canCreate() {
+    return this.activeWorktrees.size < this.config.maxWorktrees;
+  }
+  remainingCapacity() {
+    return this.config.maxWorktrees - this.activeWorktrees.size;
+  }
+  markCompleted(taskId) {
+    const info = this.activeWorktrees.get(taskId);
+    if (info) {
+      info.status = "completed";
+    }
+  }
+  markFailed(taskId) {
+    const info = this.activeWorktrees.get(taskId);
+    if (info) {
+      info.status = "failed";
+    }
+  }
+  getCompleted() {
+    return Array.from(this.activeWorktrees.values()).filter((w) => w.status === "completed");
+  }
+  getFailed() {
+    return Array.from(this.activeWorktrees.values()).filter((w) => w.status === "failed");
+  }
+  async cleanupAll() {
+    const taskIds = Array.from(this.activeWorktrees.keys());
+    for (const taskId of taskIds) {
+      await this.forceRemove(taskId).catch((error) => {
+        console.error(`Failed to cleanup worktree ${taskId}:`, error);
+      });
+    }
+  }
+  async sync() {
+    try {
+      const { stdout } = await execAsync("git worktree list --porcelain", {
+        cwd: this.config.baseDir
+      });
+      const lines = stdout.split(`
+`);
+      let currentPath = "";
+      let currentBranch = "";
+      let currentCommit = "";
+      for (const line of lines) {
+        if (line.startsWith("worktree ")) {
+          currentPath = line.slice(9);
+        } else if (line.startsWith("HEAD ")) {
+          currentCommit = line.slice(5);
+        } else if (line.startsWith("branch ")) {
+          currentBranch = line.slice(7);
+          if (currentPath.startsWith(this.config.worktreeDir)) {
+            const taskId = currentPath.split("/").pop() || "";
+            if (taskId && !this.activeWorktrees.has(taskId)) {
+              this.activeWorktrees.set(taskId, {
+                path: currentPath,
+                branch: currentBranch.replace("refs/heads/", ""),
+                commit: currentCommit,
+                taskId,
+                createdAt: new Date,
+                status: "active"
+              });
+            }
+          }
+          currentPath = "";
+          currentBranch = "";
+          currentCommit = "";
+        }
+      }
+    } catch (error) {
+      console.error("Failed to sync worktrees:", error);
+    }
+  }
+}
+// install/lib/parallel/resource-monitor.ts
+import { execSync as execSync2 } from "child_process";
+import * as os from "os";
+var DEFAULT_THRESHOLDS = {
+  minDiskGB: 2,
+  maxDiskUsagePercent: 90,
+  minMemoryGB: 1,
+  maxMemoryUsagePercent: 85,
+  maxCpuLoadPercent: 80,
+  worktreeSizeEstimateMB: 500
+};
+
+class ResourceMonitor2 {
+  thresholds;
+  baseDir;
+  constructor(baseDir, thresholds = {}) {
+    this.baseDir = baseDir;
+    this.thresholds = { ...DEFAULT_THRESHOLDS, ...thresholds };
+  }
+  async getStatus() {
+    const disk = await this.getDiskStatus();
+    const memory = this.getMemoryStatus();
+    const cpu = this.getCpuStatus();
+    const overall = this.calculateOverall(disk, memory, cpu);
+    return { disk, memory, cpu, overall };
+  }
+  async getDiskStatus() {
+    try {
+      const output = execSync2(`df -k "${this.baseDir}"`, { encoding: "utf-8" });
+      const lines = output.trim().split(`
+`);
+      if (lines.length < 2) {
+        throw new Error("Unexpected df output");
+      }
+      const parts = lines[1].split(/\s+/);
+      const totalKB = parseInt(parts[1], 10);
+      const usedKB = parseInt(parts[2], 10);
+      const availableKB = parseInt(parts[3], 10);
+      const total = totalKB * 1024;
+      const available = availableKB * 1024;
+      const usedPercent = usedKB / totalKB * 100;
+      const minRequired = this.thresholds.minDiskGB * 1024 * 1024 * 1024;
+      const sufficient = available >= minRequired && usedPercent <= this.thresholds.maxDiskUsagePercent;
+      return { available, total, usedPercent, sufficient };
+    } catch (error) {
+      console.warn("Failed to check disk status:", error);
+      return {
+        available: 10 * 1024 * 1024 * 1024,
+        total: 100 * 1024 * 1024 * 1024,
+        usedPercent: 50,
+        sufficient: true
+      };
+    }
+  }
+  getMemoryStatus() {
+    const total = os.totalmem();
+    const free = os.freemem();
+    const available = free;
+    const usedPercent = (total - free) / total * 100;
+    const minRequired = this.thresholds.minMemoryGB * 1024 * 1024 * 1024;
+    const sufficient = available >= minRequired && usedPercent <= this.thresholds.maxMemoryUsagePercent;
+    return { available, total, usedPercent, sufficient };
+  }
+  getCpuStatus() {
+    const loadAverage = os.loadavg();
+    const cores = os.cpus().length;
+    const loadPercent = loadAverage[0] / cores * 100;
+    const sufficient = loadPercent <= this.thresholds.maxCpuLoadPercent;
+    return { loadAverage, cores, loadPercent, sufficient };
+  }
+  calculateOverall(disk, memory, cpu) {
+    if (!disk.sufficient || !memory.sufficient || !cpu.sufficient) {
+      const reasons = [];
+      if (!disk.sufficient)
+        reasons.push("insufficient disk space");
+      if (!memory.sufficient)
+        reasons.push("insufficient memory");
+      if (!cpu.sufficient)
+        reasons.push("high CPU load");
+      return {
+        canParallelize: false,
+        recommendedConcurrency: 1,
+        reason: `Resource constraints: ${reasons.join(", ")}`
+      };
+    }
+    const worktreeSizeBytes = this.thresholds.worktreeSizeEstimateMB * 1024 * 1024;
+    const diskBasedConcurrency = Math.floor(disk.available / worktreeSizeBytes);
+    const memoryPerAgent = 200 * 1024 * 1024;
+    const memoryBasedConcurrency = Math.floor(memory.available / memoryPerAgent);
+    const availableCpuPercent = this.thresholds.maxCpuLoadPercent - cpu.loadPercent;
+    const cpuBasedConcurrency = Math.max(1, Math.floor(availableCpuPercent / 100 * cpu.cores));
+    const recommended = Math.min(diskBasedConcurrency, memoryBasedConcurrency, cpuBasedConcurrency, 4);
+    return {
+      canParallelize: recommended > 1,
+      recommendedConcurrency: Math.max(1, recommended)
+    };
+  }
+  async canAddWorktree(currentCount) {
+    const status = await this.getStatus();
+    if (!status.overall.canParallelize) {
+      return {
+        allowed: false,
+        reason: status.overall.reason || "Resources insufficient for parallelization"
+      };
+    }
+    if (currentCount >= status.overall.recommendedConcurrency) {
+      return {
+        allowed: false,
+        reason: `Maximum recommended concurrency (${status.overall.recommendedConcurrency}) reached`
+      };
+    }
+    return { allowed: true };
+  }
+  async getSummary() {
+    const status = await this.getStatus();
+    const formatBytes = (bytes) => {
+      const gb = bytes / (1024 * 1024 * 1024);
+      return `${gb.toFixed(1)}GB`;
+    };
+    const lines = [
+      "Resource Status:",
+      `  Disk: ${formatBytes(status.disk.available)} available (${status.disk.usedPercent.toFixed(1)}% used) ${status.disk.sufficient ? "✓" : "✗"}`,
+      `  Memory: ${formatBytes(status.memory.available)} available (${status.memory.usedPercent.toFixed(1)}% used) ${status.memory.sufficient ? "✓" : "✗"}`,
+      `  CPU: ${status.cpu.loadPercent.toFixed(1)}% load (${status.cpu.cores} cores) ${status.cpu.sufficient ? "✓" : "✗"}`,
+      `  Recommended concurrency: ${status.overall.recommendedConcurrency}`
+    ];
+    if (status.overall.reason) {
+      lines.push(`  Note: ${status.overall.reason}`);
+    }
+    return lines.join(`
+`);
+  }
+  startWatching(onWarning, intervalMs = 30000) {
+    let lastStatus = null;
+    const check = async () => {
+      const status = await this.getStatus();
+      if (lastStatus) {
+        if (lastStatus.disk.sufficient && !status.disk.sufficient) {
+          onWarning("Disk space running low - consider reducing parallelism");
+        }
+        if (lastStatus.memory.sufficient && !status.memory.sufficient) {
+          onWarning("Memory running low - consider reducing parallelism");
+        }
+        if (lastStatus.cpu.sufficient && !status.cpu.sufficient) {
+          onWarning("CPU load high - consider reducing parallelism");
+        }
+      }
+      lastStatus = status;
+    };
+    const intervalId = setInterval(check, intervalMs);
+    check();
+    return () => clearInterval(intervalId);
+  }
+}
+// install/lib/parallel/task-analyzer.ts
+class TaskAnalyzer2 {
+  analyze(tasks) {
+    const graph = this.buildGraph(tasks);
+    const parallelGroups = this.findParallelGroups(graph);
+    const sequentialTasks = this.findSequentialTasks(graph);
+    const parallelizableTasks = parallelGroups.reduce((sum, group) => sum + group.tasks.length, 0);
+    const maxParallelism = Math.max(1, ...parallelGroups.map((g) => g.tasks.length));
+    const sequentialTime = tasks.length;
+    const parallelTime = parallelGroups.length + sequentialTasks.length;
+    const estimatedSpeedup = parallelTime > 0 ? sequentialTime / parallelTime : 1;
+    return {
+      graph,
+      parallelGroups,
+      sequentialTasks,
+      analysis: {
+        totalTasks: tasks.length,
+        parallelizableTasks,
+        sequentialTasks: sequentialTasks.length,
+        maxParallelism,
+        estimatedSpeedup: Math.round(estimatedSpeedup * 100) / 100
+      }
+    };
+  }
+  buildGraph(tasks) {
+    const nodes = new Map;
+    for (const task of tasks) {
+      nodes.set(task.id, {
+        task,
+        dependencies: new Set(task.dependencies || []),
+        dependents: new Set,
+        predictedFiles: new Set(task.estimatedFiles || [])
+      });
+    }
+    for (const [id, node] of nodes) {
+      for (const depId of node.dependencies) {
+        const depNode = nodes.get(depId);
+        if (depNode) {
+          depNode.dependents.add(id);
+        }
+      }
+    }
+    const parallelizable = this.identifyParallelizableGroups(nodes);
+    const sequential = this.identifySequentialTasks(nodes);
+    return { nodes, parallelizable, sequential };
+  }
+  identifyParallelizableGroups(nodes) {
+    const groups = [];
+    const processed = new Set;
+    const levels = this.topologicalLevels(nodes);
+    for (const level of levels) {
+      if (level.length > 1) {
+        groups.push(level);
+      }
+      level.forEach((id) => processed.add(id));
+    }
+    return groups;
+  }
+  identifySequentialTasks(nodes) {
+    const sequential = [];
+    for (const [id, node] of nodes) {
+      if (node.dependencies.size > 0 && node.dependents.size > 0) {
+        sequential.push(id);
+      }
+    }
+    return sequential;
+  }
+  topologicalLevels(nodes) {
+    const levels = [];
+    const inDegree = new Map;
+    const remaining = new Set;
+    for (const [id, node] of nodes) {
+      inDegree.set(id, node.dependencies.size);
+      remaining.add(id);
+    }
+    while (remaining.size > 0) {
+      const level = [];
+      for (const id of remaining) {
+        if ((inDegree.get(id) ?? 0) === 0) {
+          level.push(id);
+        }
+      }
+      if (level.length === 0) {
+        console.warn("Circular dependency detected in task graph");
+        levels.push(Array.from(remaining));
+        break;
+      }
+      for (const id of level) {
+        remaining.delete(id);
+        const node = nodes.get(id);
+        if (node) {
+          for (const dependentId of node.dependents) {
+            const currentDegree = inDegree.get(dependentId) ?? 0;
+            inDegree.set(dependentId, currentDegree - 1);
+          }
+        }
+      }
+      levels.push(level);
+    }
+    return levels;
+  }
+  findParallelGroups(graph) {
+    const groups = [];
+    for (let i = 0;i < graph.parallelizable.length; i++) {
+      const taskIds = graph.parallelizable[i];
+      const tasks = taskIds.map((id) => graph.nodes.get(id)?.task).filter((t) => t !== undefined);
+      const predictedFiles = taskIds.flatMap((id) => Array.from(graph.nodes.get(id)?.predictedFiles || []));
+      groups.push({
+        id: `group-${i}`,
+        tasks,
+        predictedFiles,
+        canRunWith: []
+      });
+    }
+    return groups;
+  }
+  findSequentialTasks(graph) {
+    return graph.sequential.map((id) => graph.nodes.get(id)?.task).filter((t) => t !== undefined);
+  }
+  parseTaskDescriptions(descriptions) {
+    return descriptions.map((desc, index) => {
+      const task = {
+        id: `task-${index + 1}`,
+        description: desc,
+        type: this.inferTaskType(desc)
+      };
+      const fileMatches = desc.match(/[\w\-./]+\.(tsx|jsx|ts|js|css|scss|less|json|yaml|yml|md|html)/gi);
+      if (fileMatches) {
+        task.estimatedFiles = fileMatches;
+      }
+      const dependencyHints = this.extractDependencyHints(desc, index);
+      if (dependencyHints.length > 0) {
+        task.dependencies = dependencyHints;
+      }
+      return task;
+    });
+  }
+  inferTaskType(description) {
+    const lowerDesc = description.toLowerCase();
+    if (lowerDesc.includes("module") || lowerDesc.includes("component") || lowerDesc.includes("service") || lowerDesc.includes("class")) {
+      return "module";
+    }
+    if (lowerDesc.includes("feature") || lowerDesc.includes("implement") || lowerDesc.includes("add") || lowerDesc.includes("create")) {
+      return "feature";
+    }
+    return "file";
+  }
+  extractDependencyHints(description, currentIndex) {
+    const hints = [];
+    const lowerDesc = description.toLowerCase();
+    const afterMatch = lowerDesc.match(/after\s+task[s]?\s*(\d+)/i);
+    if (afterMatch) {
+      hints.push(`task-${afterMatch[1]}`);
+    }
+    const dependsMatch = lowerDesc.match(/depends\s+on\s+task[s]?\s*(\d+)/i);
+    if (dependsMatch) {
+      hints.push(`task-${dependsMatch[1]}`);
+    }
+    if (lowerDesc.includes("then") && currentIndex > 0) {
+      hints.push(`task-${currentIndex}`);
+    }
+    return hints;
+  }
+  generateSummary(result) {
+    const { analysis, parallelGroups, sequentialTasks } = result;
+    const lines = [
+      "## Task Analysis Summary",
+      "",
+      `Total tasks: ${analysis.totalTasks}`,
+      `Parallelizable: ${analysis.parallelizableTasks} (${Math.round(analysis.parallelizableTasks / analysis.totalTasks * 100)}%)`,
+      `Sequential: ${analysis.sequentialTasks}`,
+      `Maximum parallelism: ${analysis.maxParallelism}`,
+      `Estimated speedup: ${analysis.estimatedSpeedup}x`,
+      "",
+      "### Parallel Groups"
+    ];
+    for (const group of parallelGroups) {
+      lines.push(`- ${group.id}: ${group.tasks.map((t) => t.id).join(", ")}`);
+      if (group.predictedFiles.length > 0) {
+        lines.push(`  Files: ${group.predictedFiles.slice(0, 5).join(", ")}${group.predictedFiles.length > 5 ? "..." : ""}`);
+      }
+    }
+    if (sequentialTasks.length > 0) {
+      lines.push("", "### Sequential Tasks");
+      for (const task of sequentialTasks) {
+        lines.push(`- ${task.id}: ${task.description.slice(0, 50)}...`);
+      }
+    }
+    return lines.join(`
+`);
+  }
+}
+// install/lib/parallel/file-predictor.ts
+import { execSync as execSync3 } from "child_process";
+import { existsSync as existsSync2 } from "fs";
+import { join as join2, dirname as dirname2, basename, extname } from "path";
+var DEFAULT_CONFIG = {
+  useGitHistory: true,
+  historyDepth: 50,
+  includeTests: true,
+  includeRelated: true
+};
+
+class FilePredictor2 {
+  config;
+  fileCache = new Map;
+  gitPatterns = new Map;
+  constructor(config) {
+    this.config = {
+      ...DEFAULT_CONFIG,
+      ...config
+    };
+    if (this.config.useGitHistory) {
+      this.loadGitPatterns();
+    }
+  }
+  predict(taskId, description) {
+    const predictions = [];
+    const explicitFiles = this.extractExplicitFiles(description);
+    if (explicitFiles.length > 0) {
+      predictions.push({
+        files: explicitFiles,
+        confidence: 0.95,
+        method: "explicit"
+      });
+    }
+    const patternFiles = this.matchPatterns(description);
+    if (patternFiles.length > 0) {
+      predictions.push({
+        files: patternFiles,
+        confidence: 0.8,
+        method: "pattern"
+      });
+    }
+    const moduleFiles = this.inferModuleFiles(description);
+    if (moduleFiles.length > 0) {
+      predictions.push({
+        files: moduleFiles,
+        confidence: 0.7,
+        method: "module"
+      });
+    }
+    if (this.config.useGitHistory) {
+      const historyFiles = this.predictFromHistory(description);
+      if (historyFiles.length > 0) {
+        predictions.push({
+          files: historyFiles,
+          confidence: 0.6,
+          method: "git_history"
+        });
+      }
+    }
+    const heuristicFiles = this.applyHeuristics(description);
+    if (heuristicFiles.length > 0) {
+      predictions.push({
+        files: heuristicFiles,
+        confidence: 0.5,
+        method: "heuristic"
+      });
+    }
+    const combined = this.combinePredictions(predictions);
+    return {
+      taskId,
+      predictedFiles: combined.files,
+      confidence: combined.confidence,
+      method: combined.method,
+      reasoning: this.generateReasoning(predictions)
+    };
+  }
+  predictAll(tasks) {
+    return tasks.map((task) => this.predict(task.id, task.description));
+  }
+  extractExplicitFiles(description) {
+    const files = [];
+    const fileRegex = /[\w\-./]+\.(ts|tsx|js|jsx|json|yaml|yml|md|css|scss|html)/gi;
+    const matches = description.match(fileRegex) || [];
+    for (const match of matches) {
+      const fullPath = join2(this.config.baseDir, match);
+      if (existsSync2(fullPath)) {
+        files.push(match);
+      } else {
+        const similar = this.findSimilarFiles(match);
+        files.push(...similar);
+      }
+    }
+    if (this.config.includeRelated) {
+      files.push(...this.findRelatedFiles(files));
+    }
+    return [...new Set(files)];
+  }
+  matchPatterns(description) {
+    const files = [];
+    const lowerDesc = description.toLowerCase();
+    if (lowerDesc.includes("all test") || lowerDesc.includes("every test")) {
+      files.push(...this.findFilesByPattern("**/*.test.{ts,tsx,js,jsx}"));
+    }
+    if (lowerDesc.includes("all component") || lowerDesc.includes("every component")) {
+      files.push(...this.findFilesByPattern("**/components/**/*.{ts,tsx}"));
+    }
+    const dirMatch = description.match(/(?:in|under|within)\s+([\w\-./]+)(?:\s+directory)?/i);
+    if (dirMatch) {
+      files.push(...this.findFilesByPattern(`${dirMatch[1]}/**/*`));
+    }
+    return [...new Set(files)];
+  }
+  inferModuleFiles(description) {
+    const files = [];
+    const moduleRegex = /\b([A-Z][a-zA-Z0-9]+(?:Service|Component|Controller|Manager|Handler|Provider|Module|Store|Reducer|Action|Hook)?)\b/g;
+    const matches = [...description.matchAll(moduleRegex)];
+    for (const match of matches) {
+      const moduleName = match[1];
+      const variants = [
+        moduleName,
+        this.toKebabCase(moduleName),
+        this.toCamelCase(moduleName),
+        this.toSnakeCase(moduleName)
+      ];
+      for (const variant of variants) {
+        const found = this.findFilesByPattern(`**/${variant}.*`);
+        files.push(...found);
+        const indexFound = this.findFilesByPattern(`**/${variant}/index.*`);
+        files.push(...indexFound);
+      }
+    }
+    return [...new Set(files)];
+  }
+  predictFromHistory(description) {
+    const files = [];
+    const keywords = this.extractKeywords(description);
+    for (const keyword of keywords) {
+      const pattern = this.gitPatterns.get(keyword.toLowerCase());
+      if (pattern) {
+        files.push(...pattern);
+      }
+    }
+    return [...new Set(files)];
+  }
+  applyHeuristics(description) {
+    const files = [];
+    const lowerDesc = description.toLowerCase();
+    if (lowerDesc.includes("auth") || lowerDesc.includes("login") || lowerDesc.includes("session")) {
+      files.push(...this.findFilesByPattern("**/*auth*"));
+      files.push(...this.findFilesByPattern("**/*login*"));
+      files.push(...this.findFilesByPattern("**/*session*"));
+    }
+    if (lowerDesc.includes("api") || lowerDesc.includes("endpoint") || lowerDesc.includes("route")) {
+      files.push(...this.findFilesByPattern("**/routes/**/*"));
+      files.push(...this.findFilesByPattern("**/api/**/*"));
+      files.push(...this.findFilesByPattern("**/*.route.*"));
+    }
+    if (lowerDesc.includes("database") || lowerDesc.includes("schema") || lowerDesc.includes("model")) {
+      files.push(...this.findFilesByPattern("**/models/**/*"));
+      files.push(...this.findFilesByPattern("**/schemas/**/*"));
+      files.push(...this.findFilesByPattern("**/*.model.*"));
+    }
+    if (lowerDesc.includes("style") || lowerDesc.includes("css") || lowerDesc.includes("ui")) {
+      files.push(...this.findFilesByPattern("**/*.css"));
+      files.push(...this.findFilesByPattern("**/*.scss"));
+      files.push(...this.findFilesByPattern("**/styles/**/*"));
+    }
+    if (lowerDesc.includes("config") || lowerDesc.includes("setting")) {
+      files.push(...this.findFilesByPattern("**/*.config.*"));
+      files.push(...this.findFilesByPattern("**/config/**/*"));
+    }
+    return [...new Set(files)];
+  }
+  combinePredictions(predictions) {
+    if (predictions.length === 0) {
+      return { files: [], confidence: 0, method: "heuristic" };
+    }
+    predictions.sort((a, b) => b.confidence - a.confidence);
+    const best = predictions[0];
+    const allFiles = new Set;
+    for (const pred of predictions) {
+      pred.files.forEach((f) => allFiles.add(f));
+    }
+    return {
+      files: Array.from(allFiles),
+      confidence: best.confidence,
+      method: best.method
+    };
+  }
+  loadGitPatterns() {
+    try {
+      const output = execSync3(`git log --name-only --pretty=format:"COMMIT:%s" -${this.config.historyDepth}`, { cwd: this.config.baseDir, encoding: "utf-8" });
+      let currentMessage = "";
+      const commitFiles = new Map;
+      for (const line of output.split(`
+`)) {
+        if (line.startsWith("COMMIT:")) {
+          currentMessage = line.slice(7).toLowerCase();
+          if (!commitFiles.has(currentMessage)) {
+            commitFiles.set(currentMessage, []);
+          }
+        } else if (line.trim() && currentMessage) {
+          commitFiles.get(currentMessage)?.push(line.trim());
+        }
+      }
+      for (const [message, files] of commitFiles) {
+        const keywords = this.extractKeywords(message);
+        for (const keyword of keywords) {
+          const existing = this.gitPatterns.get(keyword) || [];
+          this.gitPatterns.set(keyword, [...new Set([...existing, ...files])]);
+        }
+      }
+    } catch (error) {}
+  }
+  findFilesByPattern(pattern) {
+    try {
+      const output = execSync3(`find . -type f -path "${pattern.replace("**", "*")}" 2>/dev/null | head -20`, { cwd: this.config.baseDir, encoding: "utf-8" });
+      return output.split(`
+`).filter(Boolean).map((f) => f.replace(/^\.\//, ""));
+    } catch {
+      return [];
+    }
+  }
+  findSimilarFiles(path) {
+    const name = basename(path, extname(path));
+    return this.findFilesByPattern(`**/*${name}*`).slice(0, 5);
+  }
+  findRelatedFiles(files) {
+    const related = [];
+    for (const file of files) {
+      const ext = extname(file);
+      const base = basename(file, ext);
+      const dir = dirname2(file);
+      if (this.config.includeTests) {
+        related.push(...this.findFilesByPattern(`${dir}/${base}.test${ext}`));
+        related.push(...this.findFilesByPattern(`${dir}/__tests__/${base}${ext}`));
+      }
+      if (ext === ".ts" || ext === ".tsx") {
+        related.push(...this.findFilesByPattern(`${dir}/${base}.d.ts`));
+      }
+      related.push(...this.findFilesByPattern(`${dir}/index${ext}`));
+    }
+    return related;
+  }
+  extractKeywords(text) {
+    const stopWords = new Set([
+      "the",
+      "a",
+      "an",
+      "and",
+      "or",
+      "but",
+      "in",
+      "on",
+      "at",
+      "to",
+      "for",
+      "of",
+      "with",
+      "by",
+      "from",
+      "as",
+      "is",
+      "was",
+      "are",
+      "been",
+      "be",
+      "have",
+      "has",
+      "had",
+      "do",
+      "does",
+      "did",
+      "will",
+      "would",
+      "could",
+      "should",
+      "may",
+      "might",
+      "must",
+      "shall",
+      "can",
+      "need",
+      "dare",
+      "ought",
+      "used",
+      "fix",
+      "add",
+      "update",
+      "remove",
+      "change",
+      "make"
+    ]);
+    return text.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((word) => word.length > 2 && !stopWords.has(word));
+  }
+  generateReasoning(predictions) {
+    if (predictions.length === 0) {
+      return "No files could be predicted for this task.";
+    }
+    const parts = predictions.map((p) => `${p.method}: ${p.files.length} files (${Math.round(p.confidence * 100)}% confidence)`);
+    return `Predictions based on: ${parts.join(", ")}`;
+  }
+  toKebabCase(str) {
+    return str.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
+  }
+  toCamelCase(str) {
+    return str.charAt(0).toLowerCase() + str.slice(1);
+  }
+  toSnakeCase(str) {
+    return str.replace(/([a-z])([A-Z])/g, "$1_$2").toLowerCase();
+  }
+}
+// install/lib/parallel/overlap-detector.ts
+class OverlapDetector2 {
+  detect(predictions) {
+    const overlapPairs = [];
+    const fileToTasks = new Map;
+    for (const prediction of predictions) {
+      for (const file of prediction.predictedFiles) {
+        const existing = fileToTasks.get(file) || [];
+        existing.push(prediction.taskId);
+        fileToTasks.set(file, existing);
+      }
+    }
+    const overlappingFiles = [];
+    for (const [file, tasks] of fileToTasks) {
+      if (tasks.length > 1) {
+        overlappingFiles.push(file);
+        for (let i = 0;i < tasks.length; i++) {
+          for (let j = i + 1;j < tasks.length; j++) {
+            const existingPair = overlapPairs.find((p) => p.task1 === tasks[i] && p.task2 === tasks[j] || p.task1 === tasks[j] && p.task2 === tasks[i]);
+            if (existingPair) {
+              existingPair.overlappingFiles.push(file);
+            } else {
+              overlapPairs.push({
+                task1: tasks[i],
+                task2: tasks[j],
+                overlappingFiles: [file],
+                severity: this.assessSeverity(file)
+              });
+            }
+          }
+        }
+      }
+    }
+    const safeGroups = this.buildSafeGroups(predictions, overlapPairs);
+    return {
+      hasOverlap: overlappingFiles.length > 0,
+      overlappingFiles,
+      taskPairs: overlapPairs,
+      safeGroups
+    };
+  }
+  canRunInParallel(prediction1, prediction2) {
+    const overlapping = this.findOverlap(prediction1.predictedFiles, prediction2.predictedFiles);
+    if (overlapping.length === 0) {
+      return { canParallelize: true };
+    }
+    return {
+      canParallelize: false,
+      reason: `Tasks would modify ${overlapping.length} common file(s)`,
+      overlappingFiles: overlapping
+    };
+  }
+  analyze(predictions) {
+    const result = this.detect(predictions);
+    const overlapMatrix = new Map;
+    const recommendations = [];
+    for (const pair of result.taskPairs) {
+      const set1 = overlapMatrix.get(pair.task1) || new Set;
+      set1.add(pair.task2);
+      overlapMatrix.set(pair.task1, set1);
+      const set2 = overlapMatrix.get(pair.task2) || new Set;
+      set2.add(pair.task1);
+      overlapMatrix.set(pair.task2, set2);
+    }
+    const blocked = new Set;
+    for (const pair of result.taskPairs) {
+      if (pair.severity === "critical") {
+        blocked.add(pair.task1);
+        blocked.add(pair.task2);
+      }
+    }
+    const parallelizable = predictions.length - blocked.size;
+    if (result.hasOverlap) {
+      recommendations.push("Consider splitting tasks to avoid file overlaps for better parallelization.");
+      const fileConflictCounts = new Map;
+      for (const pair of result.taskPairs) {
+        for (const file of pair.overlappingFiles) {
+          fileConflictCounts.set(file, (fileConflictCounts.get(file) || 0) + 1);
+        }
+      }
+      const topConflicting = Array.from(fileConflictCounts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 3);
+      if (topConflicting.length > 0) {
+        recommendations.push(`Most conflicting files: ${topConflicting.map(([f]) => f).join(", ")}`);
+      }
+    } else {
+      recommendations.push("All tasks can be safely parallelized.");
+    }
+    if (result.safeGroups.length > 0) {
+      const maxGroupSize = Math.max(...result.safeGroups.map((g) => g.taskIds.length));
+      recommendations.push(`Maximum parallel group size: ${maxGroupSize} tasks`);
+    }
+    return {
+      totalTasks: predictions.length,
+      parallelizable,
+      blocked: blocked.size,
+      overlapMatrix,
+      recommendations
+    };
+  }
+  buildSafeGroups(predictions, overlapPairs) {
+    const groups = [];
+    const assigned = new Set;
+    const conflicts = new Map;
+    for (const prediction of predictions) {
+      conflicts.set(prediction.taskId, new Set);
+    }
+    for (const pair of overlapPairs) {
+      conflicts.get(pair.task1)?.add(pair.task2);
+      conflicts.get(pair.task2)?.add(pair.task1);
+    }
+    let groupId = 0;
+    for (const prediction of predictions) {
+      if (assigned.has(prediction.taskId))
+        continue;
+      const group = {
+        id: `safe-group-${groupId++}`,
+        taskIds: [prediction.taskId],
+        files: [...prediction.predictedFiles],
+        canRunInParallel: true
+      };
+      assigned.add(prediction.taskId);
+      for (const other of predictions) {
+        if (assigned.has(other.taskId))
+          continue;
+        const hasConflict = group.taskIds.some((taskId) => conflicts.get(taskId)?.has(other.taskId));
+        if (!hasConflict) {
+          group.taskIds.push(other.taskId);
+          group.files.push(...other.predictedFiles);
+          assigned.add(other.taskId);
+        }
+      }
+      group.files = [...new Set(group.files)];
+      groups.push(group);
+    }
+    return groups;
+  }
+  findOverlap(files1, files2) {
+    const set1 = new Set(files1);
+    return files2.filter((f) => set1.has(f));
+  }
+  assessSeverity(file) {
+    if (file.match(/\.(ts|tsx|js|jsx|py|java|go|rs|rb)$/)) {
+      return "critical";
+    }
+    if (file.match(/\.(json|yaml|yml|toml|xml)$/)) {
+      return "warning";
+    }
+    return "info";
+  }
+  generateReport(predictions) {
+    const result = this.detect(predictions);
+    const analysis = this.analyze(predictions);
+    const lines = [
+      "## File Overlap Analysis",
+      "",
+      `Total tasks: ${analysis.totalTasks}`,
+      `Parallelizable: ${analysis.parallelizable}`,
+      `Blocked by overlaps: ${analysis.blocked}`,
+      ""
+    ];
+    if (result.hasOverlap) {
+      lines.push("### Overlapping File Pairs");
+      lines.push("");
+      for (const pair of result.taskPairs) {
+        const icon = pair.severity === "critical" ? "\uD83D\uDD34" : pair.severity === "warning" ? "\uD83D\uDFE1" : "\uD83D\uDFE2";
+        lines.push(`${icon} ${pair.task1} ↔ ${pair.task2}`);
+        lines.push(`   Files: ${pair.overlappingFiles.join(", ")}`);
+      }
+      lines.push("");
+    }
+    lines.push("### Safe Parallel Groups");
+    lines.push("");
+    for (const group of result.safeGroups) {
+      lines.push(`- ${group.id}: ${group.taskIds.join(", ")}`);
+    }
+    lines.push("");
+    lines.push("### Recommendations");
+    lines.push("");
+    for (const rec of analysis.recommendations) {
+      lines.push(`- ${rec}`);
+    }
+    return lines.join(`
+`);
+  }
+  isConflictFree(predictions) {
+    const result = this.detect(predictions);
+    return !result.hasOverlap || result.taskPairs.every((p) => p.severity !== "critical");
+  }
+  getMaxParallelization(predictions) {
+    const result = this.detect(predictions);
+    return Math.max(...result.safeGroups.map((g) => g.taskIds.length), 1);
+  }
+}
+// install/lib/parallel/parallel-executor.ts
+import { spawn } from "child_process";
+import { EventEmitter } from "events";
+var DEFAULT_CONFIG2 = {
+  maxConcurrent: 4,
+  timeout: 300000,
+  agentCommand: "npx claude-code"
+};
+
+class ParallelExecutor2 extends EventEmitter {
+  config;
+  worktreeManager;
+  resourceMonitor;
+  executionTasks = new Map;
+  runningProcesses = new Map;
+  cancelled = false;
+  constructor(config) {
+    super();
+    this.config = {
+      ...DEFAULT_CONFIG2,
+      ...config
+    };
+    this.worktreeManager = new WorktreeManager({
+      baseDir: config.baseDir,
+      maxWorktrees: this.config.maxConcurrent
+    });
+    this.resourceMonitor = new ResourceMonitor2(config.baseDir);
+  }
+  async execute(group) {
+    this.cancelled = false;
+    const results = [];
+    const resourceStatus = await this.resourceMonitor.getStatus();
+    if (!resourceStatus.overall.canParallelize) {
+      throw new Error(`Cannot parallelize: ${resourceStatus.overall.reason}`);
+    }
+    const maxConcurrent = Math.min(this.config.maxConcurrent, resourceStatus.overall.recommendedConcurrency, group.taskIds.length);
+    for (const taskId of group.taskIds) {
+      this.executionTasks.set(taskId, {
+        task: { id: taskId, description: "", type: "feature" },
+        status: "pending"
+      });
+    }
+    const taskQueue = [...group.taskIds];
+    const running = [];
+    while (taskQueue.length > 0 || running.length > 0) {
+      if (this.cancelled) {
+        await this.cancelAll();
+        break;
+      }
+      while (taskQueue.length > 0 && running.length < maxConcurrent) {
+        const taskId = taskQueue.shift();
+        const promise = this.executeTask(taskId);
+        running.push(promise);
+      }
+      if (running.length > 0) {
+        const completedIndex = await Promise.race(running.map((p, i) => p.then(() => i)));
+        const result = await running[completedIndex];
+        results.push(result);
+        running.splice(completedIndex, 1);
+      }
+    }
+    return results;
+  }
+  async executeTask(taskId) {
+    const execTask = this.executionTasks.get(taskId);
+    execTask.status = "running";
+    execTask.startTime = new Date;
+    this.emitProgress({
+      type: "started",
+      taskId,
+      message: `Starting task ${taskId}`
+    });
+    let worktree;
+    try {
+      worktree = await this.worktreeManager.create({ taskId });
+      execTask.worktree = worktree;
+      const result = await this.runAgentInWorktree(taskId, worktree);
+      execTask.status = result.success ? "completed" : "failed";
+      execTask.endTime = new Date;
+      execTask.output = result.output;
+      execTask.exitCode = result.exitCode;
+      if (result.success) {
+        this.worktreeManager.markCompleted(taskId);
+        this.emitProgress({
+          type: "completed",
+          taskId,
+          message: `Task ${taskId} completed successfully`
+        });
+      } else {
+        this.worktreeManager.markFailed(taskId);
+        execTask.error = result.error;
+        this.emitProgress({
+          type: "failed",
+          taskId,
+          message: `Task ${taskId} failed: ${result.error}`
+        });
+      }
+      return result;
+    } catch (error) {
+      execTask.status = "failed";
+      execTask.endTime = new Date;
+      execTask.error = String(error);
+      if (worktree) {
+        this.worktreeManager.markFailed(taskId);
+      }
+      this.emitProgress({
+        type: "failed",
+        taskId,
+        message: `Task ${taskId} failed: ${error}`
+      });
+      return {
+        taskId,
+        success: false,
+        output: "",
+        error: String(error),
+        exitCode: 1,
+        duration: execTask.startTime ? Date.now() - execTask.startTime.getTime() : 0,
+        worktreePath: worktree?.path ?? ""
+      };
+    }
+  }
+  async runAgentInWorktree(taskId, worktree) {
+    return new Promise((resolve) => {
+      const startTime = Date.now();
+      let output = "";
+      let error = "";
+      const execTask = this.executionTasks.get(taskId);
+      const taskDescription = execTask.task.description || `Execute task ${taskId}`;
+      const childProcess = spawn(this.config.agentCommand, ["--print", "--no-tty", taskDescription], {
+        cwd: worktree.path,
+        shell: true,
+        env: {
+          ...globalThis.process.env,
+          PARALLEL_TASK_ID: taskId,
+          PARALLEL_WORKTREE: worktree.path
+        }
+      });
+      this.runningProcesses.set(taskId, childProcess);
+      childProcess.stdout?.on("data", (data) => {
+        output += data.toString();
+        this.emitProgress({
+          type: "output",
+          taskId,
+          message: data.toString()
+        });
+      });
+      childProcess.stderr?.on("data", (data) => {
+        error += data.toString();
+      });
+      childProcess.on("close", (exitCode) => {
+        this.runningProcesses.delete(taskId);
+        resolve({
+          taskId,
+          success: exitCode === 0,
+          output,
+          error: error || undefined,
+          exitCode: exitCode ?? 1,
+          duration: Date.now() - startTime,
+          worktreePath: worktree.path
+        });
+      });
+      childProcess.on("error", (err) => {
+        this.runningProcesses.delete(taskId);
+        resolve({
+          taskId,
+          success: false,
+          output,
+          error: err.message,
+          exitCode: 1,
+          duration: Date.now() - startTime,
+          worktreePath: worktree.path
+        });
+      });
+      setTimeout(() => {
+        if (this.runningProcesses.has(taskId)) {
+          childProcess.kill("SIGTERM");
+          error = "Task timed out";
+        }
+      }, this.config.timeout);
+    });
+  }
+  async cancel() {
+    this.cancelled = true;
+    await this.cancelAll();
+  }
+  async cancelAll() {
+    for (const [taskId, process2] of this.runningProcesses) {
+      try {
+        process2.kill("SIGTERM");
+        const execTask = this.executionTasks.get(taskId);
+        if (execTask) {
+          execTask.status = "cancelled";
+          execTask.endTime = new Date;
+        }
+        this.emitProgress({
+          type: "cancelled",
+          taskId,
+          message: `Task ${taskId} cancelled`
+        });
+      } catch {}
+    }
+    this.runningProcesses.clear();
+  }
+  getStatus() {
+    let running = 0;
+    let completed = 0;
+    let failed = 0;
+    let pending = 0;
+    for (const task of this.executionTasks.values()) {
+      switch (task.status) {
+        case "running":
+          running++;
+          break;
+        case "completed":
+          completed++;
+          break;
+        case "failed":
+          failed++;
+          break;
+        case "pending":
+          pending++;
+          break;
+      }
+    }
+    return {
+      total: this.executionTasks.size,
+      running,
+      completed,
+      failed,
+      pending
+    };
+  }
+  getCompletedWorktrees() {
+    return this.worktreeManager.getCompleted();
+  }
+  getFailedWorktrees() {
+    return this.worktreeManager.getFailed();
+  }
+  getWorktreeManager() {
+    return this.worktreeManager;
+  }
+  async cleanup() {
+    await this.worktreeManager.cleanupAll();
+    this.executionTasks.clear();
+  }
+  emitProgress(event) {
+    this.emit("progress", event);
+    if (this.config.onProgress) {
+      this.config.onProgress(event);
+    }
+  }
+}
+// install/lib/parallel/merge-orchestrator.ts
+import { execSync as execSync4, exec as exec2 } from "child_process";
+import { promisify as promisify2 } from "util";
+var execAsync2 = promisify2(exec2);
+
+class MergeOrchestrator2 {
+  baseDir;
+  targetBranch;
+  constructor(baseDir, targetBranch) {
+    this.baseDir = baseDir;
+    this.targetBranch = targetBranch || this.getCurrentBranch();
+  }
+  async mergeAll(worktrees, strategy = { type: "sequential" }) {
+    const merged = [];
+    const failed = [];
+    const skipped = [];
+    let totalCommits = 0;
+    const allFilesChanged = new Set;
+    const completedWorktrees = worktrees.filter((w) => w.status === "completed");
+    const failedWorktrees = worktrees.filter((w) => w.status === "failed");
+    for (const worktree of failedWorktrees) {
+      skipped.push(worktree.taskId);
+    }
+    for (const worktree of completedWorktrees) {
+      const canMerge = await this.canMergeSafely(worktree);
+      if (!canMerge.safe) {
+        failed.push({
+          taskId: worktree.taskId,
+          success: false,
+          branch: worktree.branch,
+          commits: 0,
+          filesChanged: [],
+          error: canMerge.reason
+        });
+        continue;
+      }
+      try {
+        const result = await this.mergeBranch(worktree, strategy);
+        if (result.success) {
+          merged.push(result);
+          totalCommits += result.commits;
+          result.filesChanged.forEach((f) => allFilesChanged.add(f));
+        } else {
+          failed.push(result);
+        }
+      } catch (error) {
+        failed.push({
+          taskId: worktree.taskId,
+          success: false,
+          branch: worktree.branch,
+          commits: 0,
+          filesChanged: [],
+          error: String(error)
+        });
+      }
+    }
+    return {
+      success: failed.length === 0,
+      merged,
+      failed,
+      skipped,
+      totalCommits,
+      totalFilesChanged: Array.from(allFilesChanged)
+    };
+  }
+  async mergeBranch(worktree, strategy) {
+    const { branch, taskId } = worktree;
+    try {
+      const commitInfo = await this.getCommitInfo(branch);
+      if (commitInfo.commits === 0) {
+        return {
+          taskId,
+          success: true,
+          branch,
+          commits: 0,
+          filesChanged: []
+        };
+      }
+      switch (strategy.type) {
+        case "squash":
+          await this.squashMerge(branch, strategy.message || `Merge parallel task: ${taskId}`);
+          break;
+        case "rebase":
+          await this.rebaseMerge(branch);
+          break;
+        case "sequential":
+        default:
+          await this.sequentialMerge(branch);
+          break;
+      }
+      return {
+        taskId,
+        success: true,
+        branch,
+        commits: commitInfo.commits,
+        filesChanged: commitInfo.filesChanged
+      };
+    } catch (error) {
+      await this.abortMerge().catch(() => {});
+      return {
+        taskId,
+        success: false,
+        branch,
+        commits: 0,
+        filesChanged: [],
+        error: String(error)
+      };
+    }
+  }
+  async canMergeSafely(worktree) {
+    try {
+      await execAsync2(`git merge --no-commit --no-ff "${worktree.branch}"`, { cwd: this.baseDir });
+      await execAsync2("git merge --abort", { cwd: this.baseDir });
+      return { safe: true };
+    } catch (error) {
+      await execAsync2("git merge --abort", { cwd: this.baseDir }).catch(() => {});
+      const errorMsg = String(error);
+      if (errorMsg.includes("CONFLICT")) {
+        return {
+          safe: false,
+          reason: "Merge would result in conflicts. File overlap detection may have missed some files."
+        };
+      }
+      return {
+        safe: false,
+        reason: `Merge check failed: ${errorMsg}`
+      };
+    }
+  }
+  async sequentialMerge(branch) {
+    await execAsync2(`git merge --no-ff "${branch}" -m "Merge parallel task: ${branch}"`, { cwd: this.baseDir });
+  }
+  async squashMerge(branch, message) {
+    await execAsync2(`git merge --squash "${branch}"`, { cwd: this.baseDir });
+    await execAsync2(`git commit -m "${message}"`, { cwd: this.baseDir });
+  }
+  async rebaseMerge(branch) {
+    await execAsync2(`git rebase "${branch}"`, { cwd: this.baseDir });
+  }
+  async abortMerge() {
+    await execAsync2("git merge --abort", { cwd: this.baseDir });
+  }
+  async getCommitInfo(branch) {
+    try {
+      const { stdout: countOutput } = await execAsync2(`git rev-list --count "${this.targetBranch}..${branch}"`, { cwd: this.baseDir });
+      const commits = parseInt(countOutput.trim(), 10);
+      const { stdout: filesOutput } = await execAsync2(`git diff --name-only "${this.targetBranch}...${branch}"`, { cwd: this.baseDir });
+      const filesChanged = filesOutput.trim().split(`
+`).filter(Boolean);
+      return { commits, filesChanged };
+    } catch {
+      return { commits: 0, filesChanged: [] };
+    }
+  }
+  getCurrentBranch() {
+    try {
+      return execSync4("git branch --show-current", {
+        cwd: this.baseDir,
+        encoding: "utf-8"
+      }).trim();
+    } catch {
+      return "main";
+    }
+  }
+  async rollback(commits = 1) {
+    await execAsync2(`git reset --hard HEAD~${commits}`, { cwd: this.baseDir });
+  }
+  generateSummary(result) {
+    const lines = [
+      "## Merge Summary",
+      "",
+      `Status: ${result.success ? "✅ Success" : "❌ Failed"}`,
+      `Total commits merged: ${result.totalCommits}`,
+      `Files changed: ${result.totalFilesChanged.length}`,
+      ""
+    ];
+    if (result.merged.length > 0) {
+      lines.push("### Successfully Merged");
+      for (const m of result.merged) {
+        lines.push(`- ${m.taskId}: ${m.commits} commits, ${m.filesChanged.length} files`);
+      }
+      lines.push("");
+    }
+    if (result.failed.length > 0) {
+      lines.push("### Failed to Merge");
+      for (const f of result.failed) {
+        lines.push(`- ${f.taskId}: ${f.error}`);
+      }
+      lines.push("");
+    }
+    if (result.skipped.length > 0) {
+      lines.push("### Skipped (Failed Tasks)");
+      for (const s of result.skipped) {
+        lines.push(`- ${s}`);
+      }
+      lines.push("");
+    }
+    if (result.totalFilesChanged.length > 0) {
+      lines.push("### Files Changed");
+      for (const f of result.totalFilesChanged.slice(0, 20)) {
+        lines.push(`- ${f}`);
+      }
+      if (result.totalFilesChanged.length > 20) {
+        lines.push(`... and ${result.totalFilesChanged.length - 20} more`);
+      }
+    }
+    return lines.join(`
+`);
+  }
+  async cleanupBranches(worktreeManager, results) {
+    for (const result of results) {
+      if (result.success) {
+        await worktreeManager.remove(result.taskId).catch((error) => {
+          console.error(`Failed to cleanup worktree for ${result.taskId}:`, error);
+        });
+      }
+    }
+  }
+}
 // install/lib/parallel/progress-reporter.ts
 import { EventEmitter as EventEmitter2 } from "events";
 var DEFAULT_CONFIG3 = {
@@ -9007,424 +8920,30 @@ function parseParallelFlags(args) {
   }
   return flags;
 }
-// install/lib/parallel/command.ts
-init_task_analyzer();
-init_file_predictor();
-init_overlap_detector();
-init_parallel_executor();
-init_merge_orchestrator();
-init_resource_monitor();
 
-// install/hooks/auto-suggester.ts
-import { join as join4 } from "path";
-import { homedir } from "os";
-var PARALLEL_LIB = join4(homedir(), ".claude", "lib", "parallel");
-var { TaskAnalyzer: TaskAnalyzer2 } = await import(join4(PARALLEL_LIB, "task-analyzer.ts"));
-var { FilePredictor: FilePredictor2 } = await import(join4(PARALLEL_LIB, "file-predictor.ts"));
-var { OverlapDetector: OverlapDetector2 } = await import(join4(PARALLEL_LIB, "overlap-detector.ts"));
-var { ParallelConfigManager: ParallelConfigManager2 } = await import(join4(PARALLEL_LIB, "parallel-config.ts"));
-var DEFAULT_OPTIONS = {
-  minTasks: 2,
-  minSpeedup: 1.3,
-  minConfidence: 0.6,
-  forceCheck: false
-};
-
-class AutoSuggester {
-  taskAnalyzer;
-  filePredictor;
-  overlapDetector;
-  configManager;
-  baseDir;
-  constructor(baseDir) {
-    this.baseDir = baseDir;
-    this.taskAnalyzer = new TaskAnalyzer2;
-    this.filePredictor = new FilePredictor2({ baseDir });
-    this.overlapDetector = new OverlapDetector2;
-    this.configManager = new ParallelConfigManager2(baseDir);
-  }
-  async suggest(tasks, options = {}) {
-    const opts = { ...DEFAULT_OPTIONS, ...options };
-    const config = this.configManager.get();
-    if (!config.enabled && !opts.forceCheck) {
-      return this.createNegativeSuggestion("Parallelization is disabled in config");
-    }
-    const parsedTasks = typeof tasks[0] === "string" ? this.taskAnalyzer.parseTaskDescriptions(tasks) : tasks;
-    if (parsedTasks.length < opts.minTasks) {
-      return this.createNegativeSuggestion(`Only ${parsedTasks.length} task(s) - minimum ${opts.minTasks} required for parallelization`);
-    }
-    const analysisResult = this.taskAnalyzer.analyze(parsedTasks);
-    const predictions = this.filePredictor.predictAll(parsedTasks.map((t) => ({ id: t.id, description: t.description })));
-    const overlapResult = this.overlapDetector.detect(predictions);
-    return this.buildSuggestion(analysisResult, predictions, overlapResult, opts);
-  }
-  buildSuggestion(analysis, predictions, overlaps, options) {
-    const reasoning = [];
-    const warnings = [];
-    const avgConfidence = predictions.reduce((sum, p) => sum + p.confidence, 0) / predictions.length;
-    if (analysis.analysis.estimatedSpeedup < options.minSpeedup) {
-      reasoning.push(`Estimated speedup (${analysis.analysis.estimatedSpeedup.toFixed(2)}x) is below threshold (${options.minSpeedup}x)`);
-    }
-    if (avgConfidence < options.minConfidence) {
-      reasoning.push(`File prediction confidence (${(avgConfidence * 100).toFixed(0)}%) is below threshold (${(options.minConfidence * 100).toFixed(0)}%)`);
-      warnings.push("Low confidence in file predictions - manual verification recommended");
-    }
-    if (overlaps.hasOverlap) {
-      const criticalOverlaps = overlaps.taskPairs.filter((p) => p.severity === "critical");
-      if (criticalOverlaps.length > 0) {
-        reasoning.push(`${criticalOverlaps.length} task pair(s) have file overlaps that prevent parallelization`);
-        for (const pair of criticalOverlaps.slice(0, 3)) {
-          warnings.push(`Tasks ${pair.task1} and ${pair.task2} modify common files: ${pair.overlappingFiles.slice(0, 3).join(", ")}`);
-        }
-      }
-    }
-    if (overlaps.safeGroups.length > 0) {
-      const maxGroupSize = Math.max(...overlaps.safeGroups.map((g) => g.taskIds.length));
-      reasoning.push(`Found ${overlaps.safeGroups.length} safe parallel group(s)`);
-      reasoning.push(`Maximum parallelism: ${maxGroupSize} concurrent tasks`);
-    }
-    if (analysis.analysis.parallelizableTasks > 0) {
-      reasoning.push(`${analysis.analysis.parallelizableTasks} of ${analysis.analysis.totalTasks} tasks can be parallelized`);
-    }
-    const shouldParallelize = overlaps.safeGroups.some((g) => g.taskIds.length > 1) && analysis.analysis.estimatedSpeedup >= options.minSpeedup && avgConfidence >= options.minConfidence;
-    return {
-      shouldParallelize,
-      confidence: avgConfidence,
-      parallelGroups: overlaps.safeGroups,
-      sequentialTasks: analysis.graph.sequential,
-      reasoning,
-      estimatedSpeedup: analysis.analysis.estimatedSpeedup,
-      warnings
-    };
-  }
-  createNegativeSuggestion(reason) {
-    return {
-      shouldParallelize: false,
-      confidence: 0,
-      parallelGroups: [],
-      sequentialTasks: [],
-      reasoning: [reason],
-      estimatedSpeedup: 1,
-      warnings: []
-    };
-  }
-  formatSuggestion(suggestion) {
-    const lines = [];
-    if (suggestion.shouldParallelize) {
-      lines.push("✅ **Parallelization Recommended**");
-      lines.push("");
-      lines.push(`Estimated speedup: ${suggestion.estimatedSpeedup.toFixed(2)}x`);
-      lines.push(`Confidence: ${(suggestion.confidence * 100).toFixed(0)}%`);
-      lines.push("");
-      lines.push("### Parallel Groups");
-      for (const group of suggestion.parallelGroups) {
-        if (group.taskIds.length > 1) {
-          lines.push(`- **${group.id}**: ${group.taskIds.join(", ")}`);
-        }
-      }
-    } else {
-      lines.push("⚠️ **Sequential Execution Recommended**");
-    }
-    lines.push("");
-    lines.push("### Reasoning");
-    for (const reason of suggestion.reasoning) {
-      lines.push(`- ${reason}`);
-    }
-    if (suggestion.warnings.length > 0) {
-      lines.push("");
-      lines.push("### Warnings");
-      for (const warning of suggestion.warnings) {
-        lines.push(`- ⚠️ ${warning}`);
-      }
-    }
-    return lines.join(`
-`);
-  }
-  quickCheck(taskCount) {
-    const config = this.configManager.get();
-    return config.enabled && config.autoSuggest && taskCount >= 2;
-  }
-  async hookTaskCreation(tasks) {
-    const config = this.configManager.get();
-    if (!config.enabled || !config.autoSuggest) {
-      return { suggest: false };
-    }
-    if (tasks.length < 2) {
-      return { suggest: false };
-    }
-    try {
-      const suggestion = await this.suggest(tasks);
-      if (suggestion.shouldParallelize) {
-        const groupsWithMultiple = suggestion.parallelGroups.filter((g) => g.taskIds.length > 1);
-        if (groupsWithMultiple.length > 0) {
-          return {
-            suggest: true,
-            message: `\uD83D\uDCA1 ${groupsWithMultiple.length} task(s) can be parallelized (${suggestion.estimatedSpeedup.toFixed(1)}x estimated speedup). Run with --auto-parallel or use /manifold:parallel command.`
-          };
-        }
-      }
-      return { suggest: false };
-    } catch (error) {
-      console.warn("Auto-suggest failed:", error);
-      return { suggest: false };
-    }
-  }
-}
-
-// install/lib/parallel/command.ts
-class ParallelCommand {
-  baseDir;
-  configManager;
-  taskAnalyzer;
-  filePredictor;
-  overlapDetector;
-  autoSuggester;
-  constructor(baseDir) {
-    this.baseDir = baseDir;
-    this.configManager = new ParallelConfigManager(baseDir);
-    this.taskAnalyzer = new TaskAnalyzer;
-    this.filePredictor = new FilePredictor({ baseDir });
-    this.overlapDetector = new OverlapDetector;
-    this.autoSuggester = new AutoSuggester(baseDir);
-  }
-  async execute(options) {
-    const startTime = Date.now();
-    const outputLines = [];
-    const log = (msg) => {
-      outputLines.push(msg);
-      console.log(msg);
-    };
-    try {
-      const config = this.configManager.applyFlags({
-        autoParallel: options.autoParallel,
-        maxParallel: options.maxParallel,
-        verbose: options.verbose,
-        deep: options.deep,
-        timeout: options.timeout,
-        strategy: options.strategy,
-        noCleanup: options.noCleanup
-      });
-      log(`
-\uD83D\uDD04 Analyzing tasks for parallelization...
-`);
-      const suggestion = await this.autoSuggester.suggest(options.tasks);
-      log(this.autoSuggester.formatSuggestion(suggestion));
-      log("");
-      if (options.dryRun) {
-        log("ℹ️  Dry run mode - no execution performed");
-        return {
-          success: true,
-          suggestion,
-          duration: Date.now() - startTime,
-          output: outputLines.join(`
-`)
-        };
-      }
-      if (!suggestion.shouldParallelize) {
-        log("⚠️  Sequential execution recommended. Use --force to override.");
-        return {
-          success: true,
-          suggestion,
-          duration: Date.now() - startTime,
-          output: outputLines.join(`
-`)
-        };
-      }
-      const resourceMonitor = new ResourceMonitor(this.baseDir);
-      const resourceStatus = await resourceMonitor.getStatus();
-      if (!resourceStatus.overall.canParallelize) {
-        log(`
-⚠️  ${resourceStatus.overall.reason}`);
-        log("Falling back to sequential execution.");
-        return {
-          success: false,
-          suggestion,
-          duration: Date.now() - startTime,
-          output: outputLines.join(`
-`)
-        };
-      }
-      log(await resourceMonitor.getSummary());
-      log("");
-      const progressReporter = new ProgressReporter({
-        verbose: config.verbose,
-        showProgress: true,
-        outputCallback: log
-      });
-      const executor = new ParallelExecutor({
-        baseDir: this.baseDir,
-        maxConcurrent: Math.min(config.maxParallel, resourceStatus.overall.recommendedConcurrency),
-        timeout: config.timeout,
-        onProgress: (event) => progressReporter.handleProgressEvent(event)
-      });
-      const parallelizableGroups = suggestion.parallelGroups.filter((g) => g.taskIds.length > 1);
-      if (parallelizableGroups.length === 0) {
-        log("No parallelizable groups found.");
-        return {
-          success: true,
-          suggestion,
-          duration: Date.now() - startTime,
-          output: outputLines.join(`
-`)
-        };
-      }
-      progressReporter.start(parallelizableGroups);
-      const executionResults = [];
-      for (const group of parallelizableGroups) {
-        log(`
-Executing group: ${group.id} (${group.taskIds.length} tasks)`);
-        const groupResults = await executor.execute(group);
-        executionResults.push(...groupResults);
-      }
-      progressReporter.reportMergeStart();
-      const mergeOrchestrator = new MergeOrchestrator(this.baseDir, undefined);
-      const completedWorktrees = executor.getCompletedWorktrees();
-      const mergeResult = await mergeOrchestrator.mergeAll(completedWorktrees, { type: config.mergeStrategy });
-      progressReporter.reportMergeComplete(mergeResult);
-      if (config.cleanupOnComplete) {
-        progressReporter.reportCleanup();
-        await executor.cleanup();
-      }
-      const success = mergeResult.success && executionResults.every((r) => r.success);
-      progressReporter.complete(success);
-      return {
-        success,
-        suggestion,
-        execution: executionResults,
-        merge: mergeResult,
-        duration: Date.now() - startTime,
-        output: outputLines.join(`
-`)
-      };
-    } catch (error) {
-      log(`
-❌ Error: ${error}`);
-      return {
-        success: false,
-        suggestion: {
-          shouldParallelize: false,
-          confidence: 0,
-          parallelGroups: [],
-          sequentialTasks: [],
-          reasoning: [`Error: ${error}`],
-          estimatedSpeedup: 1,
-          warnings: []
-        },
-        duration: Date.now() - startTime,
-        output: outputLines.join(`
-`)
-      };
-    }
-  }
-  static parseArgs(args) {
-    const tasks = [];
-    const flags = parseParallelFlags(args);
-    let file;
-    let dryRun = false;
-    for (let i = 0;i < args.length; i++) {
-      const arg = args[i];
-      if (arg === "--file" || arg === "-f") {
-        file = args[++i];
-      } else if (arg === "--dry-run") {
-        dryRun = true;
-      } else if (!arg.startsWith("-") && !arg.startsWith("--")) {
-        tasks.push(arg);
-      }
-    }
-    return {
-      tasks,
-      file,
-      dryRun,
-      ...flags
-    };
-  }
-  static help() {
-    return `
-/parallel - Execute tasks in parallel using git worktrees
-
-USAGE:
-  /parallel "task1" "task2" "task3" [options]
-  /parallel --file tasks.yaml [options]
-
-OPTIONS:
-  --auto-parallel      Enable automatic parallelization
-  --max-parallel N     Maximum concurrent tasks (default: 4)
-  --verbose, -v        Show detailed output
-  --deep               Use deep analysis (slower but more accurate)
-  --timeout N          Task timeout in seconds (default: 300)
-  --strategy TYPE      Merge strategy: sequential, squash, rebase
-  --no-cleanup         Don't cleanup worktrees after completion
-  --dry-run            Analyze but don't execute
-  --file, -f FILE      Load tasks from YAML file
-
-EXAMPLES:
-  /parallel "Add login form" "Add signup form" "Add password reset"
-  /parallel --file features.yaml --auto-parallel
-  /parallel "task1" "task2" --dry-run --verbose
-
-The command will:
-1. Analyze tasks for dependencies and file overlaps
-2. Group tasks that can safely run in parallel
-3. Create isolated git worktrees for each parallel task
-4. Execute tasks concurrently
-5. Merge results back to main worktree
-6. Clean up temporary worktrees
-`;
-  }
-}
-async function runParallelCommand(args) {
-  if (args.includes("--help") || args.includes("-h")) {
-    return ParallelCommand.help();
-  }
-  const options = ParallelCommand.parseArgs(args);
-  if (options.tasks.length === 0 && !options.file) {
-    return 'Error: No tasks provided. Use /parallel "task1" "task2" or --file tasks.yaml';
-  }
-  if (options.file) {
-    return "File loading not yet implemented. Please provide tasks as arguments.";
-  }
-  const command = new ParallelCommand(process.cwd());
-  const result = await command.execute(options);
-  return result.output;
-}
-
-// install/lib/parallel/index.ts
+// install/lib/parallel/bundle-entry.ts
 async function runParallel(baseDir, taskDescriptions, options = {}) {
-  const { TaskAnalyzer: TaskAnalyzer3 } = await Promise.resolve().then(() => (init_task_analyzer(), exports_task_analyzer));
-  const { FilePredictor: FilePredictor3 } = await Promise.resolve().then(() => (init_file_predictor(), exports_file_predictor));
-  const { OverlapDetector: OverlapDetector3 } = await Promise.resolve().then(() => (init_overlap_detector(), exports_overlap_detector));
-  const { ParallelExecutor: ParallelExecutor2 } = await Promise.resolve().then(() => (init_parallel_executor(), exports_parallel_executor));
-  const { MergeOrchestrator: MergeOrchestrator2 } = await Promise.resolve().then(() => (init_merge_orchestrator(), exports_merge_orchestrator));
-  const { ResourceMonitor: ResourceMonitor2 } = await Promise.resolve().then(() => (init_resource_monitor(), exports_resource_monitor));
-  const analyzer = new TaskAnalyzer3;
+  const analyzer = new TaskAnalyzer;
   const tasks = analyzer.parseTaskDescriptions(taskDescriptions);
   const analysisResult = analyzer.analyze(tasks);
-  const predictor = new FilePredictor3({ baseDir });
+  const predictor = new FilePredictor({ baseDir });
   const predictions = predictor.predictAll(tasks.map((t) => ({ id: t.id, description: t.description })));
-  const detector = new OverlapDetector3;
+  const detector = new OverlapDetector;
   const overlaps = detector.detect(predictions);
   const parallelGroups = overlaps.safeGroups.filter((g) => g.taskIds.length > 1);
   if (parallelGroups.length === 0) {
-    return {
-      success: true,
-      parallelized: false,
-      results: []
-    };
+    return { success: true, parallelized: false, results: [] };
   }
-  const resourceMonitor = new ResourceMonitor2(baseDir);
+  const resourceMonitor = new ResourceMonitor(baseDir);
   const status = await resourceMonitor.getStatus();
   if (!status.overall.canParallelize) {
     return {
       success: false,
       parallelized: false,
-      results: [{
-        taskId: "resource-check",
-        success: false,
-        error: status.overall.reason
-      }]
+      results: [{ taskId: "resource-check", success: false, error: status.overall.reason }]
     };
   }
-  const executor = new ParallelExecutor2({
+  const executor = new ParallelExecutor({
     baseDir,
     maxConcurrent: options.maxParallel ?? status.overall.recommendedConcurrency
   });
@@ -9439,7 +8958,7 @@ async function runParallel(baseDir, taskDescriptions, options = {}) {
     })));
   }
   if (options.autoMerge !== false) {
-    const orchestrator = new MergeOrchestrator2(baseDir);
+    const orchestrator = new MergeOrchestrator(baseDir);
     const completedWorktrees = executor.getCompletedWorktrees();
     await orchestrator.mergeAll(completedWorktrees);
   }
@@ -9451,18 +8970,16 @@ async function runParallel(baseDir, taskDescriptions, options = {}) {
   };
 }
 export {
-  runParallelCommand,
   runParallel,
   parseParallelFlags,
   WorktreeManager,
-  TaskAnalyzer,
-  ResourceMonitor,
+  TaskAnalyzer2 as TaskAnalyzer,
+  ResourceMonitor2 as ResourceMonitor,
   ProgressReporter,
-  ParallelExecutor,
+  ParallelExecutor2 as ParallelExecutor,
   ParallelConfigManager,
-  ParallelCommand,
-  OverlapDetector,
-  MergeOrchestrator,
-  FilePredictor,
+  OverlapDetector2 as OverlapDetector,
+  MergeOrchestrator2 as MergeOrchestrator,
+  FilePredictor2 as FilePredictor,
   DEFAULT_CONFIG4 as DEFAULT_CONFIG
 };
