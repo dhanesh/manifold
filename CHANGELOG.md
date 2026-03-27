@@ -5,6 +5,25 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.27.1](https://github.com/dhanesh/manifold/compare/v2.27.0...v2.27.1) (2026-03-27)
+
+### Bug Fixes
+
+* align parser interfaces with structure-schema types ([c91376f](https://github.com/dhanesh/manifold/commit/c91376f151275bef29984be85f45f79b5eab97ae))
+* correct operator precedence in markdown section header check ([38ba6a5](https://github.com/dhanesh/manifold/commit/38ba6a5405bb5cd390c6272e2fcc405e49896307))
+* make evidence counting categories mutually exclusive ([60a9152](https://github.com/dhanesh/manifold/commit/60a915230e0d5a816c029540c670cd24aebbd31a))
+* replace non-null assertions with safe optional chaining ([39d9c28](https://github.com/dhanesh/manifold/commit/39d9c287b1e0bb2bf3c039369952621d5f2dca93))
+* resolve all remaining type errors in test files ([b81deaf](https://github.com/dhanesh/manifold/commit/b81deafd705371498db0aee89a504fd4eb5c579e))
+* resolve migrate.ts type errors and correct artifact_class union ([5a21cb0](https://github.com/dhanesh/manifold/commit/5a21cb0073bde613480e5a9f55e856c36e9b4542))
+* resolve process variable shadowing in parallel-executor ([8a2afde](https://github.com/dhanesh/manifold/commit/8a2afdebf1a2590fda68d98d04713b4e5bab77b9))
+
+### Refactoring
+
+* consolidate validation constants to single source of truth ([d3ef535](https://github.com/dhanesh/manifold/commit/d3ef535aee932394da6be943688cc7c5fccf01f0))
+* eliminate redundant directory lookup in verify command ([e0b915b](https://github.com/dhanesh/manifold/commit/e0b915b6bb99ae1389a6b6e0fced3caf5219fee4))
+* remove dead code and replace require() with static imports ([d1c49ed](https://github.com/dhanesh/manifold/commit/d1c49ed4d2b1427d0ade884c5d5f90c2b40c3e92))
+* use structured warning output in solver module ([47e5413](https://github.com/dhanesh/manifold/commit/47e5413caa9f8915939a76f2b6ecb9b29038e80f))
+
 ## [2.27.0](https://github.com/dhanesh/manifold/compare/v2.26.0...v2.27.0) (2026-03-14)
 
 ### Features
