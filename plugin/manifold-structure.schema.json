@@ -1,72 +1,6 @@
 {
   "$ref": "#/definitions/ManifoldStructure",
   "definitions": {
-    "EvidenceRef": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string",
-          "enum": [
-            "file_exists",
-            "content_match",
-            "test_passes",
-            "metric_value",
-            "manual_review"
-          ]
-        },
-        "path": {
-          "type": "string"
-        },
-        "pattern": {
-          "type": "string"
-        },
-        "test_name": {
-          "type": "string"
-        },
-        "metric_name": {
-          "type": "string"
-        },
-        "threshold": {
-          "type": [
-            "string",
-            "number"
-          ]
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "VERIFIED",
-            "PENDING",
-            "FAILED",
-            "STALE"
-          ]
-        },
-        "satisfies": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "test_tier": {
-          "type": "string",
-          "enum": ["unit", "integration", "e2e"]
-        },
-        "validation_criteria": {
-          "type": "string"
-        },
-        "file_hash": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "id",
-        "type"
-      ],
-      "additionalProperties": false
-    },
     "ManifoldStructure": {
       "type": "object",
       "properties": {
@@ -98,6 +32,13 @@
           "enum": [
             "light",
             "full"
+          ]
+        },
+        "domain": {
+          "type": "string",
+          "enum": [
+            "software",
+            "non-software"
           ]
         },
         "outcome_ref": {
@@ -137,8 +78,124 @@
                   },
                   "verified_by": {
                     "type": "array",
-                    "items": { "$ref": "#/definitions/EvidenceRef" },
-                    "description": "Evidence verifying this constraint"
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "file_exists",
+                            "content_match",
+                            "test_passes",
+                            "metric_value",
+                            "manual_review"
+                          ]
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "pattern": {
+                          "type": "string"
+                        },
+                        "test_name": {
+                          "type": "string"
+                        },
+                        "metric_name": {
+                          "type": "string"
+                        },
+                        "threshold": {
+                          "type": [
+                            "string",
+                            "number"
+                          ]
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "VERIFIED",
+                            "PENDING",
+                            "FAILED",
+                            "STALE"
+                          ]
+                        },
+                        "satisfies": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "test_tier": {
+                          "type": "string",
+                          "enum": [
+                            "unit",
+                            "integration",
+                            "e2e"
+                          ]
+                        },
+                        "validation_criteria": {
+                          "type": "string"
+                        },
+                        "file_hash": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "interview",
+                      "pre-mortem",
+                      "assumption"
+                    ]
+                  },
+                  "challenger": {
+                    "type": "string",
+                    "enum": [
+                      "regulation",
+                      "stakeholder",
+                      "technical-reality",
+                      "assumption"
+                    ]
+                  },
+                  "threshold": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "deterministic",
+                          "statistical"
+                        ]
+                      },
+                      "ceiling": {
+                        "type": "string"
+                      },
+                      "p99": {
+                        "type": "string"
+                      },
+                      "p50": {
+                        "type": "string"
+                      },
+                      "failure_rate": {
+                        "type": "string"
+                      },
+                      "window": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": true
                   }
                 },
                 "required": [
@@ -168,8 +225,124 @@
                   },
                   "verified_by": {
                     "type": "array",
-                    "items": { "$ref": "#/definitions/EvidenceRef" },
-                    "description": "Evidence verifying this constraint"
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "file_exists",
+                            "content_match",
+                            "test_passes",
+                            "metric_value",
+                            "manual_review"
+                          ]
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "pattern": {
+                          "type": "string"
+                        },
+                        "test_name": {
+                          "type": "string"
+                        },
+                        "metric_name": {
+                          "type": "string"
+                        },
+                        "threshold": {
+                          "type": [
+                            "string",
+                            "number"
+                          ]
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "VERIFIED",
+                            "PENDING",
+                            "FAILED",
+                            "STALE"
+                          ]
+                        },
+                        "satisfies": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "test_tier": {
+                          "type": "string",
+                          "enum": [
+                            "unit",
+                            "integration",
+                            "e2e"
+                          ]
+                        },
+                        "validation_criteria": {
+                          "type": "string"
+                        },
+                        "file_hash": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "interview",
+                      "pre-mortem",
+                      "assumption"
+                    ]
+                  },
+                  "challenger": {
+                    "type": "string",
+                    "enum": [
+                      "regulation",
+                      "stakeholder",
+                      "technical-reality",
+                      "assumption"
+                    ]
+                  },
+                  "threshold": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "deterministic",
+                          "statistical"
+                        ]
+                      },
+                      "ceiling": {
+                        "type": "string"
+                      },
+                      "p99": {
+                        "type": "string"
+                      },
+                      "p50": {
+                        "type": "string"
+                      },
+                      "failure_rate": {
+                        "type": "string"
+                      },
+                      "window": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": true
                   }
                 },
                 "required": [
@@ -199,8 +372,124 @@
                   },
                   "verified_by": {
                     "type": "array",
-                    "items": { "$ref": "#/definitions/EvidenceRef" },
-                    "description": "Evidence verifying this constraint"
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "file_exists",
+                            "content_match",
+                            "test_passes",
+                            "metric_value",
+                            "manual_review"
+                          ]
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "pattern": {
+                          "type": "string"
+                        },
+                        "test_name": {
+                          "type": "string"
+                        },
+                        "metric_name": {
+                          "type": "string"
+                        },
+                        "threshold": {
+                          "type": [
+                            "string",
+                            "number"
+                          ]
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "VERIFIED",
+                            "PENDING",
+                            "FAILED",
+                            "STALE"
+                          ]
+                        },
+                        "satisfies": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "test_tier": {
+                          "type": "string",
+                          "enum": [
+                            "unit",
+                            "integration",
+                            "e2e"
+                          ]
+                        },
+                        "validation_criteria": {
+                          "type": "string"
+                        },
+                        "file_hash": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "interview",
+                      "pre-mortem",
+                      "assumption"
+                    ]
+                  },
+                  "challenger": {
+                    "type": "string",
+                    "enum": [
+                      "regulation",
+                      "stakeholder",
+                      "technical-reality",
+                      "assumption"
+                    ]
+                  },
+                  "threshold": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "deterministic",
+                          "statistical"
+                        ]
+                      },
+                      "ceiling": {
+                        "type": "string"
+                      },
+                      "p99": {
+                        "type": "string"
+                      },
+                      "p50": {
+                        "type": "string"
+                      },
+                      "failure_rate": {
+                        "type": "string"
+                      },
+                      "window": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": true
                   }
                 },
                 "required": [
@@ -230,8 +519,124 @@
                   },
                   "verified_by": {
                     "type": "array",
-                    "items": { "$ref": "#/definitions/EvidenceRef" },
-                    "description": "Evidence verifying this constraint"
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "file_exists",
+                            "content_match",
+                            "test_passes",
+                            "metric_value",
+                            "manual_review"
+                          ]
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "pattern": {
+                          "type": "string"
+                        },
+                        "test_name": {
+                          "type": "string"
+                        },
+                        "metric_name": {
+                          "type": "string"
+                        },
+                        "threshold": {
+                          "type": [
+                            "string",
+                            "number"
+                          ]
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "VERIFIED",
+                            "PENDING",
+                            "FAILED",
+                            "STALE"
+                          ]
+                        },
+                        "satisfies": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "test_tier": {
+                          "type": "string",
+                          "enum": [
+                            "unit",
+                            "integration",
+                            "e2e"
+                          ]
+                        },
+                        "validation_criteria": {
+                          "type": "string"
+                        },
+                        "file_hash": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "interview",
+                      "pre-mortem",
+                      "assumption"
+                    ]
+                  },
+                  "challenger": {
+                    "type": "string",
+                    "enum": [
+                      "regulation",
+                      "stakeholder",
+                      "technical-reality",
+                      "assumption"
+                    ]
+                  },
+                  "threshold": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "deterministic",
+                          "statistical"
+                        ]
+                      },
+                      "ceiling": {
+                        "type": "string"
+                      },
+                      "p99": {
+                        "type": "string"
+                      },
+                      "p50": {
+                        "type": "string"
+                      },
+                      "failure_rate": {
+                        "type": "string"
+                      },
+                      "window": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": true
                   }
                 },
                 "required": [
@@ -261,8 +666,124 @@
                   },
                   "verified_by": {
                     "type": "array",
-                    "items": { "$ref": "#/definitions/EvidenceRef" },
-                    "description": "Evidence verifying this constraint"
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "file_exists",
+                            "content_match",
+                            "test_passes",
+                            "metric_value",
+                            "manual_review"
+                          ]
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "pattern": {
+                          "type": "string"
+                        },
+                        "test_name": {
+                          "type": "string"
+                        },
+                        "metric_name": {
+                          "type": "string"
+                        },
+                        "threshold": {
+                          "type": [
+                            "string",
+                            "number"
+                          ]
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "VERIFIED",
+                            "PENDING",
+                            "FAILED",
+                            "STALE"
+                          ]
+                        },
+                        "satisfies": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "test_tier": {
+                          "type": "string",
+                          "enum": [
+                            "unit",
+                            "integration",
+                            "e2e"
+                          ]
+                        },
+                        "validation_criteria": {
+                          "type": "string"
+                        },
+                        "file_hash": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "interview",
+                      "pre-mortem",
+                      "assumption"
+                    ]
+                  },
+                  "challenger": {
+                    "type": "string",
+                    "enum": [
+                      "regulation",
+                      "stakeholder",
+                      "technical-reality",
+                      "assumption"
+                    ]
+                  },
+                  "threshold": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "deterministic",
+                          "statistical"
+                        ]
+                      },
+                      "ceiling": {
+                        "type": "string"
+                      },
+                      "p99": {
+                        "type": "string"
+                      },
+                      "p50": {
+                        "type": "string"
+                      },
+                      "failure_rate": {
+                        "type": "string"
+                      },
+                      "window": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": true
                   }
                 },
                 "required": [
@@ -311,6 +832,39 @@
                 "type": "array",
                 "items": {
                   "type": "string"
+                }
+              },
+              "triz_principles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "propagation_effects": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "constraint_id": {
+                      "type": "string"
+                    },
+                    "effect": {
+                      "type": "string",
+                      "enum": [
+                        "TIGHTENED",
+                        "LOOSENED",
+                        "VIOLATED"
+                      ]
+                    },
+                    "note": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "constraint_id",
+                    "effect"
+                  ],
+                  "additionalProperties": false
                 }
               }
             },
@@ -366,7 +920,7 @@
                 "properties": {
                   "id": {
                     "type": "string",
-                    "pattern": "^RT-\\d+$"
+                    "pattern": "^RT-[\\d.]+$"
                   },
                   "status": {
                     "type": "string",
@@ -385,8 +939,83 @@
                   },
                   "evidence": {
                     "type": "array",
-                    "items": { "$ref": "#/definitions/EvidenceRef" },
-                    "description": "Concrete evidence for this required truth"
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "file_exists",
+                            "content_match",
+                            "test_passes",
+                            "metric_value",
+                            "manual_review"
+                          ]
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "pattern": {
+                          "type": "string"
+                        },
+                        "test_name": {
+                          "type": "string"
+                        },
+                        "metric_name": {
+                          "type": "string"
+                        },
+                        "threshold": {
+                          "type": [
+                            "string",
+                            "number"
+                          ]
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "VERIFIED",
+                            "PENDING",
+                            "FAILED",
+                            "STALE"
+                          ]
+                        },
+                        "satisfies": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "test_tier": {
+                          "type": "string",
+                          "enum": [
+                            "unit",
+                            "integration",
+                            "e2e"
+                          ]
+                        },
+                        "validation_criteria": {
+                          "type": "string"
+                        },
+                        "file_hash": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "depth": {
+                    "type": "number"
+                  },
+                  "children": {
+                    "type": "array",
+                    "items": {}
                   }
                 },
                 "required": [
@@ -403,8 +1032,40 @@
             "implementation_phases": {
               "type": "array",
               "items": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                ]
               }
+            },
+            "anchor_document": {
+              "type": "string"
+            },
+            "binding_constraint": {
+              "type": "object",
+              "properties": {
+                "required_truth_id": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "dependency_chain": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "required_truth_id"
+              ],
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -448,25 +1109,35 @@
               ]
             },
             "criteria": {
-              "type": "object",
-              "properties": {
-                "all_invariants_satisfied": {
-                  "type": "boolean"
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "all_invariants_satisfied": {
+                      "type": "boolean"
+                    },
+                    "all_required_truths_satisfied": {
+                      "type": "boolean"
+                    },
+                    "no_blocking_gaps": {
+                      "type": "boolean"
+                    },
+                    "all_integrations_complete": {
+                      "type": "boolean"
+                    },
+                    "strict_verification_passed": {
+                      "type": "boolean"
+                    },
+                    "verification_passed": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
                 },
-                "all_required_truths_satisfied": {
-                  "type": "boolean"
-                },
-                "no_blocking_gaps": {
-                  "type": "boolean"
-                },
-                "all_integrations_complete": {
-                  "type": "boolean"
-                },
-                "strict_verification_passed": {
-                  "type": "boolean"
+                {
+                  "type": "string"
                 }
-              },
-              "additionalProperties": false
+              ]
             },
             "iterations_to_convergence": {
               "type": "number"
@@ -526,7 +1197,10 @@
                   },
                   "artifact_class": {
                     "type": "string",
-                    "enum": ["substantive", "structural"]
+                    "enum": [
+                      "substantive",
+                      "structural"
+                    ]
                   }
                 },
                 "required": [
@@ -556,21 +1230,114 @@
                   "type": "number"
                 }
               },
-              "required": [
-                "constraints_addressed",
-                "constraints_total",
-                "required_truths_addressed",
-                "required_truths_total",
-                "percentage"
-              ],
-              "additionalProperties": false
+              "additionalProperties": true
             }
           },
           "additionalProperties": false
         },
+        "reversibility_log": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "action_step": {
+                "type": "number"
+              },
+              "description": {
+                "type": "string"
+              },
+              "reversibility": {
+                "type": "string",
+                "enum": [
+                  "TWO_WAY",
+                  "REVERSIBLE_WITH_COST",
+                  "ONE_WAY"
+                ]
+              },
+              "one_way_consequence": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "action_step",
+              "description",
+              "reversibility"
+            ],
+            "additionalProperties": false
+          }
+        },
         "evidence": {
           "type": "array",
-          "items": { "$ref": "#/definitions/EvidenceRef" }
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "file_exists",
+                  "content_match",
+                  "test_passes",
+                  "metric_value",
+                  "manual_review"
+                ]
+              },
+              "path": {
+                "type": "string"
+              },
+              "pattern": {
+                "type": "string"
+              },
+              "test_name": {
+                "type": "string"
+              },
+              "metric_name": {
+                "type": "string"
+              },
+              "threshold": {
+                "type": [
+                  "string",
+                  "number"
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "VERIFIED",
+                  "PENDING",
+                  "FAILED",
+                  "STALE"
+                ]
+              },
+              "satisfies": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "test_tier": {
+                "type": "string",
+                "enum": [
+                  "unit",
+                  "integration",
+                  "e2e"
+                ]
+              },
+              "validation_criteria": {
+                "type": "string"
+              },
+              "file_hash": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "type"
+            ],
+            "additionalProperties": false
+          }
         },
         "constraint_graph": {
           "type": "object",
@@ -636,9 +1403,6 @@
                     "type": "number"
                   }
                 },
-                "required": [
-                  "id"
-                ],
                 "additionalProperties": false
               }
             },
@@ -648,31 +1412,55 @@
                 "dependencies": {
                   "type": "array",
                   "items": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "minItems": 2
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 2
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": {}
+                      }
+                    ]
                   }
                 },
                 "conflicts": {
                   "type": "array",
                   "items": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "minItems": 2
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 2
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": {}
+                      }
+                    ]
                   }
                 },
                 "satisfies": {
                   "type": "array",
                   "items": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "minItems": 2
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 2
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": {}
+                      }
+                    ]
                   }
                 }
               },
@@ -691,11 +1479,21 @@
               },
               "category": {
                 "type": "string",
-                "enum": ["business", "technical", "user_experience", "security", "operational"]
+                "enum": [
+                  "business",
+                  "technical",
+                  "user_experience",
+                  "security",
+                  "operational"
+                ]
               },
               "type": {
                 "type": "string",
-                "enum": ["invariant", "goal", "boundary"]
+                "enum": [
+                  "invariant",
+                  "goal",
+                  "boundary"
+                ]
               },
               "source_constraint": {
                 "type": "string"
@@ -709,7 +1507,13 @@
                 "default": false
               }
             },
-            "required": ["id", "category", "type", "source_constraint", "auto_generated"],
+            "required": [
+              "id",
+              "category",
+              "type",
+              "source_constraint",
+              "auto_generated"
+            ],
             "additionalProperties": false
           }
         },

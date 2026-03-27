@@ -148,6 +148,12 @@ export interface Manifold {
     recommended_option?: string;
     implementation_phases?: string[];
     anchor_document?: string;
+    // Enhancement 5: Theory of Constraints
+    binding_constraint?: {
+      required_truth_id: string;
+      reason?: string;
+      dependency_chain?: string[];
+    };
   };
 
   iterations?: Iteration[];
@@ -175,6 +181,17 @@ export interface Manifold {
 
   // v3: Constraint graph (computed from constraints, tensions, required truths)
   constraint_graph?: ConstraintGraph;
+
+  // Enhancement 4: Reversibility tagging
+  reversibility_log?: Array<{
+    action_step: number;
+    description: string;
+    reversibility: 'TWO_WAY' | 'REVERSIBLE_WITH_COST' | 'ONE_WAY';
+    one_way_consequence?: string;
+  }>;
+
+  // Non-software domain support
+  domain?: 'software' | 'non-software';
 }
 
 export interface Constraint {
@@ -186,6 +203,19 @@ export interface Constraint {
   implemented_by?: string[];       // Paths to implementation files
   verified_by?: Evidence[];        // How this is verified
   depends_on?: string[];           // Constraint dependencies
+  // Enhancement 2: Constraint genealogy
+  source?: 'interview' | 'pre-mortem' | 'assumption';
+  challenger?: 'regulation' | 'stakeholder' | 'technical-reality' | 'assumption';
+  // Enhancement 6: Probabilistic bounds
+  threshold?: {
+    kind: 'deterministic' | 'statistical';
+    ceiling?: string;
+    p99?: string;
+    p50?: string;
+    failure_rate?: string;
+    window?: string;
+    [key: string]: unknown;
+  };
 }
 
 export interface Tension {
@@ -196,6 +226,14 @@ export interface Tension {
   status: 'resolved' | 'unresolved';
   resolution?: string;
   priority?: number;
+  // Enhancement 3: TRIZ principles
+  triz_principles?: string[];
+  // Enhancement 8: Propagation effects
+  propagation_effects?: Array<{
+    constraint_id: string;
+    effect: 'TIGHTENED' | 'LOOSENED' | 'VIOLATED';
+    note?: string;
+  }>;
 }
 
 export interface TensionSummary {
@@ -217,6 +255,9 @@ export interface RequiredTruth {
   // v3: Enhanced tracking
   maps_to_constraints?: string[];  // Constraint IDs this RT satisfies
   last_verified?: string;          // ISO timestamp of last verification
+  // Enhancement 7: Recursive backward chaining
+  depth?: number;
+  children?: RequiredTruth[];
 }
 
 export interface Iteration {
@@ -621,6 +662,9 @@ function loadJsonMdAsManifold(jsonPath: string, mdPath: string): Manifold | null
       constraint_graph: structure.constraint_graph,
       quick_summary: structure.quick_summary,
       tension_summary: structure.tension_summary,
+      // Preserve enhancement fields
+      ...(structure.domain && { domain: structure.domain }),
+      ...(structure.reversibility_log && { reversibility_log: structure.reversibility_log }),
     };
 
     // Reconstruct constraints with text from markdown
@@ -628,13 +672,18 @@ function loadJsonMdAsManifold(jsonPath: string, mdPath: string): Manifold | null
       manifold.constraints = {};
       for (const category of ['business', 'technical', 'user_experience', 'security', 'operational'] as const) {
         const refs = structure.constraints[category] || [];
-        manifold.constraints[category] = refs.map((ref: { id: string; type: string }) => {
+        manifold.constraints[category] = refs.map((ref: any) => {
           const mdConstraint = mdSections.constraints.get(ref.id);
           return {
             id: ref.id,
             type: ref.type,
             statement: mdConstraint?.statement || `[${ref.id}]`,
             rationale: mdConstraint?.rationale,
+            // Preserve enhancement fields from JSON structure
+            ...(ref.source && { source: ref.source }),
+            ...(ref.challenger && { challenger: ref.challenger }),
+            ...(ref.threshold && { threshold: ref.threshold }),
+            ...(ref.verified_by && { verified_by: ref.verified_by }),
           } as Constraint;
         });
       }
@@ -642,7 +691,7 @@ function loadJsonMdAsManifold(jsonPath: string, mdPath: string): Manifold | null
 
     // Reconstruct tensions with text from markdown
     if (structure.tensions) {
-      manifold.tensions = structure.tensions.map((ref: { id: string; type: string; between: string[]; status: string }) => {
+      manifold.tensions = structure.tensions.map((ref: any) => {
         const mdTension = mdSections.tensions.get(ref.id);
         return {
           id: ref.id,
@@ -651,6 +700,10 @@ function loadJsonMdAsManifold(jsonPath: string, mdPath: string): Manifold | null
           status: ref.status,
           description: mdTension?.description || `[${ref.id}]`,
           resolution: mdTension?.resolution,
+          // Preserve enhancement fields from JSON structure
+          ...(ref.triz_principles && { triz_principles: ref.triz_principles }),
+          ...(ref.propagation_effects && { propagation_effects: ref.propagation_effects }),
+          ...(ref.validation_criteria && { validation_criteria: ref.validation_criteria }),
         } as Tension;
       });
     }
@@ -659,7 +712,7 @@ function loadJsonMdAsManifold(jsonPath: string, mdPath: string): Manifold | null
     if (structure.anchors) {
       manifold.anchors = {
         required_truths: (structure.anchors.required_truths || []).map(
-          (ref: { id: string; status: string; maps_to?: string[]; evidence?: any }) => {
+          (ref: any) => {
             const mdRT = mdSections.requiredTruths.get(ref.id);
             return {
               id: ref.id,
@@ -667,12 +720,17 @@ function loadJsonMdAsManifold(jsonPath: string, mdPath: string): Manifold | null
               statement: mdRT?.statement || `[${ref.id}]`,
               maps_to_constraints: ref.maps_to,
               evidence: ref.evidence,
+              // Preserve enhancement fields from JSON structure
+              ...(ref.depth !== undefined && { depth: ref.depth }),
+              ...(ref.children && { children: ref.children }),
             } as RequiredTruth;
           }
         ),
         recommended_option: structure.anchors.recommended_option,
         implementation_phases: structure.anchors.implementation_phases,
         anchor_document: structure.anchors.anchor_document,
+        // Enhancement 5: binding constraint
+        ...(structure.anchors.binding_constraint && { binding_constraint: structure.anchors.binding_constraint }),
       };
     }
 

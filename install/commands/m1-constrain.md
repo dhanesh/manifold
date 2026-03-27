@@ -161,11 +161,34 @@ iterations:
 
 ## Constraint Categories
 
+### Software Domain (default)
+
 1. **Business** - Revenue impact, compliance requirements, stakeholder needs
 2. **Technical** - Performance requirements, integration points, data constraints
 3. **User Experience** - Response times, error handling, accessibility
 4. **Security** - Data protection, authentication, audit requirements
 5. **Operational** - Monitoring needs, SLAs, incident procedures
+
+### Non-Software Domain (when `domain: non-software` in manifold JSON)
+
+When the manifold has `"domain": "non-software"`, use these universal categories instead:
+
+| Universal Category | Core Question | Replaces |
+|---|---|---|
+| **Obligations** | What must/must-not be true? | Business + Security |
+| **Desires** | What does success look like? | UX + Business goals |
+| **Resources** | What can I bring to this? | Technical (capability limits) |
+| **Risks** | What could break irreversibly? | Security (broadened) |
+| **Dependencies** | What else must hold outside me? | Operational |
+
+The constraint types (INVARIANT / GOAL / BOUNDARY) remain unchanged. Only the categories change. In the JSON structure, non-software constraints still use the standard category keys (`business`, `technical`, etc.) with a mapping:
+- `business` → Obligations
+- `technical` → Resources
+- `user_experience` → Desires
+- `security` → Risks
+- `operational` → Dependencies
+
+The interview questions should use the universal vocabulary (no software jargon). See `docs/non-programming/guide.md` for guidance.
 
 ## Constraint Types
 
@@ -241,6 +264,72 @@ When constraints involve shared state (caching, connection pools, singletons):
 - Are there thread-safety requirements?
 - Should concurrent request handling tests be generated?
 - What shared-state constraints exist?
+
+### Pre-mortem Pass (run after elicitation, before phase closes)
+
+After all five category interviews are complete, run a stress-test pass before committing the phase.
+
+Say to the user:
+
+> "Before we close constraint discovery, let's stress-test what we have. Imagine it is [TIMEFRAME from outcome]. This has clearly failed — not partially, just failed. Give me three failure stories:
+> 1. One you could have seen coming
+> 2. One that surprised you
+> 3. One caused by someone else's action or inaction"
+
+Three stories are required. One story produces the obvious failure. Three stories reliably surface assumption violations and external dependencies.
+
+For each story:
+- Identify which category the violated constraint belongs to
+- If not already in the constraint set: add it, tag `source: pre-mortem`
+- If already in the set: confirm and tag `source: validated-pre-mortem`
+- Use AskUserQuestion to present the three failure story prompts
+
+### Constraint Genealogy Tagging (applied during elicitation)
+
+Every constraint carries two optional tags that record its origin and challengeability. These are populated in the JSON structure file.
+
+**Source tag** (how the constraint was discovered):
+
+| Source | Meaning | Default? |
+|--------|---------|----------|
+| `interview` | Named explicitly during elicitation | Yes — applied automatically |
+| `pre-mortem` | Discovered through failure analysis | Applied by pre-mortem pass |
+| `assumption` | Believed true, unverified | Must be explicitly set |
+
+**Challenger tag** (can it be challenged?):
+
+| Challenger | Meaning | Resolution implication |
+|-----------|---------|----------------------|
+| `regulation` | Legal/regulatory requirement | Cannot be challenged. Route around it. |
+| `stakeholder` | Named party's stated need | Can be negotiated |
+| `technical-reality` | Physical/architectural limit | Cannot change within scope |
+| `assumption` | Believed true, unverified | Must be confirmed before m4. Blocks generation if unconfirmed. |
+
+**Smart defaults (U2):** Source defaults to `interview`. Challenger is inferred — only prompt the user when the challenger classification would change the resolution direction (e.g., when a constraint seems like it could be either `regulation` or `stakeholder`). Never make the user fill in both tags for every constraint.
+
+**Downstream use:**
+- **m2-tension:** When two constraints conflict, their challenger tags determine resolution direction. Challenge the assumption, not the regulation.
+- **m4-generate:** All `challenger: assumption` constraints are surfaced. User must acknowledge before generation proceeds.
+- **m5-verify:** Flag any INVARIANT with `challenger: assumption` as a convergence risk.
+
+### Probabilistic Bounds (applied to metric-based constraints only)
+
+When a constraint contains a measurable threshold (latency, success rate, cost, time, count), prompt:
+
+> "Is this a hard ceiling that must hold for every instance, or a statistical target? If statistical, what percentile or confidence level applies?"
+
+**Examples:**
+- Deterministic: "must never exceed 500ms" → `threshold: {kind: deterministic, ceiling: "500ms"}`
+- Statistical: "p99 < 200ms, p50 < 80ms" → `threshold: {kind: statistical, p99: "200ms", p50: "80ms"}`
+- Rate-based: "< 0.1% failure rate over rolling 24h" → `threshold: {kind: statistical, failure_rate: "< 0.1%", window: "24h"}`
+- Non-software: "budget must not exceed ₹40L" → deterministic. "Project profitable within 18 months" → statistical (what confidence?)
+
+**Firing rule (U3):** Only prompt for constraints with measurable quantities. Skip qualitative constraints ("code should be readable", "interface should feel intuitive"). If in doubt, ask the user rather than guessing.
+
+**Schema:** Add `threshold` object to the constraint in `.manifold/<feature>.json`:
+```json
+{"id": "T1", "type": "boundary", "threshold": {"kind": "statistical", "p99": "200ms"}}
+```
 
 ## Example
 

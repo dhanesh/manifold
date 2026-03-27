@@ -328,6 +328,61 @@ For constraints that can be directly verified (not just via RT mapping), add `ve
 - Evidence format matches the same structure used on required truths
 - This provides a secondary verification path independent of the RT `maps_to` chain
 
+
+## Reversibility Tagging (Enhancement 4)
+
+Every action step in the generated plan MUST carry a reversibility tag.
+
+### Reversibility taxonomy
+
+| Tag | Meaning | Implication at m4 |
+|-----|---------|-------------------|
+| `TWO_WAY` | Reversible with minimal cost — can undo, retry, adjust | Proceed normally |
+| `REVERSIBLE_WITH_COST` | Can reverse with meaningful cost — financial, relational, reputational | Flag and note the cost |
+| `ONE_WAY` | Once taken, closes options permanently or for a defined long period | Require explicit acknowledgment |
+
+### Generation rules
+
+1. For each step in the action plan, assign a reversibility tag
+2. Group all ONE_WAY steps into a dedicated section: **"Irreversible Steps — Require Explicit Acknowledgment"**
+3. Present ONE_WAY steps to the user and require explicit acknowledgment of each before proceeding
+4. Add to the decision brief: **"What This Decision Closes"** — list all ONE_WAY consequences in plain language
+
+### Schema
+
+Record in `.manifold/<feature>.json`:
+```json
+{
+  "reversibility_log": [
+    {
+      "action_step": 1,
+      "description": "Migrate database schema",
+      "reversibility": "ONE_WAY",
+      "one_way_consequence": "Old schema format becomes unreadable"
+    },
+    {
+      "action_step": 2,
+      "description": "Deploy new API version",
+      "reversibility": "TWO_WAY"
+    }
+  ]
+}
+```
+
+### Non-software domain branching
+
+When `--domain=non-software` is set (from m0-init), generate the non-software artifact set instead of code artifacts. See `docs/m4-generate-nonsoftware.md` for templates:
+
+| Non-Software Artifact | Output Path |
+|----------------------|-------------|
+| Decision Brief | `docs/<feature>/DECISION_BRIEF.md` |
+| Scenario Stress-Tests | `docs/<feature>/STRESS_TESTS.md` |
+| Narrative Guide | `docs/<feature>/NARRATIVE_GUIDE.md` |
+| Recovery Playbook | `docs/<feature>/RECOVERY_PLAYBOOK.md` |
+| Risk Watch List | `docs/<feature>/RISK_WATCH_LIST.md` |
+
+All non-software artifacts maintain full constraint traceability. Reversibility tagging applies to both software and non-software domains.
+
 ## STEP 0: Parallel Execution Check (MANDATORY)
 
 > **STOP! Complete this check BEFORE writing ANY files.**

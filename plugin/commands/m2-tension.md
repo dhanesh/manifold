@@ -237,6 +237,93 @@ When tensions involve caching, generate sub-constraints for invalidation trigger
 - What happens during key/credential rotation?
 - Is there a forced invalidation mechanism?
 
+## TRIZ Contradiction Classification (Enhancement 3)
+
+After detecting a tension and before proposing resolution options, classify it using TRIZ methodology. See `docs/triz-principles.md` for the full principle reference.
+
+### Step 1: Classify the contradiction type
+
+**Technical contradiction:** Improving parameter A degrades parameter B.
+Signal: "the more X, the less Y."
+Example: more retries → better reliability, higher latency.
+
+**Physical contradiction:** The same element must simultaneously have a property and its opposite.
+Signal: "must be X and must not be X."
+Example: API must be public (usability) and private (security).
+
+### Step 2: Map to parameter pairs
+
+Match the tension to the parameter pair lookup table in `docs/triz-principles.md`. Surface top 2-3 principles per tension.
+
+**Quality gate (U5):** If the parameter pair has no close match in the lookup table, say "No strong TRIZ mapping — resolve via direct analysis" rather than forcing a weak match. If the match is approximate, label it: "Approximate match (nearest: [pair]) — principles may not apply directly."
+
+**Tier gate (B2):** Never surface Tier C principles (P18, P29-P33, P36-P39) in non-engineering contexts. In software contexts, Tier C principles may be surfaced only with explicit "engineering-specific, no abstract analog" warning.
+
+### Step 3: Output format per tension
+
+```
+TENSION: [description]
+CHALLENGER PROFILE: [C-ID] challenger: [tag] vs. [C-ID] challenger: [tag]
+TYPE: Technical contradiction | Physical contradiction
+PARAMETERS: [A] vs. [B]
+TRIZ MATCH: Exact | Approximate (nearest: [pair]) | No match
+PRINCIPLES:
+  - P[N] [Name]: [one-line application note for this specific tension]
+  - P[N] [Name]: [one-line application note]
+RESOLUTION OPTIONS: [2-3 candidates incorporating principle guidance]
+STATUS: resolved | unresolved
+```
+
+Note: Challenger profile informs resolution direction before principles are applied — challenge the assumption, not the regulation.
+
+## Directional Constraint Propagation (Enhancement 8)
+
+After proposing a resolution option for a tension, run a propagation check BEFORE committing the resolution. This prevents cascading constraint violations.
+
+### Propagation check procedure
+
+For the proposed resolution option:
+
+1. List ALL constraints it directly affects (not just the two in tension)
+2. For each affected constraint:
+   - **TIGHTENED:** Makes it harder to satisfy → note the new pressure
+   - **LOOSENED:** Makes it easier to satisfy → note the benefit
+   - **VIOLATED:** Makes it unsatisfiable → resolution is INVALID, must choose another
+3. Flag any VIOLATION immediately — this resolution option is blocked
+4. Flag any TIGHTEN — note the new constraint pressure, surface to user
+5. If no violations: mark resolution SAFE TO PROCEED
+
+### Interaction with constraint genealogy
+
+When a propagation check finds a TIGHTENED constraint, surface its challenger tag:
+- A tightened `challenger: assumption` should be confirmed before accepting the resolution
+- A tightened `challenger: regulation` may block the option entirely regardless of other factors
+
+### Output format
+
+```
+RESOLUTION PROPOSED: [option description]
+PROPAGATION CHECK:
+  [C-ID] [title]: TIGHTENED — [how and by how much]
+  [C-ID] [title]: LOOSENED — [how]
+  [C-ID] [title]: VIOLATED — [why this invalidates the resolution]
+VERDICT: SAFE | BLOCKED (violation found) | PROCEED WITH AWARENESS (tightening noted)
+```
+
+### Schema
+
+Record propagation effects in `.manifold/<feature>.json`:
+```json
+{
+  "tensions": [{
+    "id": "TN1",
+    "propagation_effects": [
+      {"constraint_id": "T3", "effect": "TIGHTENED", "note": "Cache TTL adds 50ms to p99"}
+    ]
+  }]
+}
+```
+
 ## Example
 
 ```

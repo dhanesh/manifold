@@ -21,7 +21,7 @@ Initialize a new constraint manifold for a feature.
 ## Usage
 
 ```
-/manifold:m0-init <feature-name> [--outcome="<desired outcome>"]
+/manifold:m0-init <feature-name> [--outcome="<desired outcome>"] [--domain=software|non-software]
 ```
 
 ## Process
@@ -48,6 +48,7 @@ Creates TWO files that work together:
   "schema_version": 3,
   "feature": "<feature-name>",
   "phase": "INITIALIZED",
+  "domain": "software",
   "created": "<timestamp>",
   "constraints": {
     "business": [],
@@ -220,19 +221,42 @@ v3 Features Enabled:
 Next: /manifold:m1-constrain payment-retry
 ```
 
+## Domain Auto-Detection
+
+If the user does NOT specify `--domain` explicitly, analyze the feature name and outcome for domain signals:
+
+**Non-software signals** (suggest `--domain=non-software`):
+- Feature names like: career-decision, hiring-plan, budget-allocation, product-strategy, relocation
+- Outcome describes: a decision, a plan, a strategy, a policy, a negotiation, a life choice
+- No technical terms: no APIs, databases, services, endpoints, deployments
+
+**Software signals** (keep default `--domain=software`):
+- Feature names like: payment-retry, auth-module, api-gateway, cache-layer
+- Outcome describes: a system, a service, a feature, a component, performance targets
+- Technical terms present: latency, throughput, API, database, deployment
+
+When non-software is detected, use AskUserQuestion to confirm:
+> "This looks like a non-software decision. Would you like to use non-software mode (universal categories: Obligations, Desires, Resources, Risks, Dependencies)?"
+
+**Next-step suggestion must reflect domain:**
+- Software: `Next: /manifold:m1-constrain <feature>`
+- Non-software: `Next: /manifold:m1-constrain <feature>` with note: "(non-software mode: uses universal constraint categories — Obligations, Desires, Resources, Risks, Dependencies)"
+
 ## Execution Instructions
 
 When this command is invoked:
 
 1. Parse the feature name from arguments
 2. Extract optional `--outcome` flag
-3. Check if `.manifold/` directory exists, create if not
-4. Check if manifold already exists for this feature (warn if so)
-5. **Create TWO files (JSON+Markdown hybrid format)**:
-   - `.manifold/<feature>.json` — Structure with IDs, types, phases (NO text content)
-   - `.manifold/<feature>.md` — Content with outcome, section headings
-6. **Run `manifold validate <feature>`** — confirm the new manifold is valid
-7. Display confirmation with file paths and next step
+3. Extract optional `--domain` flag (default: `software`). When `non-software`, the manifold uses universal constraint categories and generates non-software artifacts in m4.
+4. **If no `--domain` flag:** Run domain auto-detection (see above). If non-software signals detected, suggest the flag via AskUserQuestion before proceeding.
+5. Check if `.manifold/` directory exists, create if not
+6. Check if manifold already exists for this feature (warn if so)
+7. **Create TWO files (JSON+Markdown hybrid format)**:
+   - `.manifold/<feature>.json` — Structure with IDs, types, phases, `"domain": "software"` or `"non-software"` (NO text content)
+   - `.manifold/<feature>.md` — Content with outcome, section headings. For non-software: use universal category headings (Obligations, Desires, Resources, Risks, Dependencies)
+8. **Run `manifold validate <feature>`** — confirm the new manifold is valid
+9. Display confirmation with file paths, domain, and domain-aware next step
 
 ### Generation Guidelines
 

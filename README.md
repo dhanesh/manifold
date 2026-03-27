@@ -24,24 +24,31 @@ Forward reasoning                    Backward from outcome
 | Understand the terminology | [Glossary](docs/GLOSSARY.md) |
 | Use pre-built constraint patterns | [Templates](install/templates/README.md) |
 | Generate PRDs and user stories | [PM Guide](docs/pm/guide.md) |
+| Use Manifold for non-software decisions | [Non-Programming Guide](docs/non-programming/guide.md) |
 | Fix something that's broken | [Troubleshooting](docs/troubleshooting.md) |
 | Contribute to Manifold | [Contributing](CONTRIBUTING.md) |
 
 ## Features
 
-- **Constraint-First Development** — Surface all constraints before writing code
-- **Backward Reasoning** — Reason from desired outcomes to required truths
-- **Tension Detection** — Find conflicts between constraints early
-- **All-at-Once Generation** — Generate code, tests, docs, runbooks, and alerts from a single source
-- **Evidence System** — Verify constraints with [concrete proof](docs/evidence-system.md)
-- **Drift Detection** — Detect post-verification file changes using SHA-256 hashing
-- **Guided Workflow** — Structured next-step suggestions guide you through each phase
-- **Constraint Templates** — Pre-built patterns for [auth, CRUD, API, payment, and 13 PM templates](install/templates/README.md)
-- **Light Mode** — Simplified 3-phase workflow for quick changes
-- **PM Workflows** — Generate PRDs and user stories with constraint traceability
-- **Parallel Execution** — Run independent tasks concurrently using git worktrees
-- **Native CLI** — Fast, deterministic operations (<100ms) for CI/CD
-- **Multi-Agent Support** — Works with Claude Code, AMP, Gemini CLI, and Codex CLI
+- **Constraint-First Development** -- Surface all constraints before writing code
+- **Backward Reasoning** -- Reason from desired outcomes to required truths, with recursive decomposition for multi-level dependency chains
+- **Tension Detection** -- Find conflicts between constraints early, with TRIZ-guided resolution and directional propagation checks
+- **Pre-mortem Stress Testing** -- Mandatory failure-story pass in constraint discovery surfaces assumptions single-pass elicitation misses
+- **Constraint Genealogy** -- Track constraint origins (`source`) and challengeability (`challenger`) to guide tension resolution direction
+- **Probabilistic Bounds** -- Express metric constraints as statistical targets (p99, p50, failure rates) rather than only deterministic thresholds
+- **Bottleneck Identification** -- Theory of Constraints integration surfaces the binding constraint before solution generation
+- **Reversibility Tagging** -- Every action step tagged as TWO_WAY, REVERSIBLE_WITH_COST, or ONE_WAY with explicit acknowledgment for irreversible decisions
+- **Non-Software Domain Support** -- `--domain=non-software` activates universal categories (Obligations, Desires, Resources, Risks, Dependencies) and decision-focused artifacts
+- **All-at-Once Generation** -- Generate code, tests, docs, runbooks, and alerts from a single source
+- **Evidence System** -- Verify constraints with [concrete proof](docs/evidence-system.md)
+- **Drift Detection** -- Detect post-verification file changes using SHA-256 hashing
+- **Guided Workflow** -- Structured next-step suggestions guide you through each phase
+- **Constraint Templates** -- Pre-built patterns for [auth, CRUD, API, payment, and 13 PM templates](install/templates/README.md)
+- **Light Mode** -- Simplified 3-phase workflow for quick changes
+- **PM Workflows** -- Generate PRDs and user stories with constraint traceability
+- **Parallel Execution** -- Run independent tasks concurrently using git worktrees
+- **Native CLI** -- Fast, deterministic operations (<100ms) for CI/CD
+- **Multi-Agent Support** -- Works with Claude Code, AMP, Gemini CLI, and Codex CLI
 
 ## Install
 
@@ -76,13 +83,13 @@ The installer auto-detects which AI agents you have and installs per-agent:
 | **CLI binary** | `manifold` binary for your platform (darwin/linux, arm64/x64) | `/usr/local/bin/` or `~/.local/bin/` |
 
 **Specifically, the installer creates:**
-- `commands/` — 12 Manifold slash command files (m0-init through parallel, plus SCHEMA_REFERENCE)
-- `lib/parallel/` — 11 TypeScript modules for git worktree-based parallel execution
-- `hooks/` — 2 hooks: `manifold-context.ts` (context preservation) and `auto-suggester.ts` (parallel suggestions)
-- `skills/manifold/SKILL.md` — Overview skill for `/manifold` command
+- `commands/` -- 12 Manifold slash command files (m0-init through parallel, plus SCHEMA_REFERENCE)
+- `lib/parallel/` -- 11 TypeScript modules for git worktree-based parallel execution
+- `hooks/` -- 2 hooks: `manifold-context.ts` (context preservation) and `auto-suggester.ts` (parallel suggestions)
+- `skills/manifold/SKILL.md` -- Overview skill for `/manifold` command
 - Schema snippet appended to your agent's instruction file (CLAUDE.md, GEMINI.md, or AGENTS.md)
 
-The installer is idempotent — running it again updates existing files without duplication. Run `install.sh --validate` to check what was installed. See [Uninstall](#uninstall) to remove.
+The installer is idempotent -- running it again updates existing files without duplication. Run `install.sh --validate` to check what was installed. See [Uninstall](#uninstall) to remove.
 
 Verify it worked:
 
@@ -116,7 +123,7 @@ chmod +x manifold
 /manifold:m0-init payment-retry --outcome="95% retry success"
 /manifold:m1-constrain payment-retry        # Discover constraints across 5 categories
 /manifold:m2-tension payment-retry          # Surface conflicts: latency vs idempotency
-/manifold:m3-anchor payment-retry           # Backward reasoning → solution options
+/manifold:m3-anchor payment-retry           # Backward reasoning -> solution options
 /manifold:m4-generate payment-retry         # Create code, tests, docs, runbooks, alerts
 /manifold:m5-verify payment-retry           # Validate all artifacts against constraints
 ```
@@ -159,7 +166,7 @@ manifold verify [feature]          # Verify artifacts exist
 manifold graph [feature]           # Visualize constraint network
 manifold show [feature]            # Combined JSON+MD view
 manifold solve [feature]           # Parallel execution plan
-manifold migrate [feature]         # Convert YAML → JSON+MD
+manifold migrate [feature]         # Convert YAML -> JSON+MD
 manifold drift [feature]          # Detect post-verification file changes
 manifold completion [shell]        # Shell completions (bash/zsh/fish)
 ```
@@ -171,19 +178,19 @@ manifold completion [shell]        # Shell completions (bash/zsh/fish)
 ## Phase Workflow
 
 ```
-INITIALIZED → CONSTRAINED → TENSIONED → ANCHORED → GENERATED → VERIFIED
-     ↑                                                              |
-     └──────────────────── (iteration) ─────────────────────────────┘
+INITIALIZED -> CONSTRAINED -> TENSIONED -> ANCHORED -> GENERATED -> VERIFIED
+     ^                                                              |
+     +----------------------- (iteration) --------------------------+
 ```
 
 Each phase builds on the previous:
 
-1. **Initialize** — Name the feature, state the outcome
-2. **Constrain** — Interview-driven discovery across 5 categories (business, technical, UX, security, operational)
-3. **Tension** — Find and resolve conflicts between constraints
-4. **Anchor** — Reason backward from outcome to derive required truths
-5. **Generate** — Create ALL artifacts (code, tests, docs, runbooks, alerts) simultaneously
-6. **Verify** — Validate every artifact against every constraint with evidence
+1. **Initialize** -- Name the feature, state the outcome
+2. **Constrain** -- Interview-driven discovery across 5 categories (business, technical, UX, security, operational), with pre-mortem stress testing and constraint genealogy tagging
+3. **Tension** -- Find and resolve conflicts between constraints, with TRIZ principle lookup and directional propagation checks
+4. **Anchor** -- Reason backward from outcome to derive required truths, with recursive decomposition and bottleneck identification
+5. **Generate** -- Create ALL artifacts (code, tests, docs, runbooks, alerts) simultaneously, with reversibility tagging per action step
+6. **Verify** -- Validate every artifact against every constraint with evidence
 
 See the [Walkthrough](docs/walkthrough/README.md) for a real example with actual outputs.
 
@@ -194,7 +201,7 @@ See the [Walkthrough](docs/walkthrough/README.md) for a real example with actual
 | Type | Meaning | Priority | Example |
 |------|---------|----------|---------|
 | **invariant** | Must NEVER be violated | Highest | "No duplicate payments" |
-| **boundary** | Hard limits | Medium | "Retry window ≤ 72 hours" |
+| **boundary** | Hard limits | Medium | "Retry window <= 72 hours" |
 | **goal** | Should be optimized | Lowest | "95% retry success rate" |
 
 ### Categories
@@ -213,9 +220,9 @@ Manifold uses JSON+Markdown hybrid format stored in `.manifold/`:
 
 ```
 .manifold/
-├── <feature>.json           # Structure (IDs, types, phases)
-├── <feature>.md             # Content (statements, rationale)
-└── <feature>.verify.json    # Verification results
++-- <feature>.json           # Structure (IDs, types, phases)
++-- <feature>.md             # Content (statements, rationale)
++-- <feature>.verify.json    # Verification results
 ```
 
 > Legacy YAML format (`.yaml` files) is still supported. Use `manifold migrate` to convert.
@@ -299,7 +306,11 @@ See [PM Guide](docs/pm/guide.md) for detailed workflows and [PM Templates](insta
 
 ## Non-Programming Use Cases
 
-Manifold's constraint-first approach extends beyond software:
+Manifold's constraint-first approach extends beyond software. Use `--domain=non-software` to activate universal categories and decision-focused artifacts:
+
+```bash
+/manifold:m0-init career-change --domain=non-software --outcome="Make the right career move"
+```
 
 | Domain | Best For |
 |--------|----------|
@@ -308,7 +319,9 @@ Manifold's constraint-first approach extends beyond software:
 | Personal | Major life decisions, career choices |
 | Creative | Project planning (not creative direction) |
 
-See [Non-Programming Guide](docs/non-programming/guide.md) for adapted categories and examples.
+Non-software mode uses five universal categories (Obligations, Desires, Resources, Risks, Dependencies) and generates decision artifacts (decision brief, scenario stress-tests, narrative guide, recovery playbook, risk watch list) instead of code.
+
+See [Non-Programming Guide](docs/non-programming/guide.md) for full details, universal category definitions, and examples.
 
 ## Documentation
 
@@ -321,6 +334,8 @@ See [Non-Programming Guide](docs/non-programming/guide.md) for adapted categorie
 | [Glossary](docs/GLOSSARY.md) | Plain-language terminology |
 | [Troubleshooting](docs/troubleshooting.md) | Common errors and fixes |
 | [When NOT to Use](docs/WHEN_NOT_TO_USE.md) | Know when simpler approaches work |
+| [TRIZ Principles](docs/triz-principles.md) | 40 inventive principles for tension resolution |
+| [Non-Programming Guide](docs/non-programming/guide.md) | Using Manifold for non-software decisions |
 | [Scientific Foundations](docs/research/phase-scientific-foundations.md) | Research supporting each phase |
 | [Contributing](CONTRIBUTING.md) | How to contribute |
 

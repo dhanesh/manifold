@@ -331,6 +331,8 @@ function extractStructure(manifold: Manifold): ManifoldStructure {
       required_truths: (manifold.anchors.required_truths || []).map(extractRequiredTruthRef),
       recommended_option: manifold.anchors.recommended_option,
       implementation_phases: manifold.anchors.implementation_phases,
+      // Preserve enhancement fields
+      ...((manifold.anchors as any).binding_constraint && { binding_constraint: (manifold.anchors as any).binding_constraint }),
     };
   }
 
@@ -379,6 +381,14 @@ function extractStructure(manifold: Manifold): ManifoldStructure {
     structure.quick_summary = manifold.quick_summary;
   }
 
+  // Preserve enhancement fields
+  if ((manifold as any).domain) {
+    (structure as any).domain = (manifold as any).domain;
+  }
+  if ((manifold as any).reversibility_log) {
+    (structure as any).reversibility_log = (manifold as any).reversibility_log;
+  }
+
   return structure;
 }
 
@@ -386,7 +396,12 @@ function extractConstraintRef(c: Constraint): ConstraintRef {
   return {
     id: c.id,
     type: c.type,
-  };
+    // Preserve enhancement fields if present
+    ...(c.source && { source: c.source }),
+    ...(c.challenger && { challenger: c.challenger }),
+    ...(c.threshold && { threshold: c.threshold }),
+    ...(c.verified_by && { verified_by: c.verified_by }),
+  } as any;
 }
 
 function extractTensionRef(t: Tension): TensionRef {
@@ -395,7 +410,10 @@ function extractTensionRef(t: Tension): TensionRef {
     type: t.type,
     between: t.between,
     status: t.status,
-  };
+    // Preserve enhancement fields if present
+    ...(t.triz_principles && { triz_principles: t.triz_principles }),
+    ...(t.propagation_effects && { propagation_effects: t.propagation_effects }),
+  } as any;
 }
 
 function extractRequiredTruthRef(rt: RequiredTruth): RequiredTruthRef {
@@ -403,7 +421,11 @@ function extractRequiredTruthRef(rt: RequiredTruth): RequiredTruthRef {
     id: rt.id,
     status: rt.status,
     maps_to: rt.maps_to_constraints,
-  };
+    // Preserve enhancement fields if present
+    ...(rt.evidence && { evidence: rt.evidence }),
+    ...(rt.depth !== undefined && { depth: rt.depth }),
+    ...(rt.children && { children: rt.children }),
+  } as any;
 }
 
 /**

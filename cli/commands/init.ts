@@ -21,6 +21,7 @@ interface InitOptions {
   outcome?: string;
   force?: boolean;
   template?: string;
+  domain?: 'software' | 'non-software';
 }
 
 /**
@@ -34,6 +35,7 @@ export function registerInitCommand(program: Command): void {
     .option('-o, --outcome <outcome>', 'Set the outcome statement')
     .option('-f, --force', 'Overwrite existing manifold')
     .option('-t, --template <template>', 'Use a constraint template (auth, crud, payment, api, pm/*)')
+    .option('-d, --domain <domain>', 'Domain type: software (default) or non-software', 'software')
     .action(async (feature: string, options: InitOptions) => {
       const exitCode = await initCommand(feature, options);
       process.exit(exitCode);
@@ -120,7 +122,7 @@ async function initCommand(feature: string, options: InitOptions): Promise<numbe
   // Generate manifold content (JSON+MD format)
   const { structure, markdown } = templateResult
     ? templateResult
-    : generateManifoldTemplate(feature, options.outcome);
+    : generateManifoldTemplate(feature, options.outcome, options);
 
   // Write JSON structure file
   try {
@@ -149,11 +151,16 @@ async function initCommand(feature: string, options: InitOptions): Promise<numbe
   }
 
   // Success output
+  const domainLabel = options.domain === 'non-software' ? 'non-software' : 'software';
+  const domainNote = options.domain === 'non-software'
+    ? ' (non-software: uses universal constraint categories)'
+    : '';
   if (options.json) {
     println(toJSON({
       success: true,
       feature,
       format: 'json-md',
+      domain: domainLabel,
       ...(options.template ? { template: options.template } : {}),
       paths: {
         json: jsonPath,
@@ -166,10 +173,13 @@ async function initCommand(feature: string, options: InitOptions): Promise<numbe
     if (options.template) {
       println(`  Template: ${options.template}`);
     }
+    if (options.domain === 'non-software') {
+      println(`  Domain: non-software (universal constraint categories)`);
+    }
     println(`  JSON: ${jsonPath}`);
     println(`  MD:   ${mdPath}`);
     println();
-    println(`  ${style.dim('Next:')} /manifold:m1-constrain ${feature}`);
+    println(`  ${style.dim('Next:')} /manifold:m1-constrain ${feature}${domainNote}`);
   }
 
   return 0;
@@ -192,16 +202,18 @@ interface ManifoldTemplate {
  * Generate manifold template in JSON+MD format
  * Satisfies: Schema v3 with evidence[], constraint_graph
  */
-function generateManifoldTemplate(feature: string, outcome?: string): ManifoldTemplate {
+function generateManifoldTemplate(feature: string, outcome?: string, options?: InitOptions): ManifoldTemplate {
   const now = new Date().toISOString();
   const date = now.split('T')[0];
   const outcomeText = outcome || `[Describe the desired outcome for ${feature}]`;
 
   // JSON structure (IDs, types, phases, references only)
+  const domain = options?.domain === 'non-software' ? 'non-software' : 'software';
   const structure: Record<string, unknown> = {
     schema_version: 3,
     feature,
     phase: 'INITIALIZED',
+    domain,
     created: date,
 
     // Constraints placeholder (populated by /manifold:m1-constrain)

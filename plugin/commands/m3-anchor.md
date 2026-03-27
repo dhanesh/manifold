@@ -180,6 +180,94 @@ iterations:
 4. **Identify gaps** - What's missing between current state and requirements?
 5. **Generate solution space** - Options that satisfy all required truths
 
+## Recursive Backward Chaining (Enhancement 7)
+
+After the first-pass required truths are generated, for each truth with status NOT_SATISFIED or PARTIAL:
+
+1. Take the truth as the new sub-outcome
+2. Ask: "For [required truth] to hold, what MUST be true?"
+3. Generate second-order required truths with dotted IDs (RT-1.1, RT-1.2)
+4. Check each against the constraint set and current state
+5. Tag each: SATISFIED (already holds) | PRIMITIVE (verifiable fact, recursion stops) | REQUIRES_FURTHER_DECOMPOSITION
+
+6. For each REQUIRES_FURTHER_DECOMPOSITION truth, recurse to `--depth` (default: 2, maximum: 4)
+
+7. Recursion stops when:
+   - All leaves are SATISFIED or PRIMITIVE
+   - Maximum depth is reached (flag remaining gaps explicitly)
+   - A circular dependency is detected (flag and surface to user)
+
+Output the full dependency tree, not just the leaf nodes:
+
+```
+REQUIRED TRUTH: RT-1 Retries are idempotent [NOT_SATISFIED]
+  ├── RT-1.1 Unique request IDs generated per call [NOT_SATISFIED]
+  │     ├── RT-1.1.1 ID generation library available [SATISFIED]
+  │     └── RT-1.1.2 ID stored with TTL matching retry window [NOT_SATISFIED]
+  │           └── RT-1.1.2.1 Persistence layer with TTL support exists [PRIMITIVE — verify]
+  └── RT-1.2 Server-side deduplication check on ID [NOT_SATISFIED]
+        └── RT-1.2.1 Deduplication store accessible at request time [NOT_SATISFIED]
+```
+
+**Parameter:** `--depth=N` (default: 2, range: 1-4). Depth 1 is current behavior. Surface a warning if depth 4 is reached without all leaves resolving.
+
+**Schema:** Required truths gain `depth` and `children` fields:
+```json
+{"id": "RT-1", "status": "NOT_SATISFIED", "depth": 0, "children": [
+  {"id": "RT-1.1", "status": "NOT_SATISFIED", "depth": 1, "children": []}
+]}
+```
+
+## Theory of Constraints Bottleneck Identification (Enhancement 5)
+
+After generating required truths (and recursive sub-truths if --depth > 1), identify the binding constraint before generating solution options.
+
+For all required truths with status PARTIAL or NOT_SATISFIED:
+
+1. Ask: Which of these is hardest to close given current state?
+2. Ask: Which of these, if closed, would make the others easier or automatically satisfied?
+3. Ask: Which of these, if not closed, blocks all solution options regardless of how the others are handled?
+
+The answer to all three is the binding constraint. Surface it explicitly:
+
+```
+BINDING CONSTRAINT: [RT-ID] [statement]
+  Status: PARTIAL | NOT_SATISFIED
+  Reason: [why this is the binding limit]
+  Dependency chain: RT-[n] depends on this, RT-[n] depends on this
+```
+
+Generate solution options ordered by their approach to the binding constraint first. Solutions that do not address the binding constraint are deprioritized regardless of how elegantly they handle the others.
+
+**Schema:** Add `binding_constraint` to anchors in `.manifold/<feature>.json`:
+```json
+{"anchors": {"binding_constraint": {"required_truth_id": "RT-3", "reason": "...", "dependency_chain": ["RT-1", "RT-5"]}}}
+```
+
+### Reversibility Tagging for Solution Options (Enhancement 4)
+
+When generating solution options, tag each option with its reversibility:
+
+| Tag | Meaning | Implication |
+|-----|---------|-------------|
+| `TWO_WAY` | Reversible with minimal cost | Proceed normally |
+| `REVERSIBLE_WITH_COST` | Can reverse with meaningful cost | Flag and note the cost |
+| `ONE_WAY` | Closes options permanently | Require explicit acknowledgment |
+
+Options that close doors should be surfaced distinctly from options that don't:
+
+```
+SOLUTION OPTIONS:
+  Option A: [description]
+    Reversibility: TWO_WAY
+    Satisfies: RT-1, RT-3
+
+  Option B: [description]
+    Reversibility: ONE_WAY ⚠️
+    What this closes: [consequences]
+    Satisfies: RT-1, RT-2, RT-3
+```
+
 ## Example
 
 ```

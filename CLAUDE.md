@@ -77,6 +77,8 @@ manifold drift [feature]       # Detect post-verification file changes
 | `security` | S1, S2... | Data protection, auth, audit |
 | `operational` | O1, O2... | Monitoring, incidents, deployment |
 
+**Non-software mode** (`--domain=non-software` on m0-init) replaces these with universal categories: Obligations, Desires, Resources, Risks, Dependencies. See [Non-Programming Guide](docs/non-programming/guide.md).
+
 ### Tension Types
 
 | Type | Description |
@@ -226,7 +228,7 @@ describe('IdempotencyService', () => {
 
 Two files that work together, eliminating field name confusion:
 
-**`.manifold/<feature>.json`** — Structure only (IDs, types, refs)
+**`.manifold/<feature>.json`** -- Structure only (IDs, types, refs)
 ```json
 {
   "schema_version": 3,
@@ -245,7 +247,7 @@ Two files that work together, eliminating field name confusion:
 }
 ```
 
-**`.manifold/<feature>.md`** — Content only (text, rationale)
+**`.manifold/<feature>.md`** -- Content only (text, rationale)
 ```markdown
 # payment-retry
 
@@ -263,7 +265,7 @@ Payment processing must never create duplicate charges.
 ```bash
 manifold validate <feature>    # Validates JSON+MD linking
 manifold show <feature>        # Combined view
-manifold migrate <feature>     # Convert YAML → JSON+MD
+manifold migrate <feature>     # Convert YAML -> JSON+MD
 ```
 
 **Legacy: YAML Manifold**
@@ -291,6 +293,16 @@ convergence:
   status: NOT_STARTED
 ```
 
+### Enhancement Schema Fields (v3.1)
+
+The following optional fields extend the v3 schema. All are additive -- existing manifolds without these fields continue to validate unchanged.
+
+- **Constraints**: Optional genealogy fields (`source`, `challenger`) for tracking constraint origin and challengeability. Optional probabilistic bounds (`threshold`) with `kind` (deterministic | statistical) and type-specific sub-fields (ceiling, p99, p50, failure_rate).
+- **Tensions**: Optional TRIZ classification (`triz_principles`) for principle-guided resolution. Optional propagation tracking (`propagation_effects`) recording which other constraints are TIGHTENED, LOOSENED, or VIOLATED by a resolution.
+- **Required truths**: Optional recursive decomposition (`depth`, `children`) for multi-level backward chaining trees.
+- **Anchors**: Optional bottleneck identification (`binding_constraint`) surfacing the single required truth that is the binding limit.
+- **Manifold (top-level)**: Optional reversibility logging (`reversibility_log`) tagging each action step as TWO_WAY, REVERSIBLE_WITH_COST, or ONE_WAY. Optional domain selection (`domain`: `software` | `non-software`) activating universal constraint categories.
+
 ## Critical Rules
 
 ### Phase Transition Control
@@ -312,20 +324,20 @@ convergence:
 ### DO
 
 1. **Always run `/manifold:m-status` first** to understand current phase
-2. **Discover ALL constraints before coding** — use `/manifold:m1-constrain`
-3. **Surface tensions explicitly** — use `/manifold:m2-tension`
-4. **Generate ALL artifacts together** — code, tests, docs, runbooks, alerts
-5. **Trace every artifact to constraints** — use comments like `// Satisfies: B1`
-6. **Validate schema after changes** — `manifold validate <feature>`
+2. **Discover ALL constraints before coding** -- use `/manifold:m1-constrain`
+3. **Surface tensions explicitly** -- use `/manifold:m2-tension`
+4. **Generate ALL artifacts together** -- code, tests, docs, runbooks, alerts
+5. **Trace every artifact to constraints** -- use comments like `// Satisfies: B1`
+6. **Validate schema after changes** -- `manifold validate <feature>`
 7. **Check convergence criteria** before marking complete
 
 ### DO NOT
 
-1. **DO NOT skip constraint discovery** — never implement without a manifold
-2. **DO NOT invent new phases or types** — use ONLY values from SCHEMA_REFERENCE.md
-3. **DO NOT generate code without tests** — tests derive from constraints
-4. **DO NOT forget operational artifacts** — runbooks, alerts, dashboards
-5. **DO NOT ignore tensions** — unresolved tensions cause bugs
+1. **DO NOT skip constraint discovery** -- never implement without a manifold
+2. **DO NOT invent new phases or types** -- use ONLY values from SCHEMA_REFERENCE.md
+3. **DO NOT generate code without tests** -- tests derive from constraints
+4. **DO NOT forget operational artifacts** -- runbooks, alerts, dashboards
+5. **DO NOT ignore tensions** -- unresolved tensions cause bugs
 6. **DO NOT modify main worktree during parallel execution**
 
 ## Parallel Execution
@@ -344,15 +356,15 @@ The system:
 5. Merges results automatically
 
 **Options:**
-- `--dry-run` — Analyze only, no execution
-- `--auto-parallel` — Enable automatic parallelization without confirmation
-- `--max-parallel N` — Limit concurrent tasks (default: 4)
-- `--timeout N` — Seconds per task (default: 300)
-- `--verbose, -v` — Show detailed output
-- `--deep` — Use deep analysis (slower but more accurate)
-- `--strategy TYPE` — Merge strategy: sequential, squash, rebase
-- `--no-cleanup` — Don't cleanup worktrees after completion
-- `--file, -f FILE` — Load tasks from YAML file
+- `--dry-run` -- Analyze only, no execution
+- `--auto-parallel` -- Enable automatic parallelization without confirmation
+- `--max-parallel N` -- Limit concurrent tasks (default: 4)
+- `--timeout N` -- Seconds per task (default: 300)
+- `--verbose, -v` -- Show detailed output
+- `--deep` -- Use deep analysis (slower but more accurate)
+- `--strategy TYPE` -- Merge strategy: sequential, squash, rebase
+- `--no-cleanup` -- Don't cleanup worktrees after completion
+- `--file, -f FILE` -- Load tasks from YAML file
 
 **Configuration:** `.parallel.yaml` in project root
 
@@ -390,7 +402,7 @@ For simple changes that don't need full constraint analysis:
 /manifold:m-quick fix-login-bug --outcome="Fix 504 timeout on login"
 ```
 
-Light mode uses 3 phases: Constrain → Generate → Verify. See [When NOT to Use](docs/WHEN_NOT_TO_USE.md) for guidance.
+Light mode uses 3 phases: Constrain -> Generate -> Verify. See [When NOT to Use](docs/WHEN_NOT_TO_USE.md) for guidance.
 
 ### Use Templates
 
@@ -416,8 +428,8 @@ For PRD and user story generation:
 ```
 
 Outputs:
-- `docs/mobile-checkout/PRD.md` — Structured PRD with constraint traceability
-- `docs/mobile-checkout/STORIES.md` — User stories with acceptance criteria
+- `docs/mobile-checkout/PRD.md` -- Structured PRD with constraint traceability
+- `docs/mobile-checkout/STORIES.md` -- User stories with acceptance criteria
 
 PM templates available: `pm/feature-launch`, `pm/experiment`, `pm/deprecation`
 
@@ -445,15 +457,16 @@ manifold validate my-feature    # Exits 2 on failure
 
 ## See Also
 
-- [README.md](README.md) — Project overview
-- [AGENTS.md](AGENTS.md) — Agent specifications
-- [SCHEMA_REFERENCE.md](install/commands/SCHEMA_REFERENCE.md) — Valid values (complete reference)
-- [SCHEMA_QUICK_REFERENCE.md](install/commands/SCHEMA_QUICK_REFERENCE.md) — Field name lookup (prevents confusion)
-- [Parallel Agents](docs/parallel-agents/README.md) — Parallel execution guide
-- [Practical Walkthrough](docs/walkthrough/README.md) — End-to-end feature example
-- [Glossary](docs/GLOSSARY.md) — Plain-language terminology explanations
-- [When NOT to Use](docs/WHEN_NOT_TO_USE.md) — Know when simpler approaches are better
-- [Constraint Templates](install/templates/README.md) — Pre-built patterns (auth, CRUD, API, payment)
-- [PM Adaptation Guide](docs/pm/guide.md) — Product Manager workflows and PRD/story generation
-- [PM Templates](install/templates/pm/README.md) — Feature launch, experiment, deprecation templates
-- [Scientific Foundations](docs/research/phase-scientific-foundations.md) — Research supporting each phase
+- [README.md](README.md) -- Project overview
+- [AGENTS.md](AGENTS.md) -- Agent specifications
+- [SCHEMA_REFERENCE.md](install/commands/SCHEMA_REFERENCE.md) -- Valid values (complete reference)
+- [SCHEMA_QUICK_REFERENCE.md](install/commands/SCHEMA_QUICK_REFERENCE.md) -- Field name lookup (prevents confusion)
+- [Parallel Agents](docs/parallel-agents/README.md) -- Parallel execution guide
+- [Practical Walkthrough](docs/walkthrough/README.md) -- End-to-end feature example
+- [Glossary](docs/GLOSSARY.md) -- Plain-language terminology explanations
+- [When NOT to Use](docs/WHEN_NOT_TO_USE.md) -- Know when simpler approaches are better
+- [Constraint Templates](install/templates/README.md) -- Pre-built patterns (auth, CRUD, API, payment)
+- [PM Adaptation Guide](docs/pm/guide.md) -- Product Manager workflows and PRD/story generation
+- [PM Templates](install/templates/pm/README.md) -- Feature launch, experiment, deprecation templates
+- [Scientific Foundations](docs/research/phase-scientific-foundations.md) -- Research supporting each phase
+- [Non-Programming Guide](docs/non-programming/guide.md) -- Using Manifold for non-software decisions

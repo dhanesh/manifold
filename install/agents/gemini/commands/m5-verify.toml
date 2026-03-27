@@ -158,6 +158,44 @@ Every constraint must be verifiable in:
 - No ◐ allowed
 - Verification fails on any gap
 
+
+## Enhancement Verification Checks
+
+These checks are added by the manifold-enhancements feature and verify constraint metadata.
+
+### Genealogy Verification (Enhancement 2)
+
+- Flag any INVARIANT constraint with `challenger: assumption` as a **convergence risk** — invariants should not be based on unverified assumptions
+- Flag any constraint with `source: assumption` that has not been confirmed by m4-generate — unconfirmed assumptions block generation
+- Verify that `challenger: regulation` constraints were never traded off in tension resolution — regulations cannot be challenged
+
+### Statistical Verification (Enhancement 6)
+
+For constraints with `threshold` objects:
+
+| Constraint kind | SATISFIED means |
+|----------------|-----------------|
+| `deterministic` | Artifact provably does not exceed the ceiling |
+| `statistical` | Artifact addresses the distribution — test coverage includes percentile cases |
+
+Flag any statistical constraint verified with a single deterministic test — this provides false confidence.
+
+### Reversibility Verification (Enhancement 4)
+
+- Check that all `ONE_WAY` entries in `reversibility_log` have a corresponding entry in the risk watch list
+- An irreversible step without a watch entry is a **convergence gap**
+- Verify that ONE_WAY steps were explicitly acknowledged by the user during m4-generate
+
+### Propagation Verification (Enhancement 8)
+
+- Check that no tension resolution produced a `VIOLATED` propagation effect — if found, the tension resolution is invalid
+- Verify that `TIGHTENED` constraints with `challenger: assumption` were confirmed before the resolution was accepted
+
+### Binding Constraint Verification (Enhancement 5)
+
+- If `anchors.binding_constraint` exists, verify the referenced required truth has been addressed by the selected solution option
+- Flag if the binding constraint remains NOT_SATISFIED after generation — this indicates the plan doesn't address the bottleneck
+
 ## Example
 
 ```

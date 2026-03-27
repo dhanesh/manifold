@@ -176,10 +176,44 @@ export const ConstraintIdSchema = z.string().regex(
   'Constraint ID must match pattern like B1, T2, U3, S4, O5'
 );
 
+// Enhancement 2: Constraint genealogy source taxonomy
+export const ConstraintSourceSchema = z.enum(['interview', 'pre-mortem', 'assumption']);
+export type ConstraintSource = z.infer<typeof ConstraintSourceSchema>;
+
+// Enhancement 2: Constraint genealogy challenger taxonomy
+export const ConstraintChallengerSchema = z.enum([
+  'regulation',
+  'stakeholder',
+  'technical-reality',
+  'assumption'
+]);
+export type ConstraintChallenger = z.infer<typeof ConstraintChallengerSchema>;
+
+// Enhancement 6: Probabilistic constraint threshold
+export const ThresholdKindSchema = z.enum(['deterministic', 'statistical']);
+export type ThresholdKind = z.infer<typeof ThresholdKindSchema>;
+
+export const ConstraintThresholdSchema = z.object({
+  kind: ThresholdKindSchema,
+  // Deterministic fields
+  ceiling: z.string().optional(),
+  // Statistical fields
+  p99: z.string().optional(),
+  p50: z.string().optional(),
+  failure_rate: z.string().optional(),
+  window: z.string().optional(),
+}).passthrough();
+export type ConstraintThreshold = z.infer<typeof ConstraintThresholdSchema>;
+
 export const ConstraintRefSchema = z.object({
   id: ConstraintIdSchema,
   type: ConstraintTypeSchema,
   verified_by: z.array(EvidenceRefSchema).optional(),  // v3: evidence verifying this constraint
+  // Enhancement 2: Constraint genealogy (optional, defaults inferred by AI)
+  source: ConstraintSourceSchema.optional(),
+  challenger: ConstraintChallengerSchema.optional(),
+  // Enhancement 6: Probabilistic constraint bounds (optional, metric constraints only)
+  threshold: ConstraintThresholdSchema.optional(),
 });
 
 export type ConstraintRef = z.infer<typeof ConstraintRefSchema>;
@@ -196,6 +230,17 @@ export const TensionIdSchema = z.string().regex(
   'Tension ID must match pattern like TN1, TN2'
 );
 
+// Enhancement 8: Propagation effect on a constraint after tension resolution
+export const PropagationEffectSchema = z.enum(['TIGHTENED', 'LOOSENED', 'VIOLATED']);
+export type PropagationEffect = z.infer<typeof PropagationEffectSchema>;
+
+export const PropagationEntrySchema = z.object({
+  constraint_id: z.string(),
+  effect: PropagationEffectSchema,
+  note: z.string().optional(),
+});
+export type PropagationEntry = z.infer<typeof PropagationEntrySchema>;
+
 export const TensionRefSchema = z.object({
   id: TensionIdSchema,
   type: TensionTypeSchema,
@@ -203,6 +248,10 @@ export const TensionRefSchema = z.object({
   status: TensionStatusSchema,
   // v3.1: Testable resolution criteria (GAP-08)
   validation_criteria: z.array(z.string()).optional(),
+  // Enhancement 3: TRIZ principles applied during resolution
+  triz_principles: z.array(z.string()).optional(),
+  // Enhancement 8: Directional constraint propagation effects
+  propagation_effects: z.array(PropagationEntrySchema).optional(),
 });
 
 export type TensionRef = z.infer<typeof TensionRefSchema>;
@@ -219,11 +268,15 @@ export const RequiredTruthIdSchema = z.string().regex(
   'Required Truth ID must match pattern like RT-1, RT-2'
 );
 
-export const RequiredTruthRefSchema = z.object({
-  id: RequiredTruthIdSchema,
+// Enhancement 7: Recursive backward chaining - sub-truth IDs use dotted notation (RT-1.1, RT-1.1.2)
+export const RequiredTruthRefSchema: z.ZodType<any> = z.object({
+  id: z.string().regex(/^RT-[\d.]+$/, 'Required Truth ID must match pattern like RT-1, RT-1.1, RT-1.1.2'),
   status: RequiredTruthStatusSchema,
   maps_to: z.array(z.string()).optional(),
   evidence: z.array(EvidenceRefSchema).optional(),  // v3: evidence for this RT
+  // Enhancement 7: Recursive backward chaining
+  depth: z.number().optional(),
+  children: z.lazy(() => z.array(RequiredTruthRefSchema)).optional(),
 });
 
 export type RequiredTruthRef = z.infer<typeof RequiredTruthRefSchema>;
@@ -287,12 +340,22 @@ export type ConstraintsByCategory = z.infer<typeof ConstraintsByCategorySchema>;
 // Anchors Section
 // ============================================================
 
+// Enhancement 5: Theory of Constraints binding constraint
+export const BindingConstraintSchema = z.object({
+  required_truth_id: z.string(),
+  reason: z.string().optional(),
+  dependency_chain: z.array(z.string()).optional(),
+});
+export type BindingConstraint = z.infer<typeof BindingConstraintSchema>;
+
 export const AnchorsSchema = z.object({
   required_truths: z.array(RequiredTruthRefSchema).default([]),
   recommended_option: z.string().optional(),
   // implementation_phases can be strings or objects (from legacy YAML formats)
   implementation_phases: z.array(z.union([z.string(), z.record(z.any())])).optional(),
   anchor_document: z.string().optional(),
+  // Enhancement 5: Theory of Constraints bottleneck identification
+  binding_constraint: BindingConstraintSchema.optional(),
 });
 
 export type Anchors = z.infer<typeof AnchorsSchema>;
@@ -414,6 +477,8 @@ export const ManifoldStructureSchema = z.object({
   feature: z.string().min(1, 'Feature name is required'),
   phase: PhaseSchema,
   mode: z.enum(['light', 'full']).optional(),
+  // Non-software domain: translation layer for non-engineering contexts
+  domain: z.enum(['software', 'non-software']).optional(),
 
   // Outcome reference (content in Markdown)
   outcome_ref: z.string().optional(),
@@ -453,6 +518,14 @@ export const ManifoldStructureSchema = z.object({
 
   // Generation tracking
   generation: GenerationSchema.optional(),
+
+  // Enhancement 4: Reversibility tagging per decision
+  reversibility_log: z.array(z.object({
+    action_step: z.number(),
+    description: z.string(),
+    reversibility: z.enum(['TWO_WAY', 'REVERSIBLE_WITH_COST', 'ONE_WAY']),
+    one_way_consequence: z.string().optional(),
+  })).optional(),
 
   // Evidence (v3)
   evidence: z.array(EvidenceRefSchema).optional(),
@@ -640,3 +713,7 @@ export const VALID_NODE_STATUSES = NodeStatusSchema.options;
 export const VALID_SATISFACTION_LEVELS = SatisfactionLevelSchema.options;
 export const VALID_TEST_TIERS = TestTierSchema.options;
 export const VALID_ARTIFACT_CLASSES = ArtifactClassSchema.options;
+export const VALID_CONSTRAINT_SOURCES = ConstraintSourceSchema.options;
+export const VALID_CONSTRAINT_CHALLENGERS = ConstraintChallengerSchema.options;
+export const VALID_THRESHOLD_KINDS = ThresholdKindSchema.options;
+export const VALID_PROPAGATION_EFFECTS = PropagationEffectSchema.options;
