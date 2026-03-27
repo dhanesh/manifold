@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.28.0](https://github.com/dhanesh/manifold/compare/v2.27.1...v2.28.0) (2026-03-27)
+
+### Features
+
+* add 8 constraint enhancements + non-software domain support ([61b7a55](https://github.com/dhanesh/manifold/commit/61b7a55558e66f3282c5fcf4292781bbb2717a50))
+
 ## [2.27.1](https://github.com/dhanesh/manifold/compare/v2.27.0...v2.27.1) (2026-03-27)
 
 ### Bug Fixes
