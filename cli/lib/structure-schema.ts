@@ -558,7 +558,7 @@ export type ManifoldStructure = z.infer<typeof ManifoldStructureSchema>;
  */
 export const manifoldStructureJsonSchema = zodToJsonSchema(ManifoldStructureSchema, {
   name: 'ManifoldStructure',
-  $refStrategy: 'none',
+  $refStrategy: 'root',
 });
 
 // ============================================================
