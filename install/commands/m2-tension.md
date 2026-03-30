@@ -26,6 +26,22 @@ Surface and resolve constraint conflicts. A "tension" is when two requirements c
 >
 > See [GLOSSARY.md](../../docs/GLOSSARY.md) for terminology explanations.
 
+## Scope Guard (MANDATORY)
+
+**This phase ONLY updates manifold files** (`.manifold/<feature>.json` and `.manifold/<feature>.md`) with discovered tensions and resolutions. After updating, display the tension summary and suggest the next step.
+
+**DO NOT** do any of the following during m2-tension:
+- Create project folders, directory structures, or source files
+- Spawn background agents or sub-agents for content creation
+- Write README.md, CLAUDE.md, or any files outside `.manifold/`
+- Generate code, sample data, templates, or any implementation artifacts
+- Begin work that belongs to later phases (m3-m6)
+- Implement resolution strategies — only DOCUMENT them in the manifold
+
+**Tension resolutions are DECISIONS recorded in the manifold, not instructions to implement.** The implementation happens in m4-generate. Here you only capture what was decided and why.
+
+**After updating the two manifold files: display tension summary, suggest next step, STOP.**
+
 ## Schema Compliance
 
 | Field | Valid Values |

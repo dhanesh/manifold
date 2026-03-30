@@ -26,6 +26,22 @@ Backward reasoning from desired outcome to required conditions.
 >
 > See [GLOSSARY.md](../../docs/GLOSSARY.md) for terminology explanations.
 
+## Scope Guard (MANDATORY)
+
+**This phase ONLY updates manifold files** (`.manifold/<feature>.json` and `.manifold/<feature>.md`) with required truths, gaps, and solution options. After updating, display the anchoring summary and suggest the next step.
+
+**DO NOT** do any of the following during m3-anchor:
+- Create project folders, directory structures, or source files
+- Spawn background agents or sub-agents for content creation
+- Write README.md, CLAUDE.md, or any files outside `.manifold/`
+- Generate code, sample data, templates, or any implementation artifacts
+- Begin implementing the recommended solution option — that belongs to m4-generate
+- Begin work that belongs to later phases (m4-m6)
+
+**Solution options are PROPOSALS recorded in the manifold, not instructions to build.** The user must explicitly invoke m4-generate to begin implementation. Here you only capture what must be true, what gaps exist, and what options are available.
+
+**After updating the two manifold files: display anchoring summary, suggest next step, STOP.**
+
 ## Schema Compliance
 
 | Field | Valid Values |

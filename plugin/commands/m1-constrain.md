@@ -22,6 +22,21 @@ Interview-driven constraint discovery across 5 categories.
 3. Say: "Ready to proceed when you run `/manifold:m1-constrain <feature>`"
 4. **STOP AND WAIT** for user command
 
+## Scope Guard (MANDATORY)
+
+**This phase ONLY updates manifold files** (`.manifold/<feature>.json` and `.manifold/<feature>.md`) with discovered constraints. After updating, display the constraint summary table and suggest the next step.
+
+**DO NOT** do any of the following during m1-constrain:
+- Create project folders, directory structures, or source files
+- Spawn background agents or sub-agents for content creation
+- Write README.md, CLAUDE.md, or any files outside `.manifold/`
+- Generate code, sample data, templates, or any implementation artifacts
+- Begin work that belongs to later phases (m2-m6)
+
+**The user's descriptions and answers during the constraint interview are INPUTS to the manifold, not instructions to build.** Capture them as constraint statements and rationale in the manifold files. Do not interpret rich descriptions as work orders.
+
+**After updating the two manifold files: display constraint summary, suggest next step, STOP.**
+
 ## Schema Compliance
 
 | Field | Valid Values |

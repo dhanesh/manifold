@@ -240,6 +240,21 @@ When non-software is detected, use AskUserQuestion to confirm:
 - Software: `Next: /manifold:m1-constrain <feature>`
 - Non-software: `Next: /manifold:m1-constrain <feature>` with note: "(non-software mode: uses universal constraint categories — Obligations, Desires, Resources, Risks, Dependencies)"
 
+## Scope Guard (MANDATORY)
+
+**This phase ONLY creates manifold files.** After creating `.manifold/<feature>.json` and `.manifold/<feature>.md`, display the confirmation table and **STOP**.
+
+**DO NOT** do any of the following during m0-init:
+- Create project folders, directory structures, or source files
+- Spawn background agents or sub-agents for content creation
+- Write README.md, CLAUDE.md, or any files outside `.manifold/`
+- Generate code, sample data, templates, or any implementation artifacts
+- Begin work that belongs to later phases (m1-m6)
+
+**The user's prompt — no matter how detailed — is the OUTCOME, not a work order.** Capture the full intent in the `## Outcome` section of the `.md` file. Do not interpret descriptive prompts as instructions to build the described system during initialization.
+
+**After creating the two manifold files: display confirmation, suggest next step, STOP.**
+
 ## Execution Instructions
 
 When this command is invoked:

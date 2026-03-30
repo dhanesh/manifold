@@ -19,6 +19,18 @@ Show current Manifold state and next recommended action.
 > **CRITICAL**: When displaying phase information, use ONLY the phases listed above.
 > See SCHEMA_REFERENCE.md for all valid values. Do NOT invent or display invalid phases.
 
+## Scope Guard (MANDATORY)
+
+**This command is READ-ONLY.** It displays the current state of the manifold and suggests the next action. It does not modify any files.
+
+**DO NOT** do any of the following during m-status:
+- Modify any manifold files or source files
+- Spawn background agents or sub-agents
+- Auto-invoke the suggested next action
+- Begin work on any phase
+
+**The "SUGGESTED NEXT ACTION" is informational only.** The user must explicitly invoke the next phase command. Display the status, say "Waiting for your command" if resuming from compaction, and STOP.
+
 ## Usage
 
 ```

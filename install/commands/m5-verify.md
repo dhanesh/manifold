@@ -22,6 +22,20 @@ Verify ALL artifacts against ALL constraints.
 3. Say: "Ready to proceed when you run `/manifold:m5-verify <feature>`"
 4. **STOP AND WAIT** for user command
 
+## Scope Guard (MANDATORY)
+
+**This phase ONLY reads existing artifacts and creates/updates `.manifold/<feature>.verify.json`.** It verifies what exists — it does not create what's missing.
+
+**DO NOT** do any of the following during m5-verify:
+- Create implementation code, tests, or documentation to fill gaps
+- Spawn background agents or sub-agents to fix verification failures
+- Modify source files, test files, or any files outside `.manifold/`
+- Auto-fix gaps — only REPORT them with actionable descriptions
+
+**Gaps are FINDINGS, not work orders.** When verification finds missing coverage, document it in the verification matrix and gap list. The user decides whether to fix gaps (by re-running m4-generate or manually) before re-verifying. Do not attempt to close gaps during verification.
+
+**After creating/updating .verify.json: display verification matrix, list gaps, suggest next step, STOP.**
+
 ## Schema Compliance
 
 | Field | Valid Values |
