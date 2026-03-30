@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.28.1](https://github.com/dhanesh/manifold/compare/v2.28.0...v2.28.1) (2026-03-30)
+
+### Bug Fixes
+
+* resolve recursive json schema reference warning in cli ([9bda0ec](https://github.com/dhanesh/manifold/commit/9bda0ec123e625e2893fcefd5018dfd4de92b737))
+
 ## [2.28.0](https://github.com/dhanesh/manifold/compare/v2.27.1...v2.28.0) (2026-03-27)
 
 ### Features
