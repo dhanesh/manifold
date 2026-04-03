@@ -112,36 +112,49 @@ Upgrade to full workflow? /manifold:m0-init fix-login-timeout --from-quick
 
 Light mode creates a minimal manifold for traceability:
 
-```yaml
-# Light Mode Manifold
-schema_version: 3
-feature: fix-login-timeout
-outcome: "Fix 504 timeout on login"
-mode: light  # Indicates light mode was used
-phase: VERIFIED
+**`.manifold/fix-login-timeout.json`** (structure):
+```json
+{
+  "schema_version": 3,
+  "feature": "fix-login-timeout",
+  "phase": "VERIFIED",
+  "mode": "light",
+  "constraints": {
+    "technical": [
+      { "id": "T1", "type": "boundary" },
+      { "id": "T2", "type": "invariant" },
+      { "id": "T3", "type": "goal" }
+    ],
+    "business": [], "user_experience": [], "security": [], "operational": []
+  },
+  "tensions": [],
+  "anchors": { "required_truths": [] },
+  "iterations": [],
+  "convergence": { "status": "CONVERGED" },
+  "quick_summary": {
+    "started": "2026-01-21T10:00:00Z",
+    "completed": "2026-01-21T10:15:00Z",
+    "files_changed": 2,
+    "tests_added": 1
+  }
+}
+```
 
-constraints:
-  technical:
-    - id: T1
-      type: boundary
-      statement: "Login must complete in <5s"
-    - id: T2
-      type: invariant
-      statement: "Auth token must be valid"
-    - id: T3
-      type: goal
-      statement: "Reduce timeout errors by 95%"
+**`.manifold/fix-login-timeout.md`** (content):
+```markdown
+# fix-login-timeout
 
-# Light mode skips these sections:
-# - tensions (handled inline)
-# - anchors (not needed for simple changes)
-# - detailed iterations
+## Outcome
+Fix 504 timeout on login
 
-quick_summary:
-  started: "2026-01-21T10:00:00Z"
-  completed: "2026-01-21T10:15:00Z"
-  files_changed: 2
-  tests_added: 1
+## Constraints
+### Technical
+#### T1: Login Response Time
+Login must complete in <5s
+#### T2: Auth Token Validity
+Auth token must be valid
+#### T3: Timeout Error Reduction
+Reduce timeout errors by 95%
 ```
 
 ## Upgrading to Full Workflow

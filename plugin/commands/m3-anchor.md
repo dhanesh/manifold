@@ -128,45 +128,27 @@ Retries are idempotent via transaction idempotency keys.
 |------------|------------------------|---------|
 | RT-1, RT-2 | `###` (h3) | `### RT-1: Error Classification` |
 
-## Legacy YAML Format (Still Supported)
+## Iteration Recording
 
-When using legacy YAML, maintain v3 schema structure:
-
-```yaml
-anchors:
-  required_truths:
-    - id: RT-1
-      statement: "Description of what must be true"
-      status: NOT_SATISFIED    # Valid: SATISFIED, PARTIAL, NOT_SATISFIED, SPECIFICATION_READY
-      gap: "What's missing"
-      evidence:                # v3: Reality grounding — every evidence item MUST have `id`
-        - id: E1
-          type: file_exists
-          path: "path/to/implementation"
-        - id: E2
-          type: content_match
-          path: "path/to/file"
-          pattern: "expected pattern"
-        - id: E3
-          type: test_passes
-          path: "path/to/test"
-          test_name: "test name"
-
-# Record iteration when phase changes — every iteration MUST have `result`
-iterations:
-  - number: 3
-    phase: anchor
-    timestamp: "<ISO timestamp>"
-    result: "Derived <count> required truths, recommended Option C"  # ← REQUIRED
-    required_truths: <count>
-    by_status:
-      SATISFIED: <count>
-      PARTIAL: <count>
-      NOT_SATISFIED: <count>
-      SPECIFICATION_READY: <count>
-    solution_options: <count>
-    selected_option: "Option description"
+**Append to `"iterations"` array** in JSON when phase completes:
+```json
+{
+  "iterations": [
+    {
+      "number": 3,
+      "phase": "anchor",
+      "timestamp": "2026-04-04T00:00:00Z",
+      "result": "Derived 6 required truths, recommended Option A",
+      "required_truths": 6,
+      "by_status": { "SATISFIED": 0, "PARTIAL": 1, "NOT_SATISFIED": 3, "SPECIFICATION_READY": 2 },
+      "solution_options": 3,
+      "selected_option": "Option A"
+    }
+  ]
+}
 ```
+
+> **REQUIRED**: Every iteration MUST have `number`, `phase`, `timestamp`, and `result` (string). Omitting `result` fails schema validation.
 
 **Evidence Types** (v3):
 - `file_exists` - Verify file exists on disk

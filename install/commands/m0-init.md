@@ -133,47 +133,9 @@ Creates TWO files that work together:
 
 ### Legacy YAML Format
 
-Single file with both structure and content (still supported):
+> **Note**: Legacy YAML is only for existing manifolds. New manifolds MUST use JSON+Markdown. Use `manifold migrate <feature>` to convert.
 
-```yaml
-# Manifold Schema v3
-schema_version: 3
-feature: <feature-name>
-outcome: <desired outcome or "TBD">
-phase: INITIALIZED
-created: <timestamp>
-
-constraints:
-  business: []
-  technical: []
-  user_experience: []
-  security: []
-  operational: []
-
-tensions: []
-
-anchors:
-  required_truths: []
-
-# v2+: Iteration Tracking
-iterations: []
-
-# v2+: Convergence Tracking
-convergence:
-  status: NOT_STARTED
-
-# v3: Evidence System (reality grounding)
-evidence: []
-
-# v3: Constraint Graph (temporal non-linearity)
-constraint_graph:
-  version: 1
-  nodes: {}
-  edges:
-    dependencies: []
-    conflicts: []
-    satisfies: []
-```
+Single-file YAML format is still supported but deprecated. See `SCHEMA_REFERENCE.md` for legacy YAML migration details.
 
 ## Schema Version Compatibility
 

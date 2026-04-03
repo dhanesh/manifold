@@ -134,28 +134,32 @@ If using legacy YAML, tensions use `description`, NOT `statement`:
 
 When recording tensions, maintain v3 schema structure and record iterations:
 
-```yaml
-tensions:
-  - id: TN1
-    type: trade_off           # Valid: trade_off, resource_tension, hidden_dependency
-    status: resolved          # Valid: resolved, unresolved
-    between: [T1, B1]         # Constraint IDs in conflict
-    resolution: "Description of how tension was resolved"
-    decision: "A"             # Selected option (A/B/C)
-
-# Record iteration when phase changes
-iterations:
-  - number: 2
-    phase: tension
-    timestamp: "<ISO timestamp>"
-    result: "Found <count> tensions, resolved <count>"  # ← REQUIRED field
-    tensions_found: <count>
-    tensions_resolved: <count>
-    by_type:
-      trade_offs: <count>
-      resource_tensions: <count>
-      hidden_dependencies: <count>
+```json
+{
+  "tensions": [
+    {
+      "id": "TN1",
+      "type": "trade_off",
+      "between": ["T1", "B1"],
+      "status": "resolved",
+      "decision": "A"
+    }
+  ],
+  "iterations": [
+    {
+      "number": 2,
+      "phase": "tension",
+      "timestamp": "2026-04-04T00:00:00Z",
+      "result": "Found 3 tensions, resolved 2",
+      "tensions_found": 3,
+      "tensions_resolved": 2,
+      "by_type": { "trade_offs": 1, "resource_tensions": 1, "hidden_dependencies": 1 }
+    }
+  ]
+}
 ```
+
+> **Note**: Tension text content (description, resolution rationale) goes in the `.md` file under `### TN1: Title`. JSON contains only IDs, types, and structural refs.
 
 ## CLI Conflict Detection
 
@@ -334,6 +338,9 @@ Record propagation effects in `.manifold/<feature>.json`:
 {
   "tensions": [{
     "id": "TN1",
+    "type": "trade_off",
+    "between": ["B1", "T3"],
+    "status": "resolved",
     "propagation_effects": [
       {"constraint_id": "T3", "effect": "TIGHTENED", "note": "Cache TTL adds 50ms to p99"}
     ]

@@ -137,36 +137,31 @@ If using legacy YAML, constraints use `statement`, NOT `description`:
 
 When adding constraints, ensure the manifold maintains v3 schema structure:
 
-```yaml
-# v3 requires these fields (created by /manifold:m0-init)
-schema_version: 3
-iterations: []      # Track each phase change
-convergence:
-  status: NOT_STARTED
-evidence: []        # For reality grounding
-constraint_graph:   # For temporal non-linearity
-  version: 1
-  nodes: {}
-  edges:
-    dependencies: []
-    conflicts: []
-    satisfies: []
+```json
+{
+  "iterations": [],
+  "convergence": { "status": "NOT_STARTED" },
+  "evidence": [],
+  "constraint_graph": { "version": 1, "nodes": {}, "edges": { "dependencies": [], "conflicts": [], "satisfies": [] } }
+}
 ```
 
-**Record iteration** when updating constraints:
-```yaml
-iterations:
-  - number: 1
-    phase: constrain
-    timestamp: "<ISO timestamp>"
-    result: "Discovered <count> constraints across 5 categories"  # ← REQUIRED field
-    constraints_added: <count>
-    by_category:
-      business: <count>
-      technical: <count>
-      user_experience: <count>
-      security: <count>
-      operational: <count>
+> These fields are created by `/manifold:m0-init` (schema_version 3). You only need to update them.
+
+**Record iteration** when updating constraints — append to the `"iterations"` array in JSON:
+```json
+{
+  "iterations": [
+    {
+      "number": 1,
+      "phase": "constrain",
+      "timestamp": "2026-04-04T00:00:00Z",
+      "result": "Discovered 15 constraints across 5 categories",
+      "constraints_added": 15,
+      "by_category": { "business": 3, "technical": 4, "user_experience": 3, "security": 3, "operational": 2 }
+    }
+  ]
+}
 ```
 
 > **REQUIRED FIELDS**: Every iteration MUST have `number`, `phase`, `timestamp`, and `result` (string). The `result` field is mandatory — omitting it will fail schema validation.

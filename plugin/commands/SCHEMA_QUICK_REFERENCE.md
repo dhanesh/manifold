@@ -63,42 +63,30 @@ INITIALIZED → CONSTRAINED → TENSIONED → ANCHORED → GENERATED → VERIFIE
 ```
 
 ### Constraint Types
-```json
-"type": "invariant"         // Must NEVER be violated
-"type": "goal"              // Should be optimized
-"type": "boundary"          // Hard limits
-```
+
+| Value | Meaning |
+|-------|---------|
+| `"invariant"` | Must NEVER be violated |
+| `"goal"` | Should be optimized |
+| `"boundary"` | Hard limits |
 
 ### Tension Types
-```json
-"type": "trade_off"          // Competing constraints
-"type": "resource_tension"   // Resource limits
-"type": "hidden_dependency"  // Non-obvious relationships
-```
+
+| Value | Meaning |
+|-------|---------|
+| `"trade_off"` | Competing constraints |
+| `"resource_tension"` | Resource limits |
+| `"hidden_dependency"` | Non-obvious relationships |
 
 ### Statuses
-```json
-// Tension statuses
-"status": "resolved"
-"status": "unresolved"
 
-// Required truth statuses
-"status": "SATISFIED"
-"status": "PARTIAL"
-"status": "NOT_SATISFIED"
-"status": "SPECIFICATION_READY"
+**Tension**: `"resolved"` | `"unresolved"`
 
-// Convergence statuses
-"status": "NOT_STARTED"
-"status": "IN_PROGRESS"
-"status": "CONVERGED"
+**Required Truth**: `"SATISFIED"` | `"PARTIAL"` | `"NOT_SATISFIED"` | `"SPECIFICATION_READY"`
 
-// Evidence statuses (v3)
-"status": "VERIFIED"
-"status": "PENDING"
-"status": "FAILED"
-"status": "STALE"
-```
+**Convergence**: `"NOT_STARTED"` | `"IN_PROGRESS"` | `"CONVERGED"`
+
+**Evidence (v3)**: `"VERIFIED"` | `"PENDING"` | `"FAILED"` | `"STALE"`
 
 ### Constraint ID Prefixes
 ```

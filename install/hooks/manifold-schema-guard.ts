@@ -85,10 +85,11 @@ if (result.status === 2) {
       `⚠️ MANIFOLD SCHEMA VALIDATION FAILED for "${feature}":`,
       errorLines || errors,
       '',
-      'Fix these errors before proceeding. Common issues:',
+      `File: ${filePath}`,
+      'Fix these errors IN THE FILE ABOVE before proceeding. Common issues:',
       '- Every evidence object MUST have an `id` field (e.g. "E1", "E2")',
-      '- Every iteration MUST have a `result` field (string summary)',
-      '- Run `manifold validate ' + feature + '` for full details',
+      '- Every iteration MUST have a `result` field (string summary of what happened)',
+      `- Run \`manifold validate ${feature}\` from ${cwd} for full details`,
     ].join('\n'),
   };
 

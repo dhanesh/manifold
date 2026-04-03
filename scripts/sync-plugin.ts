@@ -59,6 +59,10 @@ syncFile(
   join(install, "hooks", "prompt-enforcer.ts"),
   join(plugin, "hooks", "prompt-enforcer.ts")
 );
+syncFile(
+  join(install, "hooks", "manifold-schema-guard.ts"),
+  join(plugin, "hooks", "manifold-schema-guard.ts")
+);
 
 // 3. Parallel bundle: install/lib/parallel/parallel.bundle.js -> plugin/lib/parallel/
 syncFile(
