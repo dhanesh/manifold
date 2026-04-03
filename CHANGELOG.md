@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.28.4](https://github.com/dhanesh/manifold/compare/v2.28.3...v2.28.4) (2026-04-03)
+
+### Bug Fixes
+
+* convert yaml schema examples to json and fix 7 validation failures ([187ccce](https://github.com/dhanesh/manifold/commit/187ccce9fc2145071a7468ad1ff5830d33453f78))
+
 ## [2.28.3](https://github.com/dhanesh/manifold/compare/v2.28.2...v2.28.3) (2026-04-03)
 
 ### Bug Fixes
