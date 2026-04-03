@@ -1,19 +1,17 @@
 ---
-description: "Quick lookup for Manifold field names across YAML and JSON+MD formats. Prevents field name confusion."
+description: "Quick lookup for Manifold JSON schema field names. Prevents field name confusion and lists all required fields."
 ---
 
 # Manifold Schema Quick Reference
 
-> **PURPOSE**: This file exists to prevent field name confusion between AI commands.
-> It documents both the legacy YAML format and the new JSON+Markdown hybrid format.
+> **PURPOSE**: This file exists to prevent field name confusion and document required fields.
+> New manifolds use JSON+Markdown hybrid format. YAML is only supported for migrating legacy manifolds.
 
-## Format Options
+## Format: JSON+Markdown Hybrid
 
-### JSON+Markdown Hybrid (Recommended)
-
-**Why this format eliminates field name confusion:**
-- **JSON file** (`<feature>.json`) contains ONLY structure: IDs, types, phases, references
-- **Markdown file** (`<feature>.md`) contains ALL text content: statements, descriptions, rationale
+**Two files per feature:**
+- **JSON file** (`<feature>.json`) — ONLY structure: IDs, types, phases, references
+- **Markdown file** (`<feature>.md`) — ALL text content: statements, descriptions, rationale
 - No text fields in JSON = no `statement` vs `description` confusion
 
 **Files created:**
@@ -27,31 +25,35 @@ description: "Quick lookup for Manifold field names across YAML and JSON+MD form
 ```bash
 manifold validate <feature>    # Validates both files + linking
 manifold show <feature>        # Combined view
-manifold migrate <feature>     # Convert YAML → JSON+MD
+manifold migrate <feature>     # Convert legacy YAML → JSON+MD
 ```
 
-### Legacy YAML Format
+## Required Fields Per Object Type
 
-Single file (`<feature>.yaml`) with both structure and content.
+> **CRITICAL**: These fields are MANDATORY. Omitting them will fail `manifold validate`.
 
-## Field Names - For YAML Only
+| Object | Required Fields | Example |
+|--------|----------------|---------|
+| **Evidence** | `id`, `type` | `{"id": "E1", "type": "file_exists", "path": "..."}` |
+| **Iteration** | `number`, `phase`, `timestamp`, `result` | `{"number": 1, "phase": "constrain", "timestamp": "...", "result": "Discovered 12 constraints"}` |
+| **Constraint** | `id`, `type` | `{"id": "B1", "type": "invariant"}` |
+| **Tension** | `id`, `type`, `between`, `status` | `{"id": "TN1", "type": "trade_off", "between": ["B1", "T1"], "status": "resolved"}` |
+| **Required Truth** | `id`, `status` | `{"id": "RT-1", "status": "NOT_SATISFIED"}` |
 
-| Structure | Text Field | Use | Memory Aid |
-|-----------|------------|-----|------------|
-| **Constraint** | `statement` | What must be true | Constraints _state_ requirements |
-| **Tension** | `description` | What the conflict is | Tensions _describe_ conflicts |
-| **RequiredTruth** | `statement` | What must be verified | Truths _state_ conditions |
-| **Iteration** | `result` | What was accomplished | Iterations report _results_ |
+**Common mistakes that fail validation:**
+- Evidence without `id` → Add `"id": "E1"`, `"E2"`, etc.
+- Iteration without `result` → Add `"result": "Summary of what happened"`
 
-### The Rule (YAML only)
+## Text Content Rule
 
-```
-NEVER use 'description' for Constraints or RequiredTruths
-NEVER use 'statement' for Tensions
-```
+In JSON+Markdown format, **all text content lives in Markdown**, not JSON. JSON only has IDs, types, and references.
 
-> **NOTE**: In JSON+Markdown format, these text fields live in Markdown, not JSON.
-> JSON only has IDs and type references, eliminating this confusion entirely.
+| Object | Text goes in Markdown as... | JSON has only... |
+|--------|---------------------------|-----------------|
+| **Constraint** | `#### B1: Title` + paragraph + `> **Rationale:**` | `id`, `type` |
+| **Tension** | `### TN1: Title` + paragraph + `> **Resolution:**` | `id`, `type`, `between`, `status` |
+| **Required Truth** | `### RT-1: Title` + paragraph + `**Gap:**` | `id`, `status`, `maps_to`, `evidence` |
+| **Iteration** | N/A (result is a brief summary string in JSON) | `number`, `phase`, `timestamp`, `result` |
 
 ## Valid Values Reference
 
@@ -61,52 +63,53 @@ INITIALIZED → CONSTRAINED → TENSIONED → ANCHORED → GENERATED → VERIFIE
 ```
 
 ### Constraint Types
-```yaml
-type: invariant  # Must NEVER be violated
-type: goal       # Should be optimized
-type: boundary   # Hard limits
+```json
+"type": "invariant"         // Must NEVER be violated
+"type": "goal"              // Should be optimized
+"type": "boundary"          // Hard limits
 ```
 
 ### Tension Types
-```yaml
-type: trade_off           # Competing constraints
-type: resource_tension    # Resource limits
-type: hidden_dependency   # Non-obvious relationships
+```json
+"type": "trade_off"          // Competing constraints
+"type": "resource_tension"   // Resource limits
+"type": "hidden_dependency"  // Non-obvious relationships
 ```
 
 ### Statuses
-```yaml
-# Tension statuses
-status: resolved
-status: unresolved
+```json
+// Tension statuses
+"status": "resolved"
+"status": "unresolved"
 
-# Required truth statuses
-status: SATISFIED
-status: PARTIAL
-status: NOT_SATISFIED
-status: SPECIFICATION_READY
+// Required truth statuses
+"status": "SATISFIED"
+"status": "PARTIAL"
+"status": "NOT_SATISFIED"
+"status": "SPECIFICATION_READY"
 
-# Convergence statuses
-status: NOT_STARTED
-status: IN_PROGRESS
-status: CONVERGED
+// Convergence statuses
+"status": "NOT_STARTED"
+"status": "IN_PROGRESS"
+"status": "CONVERGED"
 
-# Evidence statuses (v3)
-status: VERIFIED
-status: PENDING
-status: FAILED
-status: STALE
+// Evidence statuses (v3)
+"status": "VERIFIED"
+"status": "PENDING"
+"status": "FAILED"
+"status": "STALE"
 ```
 
 ### Constraint ID Prefixes
-```yaml
-B1, B2, ...  # Business constraints
-T1, T2, ...  # Technical constraints
-U1, U2, ...  # User experience constraints
-S1, S2, ...  # Security constraints
-O1, O2, ...  # Operational constraints
-TN1, TN2, ...  # Tension IDs
-RT-1, RT-2, ... # Required truth IDs
+```
+B1, B2, ...     // Business constraints
+T1, T2, ...     // Technical constraints
+U1, U2, ...     // User experience constraints
+S1, S2, ...     // Security constraints
+O1, O2, ...     // Operational constraints
+TN1, TN2, ...   // Tension IDs
+RT-1, RT-2, ... // Required truth IDs
+E1, E2, ...     // Evidence IDs
 ```
 
 ## JSON+Markdown Templates (Recommended)
@@ -202,47 +205,10 @@ Idempotency key must be preserved across all retry attempts.
 - `> **Rationale:**` → Rationale blockquote
 - `> **Resolution:**` → Resolution blockquote
 
-## Legacy YAML Templates
+## Legacy YAML Format (Migration Only)
 
-### Constraint (uses `statement`)
-```yaml
-constraints:
-  business:
-    - id: B1
-      statement: "No duplicate payments allowed"  # ← statement
-      type: invariant
-      rationale: "Duplicates cause chargebacks"
-```
-
-### Tension (uses `description`)
-```yaml
-tensions:
-  - id: TN1
-    type: trade_off
-    description: "Performance vs safety trade-off"  # ← description
-    between: [T1, B1]
-    status: resolved
-    resolution: "Use caching"
-```
-
-### Required Truth (uses `statement`)
-```yaml
-anchors:
-  required_truths:
-    - id: RT-1
-      statement: "Idempotency key preserved across retries"  # ← statement
-      status: NOT_SATISFIED
-      priority: 1
-```
-
-### Iteration (uses `result`)
-```yaml
-iterations:
-  - number: 1
-    phase: constrain
-    timestamp: "2026-01-29T10:00:00Z"
-    result: "Discovered 12 constraints across 5 categories"  # ← result
-```
+> YAML manifolds are only supported for backward compatibility. Use `manifold migrate <feature>` to convert to JSON+MD.
+> In YAML, text fields use specific names: constraints use `statement`, tensions use `description`, required truths use `statement`, iterations use `result`. Never mix these up.
 
 ## Validation Commands
 
@@ -265,23 +231,16 @@ manifold validate <feature> --strict
 
 ## Common Mistakes
 
-### JSON+Markdown Format
-
 | Wrong | Right | Fix |
 |-------|-------|-----|
-| Text in JSON | Text in Markdown | JSON = structure only |
+| Text in JSON | Text in Markdown | JSON = structure only, text in `.md` |
 | `"statement": "..."` in JSON | Markdown heading | Move text to `.md` file |
 | Missing Markdown heading for ID | `#### B1: Title` | Every JSON ID needs Markdown heading |
-
-### Legacy YAML Format
-
-| Wrong | Right | Fix |
-|-------|-------|-----|
-| `constraint.description` | `constraint.statement` | Constraints state, not describe |
-| `tension.statement` | `tension.description` | Tensions describe, not state |
-| `required_truth.description` | `required_truth.statement` | Truths state conditions |
-| `phase: Initialized` | `phase: INITIALIZED` | Phases are UPPERCASE |
-| `type: INVARIANT` | `type: invariant` | Types are lowercase |
+| Evidence without `"id"` | `{"id": "E1", "type": ...}` | Every evidence MUST have `id` |
+| Iteration without `"result"` | `{"result": "...", ...}` | Every iteration MUST have `result` |
+| `"phase": "Initialized"` | `"phase": "INITIALIZED"` | Phases are UPPERCASE |
+| `"type": "INVARIANT"` | `"type": "invariant"` | Types are lowercase |
+| Creating `.yaml` file | Create `.json` + `.md` | YAML is legacy only |
 
 ---
 

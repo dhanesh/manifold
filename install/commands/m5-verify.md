@@ -87,6 +87,7 @@ Constraints involving external systems (databases, APIs, message queues) should 
 
 ```json
 {
+  "id": "E1",
   "type": "test_passes",
   "path": "tests/kafka.integration.ts",
   "test_name": "produces message to real Kafka",

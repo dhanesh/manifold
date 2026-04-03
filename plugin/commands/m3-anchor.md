@@ -139,21 +139,25 @@ anchors:
       statement: "Description of what must be true"
       status: NOT_SATISFIED    # Valid: SATISFIED, PARTIAL, NOT_SATISFIED, SPECIFICATION_READY
       gap: "What's missing"
-      evidence:                # v3: Reality grounding
-        - type: file_exists
+      evidence:                # v3: Reality grounding — every evidence item MUST have `id`
+        - id: E1
+          type: file_exists
           path: "path/to/implementation"
-        - type: content_match
+        - id: E2
+          type: content_match
           path: "path/to/file"
           pattern: "expected pattern"
-        - type: test_passes
+        - id: E3
+          type: test_passes
           path: "path/to/test"
           test_name: "test name"
 
-# Record iteration when phase changes
+# Record iteration when phase changes — every iteration MUST have `result`
 iterations:
   - number: 3
     phase: anchor
     timestamp: "<ISO timestamp>"
+    result: "Derived <count> required truths, recommended Option C"  # ← REQUIRED
     required_truths: <count>
     by_status:
       SATISFIED: <count>

@@ -82,58 +82,72 @@ INITIALIZED → CONSTRAINED → TENSIONED → ANCHORED → GENERATED → VERIFIE
 | `IN_PROGRESS` | Working toward convergence |
 | `CONVERGED` | All criteria met, manifold complete |
 
-## YAML Templates
+## JSON Templates
+
+> **NOTE**: New manifolds use JSON+Markdown hybrid format. YAML is only supported for migrating legacy manifolds.
 
 ### Phase Update (use EXACTLY as shown)
-```yaml
-phase: INITIALIZED   # or CONSTRAINED, TENSIONED, ANCHORED, GENERATED, VERIFIED
+```json
+{ "phase": "INITIALIZED" }
 ```
+Valid values: `INITIALIZED`, `CONSTRAINED`, `TENSIONED`, `ANCHORED`, `GENERATED`, `VERIFIED`
 
 ### Constraint Template
-```yaml
-- id: B1
-  type: invariant    # or goal, boundary
-  statement: "The constraint statement"
-  rationale: "Why this matters"
+```json
+{"id": "B1", "type": "invariant"}
 ```
+Valid types: `invariant`, `goal`, `boundary`. Text content (statement, rationale) goes in `.manifold/<feature>.md`.
 
 ### Tension Template
-```yaml
-- id: TN1
-  type: trade_off    # or resource_tension, hidden_dependency
-  between: [B1, T2]
-  description: "What is in tension"
-  status: resolved   # or unresolved
-  resolution: "How it was resolved"
-  priority: 1
+```json
+{
+  "id": "TN1",
+  "type": "trade_off",
+  "between": ["B1", "T2"],
+  "status": "resolved",
+  "priority": 1
+}
 ```
+Valid types: `trade_off`, `resource_tension`, `hidden_dependency`. Valid statuses: `resolved`, `unresolved`. Text content (description, resolution) goes in Markdown.
 
 ### Required Truth Template
-```yaml
-- id: RT-1
-  statement: "What must be true"
-  status: SATISFIED  # or PARTIAL, NOT_SATISFIED, SPECIFICATION_READY
-  priority: 1
-  evidence: "path/to/evidence.ts"
+```json
+{
+  "id": "RT-1",
+  "status": "NOT_SATISFIED",
+  "maps_to": ["B1", "T1"],
+  "evidence": [
+    {"id": "E1", "type": "file_exists", "path": "src/feature.ts", "status": "PENDING"}
+  ]
+}
 ```
+Valid statuses: `SATISFIED`, `PARTIAL`, `NOT_SATISFIED`, `SPECIFICATION_READY`. Text content (statement, gap) goes in Markdown.
 
 ### Iteration Template
-```yaml
-- number: 1
-  phase: constrain   # lowercase phase name for iteration description
-  timestamp: "2026-01-16T10:00:00Z"
-  result: "Summary of what happened"
+```json
+{
+  "number": 1,
+  "phase": "constrain",
+  "timestamp": "2026-01-16T10:00:00Z",
+  "result": "Summary of what happened"
+}
 ```
+> **REQUIRED**: All four fields (`number`, `phase`, `timestamp`, `result`) are mandatory. Additional phase-specific fields (e.g. `constraints_added`) are allowed.
 
 ### Convergence Template
-```yaml
-convergence:
-  status: CONVERGED  # or NOT_STARTED, IN_PROGRESS
-  criteria:
-    all_invariants_satisfied: true
-    all_required_truths_satisfied: true
-    no_blocking_gaps: true
+```json
+{
+  "convergence": {
+    "status": "CONVERGED",
+    "criteria": {
+      "all_invariants_satisfied": true,
+      "all_required_truths_satisfied": true,
+      "no_blocking_gaps": true
+    }
+  }
+}
 ```
+Valid statuses: `NOT_STARTED`, `IN_PROGRESS`, `CONVERGED`
 
 ---
 
@@ -161,42 +175,46 @@ Evidence provides **concrete verification** for required truths and constraints.
 | `STALE` | File modified since last verification |
 
 ### Evidence Template (v3)
-```yaml
-evidence:
-  - type: file_exists
-    path: "src/idempotency.ts"
-    status: VERIFIED
-    verified_at: "2026-01-16T10:00:00Z"
-
-  - type: content_match
-    path: "src/idempotency.ts"
-    pattern: "idempotency_key.*uuid"
-    status: VERIFIED
-    message: "Pattern matched: 2 occurrences"
-
-  - type: test_passes
-    path: "tests/idempotency.test.ts"
-    test_name: "preserves_key_across_retries"
-    status: PENDING
+```json
+[
+  {
+    "id": "E1",
+    "type": "file_exists",
+    "path": "src/idempotency.ts",
+    "status": "VERIFIED"
+  },
+  {
+    "id": "E2",
+    "type": "content_match",
+    "path": "src/idempotency.ts",
+    "pattern": "idempotency_key.*uuid",
+    "status": "VERIFIED"
+  },
+  {
+    "id": "E3",
+    "type": "test_passes",
+    "path": "tests/idempotency.test.ts",
+    "test_name": "preserves_key_across_retries",
+    "status": "PENDING"
+  }
+]
 ```
+
+> **REQUIRED FIELDS**: Every evidence object MUST have `id` (string, e.g. "E1", "E2") and `type`. The `id` field is mandatory — omitting it will fail schema validation.
 
 ### Enhanced Required Truth (v3)
-```yaml
-- id: RT-1
-  statement: "Idempotency key must be preserved across retries"
-  status: SATISFIED
-  priority: 1
-  maps_to_constraints: [B1, T1]    # NEW: Link to constraints
-  last_verified: "2026-01-16T10:00:00Z"
-  evidence:                         # NEW: Array of Evidence objects
-    - type: file_exists
-      path: "src/idempotency.ts"
-      status: VERIFIED
-    - type: content_match
-      path: "src/idempotency.ts"
-      pattern: "class IdempotencyService"
-      status: VERIFIED
+```json
+{
+  "id": "RT-1",
+  "status": "SATISFIED",
+  "maps_to": ["B1", "T1"],
+  "evidence": [
+    {"id": "E1", "type": "file_exists", "path": "src/idempotency.ts", "status": "VERIFIED"},
+    {"id": "E2", "type": "content_match", "path": "src/idempotency.ts", "pattern": "class IdempotencyService", "status": "VERIFIED"}
+  ]
+}
 ```
+Text content (`statement`, `priority`, `last_verified`) goes in `.manifold/<feature>.md` under `### RT-1: Title`.
 
 ---
 
@@ -224,71 +242,72 @@ The constraint graph represents all constraints, tensions, and required truths a
 | `CONFLICTED` | In tension with other constraints |
 
 ### Constraint Graph Template (v3)
-```yaml
-constraint_graph:
-  version: 1
-  generated_at: "2026-01-16T10:00:00Z"
-  feature: "payment-retry"
-
-  nodes:
-    B1:
-      id: B1
-      type: constraint
-      label: "No duplicate payments"
-      depends_on: []
-      blocks: [TN1, RT-1]
-      conflicts_with: [T1]
-      status: SATISFIED
-      critical_path: true
-
-    RT-1:
-      id: RT-1
-      type: required_truth
-      label: "Idempotency key preserved"
-      depends_on: [B1, T1]
-      blocks: [ART-idempotency]
-      conflicts_with: []
-      status: REQUIRED
-      critical_path: true
-
-  edges:
-    dependencies:
-      - [RT-1, B1]     # RT-1 depends on B1
-      - [RT-1, T1]     # RT-1 depends on T1
-    conflicts:
-      - [B1, T1]       # B1 conflicts with T1
-    satisfies:
-      - [ART-idempotency, RT-1]  # Artifact satisfies RT-1
+```json
+{
+  "constraint_graph": {
+    "version": 1,
+    "generated_at": "2026-01-16T10:00:00Z",
+    "feature": "payment-retry",
+    "nodes": {
+      "B1": {
+        "id": "B1",
+        "type": "constraint",
+        "label": "No duplicate payments",
+        "depends_on": [],
+        "blocks": ["TN1", "RT-1"],
+        "conflicts_with": ["T1"],
+        "status": "SATISFIED",
+        "critical_path": true
+      },
+      "RT-1": {
+        "id": "RT-1",
+        "type": "required_truth",
+        "label": "Idempotency key preserved",
+        "depends_on": ["B1", "T1"],
+        "blocks": ["ART-idempotency"],
+        "conflicts_with": [],
+        "status": "REQUIRED",
+        "critical_path": true
+      }
+    },
+    "edges": {
+      "dependencies": [["RT-1", "B1"], ["RT-1", "T1"]],
+      "conflicts": [["B1", "T1"]],
+      "satisfies": [["ART-idempotency", "RT-1"]]
+    }
+  }
+}
 ```
 
 ### Execution Plan Template (v3)
-```yaml
-execution_plan:
-  generated_at: "2026-01-16T10:00:00Z"
-  strategy: hybrid    # forward, backward, or hybrid
-
-  waves:
-    - number: 1
-      phase: CONSTRAINED
-      parallel_tasks:
-        - id: TASK-B1
-          node_ids: [B1]
-          action: "Discover and document"
-        - id: TASK-B2
-          node_ids: [B2]
-          action: "Discover and document"
-      blocking_dependencies: []
-
-    - number: 2
-      phase: TENSIONED
-      parallel_tasks:
-        - id: TASK-TN1
-          node_ids: [TN1]
-          action: "Analyze and resolve"
-      blocking_dependencies: [B1, B2]
-
-  critical_path: [B1, TN1, RT-1, ART-idempotency]
-  parallelization_factor: 2.1
+```json
+{
+  "execution_plan": {
+    "generated_at": "2026-01-16T10:00:00Z",
+    "strategy": "hybrid",
+    "waves": [
+      {
+        "number": 1,
+        "phase": "CONSTRAINED",
+        "parallel_tasks": [
+          {"id": "TASK-B1", "node_ids": ["B1"], "action": "Discover and document"},
+          {"id": "TASK-B2", "node_ids": ["B2"], "action": "Discover and document"}
+        ],
+        "blocking_dependencies": []
+      },
+      {
+        "number": 2,
+        "phase": "TENSIONED",
+        "parallel_tasks": [
+          {"id": "TASK-TN1", "node_ids": ["TN1"], "action": "Analyze and resolve"}
+        ],
+        "blocking_dependencies": ["B1", "B2"]
+      }
+    ],
+    "critical_path": ["B1", "TN1", "RT-1", "ART-idempotency"],
+    "parallelization_factor": 2.1
+  }
+}
 ```
 
 ---
@@ -400,7 +419,7 @@ Both queries are valid and provide complementary views of the same constraint ne
 | Resource Competition | `resource_tension` | "Memory vs CPU optimization" |
 | Blocking Order | `hidden_dependency` | "Auth must exist before rate limiting" |
 
-### YAML Generation
+### JSON Generation
 
 **From bcherny (Schema Validation):**
 
@@ -467,7 +486,9 @@ Both queries are valid and provide complementary views of the same constraint ne
 | Absolute paths in evidence | Security risk, portability issues | Use relative paths only |
 | Dangling references | Broken constraint traceability | Use reference validation |
 
-### Version Migration
+### Version Migration (Legacy YAML Only)
+
+> These migration steps apply only to legacy YAML manifolds. New manifolds should always use JSON+Markdown hybrid format. Use `manifold migrate <feature>` to convert YAML to JSON+MD.
 
 **v1 → v2:**
 1. Add `schema_version: 2`

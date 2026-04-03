@@ -159,6 +159,7 @@ iterations:
   - number: 1
     phase: constrain
     timestamp: "<ISO timestamp>"
+    result: "Discovered <count> constraints across 5 categories"  # ← REQUIRED field
     constraints_added: <count>
     by_category:
       business: <count>
@@ -167,6 +168,8 @@ iterations:
       security: <count>
       operational: <count>
 ```
+
+> **REQUIRED FIELDS**: Every iteration MUST have `number`, `phase`, `timestamp`, and `result` (string). The `result` field is mandatory — omitting it will fail schema validation.
 
 ## Usage
 

@@ -148,6 +148,7 @@ iterations:
   - number: 2
     phase: tension
     timestamp: "<ISO timestamp>"
+    result: "Found <count> tensions, resolved <count>"  # ← REQUIRED field
     tensions_found: <count>
     tensions_resolved: <count>
     by_type:

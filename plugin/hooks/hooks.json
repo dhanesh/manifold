@@ -22,6 +22,17 @@
         ]
       }
     ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run ${CLAUDE_PLUGIN_ROOT}/hooks/manifold-schema-guard.ts",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "hooks": [
