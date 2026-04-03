@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.28.3](https://github.com/dhanesh/manifold/compare/v2.28.2...v2.28.3) (2026-04-03)
+
+### Bug Fixes
+
+* enforce required schema fields in skill examples and add post-write validation hook ([b15bf75](https://github.com/dhanesh/manifold/commit/b15bf75f507108ccdb7b19cfbe34780c00b3161d))
+
 ## [2.28.2](https://github.com/dhanesh/manifold/compare/v2.28.1...v2.28.2) (2026-03-30)
 
 ### Bug Fixes
