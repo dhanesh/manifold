@@ -214,6 +214,12 @@ export const ConstraintRefSchema = z.object({
   challenger: ConstraintChallengerSchema.optional(),
   // Enhancement 6: Probabilistic constraint bounds (optional, metric constraints only)
   threshold: ConstraintThresholdSchema.optional(),
+  // Constraint quality scoring (specificity, measurability, testability: 1-3 each)
+  quality: z.object({
+    specificity: z.number().min(1).max(3),
+    measurability: z.number().min(1).max(3),
+    testability: z.number().min(1).max(3),
+  }).optional(),
 });
 
 export type ConstraintRef = z.infer<typeof ConstraintRefSchema>;
@@ -356,6 +362,13 @@ export const AnchorsSchema = z.object({
   anchor_document: z.string().optional(),
   // Enhancement 5: Theory of Constraints bottleneck identification
   binding_constraint: BindingConstraintSchema.optional(),
+  // Cross-phase feedback: solution option validates m2 tension resolutions
+  tension_validation: z.array(z.object({
+    tension_id: z.string(),
+    status: z.enum(['CONFIRMED', 'REOPENED']),
+    by_option: z.string().optional(),
+    reason: z.string().optional(),
+  })).optional(),
 });
 
 export type Anchors = z.infer<typeof AnchorsSchema>;
@@ -535,6 +548,28 @@ export const ManifoldStructureSchema = z.object({
 
   // Suggested constraints (v3.1: TN3 staging area)
   suggested_constraints: z.array(SuggestedConstraintSchema).optional(),
+
+  // GAP checklist compliance (mandatory-or-skip tracking from m1)
+  gap_checklist_compliance: z.array(z.object({
+    gap: z.string(),
+    status: z.enum(['COMPLETED', 'SKIPPED']),
+    skip_reason: z.string().optional(),
+  })).optional(),
+
+  // Draft required truths seeded by m1 for m3 consumption
+  draft_required_truths: z.array(z.object({
+    id: z.string(),
+    seed_from: z.array(z.string()),
+    draft_statement: z.string(),
+    confidence: z.enum(['high', 'medium', 'low']),
+  })).optional(),
+
+  // Blocking dependencies exported by m2 for m3 prioritization
+  blocking_dependencies: z.array(z.object({
+    blocker: z.string(),
+    blocked: z.string(),
+    tension_id: z.string(),
+  })).optional(),
 
   // Quick summary for light mode
   quick_summary: z.object({

@@ -482,6 +482,12 @@ User runs: /manifold:m4-generate payment-retry --option=C
 1. Read manifold from `.manifold/<feature>.json` (or `.yaml` for legacy)
 2. Read anchoring from JSON `anchors` section (or `.manifold/<feature>.anchor.yaml` for legacy)
 3. Select solution option (from `--option` or prompt user)
+3b. **READ BINDING CONSTRAINT** from `anchors.binding_constraint` in JSON (Enhancement 5b).
+    If present:
+    - Display: `BINDING CONSTRAINT: [RT-ID] — [reason]`
+    - Reorder the artifact generation plan so artifacts satisfying the binding constraint's RT are generated FIRST
+    - In the generation summary, tag these artifacts: `⚡ Binding constraint`
+    If absent: proceed normally (backward compatible with pre-enhancement manifolds)
 4. **BUILD ARTIFACT LIST** - List ALL files that will be generated
 5. **MANDATORY PARALLELIZATION CHECK** (See "STEP 0" above)
    - Count the artifact groups (code, tests, docs, ops)
@@ -519,6 +525,13 @@ User runs: /manifold:m4-generate payment-retry --option=C
     - JSON+MD: Update `.manifold/<feature>.json` with `generation` section
     - Legacy YAML: Update `.manifold/<feature>.yaml`
 11. **Populate `evidence` arrays** on all required truths with concrete, verifiable evidence items (`file_exists`, `content_match`, `test_passes`, `manual_review`)
+11b. **Immediate Evidence Validation** — After populating evidence, validate what CAN be checked now:
+    - `file_exists`: Check the file exists on disk. If missing → flag as GENERATION_FAILED
+    - `content_match`: Grep the pattern in the file. If no match → flag as CONTENT_MISMATCH
+    - `test_passes`: Leave as PENDING (requires execution, m5's job)
+    - `manual_review`: Leave as PENDING (requires human)
+    Surface any failures immediately — do NOT defer all evidence checking to m5.
+    This catches generation errors (wrong paths, missing patterns) while context is fresh.
 12. **Set `artifact_class`** on every artifact in the generation section (`substantive` or `structural`)
 13. **Verify invariant evidence**: For invariant-type constraints, ensure at least one `test_passes` evidence exists via the RT `maps_to` chain or directly via `verified_by`
 14. Set phase to GENERATED

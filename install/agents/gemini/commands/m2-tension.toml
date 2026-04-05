@@ -333,6 +333,26 @@ PROPAGATION CHECK:
 VERDICT: SAFE | BLOCKED (violation found) | PROCEED WITH AWARENESS (tightening noted)
 ```
 
+### Constructive Relaxation Suggestion (on VIOLATED)
+
+When a propagation check finds VIOLATED, don't just block -- suggest what would make it work:
+
+1. Identify the violated constraint (C-violated)
+2. If C-violated has a `threshold` object, calculate the minimum relaxation that makes the resolution valid:
+   > "If [C-violated ID] were relaxed from [current value] to [minimum viable value], this resolution becomes valid"
+3. Check the challenger tag for negotiability:
+   - `challenger: stakeholder` or `challenger: assumption` → "This constraint MAY be negotiable"
+   - `challenger: regulation` or `challenger: technical-reality` → "This constraint is NOT negotiable — choose a different resolution"
+4. Add to the propagation output:
+
+```
+VERDICT: BLOCKED (violation found)
+RELAXATION SUGGESTION: Relax [C-ID] from [X] to [Y] → resolution becomes valid
+NEGOTIABILITY: [negotiable | not negotiable] (based on challenger tag)
+```
+
+This turns dead-end tensions into actionable trade-off decisions. In `engineering-hardening`, B4 was relaxed from 2min to 3min (TN5) -- this pattern should be prompted, not accidental.
+
 ### Schema
 
 Record propagation effects in `.manifold/<feature>.json`:
@@ -423,6 +443,21 @@ AUTO-DETECTED DEPENDENCIES:
 - T3 → B4 (blocking)
 - O3 → B2 (verification requires CI)
 ```
+
+### Blocking Dependency Export for m3
+
+After all tensions are resolved, collect all `hidden_dependency` tensions where one constraint blocks another. Write to JSON as a top-level array:
+
+```json
+{
+  "blocking_dependencies": [
+    {"blocker": "T3", "blocked": "O4", "tension_id": "TN6"},
+    {"blocker": "T8", "blocked": "T9", "tension_id": "TN7"}
+  ]
+}
+```
+
+**m3-anchor SHOULD prioritize required truth derivation starting from blocking dependencies.** The blocker constraint maps to the highest-priority RT. This feeds directly into m3's Theory of Constraints bottleneck identification -- blocking dependencies are the strongest candidates for the binding constraint.
 
 ## Context Lookup (MANDATORY)
 

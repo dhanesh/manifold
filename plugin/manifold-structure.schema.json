@@ -196,6 +196,32 @@
                       "kind"
                     ],
                     "additionalProperties": true
+                  },
+                  "quality": {
+                    "type": "object",
+                    "properties": {
+                      "specificity": {
+                        "type": "number",
+                        "minimum": 1,
+                        "maximum": 3
+                      },
+                      "measurability": {
+                        "type": "number",
+                        "minimum": 1,
+                        "maximum": 3
+                      },
+                      "testability": {
+                        "type": "number",
+                        "minimum": 1,
+                        "maximum": 3
+                      }
+                    },
+                    "required": [
+                      "specificity",
+                      "measurability",
+                      "testability"
+                    ],
+                    "additionalProperties": false
                   }
                 },
                 "required": [
@@ -209,588 +235,28 @@
             "technical": {
               "type": "array",
               "items": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "pattern": "^[BTUSO]\\d+$"
-                  },
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "invariant",
-                      "goal",
-                      "boundary"
-                    ]
-                  },
-                  "verified_by": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "file_exists",
-                            "content_match",
-                            "test_passes",
-                            "metric_value",
-                            "manual_review"
-                          ]
-                        },
-                        "path": {
-                          "type": "string"
-                        },
-                        "pattern": {
-                          "type": "string"
-                        },
-                        "test_name": {
-                          "type": "string"
-                        },
-                        "metric_name": {
-                          "type": "string"
-                        },
-                        "threshold": {
-                          "type": [
-                            "string",
-                            "number"
-                          ]
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "VERIFIED",
-                            "PENDING",
-                            "FAILED",
-                            "STALE"
-                          ]
-                        },
-                        "satisfies": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "test_tier": {
-                          "type": "string",
-                          "enum": [
-                            "unit",
-                            "integration",
-                            "e2e"
-                          ]
-                        },
-                        "validation_criteria": {
-                          "type": "string"
-                        },
-                        "file_hash": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "type"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "source": {
-                    "type": "string",
-                    "enum": [
-                      "interview",
-                      "pre-mortem",
-                      "assumption"
-                    ]
-                  },
-                  "challenger": {
-                    "type": "string",
-                    "enum": [
-                      "regulation",
-                      "stakeholder",
-                      "technical-reality",
-                      "assumption"
-                    ]
-                  },
-                  "threshold": {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "enum": [
-                          "deterministic",
-                          "statistical"
-                        ]
-                      },
-                      "ceiling": {
-                        "type": "string"
-                      },
-                      "p99": {
-                        "type": "string"
-                      },
-                      "p50": {
-                        "type": "string"
-                      },
-                      "failure_rate": {
-                        "type": "string"
-                      },
-                      "window": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "additionalProperties": true
-                  }
-                },
-                "required": [
-                  "id",
-                  "type"
-                ],
-                "additionalProperties": false
+                "$ref": "#/definitions/ManifoldStructure/properties/constraints/properties/business/items"
               },
               "default": []
             },
             "user_experience": {
               "type": "array",
               "items": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "pattern": "^[BTUSO]\\d+$"
-                  },
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "invariant",
-                      "goal",
-                      "boundary"
-                    ]
-                  },
-                  "verified_by": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "file_exists",
-                            "content_match",
-                            "test_passes",
-                            "metric_value",
-                            "manual_review"
-                          ]
-                        },
-                        "path": {
-                          "type": "string"
-                        },
-                        "pattern": {
-                          "type": "string"
-                        },
-                        "test_name": {
-                          "type": "string"
-                        },
-                        "metric_name": {
-                          "type": "string"
-                        },
-                        "threshold": {
-                          "type": [
-                            "string",
-                            "number"
-                          ]
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "VERIFIED",
-                            "PENDING",
-                            "FAILED",
-                            "STALE"
-                          ]
-                        },
-                        "satisfies": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "test_tier": {
-                          "type": "string",
-                          "enum": [
-                            "unit",
-                            "integration",
-                            "e2e"
-                          ]
-                        },
-                        "validation_criteria": {
-                          "type": "string"
-                        },
-                        "file_hash": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "type"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "source": {
-                    "type": "string",
-                    "enum": [
-                      "interview",
-                      "pre-mortem",
-                      "assumption"
-                    ]
-                  },
-                  "challenger": {
-                    "type": "string",
-                    "enum": [
-                      "regulation",
-                      "stakeholder",
-                      "technical-reality",
-                      "assumption"
-                    ]
-                  },
-                  "threshold": {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "enum": [
-                          "deterministic",
-                          "statistical"
-                        ]
-                      },
-                      "ceiling": {
-                        "type": "string"
-                      },
-                      "p99": {
-                        "type": "string"
-                      },
-                      "p50": {
-                        "type": "string"
-                      },
-                      "failure_rate": {
-                        "type": "string"
-                      },
-                      "window": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "additionalProperties": true
-                  }
-                },
-                "required": [
-                  "id",
-                  "type"
-                ],
-                "additionalProperties": false
+                "$ref": "#/definitions/ManifoldStructure/properties/constraints/properties/business/items"
               },
               "default": []
             },
             "security": {
               "type": "array",
               "items": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "pattern": "^[BTUSO]\\d+$"
-                  },
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "invariant",
-                      "goal",
-                      "boundary"
-                    ]
-                  },
-                  "verified_by": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "file_exists",
-                            "content_match",
-                            "test_passes",
-                            "metric_value",
-                            "manual_review"
-                          ]
-                        },
-                        "path": {
-                          "type": "string"
-                        },
-                        "pattern": {
-                          "type": "string"
-                        },
-                        "test_name": {
-                          "type": "string"
-                        },
-                        "metric_name": {
-                          "type": "string"
-                        },
-                        "threshold": {
-                          "type": [
-                            "string",
-                            "number"
-                          ]
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "VERIFIED",
-                            "PENDING",
-                            "FAILED",
-                            "STALE"
-                          ]
-                        },
-                        "satisfies": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "test_tier": {
-                          "type": "string",
-                          "enum": [
-                            "unit",
-                            "integration",
-                            "e2e"
-                          ]
-                        },
-                        "validation_criteria": {
-                          "type": "string"
-                        },
-                        "file_hash": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "type"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "source": {
-                    "type": "string",
-                    "enum": [
-                      "interview",
-                      "pre-mortem",
-                      "assumption"
-                    ]
-                  },
-                  "challenger": {
-                    "type": "string",
-                    "enum": [
-                      "regulation",
-                      "stakeholder",
-                      "technical-reality",
-                      "assumption"
-                    ]
-                  },
-                  "threshold": {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "enum": [
-                          "deterministic",
-                          "statistical"
-                        ]
-                      },
-                      "ceiling": {
-                        "type": "string"
-                      },
-                      "p99": {
-                        "type": "string"
-                      },
-                      "p50": {
-                        "type": "string"
-                      },
-                      "failure_rate": {
-                        "type": "string"
-                      },
-                      "window": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "additionalProperties": true
-                  }
-                },
-                "required": [
-                  "id",
-                  "type"
-                ],
-                "additionalProperties": false
+                "$ref": "#/definitions/ManifoldStructure/properties/constraints/properties/business/items"
               },
               "default": []
             },
             "operational": {
               "type": "array",
               "items": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "pattern": "^[BTUSO]\\d+$"
-                  },
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "invariant",
-                      "goal",
-                      "boundary"
-                    ]
-                  },
-                  "verified_by": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "file_exists",
-                            "content_match",
-                            "test_passes",
-                            "metric_value",
-                            "manual_review"
-                          ]
-                        },
-                        "path": {
-                          "type": "string"
-                        },
-                        "pattern": {
-                          "type": "string"
-                        },
-                        "test_name": {
-                          "type": "string"
-                        },
-                        "metric_name": {
-                          "type": "string"
-                        },
-                        "threshold": {
-                          "type": [
-                            "string",
-                            "number"
-                          ]
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "VERIFIED",
-                            "PENDING",
-                            "FAILED",
-                            "STALE"
-                          ]
-                        },
-                        "satisfies": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "test_tier": {
-                          "type": "string",
-                          "enum": [
-                            "unit",
-                            "integration",
-                            "e2e"
-                          ]
-                        },
-                        "validation_criteria": {
-                          "type": "string"
-                        },
-                        "file_hash": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "type"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "source": {
-                    "type": "string",
-                    "enum": [
-                      "interview",
-                      "pre-mortem",
-                      "assumption"
-                    ]
-                  },
-                  "challenger": {
-                    "type": "string",
-                    "enum": [
-                      "regulation",
-                      "stakeholder",
-                      "technical-reality",
-                      "assumption"
-                    ]
-                  },
-                  "threshold": {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "enum": [
-                          "deterministic",
-                          "statistical"
-                        ]
-                      },
-                      "ceiling": {
-                        "type": "string"
-                      },
-                      "p99": {
-                        "type": "string"
-                      },
-                      "p50": {
-                        "type": "string"
-                      },
-                      "failure_rate": {
-                        "type": "string"
-                      },
-                      "window": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "additionalProperties": true
-                  }
-                },
-                "required": [
-                  "id",
-                  "type"
-                ],
-                "additionalProperties": false
+                "$ref": "#/definitions/ManifoldStructure/properties/constraints/properties/business/items"
               },
               "default": []
             }
@@ -940,74 +406,7 @@
                   "evidence": {
                     "type": "array",
                     "items": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "file_exists",
-                            "content_match",
-                            "test_passes",
-                            "metric_value",
-                            "manual_review"
-                          ]
-                        },
-                        "path": {
-                          "type": "string"
-                        },
-                        "pattern": {
-                          "type": "string"
-                        },
-                        "test_name": {
-                          "type": "string"
-                        },
-                        "metric_name": {
-                          "type": "string"
-                        },
-                        "threshold": {
-                          "type": [
-                            "string",
-                            "number"
-                          ]
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "VERIFIED",
-                            "PENDING",
-                            "FAILED",
-                            "STALE"
-                          ]
-                        },
-                        "satisfies": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "test_tier": {
-                          "type": "string",
-                          "enum": [
-                            "unit",
-                            "integration",
-                            "e2e"
-                          ]
-                        },
-                        "validation_criteria": {
-                          "type": "string"
-                        },
-                        "file_hash": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "type"
-                      ],
-                      "additionalProperties": false
+                      "$ref": "#/definitions/ManifoldStructure/properties/constraints/properties/business/items/properties/verified_by/items"
                     }
                   },
                   "depth": {
@@ -1015,7 +414,9 @@
                   },
                   "children": {
                     "type": "array",
-                    "items": {}
+                    "items": {
+                      "$ref": "#/definitions/ManifoldStructure/properties/anchors/properties/required_truths/items"
+                    }
                   }
                 },
                 "required": [
@@ -1066,6 +467,35 @@
                 "required_truth_id"
               ],
               "additionalProperties": false
+            },
+            "tension_validation": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "tension_id": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "CONFIRMED",
+                      "REOPENED"
+                    ]
+                  },
+                  "by_option": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tension_id",
+                  "status"
+                ],
+                "additionalProperties": false
+              }
             }
           },
           "additionalProperties": false
@@ -1269,74 +699,7 @@
         "evidence": {
           "type": "array",
           "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "type": {
-                "type": "string",
-                "enum": [
-                  "file_exists",
-                  "content_match",
-                  "test_passes",
-                  "metric_value",
-                  "manual_review"
-                ]
-              },
-              "path": {
-                "type": "string"
-              },
-              "pattern": {
-                "type": "string"
-              },
-              "test_name": {
-                "type": "string"
-              },
-              "metric_name": {
-                "type": "string"
-              },
-              "threshold": {
-                "type": [
-                  "string",
-                  "number"
-                ]
-              },
-              "status": {
-                "type": "string",
-                "enum": [
-                  "VERIFIED",
-                  "PENDING",
-                  "FAILED",
-                  "STALE"
-                ]
-              },
-              "satisfies": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "test_tier": {
-                "type": "string",
-                "enum": [
-                  "unit",
-                  "integration",
-                  "e2e"
-                ]
-              },
-              "validation_criteria": {
-                "type": "string"
-              },
-              "file_hash": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "id",
-              "type"
-            ],
-            "additionalProperties": false
+            "$ref": "#/definitions/ManifoldStructure/properties/constraints/properties/business/items/properties/verified_by/items"
           }
         },
         "constraint_graph": {
@@ -1430,37 +793,13 @@
                 "conflicts": {
                   "type": "array",
                   "items": {
-                    "anyOf": [
-                      {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        },
-                        "minItems": 2
-                      },
-                      {
-                        "type": "object",
-                        "additionalProperties": {}
-                      }
-                    ]
+                    "$ref": "#/definitions/ManifoldStructure/properties/constraint_graph/properties/edges/properties/dependencies/items"
                   }
                 },
                 "satisfies": {
                   "type": "array",
                   "items": {
-                    "anyOf": [
-                      {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        },
-                        "minItems": 2
-                      },
-                      {
-                        "type": "object",
-                        "additionalProperties": {}
-                      }
-                    ]
+                    "$ref": "#/definitions/ManifoldStructure/properties/constraint_graph/properties/edges/properties/dependencies/items"
                   }
                 }
               },
@@ -1488,12 +827,7 @@
                 ]
               },
               "type": {
-                "type": "string",
-                "enum": [
-                  "invariant",
-                  "goal",
-                  "boundary"
-                ]
+                "$ref": "#/definitions/ManifoldStructure/properties/constraints/properties/business/items/properties/type"
               },
               "source_constraint": {
                 "type": "string"
@@ -1513,6 +847,90 @@
               "type",
               "source_constraint",
               "auto_generated"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "gap_checklist_compliance": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "gap": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "COMPLETED",
+                  "SKIPPED"
+                ]
+              },
+              "skip_reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "gap",
+              "status"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "draft_required_truths": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "seed_from": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "draft_statement": {
+                "type": "string"
+              },
+              "confidence": {
+                "type": "string",
+                "enum": [
+                  "high",
+                  "medium",
+                  "low"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "seed_from",
+              "draft_statement",
+              "confidence"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "blocking_dependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "blocker": {
+                "type": "string"
+              },
+              "blocked": {
+                "type": "string"
+              },
+              "tension_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "blocker",
+              "blocked",
+              "tension_id"
             ],
             "additionalProperties": false
           }

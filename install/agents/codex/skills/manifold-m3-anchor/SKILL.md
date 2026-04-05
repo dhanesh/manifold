@@ -179,10 +179,11 @@ Retries are idempotent via transaction idempotency keys.
 ## Process
 
 1. **State the outcome** - Clear, measurable success criteria
-2. **Ask "What must be TRUE?"** - Necessary conditions for outcome
-3. **Derive required truths** - Chain backward from each condition
-4. **Identify gaps** - What's missing between current state and requirements?
-5. **Generate solution space** - Options that satisfy all required truths
+2. **Check blocking dependencies** - Read `blocking_dependencies` from JSON (written by m2). If present, derive required truths for the BLOCKER constraints FIRST -- these are the strongest candidates for the binding constraint. If `draft_required_truths` (from m1) exist for blocking constraints, validate those as starting seeds.
+3. **Ask "What must be TRUE?"** - Necessary conditions for outcome
+4. **Derive required truths** - Chain backward from each condition
+5. **Identify gaps** - What's missing between current state and requirements?
+6. **Generate solution space** - Options that satisfy all required truths
 
 ## Recursive Backward Chaining (Enhancement 7)
 
@@ -247,6 +248,20 @@ Generate solution options ordered by their approach to the binding constraint fi
 ```json
 {"anchors": {"binding_constraint": {"required_truth_id": "RT-3", "reason": "...", "dependency_chain": ["RT-1", "RT-5"]}}}
 ```
+
+### Binding Constraint Handoff to m4 (Enhancement 5b)
+
+The binding constraint identified above MUST be communicated to m4-generate. It is already stored in JSON as `anchors.binding_constraint`.
+
+**m4-generate MUST:**
+1. Read `anchors.binding_constraint` from JSON before building the artifact plan
+2. Generate artifacts that address the binding constraint's required truth FIRST
+3. Tag binding-constraint artifacts in the generation plan: `"priority": "binding"`
+4. If the binding constraint's RT has unresolved evidence after generation, WARN before completing m4
+
+This ensures the most critical, highest-risk artifact is generated first, when context is freshest and attention is highest. Without this handoff, m4 generates in arbitrary order and the binding constraint may be addressed last (or inadequately).
+
+**Evidence for need:** In `engineering-hardening`, RT-4 (file splitting) was the binding constraint. It was the highest-risk item but would have been generated last without explicit prioritization.
 
 ### Reversibility Tagging for Solution Options (Enhancement 4)
 
@@ -408,6 +423,32 @@ manifold validate <feature>
 If validation fails, fix the errors BEFORE proceeding. The JSON structure must conform to `install/manifold-structure.schema.json`.
 
 **Format lock**: If `.manifold/<feature>.json` exists, ALWAYS use JSON+Markdown format. Never create/update `.yaml` when `.json` exists.
+
+### Solution-Tension Validation (Cross-Phase Feedback)
+
+After the recommended solution option is selected, validate it against m2's tensions to close the feedback loop:
+
+1. Read all tensions from JSON
+2. For each RESOLVED tension:
+   - Does the recommended option's approach match the recorded resolution?
+   - If YES: Mark as `CONFIRMED by option [X]`
+   - If NO: Flag as `TENSION REOPENED — option [X] does not honor resolution for [TN-ID]`
+3. For each UNRESOLVED tension (if any):
+   - Does the option implicitly resolve it? If YES, suggest marking as resolved
+4. Record in JSON under `anchors.tension_validation`:
+```json
+{
+  "tension_validation": [
+    {"tension_id": "TN1", "status": "CONFIRMED", "by_option": "A"},
+    {"tension_id": "TN3", "status": "REOPENED", "reason": "Option A uses caching which conflicts with TN3 resolution"}
+  ]
+}
+```
+
+If any tension is REOPENED, surface to user via AskUserQuestion:
+> "The recommended option conflicts with tension [TN-ID]. Options: A. Accept and update the resolution. B. Choose a different option. C. Modify the option to honor the resolution."
+
+This prevents m3 from recommending solutions that silently invalidate m2 decisions -- a gap observed in early manifolds where solution selection was disconnected from tension resolutions.
 
 
 ## Interaction Rules (MANDATORY)

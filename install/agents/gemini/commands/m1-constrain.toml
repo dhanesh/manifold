@@ -280,6 +280,35 @@ When constraints involve shared state (caching, connection pools, singletons):
 - Should concurrent request handling tests be generated?
 - What shared-state constraints exist?
 
+### GAP Checklist Compliance (MANDATORY)
+
+After all five category interviews, you MUST run each GAP checklist or explicitly record a skip with reason. These checklists catch constraints that interviews alone miss -- early manifolds that skipped them had thin, untestable constraint sets.
+
+| GAP | Checklist | When Required |
+|-----|-----------|---------------|
+| GAP-03 | Core Data Path Analysis | Always (any feature with data flow) |
+| GAP-09 | Crypto/Auth Attack Surface | When constraints involve auth/crypto |
+| GAP-10 | Resource Exhaustion | When unauthenticated endpoints or paths exist |
+| GAP-11 | External Dependency Resilience | When external HTTP dependencies exist |
+| GAP-14 | Input Validation Derivation | When constraints reference data formats |
+| GAP-17 | Concurrency Considerations | When constraints involve shared state |
+
+Record compliance in JSON under `"gap_checklist_compliance"`:
+```json
+{
+  "gap_checklist_compliance": [
+    {"gap": "GAP-03", "status": "COMPLETED"},
+    {"gap": "GAP-09", "status": "SKIPPED", "skip_reason": "No auth/crypto constraints in this feature"},
+    {"gap": "GAP-10", "status": "COMPLETED"},
+    {"gap": "GAP-11", "status": "SKIPPED", "skip_reason": "No external HTTP dependencies"},
+    {"gap": "GAP-14", "status": "COMPLETED"},
+    {"gap": "GAP-17", "status": "SKIPPED", "skip_reason": "CLI tool, no shared state"}
+  ]
+}
+```
+
+Each checklist MUST be either COMPLETED or SKIPPED with documented reason. Omission is not allowed -- if you forget a checklist, the post-phase validation should surface it.
+
 ### Pre-mortem Pass (run after elicitation, before phase closes)
 
 After all five category interviews are complete, run a stress-test pass before committing the phase.
@@ -298,6 +327,47 @@ For each story:
 - If not already in the constraint set: add it, tag `source: pre-mortem`
 - If already in the set: confirm and tag `source: validated-pre-mortem`
 - Use AskUserQuestion to present the three failure story prompts
+
+### Constraint Quality Check (Post-Elicitation)
+
+After all constraints are discovered (including pre-mortem additions), score each on three dimensions (1-3 scale):
+
+| Score | Specificity | Measurability | Testability |
+|-------|-------------|---------------|-------------|
+| 1 | Vague ("should be fast") | Unmeasurable ("code quality") | Requires judgment ("user-friendly") |
+| 2 | Directional ("under 500ms") | Proxy-measurable ("coverage > 70%") | Requires manual test ("audit passes") |
+| 3 | Precise ("p99 < 200ms, p50 < 80ms") | Directly measurable ("APM response time") | Automatable ("test asserts < 200ms") |
+
+Constraints scoring 1 on any dimension get flagged with a suggestion:
+> "Consider refining [ID]: [dimension] is weak. Current: '[text]'. Suggestion: '[improved version]'"
+
+Store scores in JSON (optional field on each constraint):
+```json
+{"id": "B1", "type": "invariant", "quality": {"specificity": 3, "measurability": 3, "testability": 3}}
+```
+
+**Low scores are warnings, not blockers.** The user may accept a vague constraint if it cannot be further specified. But surfacing the weakness drives improvement -- early manifolds had constraints like "must work" that later had to be reworked.
+
+### Draft Required Truths (Seeding for m3)
+
+After all interviews, pre-mortem, and quality scoring, auto-generate a `draft_required_truths` list to seed m3-anchor. This reduces context loss between phases.
+
+**Generation rules:**
+1. For each INVARIANT constraint, draft: "For [constraint statement] to hold, [inferred precondition] must be true"
+2. For each pair of constraints sharing hidden dependency keywords (ACID, durable, secure, etc.), draft a dependency RT
+3. For each constraint scored 1 on testability, draft: "[constraint] requires a testable proxy metric"
+
+Store in JSON as `"draft_required_truths"`:
+```json
+{
+  "draft_required_truths": [
+    {"id": "DRT-1", "seed_from": ["B1"], "draft_statement": "Error classification system must exist to distinguish transient from permanent failures", "confidence": "high"},
+    {"id": "DRT-2", "seed_from": ["T3", "O4"], "draft_statement": "File splits and sync pipeline must be updated atomically", "confidence": "medium"}
+  ]
+}
+```
+
+These are **DRAFTS, not finalized required truths.** m3-anchor will validate, refine, or discard each one. Mark explicitly: "These seed m3 -- they are NOT commitments."
 
 ### Constraint Genealogy Tagging (applied during elicitation)
 
@@ -319,6 +389,11 @@ Every constraint carries two optional tags that record its origin and challengea
 | `stakeholder` | Named party's stated need | Can be negotiated |
 | `technical-reality` | Physical/architectural limit | Cannot change within scope |
 | `assumption` | Believed true, unverified | Must be confirmed before m4. Blocks generation if unconfirmed. |
+
+**CRITICAL: These are separate enums. Do NOT mix them.**
+- `source` accepts ONLY: `interview`, `pre-mortem`, `assumption`
+- `challenger` accepts ONLY: `regulation`, `stakeholder`, `technical-reality`, `assumption`
+- `technical-reality` is a **challenger**, not a source. Using it as a source will fail schema validation.
 
 **Smart defaults (U2):** Source defaults to `interview`. Challenger is inferred — only prompt the user when the challenger classification would change the resolution direction (e.g., when a constraint seems like it could be either `regulation` or `stakeholder`). Never make the user fill in both tags for every constraint.
 
