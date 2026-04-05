@@ -9,6 +9,7 @@ import type { Command } from 'commander';
 import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { findManifoldDir } from '../lib/parser.js';
+import { IOError } from '../lib/errors.js';
 import {
   println,
   printError,
@@ -71,11 +72,14 @@ async function initCommand(feature: string, options: InitOptions): Promise<numbe
     try {
       mkdirSync(manifoldDir, { recursive: true });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
+      const err = new IOError('Failed to create .manifold/ directory', {
+        cause: error instanceof Error ? error : undefined,
+        filePath: manifoldDir,
+      });
       if (options.json) {
-        println(toJSON({ error: `Failed to create .manifold/ directory: ${message}` }));
+        println(toJSON({ error: err.toUserMessage() }));
       } else {
-        printError(`Failed to create .manifold/ directory: ${message}`);
+        printError(err.toUserMessage());
       }
       return 1;
     }
@@ -128,11 +132,14 @@ async function initCommand(feature: string, options: InitOptions): Promise<numbe
   try {
     writeFileSync(jsonPath, JSON.stringify(structure, null, 2), 'utf-8');
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
+    const err = new IOError('Failed to write manifold JSON structure', {
+      cause: error instanceof Error ? error : undefined,
+      filePath: jsonPath,
+    });
     if (options.json) {
-      println(toJSON({ error: `Failed to write JSON: ${message}` }));
+      println(toJSON({ error: err.toUserMessage() }));
     } else {
-      printError(`Failed to write JSON: ${message}`);
+      printError(err.toUserMessage());
     }
     return 1;
   }
@@ -141,11 +148,14 @@ async function initCommand(feature: string, options: InitOptions): Promise<numbe
   try {
     writeFileSync(mdPath, markdown, 'utf-8');
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
+    const err = new IOError('Failed to write manifold Markdown content', {
+      cause: error instanceof Error ? error : undefined,
+      filePath: mdPath,
+    });
     if (options.json) {
-      println(toJSON({ error: `Failed to write Markdown: ${message}` }));
+      println(toJSON({ error: err.toUserMessage() }));
     } else {
-      printError(`Failed to write Markdown: ${message}`);
+      printError(err.toUserMessage());
     }
     return 1;
   }

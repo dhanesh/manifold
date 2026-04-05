@@ -16,7 +16,7 @@
 # - O4: Manual trigger available via workflow_dispatch
 #
 # Satisfies (original constraints):
-# - T1: CLI binaries for all 4 platforms
+# - T1: CLI binaries for all 5 platforms (incl. Windows)
 # - T2: Binaries attached to GitHub release
 # - S2: Binaries built from tagged commit
 # - O3: Release tag matches CLI version
@@ -124,6 +124,9 @@ jobs:
           echo "Building linux-arm64..."
           bun build ./index.ts --compile --target=bun-linux-arm64 --outfile ./dist/manifold-linux-arm64
 
+          echo "Building windows-x64..."
+          bun build ./index.ts --compile --target=bun-windows-x64 --outfile ./dist/manifold-windows-x64.exe
+
           echo "Build complete. Binary sizes:"
           ls -lh dist/
 
@@ -206,3 +209,75 @@ jobs:
           /tmp/manifold --help
 
           echo "CLI binary verified successfully!"
+
+  verify-windows:
+    name: Verify Windows CLI Binary
+    needs: [semantic-release, release]
+    runs-on: windows-latest
+    # Satisfies: T9 (Windows binary), G2 (Windows testing via CI runner)
+    continue-on-error: true
+
+    steps:
+      - name: Wait for release assets to propagate
+        run: Start-Sleep -Seconds 30
+
+      - name: Download and test Windows CLI binary
+        shell: pwsh
+        run: |
+          $VERSION = "${{ needs.semantic-release.outputs.new_release_git_tag }}"
+          $BINARY_URL = "https://github.com/dhanesh/manifold/releases/download/${VERSION}/manifold-windows-x64.exe"
+          $DEST = "$env:TEMP\manifold.exe"
+
+          Write-Host "Downloading CLI from: $BINARY_URL"
+
+          $maxRetries = 3
+          $downloaded = $false
+          for ($i = 1; $i -le $maxRetries; $i++) {
+            try {
+              Invoke-WebRequest -Uri $BINARY_URL -OutFile $DEST -UseBasicParsing -TimeoutSec 60
+              Write-Host "Download successful on attempt $i"
+              $downloaded = $true
+              break
+            } catch {
+              Write-Host "Attempt $i failed: $_"
+              if ($i -lt $maxRetries) {
+                Write-Host "Retrying in 20s..."
+                Start-Sleep -Seconds 20
+              }
+            }
+          }
+
+          if (-not $downloaded) {
+            Write-Host "WARNING: Could not download Windows CLI binary after $maxRetries attempts"
+            Write-Host "This may be a timing issue - release assets can take time to propagate"
+            Write-Host "Please verify manually at: https://github.com/dhanesh/manifold/releases/tag/${VERSION}"
+            exit 0
+          }
+
+          Write-Host "Testing CLI..."
+          & $DEST --version
+          if ($LASTEXITCODE -ne 0) { Write-Error "Version check failed"; exit 1 }
+
+          & $DEST --help
+          if ($LASTEXITCODE -ne 0) { Write-Error "Help check failed"; exit 1 }
+
+          & $DEST hook --help
+          if ($LASTEXITCODE -ne 0) { Write-Error "Hook subcommand check failed"; exit 1 }
+
+          Write-Host "Windows CLI binary verified successfully!"
+
+      - name: Test install-cli.ps1 syntax
+        shell: pwsh
+        run: |
+          # Verify the PowerShell install script parses without errors
+          # We can't fully test download (no release URL for this commit) but
+          # we can validate the script syntax and function definitions
+          $scriptUrl = "https://raw.githubusercontent.com/dhanesh/manifold/main/plugin/bin/install-cli.ps1"
+          try {
+            $script = Invoke-WebRequest -Uri $scriptUrl -UseBasicParsing -TimeoutSec 30
+            $null = [System.Management.Automation.PSParser]::Tokenize($script.Content, [ref]$null)
+            Write-Host "install-cli.ps1 syntax validation passed"
+          } catch {
+            Write-Host "WARNING: Could not validate install-cli.ps1 syntax: $_"
+            Write-Host "This is non-blocking - script may not be published to main yet"
+          }

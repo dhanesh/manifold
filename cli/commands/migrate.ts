@@ -9,6 +9,7 @@ import type { Command } from 'commander';
 import { existsSync, readFileSync, writeFileSync, renameSync } from 'fs';
 import { join } from 'path';
 import * as yaml from 'yaml';
+import { ParseError, IOError } from '../lib/errors.js';
 import {
   findManifoldDir,
   listFeatures,
@@ -186,10 +187,14 @@ async function migrateFeature(
     const content = readFileSync(yamlPath, 'utf-8');
     manifold = yaml.parse(content) as Manifold;
   } catch (err) {
+    const parseErr = new ParseError('Failed to parse YAML manifold', {
+      cause: err instanceof Error ? err : undefined,
+      filePath: yamlPath,
+    });
     return {
       feature,
       success: false,
-      error: `Failed to parse YAML: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      error: parseErr.toUserMessage(),
     };
   }
 
@@ -220,10 +225,14 @@ async function migrateFeature(
   try {
     writeFileSync(jsonPath, JSON.stringify(structure, null, 2), 'utf-8');
   } catch (err) {
+    const ioErr = new IOError('Failed to write migrated JSON', {
+      cause: err instanceof Error ? err : undefined,
+      filePath: jsonPath,
+    });
     return {
       feature,
       success: false,
-      error: `Failed to write JSON: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      error: ioErr.toUserMessage(),
     };
   }
 
@@ -231,10 +240,14 @@ async function migrateFeature(
   try {
     writeFileSync(mdPath, markdown, 'utf-8');
   } catch (err) {
+    const ioErr = new IOError('Failed to write migrated Markdown', {
+      cause: err instanceof Error ? err : undefined,
+      filePath: mdPath,
+    });
     return {
       feature,
       success: false,
-      error: `Failed to write Markdown: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      error: ioErr.toUserMessage(),
     };
   }
 

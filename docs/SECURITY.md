@@ -376,6 +376,39 @@ gitleaks detect --report-format sarif --report-path results.sarif
 
 ---
 
+## Dependency Vulnerability Scanning
+
+> Satisfies: S1 (Dependabot blocks critical CVEs), O5 (noise control)
+
+Manifold uses **GitHub Dependabot** for dependency vulnerability scanning.
+
+### Configuration
+
+`.github/dependabot.yml` configures:
+- Weekly schedule (Mondays) for npm and GitHub Actions updates
+- Grouped minor/patch updates to reduce PR noise
+- Maximum 5 open Dependabot PRs at a time
+- Major version updates excluded from auto-PRs (require manual review)
+
+### Enablement
+
+Dependabot requires enablement in the GitHub repository settings:
+
+1. Go to **Settings > Security > Code security and analysis**
+2. Enable **Dependabot alerts** (vulnerability notifications)
+3. Enable **Dependabot security updates** (auto-fix PRs for critical CVEs)
+4. The `.github/dependabot.yml` file auto-configures update behavior
+
+### Response Process
+
+| Severity | Response Time | Action |
+|----------|--------------|--------|
+| Critical (CVSS >= 9.0) | 24 hours | Merge Dependabot PR or apply manual fix |
+| High (CVSS 7.0-8.9) | 1 week | Review and merge |
+| Medium/Low | Next release | Batch with other updates |
+
+---
+
 ## See Also
 
 - [Gitleaks Documentation](https://github.com/gitleaks/gitleaks)

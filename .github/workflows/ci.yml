@@ -38,5 +38,83 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Run tests
-        run: bun test
+      - name: Run tests with coverage
+        run: |
+          # RT-2: Run tests with coverage reporting
+          # TN2 resolution: warning-only until coverage tool validated
+          bun test --coverage 2>&1 | tee /tmp/coverage-output.txt
+
+          # Extract coverage percentage for summary
+          COVERAGE=$(grep -oP 'All files\s*\|\s*\K[0-9.]+' /tmp/coverage-output.txt 2>/dev/null || echo "unknown")
+
+          echo "## Test Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Line Coverage | ${COVERAGE}% |" >> $GITHUB_STEP_SUMMARY
+          echo "| Threshold | 70% (warning-only) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # TN2: Warning-only for now -- flip to enforcing after T7 validation
+          if [ "$COVERAGE" != "unknown" ]; then
+            COVERAGE_INT=${COVERAGE%.*}
+            if [ "$COVERAGE_INT" -lt 70 ] 2>/dev/null; then
+              echo "::warning::Test coverage (${COVERAGE}%) is below 70% threshold"
+              echo "⚠️ Coverage below threshold. See TN2 resolution for enforcement timeline." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ Coverage meets threshold." >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+
+  # Verify Windows compilation
+  # Satisfies: T9 (Windows binary), G2 (Windows CI verification)
+  windows-build:
+    name: Windows Build Check
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Compile Windows binary
+        working-directory: cli
+        run: |
+          bun build ./index.ts --compile --target=bun-windows-x64 --outfile ./dist/manifold-windows-x64.exe
+
+      - name: Test Windows binary
+        working-directory: cli
+        shell: pwsh
+        run: |
+          Write-Host "Testing compiled binary..."
+          & ./dist/manifold-windows-x64.exe --version
+          & ./dist/manifold-windows-x64.exe --help
+          & ./dist/manifold-windows-x64.exe hook --help
+          Write-Host "Windows binary verified!"
+
+      - name: Test PowerShell scripts syntax
+        shell: pwsh
+        run: |
+          $errors = @()
+          foreach ($script in @("plugin/bin/install-cli.ps1", "plugin/hooks/session-start.ps1")) {
+            $tokens = $null
+            $parseErrors = $null
+            [System.Management.Automation.PSParser]::Tokenize((Get-Content $script -Raw), [ref]$parseErrors) | Out-Null
+            if ($parseErrors.Count -gt 0) {
+              $errors += "$script has $($parseErrors.Count) parse errors"
+            } else {
+              Write-Host "  $script - syntax OK"
+            }
+          }
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_ }
+            exit 1
+          }
+          Write-Host "All PowerShell scripts validated!"

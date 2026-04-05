@@ -1,0 +1,55 @@
+# Dependabot configuration
+# Satisfies: S1 (dependency vulnerability scanning), O5 (noise control)
+# Resolution: TN5 (accept 3min CI budget for coverage)
+
+version: 2
+
+updates:
+  # Root package (husky, commitlint, dev deps)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Don't update major versions automatically
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # CLI package (commander, yaml, pino)
+  - package-ecosystem: "npm"
+    directory: "/cli"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      cli-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    groups:
+      actions:
+        patterns:
+          - "*"

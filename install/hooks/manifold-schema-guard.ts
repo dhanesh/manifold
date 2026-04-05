@@ -31,7 +31,16 @@ if (toolName !== 'Write' && toolName !== 'Edit' && toolName !== 'MultiEdit') {
 
 // Extract the file path from tool input
 const toolInput = hookData?.tool_input;
-const filePath = toolInput?.file_path || toolInput?.path;
+let filePath: string | undefined;
+
+if (toolName === 'MultiEdit' && Array.isArray(toolInput?.edits)) {
+  // MultiEdit contains an array of edits — check if any target .manifold/*.json
+  filePath = toolInput.edits.find(
+    (e: any) => e.file_path && dirname(e.file_path).endsWith('.manifold') && e.file_path.endsWith('.json')
+  )?.file_path;
+} else {
+  filePath = toolInput?.file_path || toolInput?.path;
+}
 
 if (!filePath) {
   process.exit(0);
@@ -66,9 +75,15 @@ if (existsSync(cliBin)) {
 // Run validation
 const result = spawnSync(bin, ['validate', feature], {
   cwd,
-  timeout: 5000,
+  timeout: 8000,
   encoding: 'utf-8',
 });
+
+// Handle spawn failures (binary not found, signal killed, etc.)
+if (result.error || result.status === null) {
+  // Binary missing or spawn failed — exit silently, don't block the user
+  process.exit(0);
+}
 
 // Exit code 2 = validation failure
 if (result.status === 2) {

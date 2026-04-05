@@ -1,12 +1,12 @@
 {
-  "description": "Manifold plugin hooks for context preservation, schema injection, and interaction enforcement",
+  "description": "Manifold plugin hooks for context preservation, schema validation, and interaction enforcement. Uses compiled CLI binary for cross-platform support (no Bun/Node runtime required).",
   "hooks": {
     "PreCompact": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "bun run ${CLAUDE_PLUGIN_ROOT}/hooks/manifold-context.ts",
+            "command": "manifold hook context",
             "timeout": 10
           }
         ]
@@ -17,18 +17,20 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh\" 2>/dev/null || powershell.exe -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.ps1\" 2>$null",
+            "timeout": 30
           }
         ]
       }
     ],
     "PostToolUse": [
       {
+        "matcher": "Write|Edit|MultiEdit",
         "hooks": [
           {
             "type": "command",
-            "command": "bun run ${CLAUDE_PLUGIN_ROOT}/hooks/manifold-schema-guard.ts",
-            "timeout": 10
+            "command": "manifold hook schema-guard",
+            "timeout": 15
           }
         ]
       }
@@ -38,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun run ${CLAUDE_PLUGIN_ROOT}/hooks/prompt-enforcer.ts",
+            "command": "manifold hook prompt-enforcer",
             "timeout": 5
           }
         ]

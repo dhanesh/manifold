@@ -36,9 +36,10 @@ get_latest_version() {
 detect_platform() {
     local os="" arch=""
     case "$(uname -s)" in
-        Darwin) os="darwin" ;;
-        Linux)  os="linux" ;;
-        *)      os="unsupported" ;;
+        Darwin)  os="darwin" ;;
+        Linux)   os="linux" ;;
+        MINGW*|MSYS*|CYGWIN*) os="windows" ;;
+        *)       os="unsupported" ;;
     esac
     case "$(uname -m)" in
         x86_64|amd64)   arch="x64" ;;
@@ -60,28 +61,36 @@ install_cli() {
 
     local version
     version=$(get_latest_version)
+
+    # Windows binaries have .exe suffix
     local binary_name="manifold-${platform}"
+    local dest_name="manifold"
+    if [[ "$platform" == windows-* ]]; then
+        binary_name="manifold-${platform}.exe"
+        dest_name="manifold.exe"
+    fi
+
     local download_url="${RELEASES}/v${version}/${binary_name}"
     local tmp_file="/tmp/manifold-cli-$$"
 
     print_step "Downloading manifold CLI v${version} for ${platform}..."
 
     if curl -fsSL "$download_url" -o "$tmp_file" 2>/dev/null; then
-        chmod +x "$tmp_file"
+        chmod +x "$tmp_file" 2>/dev/null
 
         if [[ -w "$install_dir" ]] || sudo -n true 2>/dev/null; then
             if [[ -w "$install_dir" ]]; then
-                mv "$tmp_file" "$install_dir/manifold"
+                mv "$tmp_file" "$install_dir/$dest_name"
             else
-                sudo mv "$tmp_file" "$install_dir/manifold"
+                sudo mv "$tmp_file" "$install_dir/$dest_name"
             fi
-            print_success "CLI installed to $install_dir/manifold"
+            print_success "CLI installed to $install_dir/$dest_name"
             return 0
         else
             local local_bin="$HOME/.local/bin"
             mkdir -p "$local_bin"
-            mv "$tmp_file" "$local_bin/manifold"
-            print_success "CLI installed to $local_bin/manifold"
+            mv "$tmp_file" "$local_bin/$dest_name"
+            print_success "CLI installed to $local_bin/$dest_name"
             if ! echo "$PATH" | grep -q "$local_bin"; then
                 print_warning "Add $local_bin to your PATH"
             fi
