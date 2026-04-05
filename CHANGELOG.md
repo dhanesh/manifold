@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.29.0](https://github.com/dhanesh/manifold/compare/v2.28.4...v2.29.0) (2026-04-05)
+
+### Features
+
+* cross-platform hooks, structured logging, file splitting, windows support ([fd90b6a](https://github.com/dhanesh/manifold/commit/fd90b6a783e7a80db70bb709dd7bfe873bdfde3e))
+
 ## [2.28.4](https://github.com/dhanesh/manifold/compare/v2.28.3...v2.28.4) (2026-04-03)
 
 ### Bug Fixes
