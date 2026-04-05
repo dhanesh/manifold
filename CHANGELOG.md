@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.30.0](https://github.com/dhanesh/manifold/compare/v2.29.0...v2.30.0) (2026-04-05)
+
+### Features
+
+* enhance thinking prompts with cross-phase data flow and quality gates ([890159a](https://github.com/dhanesh/manifold/commit/890159a56b938bc2dec6beb012640e77e0bcb90b))
+
 ## [2.29.0](https://github.com/dhanesh/manifold/compare/v2.28.4...v2.29.0) (2026-04-05)
 
 ### Features
