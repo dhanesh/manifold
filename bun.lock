@@ -23,7 +23,7 @@
     },
     "cli": {
       "name": "@manifold/cli",
-      "version": "2.28.4",
+      "version": "2.29.0",
       "bin": {
         "manifold": "./dist/index.js",
       },
