@@ -28,6 +28,22 @@ Backward reasoning from desired outcome to required conditions.
 >
 > See [GLOSSARY.md](../../docs/GLOSSARY.md) for terminology explanations.
 
+## Scope Guard (MANDATORY)
+
+**This phase ONLY updates manifold files** (`.manifold/<feature>.json` and `.manifold/<feature>.md`) with required truths, gaps, and solution options. After updating, display the anchoring summary and suggest the next step.
+
+**DO NOT** do any of the following during m3-anchor:
+- Create project folders, directory structures, or source files
+- Spawn background agents or sub-agents for content creation
+- Write README.md, CLAUDE.md, or any files outside `.manifold/`
+- Generate code, sample data, templates, or any implementation artifacts
+- Begin implementing the recommended solution option — that belongs to m4-generate
+- Begin work that belongs to later phases (m4-m6)
+
+**Solution options are PROPOSALS recorded in the manifold, not instructions to build.** The user must explicitly invoke m4-generate to begin implementation. Here you only capture what must be true, what gaps exist, and what options are available.
+
+**After updating the two manifold files: display anchoring summary, suggest next step, STOP.**
+
 ## Schema Compliance
 
 | Field | Valid Values |
@@ -114,41 +130,27 @@ Retries are idempotent via transaction idempotency keys.
 |------------|------------------------|---------|
 | RT-1, RT-2 | `###` (h3) | `### RT-1: Error Classification` |
 
-## Legacy YAML Format (Still Supported)
+## Iteration Recording
 
-When using legacy YAML, maintain v3 schema structure:
-
-```yaml
-anchors:
-  required_truths:
-    - id: RT-1
-      statement: "Description of what must be true"
-      status: NOT_SATISFIED    # Valid: SATISFIED, PARTIAL, NOT_SATISFIED, SPECIFICATION_READY
-      gap: "What's missing"
-      evidence:                # v3: Reality grounding
-        - type: file_exists
-          path: "path/to/implementation"
-        - type: content_match
-          path: "path/to/file"
-          pattern: "expected pattern"
-        - type: test_passes
-          path: "path/to/test"
-          test_name: "test name"
-
-# Record iteration when phase changes
-iterations:
-  - number: 3
-    phase: anchor
-    timestamp: "<ISO timestamp>"
-    required_truths: <count>
-    by_status:
-      SATISFIED: <count>
-      PARTIAL: <count>
-      NOT_SATISFIED: <count>
-      SPECIFICATION_READY: <count>
-    solution_options: <count>
-    selected_option: "Option description"
+**Append to `"iterations"` array** in JSON when phase completes:
+```json
+{
+  "iterations": [
+    {
+      "number": 3,
+      "phase": "anchor",
+      "timestamp": "2026-04-04T00:00:00Z",
+      "result": "Derived 6 required truths, recommended Option A",
+      "required_truths": 6,
+      "by_status": { "SATISFIED": 0, "PARTIAL": 1, "NOT_SATISFIED": 3, "SPECIFICATION_READY": 2 },
+      "solution_options": 3,
+      "selected_option": "Option A"
+    }
+  ]
+}
 ```
+
+> **REQUIRED**: Every iteration MUST have `number`, `phase`, `timestamp`, and `result` (string). Omitting `result` fails schema validation.
 
 **Evidence Types** (v3):
 - `file_exists` - Verify file exists on disk

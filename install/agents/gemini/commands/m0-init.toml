@@ -135,47 +135,9 @@ Creates TWO files that work together:
 
 ### Legacy YAML Format
 
-Single file with both structure and content (still supported):
+> **Note**: Legacy YAML is only for existing manifolds. New manifolds MUST use JSON+Markdown. Use `manifold migrate <feature>` to convert.
 
-```yaml
-# Manifold Schema v3
-schema_version: 3
-feature: <feature-name>
-outcome: <desired outcome or "TBD">
-phase: INITIALIZED
-created: <timestamp>
-
-constraints:
-  business: []
-  technical: []
-  user_experience: []
-  security: []
-  operational: []
-
-tensions: []
-
-anchors:
-  required_truths: []
-
-# v2+: Iteration Tracking
-iterations: []
-
-# v2+: Convergence Tracking
-convergence:
-  status: NOT_STARTED
-
-# v3: Evidence System (reality grounding)
-evidence: []
-
-# v3: Constraint Graph (temporal non-linearity)
-constraint_graph:
-  version: 1
-  nodes: {}
-  edges:
-    dependencies: []
-    conflicts: []
-    satisfies: []
-```
+Single-file YAML format is still supported but deprecated. See `SCHEMA_REFERENCE.md` for legacy YAML migration details.
 
 ## Schema Version Compatibility
 
@@ -241,6 +203,21 @@ When non-software is detected, use AskUserQuestion to confirm:
 **Next-step suggestion must reflect domain:**
 - Software: `Next: /manifold:m1-constrain <feature>`
 - Non-software: `Next: /manifold:m1-constrain <feature>` with note: "(non-software mode: uses universal constraint categories — Obligations, Desires, Resources, Risks, Dependencies)"
+
+## Scope Guard (MANDATORY)
+
+**This phase ONLY creates manifold files.** After creating `.manifold/<feature>.json` and `.manifold/<feature>.md`, display the confirmation table and **STOP**.
+
+**DO NOT** do any of the following during m0-init:
+- Create project folders, directory structures, or source files
+- Spawn background agents or sub-agents for content creation
+- Write README.md, CLAUDE.md, or any files outside `.manifold/`
+- Generate code, sample data, templates, or any implementation artifacts
+- Begin work that belongs to later phases (m1-m6)
+
+**The user's prompt — no matter how detailed — is the OUTCOME, not a work order.** Capture the full intent in the `## Outcome` section of the `.md` file. Do not interpret descriptive prompts as instructions to build the described system during initialization.
+
+**After creating the two manifold files: display confirmation, suggest next step, STOP.**
 
 ## Execution Instructions
 

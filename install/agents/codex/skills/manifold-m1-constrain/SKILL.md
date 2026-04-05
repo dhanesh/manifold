@@ -24,6 +24,21 @@ Interview-driven constraint discovery across 5 categories.
 3. Say: "Ready to proceed when you run `/manifold:m1-constrain <feature>`"
 4. **STOP AND WAIT** for user command
 
+## Scope Guard (MANDATORY)
+
+**This phase ONLY updates manifold files** (`.manifold/<feature>.json` and `.manifold/<feature>.md`) with discovered constraints. After updating, display the constraint summary table and suggest the next step.
+
+**DO NOT** do any of the following during m1-constrain:
+- Create project folders, directory structures, or source files
+- Spawn background agents or sub-agents for content creation
+- Write README.md, CLAUDE.md, or any files outside `.manifold/`
+- Generate code, sample data, templates, or any implementation artifacts
+- Begin work that belongs to later phases (m2-m6)
+
+**The user's descriptions and answers during the constraint interview are INPUTS to the manifold, not instructions to build.** Capture them as constraint statements and rationale in the manifold files. Do not interpret rich descriptions as work orders.
+
+**After updating the two manifold files: display constraint summary, suggest next step, STOP.**
+
 ## Schema Compliance
 
 | Field | Valid Values |
@@ -124,36 +139,34 @@ If using legacy YAML, constraints use `statement`, NOT `description`:
 
 When adding constraints, ensure the manifold maintains v3 schema structure:
 
-```yaml
-# v3 requires these fields (created by /manifold:m0-init)
-schema_version: 3
-iterations: []      # Track each phase change
-convergence:
-  status: NOT_STARTED
-evidence: []        # For reality grounding
-constraint_graph:   # For temporal non-linearity
-  version: 1
-  nodes: {}
-  edges:
-    dependencies: []
-    conflicts: []
-    satisfies: []
+```json
+{
+  "iterations": [],
+  "convergence": { "status": "NOT_STARTED" },
+  "evidence": [],
+  "constraint_graph": { "version": 1, "nodes": {}, "edges": { "dependencies": [], "conflicts": [], "satisfies": [] } }
+}
 ```
 
-**Record iteration** when updating constraints:
-```yaml
-iterations:
-  - number: 1
-    phase: constrain
-    timestamp: "<ISO timestamp>"
-    constraints_added: <count>
-    by_category:
-      business: <count>
-      technical: <count>
-      user_experience: <count>
-      security: <count>
-      operational: <count>
+> These fields are created by `/manifold:m0-init` (schema_version 3). You only need to update them.
+
+**Record iteration** when updating constraints — append to the `"iterations"` array in JSON:
+```json
+{
+  "iterations": [
+    {
+      "number": 1,
+      "phase": "constrain",
+      "timestamp": "2026-04-04T00:00:00Z",
+      "result": "Discovered 15 constraints across 5 categories",
+      "constraints_added": 15,
+      "by_category": { "business": 3, "technical": 4, "user_experience": 3, "security": 3, "operational": 2 }
+    }
+  ]
+}
 ```
+
+> **REQUIRED FIELDS**: Every iteration MUST have `number`, `phase`, `timestamp`, and `result` (string). The `result` field is mandatory — omitting it will fail schema validation.
 
 ## Usage
 

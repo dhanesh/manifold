@@ -179,9 +179,9 @@ When generating artifacts, update `.manifold/<feature>.json` with completion sta
         "status": "NOT_SATISFIED",
         "maps_to": ["B1", "T1"],
         "evidence": [
-          {"type": "file_exists", "path": "src/retry/PaymentRetryClient.ts", "status": "PENDING"},
-          {"type": "content_match", "path": "src/retry/PaymentRetryClient.ts", "pattern": "classifyError", "status": "PENDING"},
-          {"type": "test_passes", "path": "src/retry/__tests__/PaymentRetryClient.test.ts", "test_name": "classifies transient errors correctly", "status": "PENDING"}
+          {"id": "E1", "type": "file_exists", "path": "src/retry/PaymentRetryClient.ts", "status": "PENDING"},
+          {"id": "E2", "type": "content_match", "path": "src/retry/PaymentRetryClient.ts", "pattern": "classifyError", "status": "PENDING"},
+          {"id": "E3", "type": "test_passes", "path": "src/retry/__tests__/PaymentRetryClient.test.ts", "test_name": "classifies transient errors correctly", "status": "PENDING"}
         ]
       }
     ]
@@ -254,9 +254,9 @@ When generating artifacts, populate `evidence` arrays on each required truth in 
         "status": "NOT_SATISFIED",
         "maps_to": ["B1", "T1"],
         "evidence": [
-          {"type": "file_exists", "path": "src/retry/IdempotencyService.ts", "status": "PENDING"},
-          {"type": "content_match", "path": "src/retry/PaymentRetryClient.ts", "pattern": "idempotencyKey", "status": "PENDING"},
-          {"type": "test_passes", "path": "tests/retry/PaymentRetryClient.test.ts", "test_name": "rejects duplicate payment attempts", "status": "PENDING"}
+          {"id": "E1", "type": "file_exists", "path": "src/retry/IdempotencyService.ts", "status": "PENDING"},
+          {"id": "E2", "type": "content_match", "path": "src/retry/PaymentRetryClient.ts", "pattern": "idempotencyKey", "status": "PENDING"},
+          {"id": "E3", "type": "test_passes", "path": "tests/retry/PaymentRetryClient.test.ts", "test_name": "rejects duplicate payment attempts", "status": "PENDING"}
         ]
       }
     ]
@@ -268,10 +268,10 @@ When generating artifacts, populate `evidence` arrays on each required truth in 
 
 | When you need to verify... | Use evidence type | Example |
 |---------------------------|-------------------|---------|
-| A file was created | `file_exists` | `{"type": "file_exists", "path": "src/auth.ts"}` |
-| Code contains expected patterns | `content_match` | `{"type": "content_match", "path": "src/auth.ts", "pattern": "validateToken"}` |
-| A specific test exists and can pass | `test_passes` | `{"type": "test_passes", "path": "tests/auth.test.ts", "test_name": "validates JWT tokens"}` |
-| Requires human review | `manual_review` | `{"type": "manual_review", "path": "docs/security-review.md"}` |
+| A file was created | `file_exists` | `{"id": "E1", "type": "file_exists", "path": "src/auth.ts"}` |
+| Code contains expected patterns | `content_match` | `{"id": "E2", "type": "content_match", "path": "src/auth.ts", "pattern": "validateToken"}` |
+| A specific test exists and can pass | `test_passes` | `{"id": "E3", "type": "test_passes", "path": "tests/auth.test.ts", "test_name": "validates JWT tokens"}` |
+| Requires human review | `manual_review` | `{"id": "E4", "type": "manual_review", "path": "docs/security-review.md"}` |
 
 **Rules:**
 - Every required truth MUST have at least one evidence item
@@ -316,7 +316,7 @@ For constraints that can be directly verified (not just via RT mapping), add `ve
         "id": "B1",
         "type": "invariant",
         "verified_by": [
-          {"type": "test_passes", "path": "tests/retry/IdempotencyService.test.ts", "test_name": "rejects duplicate payment attempts", "status": "PENDING"}
+          {"id": "E1", "type": "test_passes", "path": "tests/retry/IdempotencyService.test.ts", "test_name": "rejects duplicate payment attempts", "status": "PENDING"}
         ]
       }
     ]
@@ -702,7 +702,7 @@ Input manifold (JSON+MD):
     ]
   },
   "tensions": [
-    { "id": "TN1", "between": ["B2", "T1"], "status": "resolved" }
+    { "id": "TN1", "type": "trade_off", "between": ["B2", "T1"], "status": "resolved" }
   ]
 }
 ```
@@ -870,14 +870,22 @@ _Cross-references: [PRD](PRD.md)_
 
 ### Story Dependencies from Tensions
 
-```yaml
-# If tension exists:
-tensions:
-  - id: TN1
-    between: [U1, U2]
-    description: "Feature A must complete before B"
+```json
+{
+  "tensions": [
+    {
+      "id": "TN1",
+      "type": "trade_off",
+      "between": ["U1", "U2"],
+      "status": "resolved",
+      "decision": "A"
+    }
+  ]
+}
+```
 
-# Then in STORIES.md:
+Then in `STORIES.md`, tension-driven dependencies become:
+```markdown
 | Priority | Story | Dependencies | Estimate |
 |----------|-------|--------------|----------|
 | P0 | US-1 (from U1) | - | - |
@@ -902,7 +910,7 @@ Input manifold (JSON+MD):
   },
   "anchors": {
     "required_truths": [
-      { "id": "RT-1", "maps_to": ["U1", "B1"] }
+      { "id": "RT-1", "status": "NOT_SATISFIED", "maps_to": ["U1", "B1"] }
     ]
   }
 }

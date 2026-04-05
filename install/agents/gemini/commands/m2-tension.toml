@@ -28,6 +28,22 @@ Surface and resolve constraint conflicts. A "tension" is when two requirements c
 >
 > See [GLOSSARY.md](../../docs/GLOSSARY.md) for terminology explanations.
 
+## Scope Guard (MANDATORY)
+
+**This phase ONLY updates manifold files** (`.manifold/<feature>.json` and `.manifold/<feature>.md`) with discovered tensions and resolutions. After updating, display the tension summary and suggest the next step.
+
+**DO NOT** do any of the following during m2-tension:
+- Create project folders, directory structures, or source files
+- Spawn background agents or sub-agents for content creation
+- Write README.md, CLAUDE.md, or any files outside `.manifold/`
+- Generate code, sample data, templates, or any implementation artifacts
+- Begin work that belongs to later phases (m3-m6)
+- Implement resolution strategies — only DOCUMENT them in the manifold
+
+**Tension resolutions are DECISIONS recorded in the manifold, not instructions to implement.** The implementation happens in m4-generate. Here you only capture what was decided and why.
+
+**After updating the two manifold files: display tension summary, suggest next step, STOP.**
+
 ## Schema Compliance
 
 | Field | Valid Values |
@@ -120,27 +136,32 @@ If using legacy YAML, tensions use `description`, NOT `statement`:
 
 When recording tensions, maintain v3 schema structure and record iterations:
 
-```yaml
-tensions:
-  - id: TN1
-    type: trade_off           # Valid: trade_off, resource_tension, hidden_dependency
-    status: resolved          # Valid: resolved, unresolved
-    between: [T1, B1]         # Constraint IDs in conflict
-    resolution: "Description of how tension was resolved"
-    decision: "A"             # Selected option (A/B/C)
-
-# Record iteration when phase changes
-iterations:
-  - number: 2
-    phase: tension
-    timestamp: "<ISO timestamp>"
-    tensions_found: <count>
-    tensions_resolved: <count>
-    by_type:
-      trade_offs: <count>
-      resource_tensions: <count>
-      hidden_dependencies: <count>
+```json
+{
+  "tensions": [
+    {
+      "id": "TN1",
+      "type": "trade_off",
+      "between": ["T1", "B1"],
+      "status": "resolved",
+      "decision": "A"
+    }
+  ],
+  "iterations": [
+    {
+      "number": 2,
+      "phase": "tension",
+      "timestamp": "2026-04-04T00:00:00Z",
+      "result": "Found 3 tensions, resolved 2",
+      "tensions_found": 3,
+      "tensions_resolved": 2,
+      "by_type": { "trade_offs": 1, "resource_tensions": 1, "hidden_dependencies": 1 }
+    }
+  ]
+}
 ```
+
+> **Note**: Tension text content (description, resolution rationale) goes in the `.md` file under `### TN1: Title`. JSON contains only IDs, types, and structural refs.
 
 ## CLI Conflict Detection
 
@@ -319,6 +340,9 @@ Record propagation effects in `.manifold/<feature>.json`:
 {
   "tensions": [{
     "id": "TN1",
+    "type": "trade_off",
+    "between": ["B1", "T3"],
+    "status": "resolved",
     "propagation_effects": [
       {"constraint_id": "T3", "effect": "TIGHTENED", "note": "Cache TTL adds 50ms to p99"}
     ]

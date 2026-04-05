@@ -23,25 +23,30 @@ Wire generated artifacts together by identifying integration points and producin
 
 When recording integration, maintain v3 schema structure:
 
-```yaml
-# Record iteration for integration phase
-iterations:
-  - number: 6
-    phase: integrate
-    timestamp: "<ISO timestamp>"
-    integration_points: <count>
-    completed: <count>
-    pending: <count>
-    auto_wireable: <count>
-    manual_required: <count>
-
-# Update convergence status based on integration completion
-convergence:
-  status: IN_PROGRESS    # Valid: NOT_STARTED, IN_PROGRESS, CONVERGED
-  criteria:
-    all_invariants_satisfied: true
-    all_required_truths_satisfied: false
-    no_blocking_gaps: true
+```json
+{
+  "iterations": [
+    {
+      "number": 6,
+      "phase": "integrate",
+      "timestamp": "2026-04-04T00:00:00Z",
+      "result": "Identified 5 integration points, 3 auto-wireable, 2 manual",
+      "integration_points": 5,
+      "completed": 0,
+      "pending": 5,
+      "auto_wireable": 3,
+      "manual_required": 2
+    }
+  ],
+  "convergence": {
+    "status": "IN_PROGRESS",
+    "criteria": {
+      "all_invariants_satisfied": true,
+      "all_required_truths_satisfied": false,
+      "no_blocking_gaps": true
+    }
+  }
+}
 ```
 
 > See `SCHEMA_REFERENCE.md` for valid convergence statuses, iteration fields, and integration checklist structure.
@@ -150,27 +155,36 @@ Next: After integration, run /manifold:m5-verify to validate
 
 Updates manifold with integration status:
 
-```yaml
-integration:
-  timestamp: <ISO timestamp>
-  iteration: 5
-  checklist:
-    - id: INT-1
-      source: "src/storage/wal.rs"
-      target: "src/storage/mod.rs"
-      action: "Add mod declaration"
-      status: pending
-      satisfies: [RT-1, T3]
-    - id: INT-2
-      source: "src/storage/wal.rs"
-      target: "Cargo.toml"
-      action: "Add feature flag"
-      status: pending
-      satisfies: [T3]
-  summary:
-    total_points: 5
-    completed: 0
-    pending: 5
+```json
+{
+  "integration": {
+    "timestamp": "2026-04-04T00:00:00Z",
+    "iteration": 5,
+    "checklist": [
+      {
+        "id": "INT-1",
+        "source": "src/storage/wal.rs",
+        "target": "src/storage/mod.rs",
+        "action": "Add mod declaration",
+        "status": "pending",
+        "satisfies": ["RT-1", "T3"]
+      },
+      {
+        "id": "INT-2",
+        "source": "src/storage/wal.rs",
+        "target": "Cargo.toml",
+        "action": "Add feature flag",
+        "status": "pending",
+        "satisfies": ["T3"]
+      }
+    ],
+    "summary": {
+      "total_points": 5,
+      "completed": 0,
+      "pending": 5
+    }
+  }
+}
 ```
 
 ## Auto-Wire Mode
