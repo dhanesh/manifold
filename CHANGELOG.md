@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.30.1](https://github.com/dhanesh/manifold/compare/v2.30.0...v2.30.1) (2026-04-05)
+
+### Bug Fixes
+
+* revert zod 4 upgrade that breaks schema validation ([2545031](https://github.com/dhanesh/manifold/commit/2545031feae5d064d4b326d770529939620b74c9)), closes [#5](https://github.com/dhanesh/manifold/issues/5)
+
 ## [2.30.0](https://github.com/dhanesh/manifold/compare/v2.29.0...v2.30.0) (2026-04-05)
 
 ### Features
