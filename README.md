@@ -80,7 +80,7 @@ The installer auto-detects which AI agents you have and installs per-agent:
 | **AMP** | Same as Claude Code | `~/.amp/commands/`, `lib/`, `hooks/` |
 | **Gemini CLI** | Translated `.toml` commands, parallel bundle (`.js`), schema snippet in `GEMINI.md` | `~/.gemini/commands/`, `lib/` |
 | **Codex CLI** | `SKILL.md` skill dirs, hook skills, parallel bundle, schema snippet in `AGENTS.md` | `~/.agents/skills/manifold-*/`, `~/.codex/lib/` |
-| **CLI binary** | `manifold` binary for your platform (darwin/linux, arm64/x64) | `/usr/local/bin/` or `~/.local/bin/` |
+| **CLI binary** | `manifold` binary for your platform (darwin/linux/windows, arm64/x64) | `/usr/local/bin/`, `~/.local/bin/`, or `%LOCALAPPDATA%\manifold\bin\` |
 
 **Specifically, the installer creates:**
 - `commands/` -- 12 Manifold slash command files (m0-init through parallel, plus SCHEMA_REFERENCE)
@@ -101,6 +101,8 @@ manifold --version
 
 Download platform-specific binaries from [Releases](https://github.com/dhanesh/manifold/releases):
 
+**macOS / Linux:**
+
 ```bash
 # macOS (Apple Silicon)
 curl -fsSL https://github.com/dhanesh/manifold/releases/latest/download/manifold-darwin-arm64 -o manifold
@@ -116,6 +118,19 @@ curl -fsSL https://github.com/dhanesh/manifold/releases/latest/download/manifold
 
 chmod +x manifold
 ```
+
+**Windows (PowerShell):**
+
+```powershell
+# Download and install via PowerShell
+Invoke-WebRequest -Uri "https://github.com/dhanesh/manifold/releases/latest/download/manifold-windows-x64.exe" -OutFile "$env:LOCALAPPDATA\manifold\bin\manifold.exe"
+
+# Or use the install script (handles PATH setup automatically)
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/dhanesh/manifold/main/plugin/bin/install-cli.ps1" -OutFile "$env:TEMP\install-manifold.ps1"
+powershell -ExecutionPolicy Bypass -File "$env:TEMP\install-manifold.ps1"
+```
+
+The Windows binary is a standalone `.exe` -- no runtime (Bun/Node) required.
 
 ## Quick Start
 
