@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.30.2](https://github.com/dhanesh/manifold/compare/v2.30.1...v2.30.2) (2026-04-08)
+
+### Bug Fixes
+
+* implement prompt eval fixes — 12 issues resolved across 8 phase commands ([2034e88](https://github.com/dhanesh/manifold/commit/2034e88619af32a937db9a959fc4cc82325f84d2))
+
 ## [2.30.1](https://github.com/dhanesh/manifold/compare/v2.30.0...v2.30.1) (2026-04-05)
 
 ### Bug Fixes
