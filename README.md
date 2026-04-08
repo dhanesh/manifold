@@ -89,7 +89,7 @@ claude plugin:install github:dhanesh/manifold#plugin
 
 This installs Manifold as a native Claude Code plugin, giving you:
 - 12 slash commands (`/manifold:m0-init` through `/manifold:parallel`)
-- 2 hooks (context preservation across compaction + schema injection at session start)
+- 4 hooks (context preservation, parallel suggestions, schema validation, phase discipline)
 - Constraint templates (auth, CRUD, API, payment, + 13 PM templates)
 - `/manifold:setup` command to install the native CLI binary
 
@@ -113,8 +113,8 @@ The installer auto-detects which AI agents you have and installs per-agent:
 
 **Specifically, the installer creates:**
 - `commands/` -- 12 Manifold slash command files (m0-init through parallel, plus SCHEMA_REFERENCE)
-- `lib/parallel/` -- 11 TypeScript modules for git worktree-based parallel execution
-- `hooks/` -- 2 hooks: `manifold-context.ts` (context preservation) and `auto-suggester.ts` (parallel suggestions)
+- `lib/parallel/` -- 12 TypeScript modules + pre-built bundle for git worktree-based parallel execution
+- `hooks/` -- 4 hooks: `manifold-context.ts` (context preservation), `auto-suggester.ts` (parallel suggestions), `manifold-schema-guard.ts` (schema validation), `prompt-enforcer.ts` (phase discipline)
 - `skills/manifold/SKILL.md` -- Overview skill for `/manifold` command
 - Schema snippet appended to your agent's instruction file (CLAUDE.md, GEMINI.md, or AGENTS.md)
 
