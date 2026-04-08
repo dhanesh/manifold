@@ -145,4 +145,4 @@ The learning objectives are achievable within the launch timeline with the defin
 
 ---
 
-**See Also:** Previous -> [Lean Canvas](./lean-canvas.md) | After MVP -> use [Feature Launch](./feature-launch.md) for individual features | [Greenfield Workflow Guide](../../docs/pm/guide.md#greenfield-workflow)
+**See Also:** Previous -> [Lean Canvas](./lean-canvas.md) | After MVP -> use [Feature Launch](./feature-launch.md) for individual features | Greenfield workflow: opportunity-assessment → product-vision → lean-canvas → mvp-definition → feature-launch

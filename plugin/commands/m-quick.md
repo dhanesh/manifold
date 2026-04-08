@@ -200,11 +200,23 @@ This:
    - Future developers can see what constraints were considered
    - Audit trail is preserved
 
+## Security Intent Detection (MANDATORY)
+
+Before proceeding with light mode, check the feature name and outcome for security-relevant keywords: `auth`, `token`, `password`, `permission`, `secret`, `encrypt`, `certificate`, `credential`, `oauth`, `session`, `login`.
+
+If any keyword is detected, use AskUserQuestion:
+> "This feature appears security-related (detected: [keyword]). Security changes benefit from full constraint analysis (GAP-09 crypto/auth checks, GAP-10 resource exhaustion). Would you like to:
+> A. Switch to full workflow (`/manifold:m0-init <feature>`)
+> B. Continue with light mode (I understand the risk)"
+
+If the user chooses B, proceed with light mode but note the override in the manifold.
+
 ## Execution Instructions
 
 When this command is invoked:
 
 1. Parse feature name and outcome from arguments
+1b. **Run Security Intent Detection** (see above) — check for security keywords before proceeding
 2. Create `.manifold/` directory if needed
 3. Begin interactive quick constrain session:
    - Ask for 1-3 key constraints
@@ -213,7 +225,18 @@ When this command is invoked:
 4. Generate code and minimal tests
 5. Run verification checks
 6. Create minimal manifold file with `mode: light`
-7. Display completion summary
+7. **Run `manifold validate <feature>`** — the light-mode manifold must pass schema validation before displaying results. Fix any errors; do not display the confirmation summary until validation passes.
+8. Display completion summary
+
+### ⚠️ Mandatory Post-Phase Validation
+
+After creating manifold files, you MUST run validation before showing results:
+
+```bash
+manifold validate <feature>
+```
+
+If validation fails, fix the JSON structure before proceeding. The light-mode manifold must conform to the same schema as full-mode manifolds.
 
 ## Related Commands
 

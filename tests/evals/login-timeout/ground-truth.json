@@ -1,0 +1,23 @@
+{
+  "feature": "login-timeout",
+  "outcome": "Fix 504 timeout on login when database is slow",
+  "description": "Simple feature: single-category, m-quick appropriate. Tests light mode and upgrade path.",
+  "expected_constraints": {
+    "business": [
+      {"id": "B1", "type": "boundary", "contains": "timeout|response", "description": "Login response time limit"}
+    ],
+    "technical": [
+      {"id": "T1", "type": "goal", "contains": "database|query|slow", "description": "Database query optimization"}
+    ],
+    "user_experience": [
+      {"id": "U1", "type": "goal", "contains": "error|message|feedback", "description": "User-friendly timeout feedback"}
+    ]
+  },
+  "expected_tensions": [],
+  "expected_required_truths": [
+    {"contains": "timeout|connection pool", "description": "Database connection handling"}
+  ],
+  "gap_checklists_required": [],
+  "recommended_mode": "m-quick",
+  "security_detection": false
+}

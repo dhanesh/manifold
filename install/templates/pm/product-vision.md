@@ -129,4 +129,4 @@ The team has the skills and resources to build a solution for the validated prob
 
 ---
 
-**See Also:** Previous -> [Opportunity Assessment](./opportunity-assessment.md) | Next -> [Lean Canvas](./lean-canvas.md) | [Greenfield Workflow Guide](../../docs/pm/guide.md#greenfield-workflow)
+**See Also:** Previous -> [Opportunity Assessment](./opportunity-assessment.md) | Next -> [Lean Canvas](./lean-canvas.md) | Greenfield workflow: opportunity-assessment → product-vision → lean-canvas → mvp-definition → feature-launch

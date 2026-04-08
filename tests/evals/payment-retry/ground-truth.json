@@ -1,0 +1,40 @@
+{
+  "feature": "payment-retry",
+  "outcome": "95% retry success rate for transient payment failures within 72 hours",
+  "description": "Complex feature: auth, idempotency, rate limits, error classification. Tests full constraint discovery depth.",
+  "expected_constraints": {
+    "business": [
+      {"id": "B1", "type": "invariant", "contains": "duplicate", "description": "No duplicate payments"},
+      {"id": "B2", "type": "goal", "contains": "success rate", "description": "95% retry success"},
+      {"id": "B3", "type": "boundary", "contains": "72 hours", "description": "Retry window limit"}
+    ],
+    "technical": [
+      {"id": "T1", "type": "boundary", "contains": "response time|latency|200ms", "description": "API response time"},
+      {"id": "T2", "type": "goal", "contains": "concurrent|throughput", "description": "Concurrent operations"}
+    ],
+    "user_experience": [
+      {"id": "U1", "type": "goal", "contains": "status|visibility", "description": "Retry status visible"},
+      {"id": "U2", "type": "invariant", "contains": "no.*action|automatic", "description": "No user action required"}
+    ],
+    "security": [
+      {"id": "S1", "type": "invariant", "contains": "card|PII|sensitive", "description": "No sensitive data in logs"},
+      {"id": "S2", "type": "invariant", "contains": "audit|logged", "description": "Retry attempts audited"}
+    ],
+    "operational": [
+      {"id": "O1", "type": "goal", "contains": "monitor|queue|depth", "description": "Queue monitoring"},
+      {"id": "O2", "type": "boundary", "contains": "alert|90%", "description": "Success rate alerting"}
+    ]
+  },
+  "expected_tensions": [
+    {"type": "trade_off", "between_contains": ["response time", "duplicate"], "description": "Performance vs idempotency check"},
+    {"type": "resource_tension", "between_contains": ["retry", "rate limit"], "description": "Retry frequency vs provider limits"}
+  ],
+  "expected_required_truths": [
+    {"contains": "classify|transient|permanent", "description": "Error classification system"},
+    {"contains": "idempoten", "description": "Idempotent retries"},
+    {"contains": "retry budget|backoff", "description": "Sufficient retry budget"},
+    {"contains": "circuit breaker|downstream", "description": "Downstream recovery"},
+    {"contains": "durable|persist|queue", "description": "Persistent retry state"}
+  ],
+  "gap_checklists_required": ["GAP-03", "GAP-09", "GAP-10", "GAP-14"]
+}

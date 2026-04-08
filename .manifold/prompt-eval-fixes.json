@@ -1,0 +1,193 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dhanesh/manifold/main/install/manifold-structure.schema.json",
+  "schema_version": 3,
+  "feature": "prompt-eval-fixes",
+  "phase": "VERIFIED",
+  "domain": "software",
+  "created": "2026-04-08T00:00:00Z",
+  "constraints": {
+    "business": [
+      {"id": "B1", "type": "invariant", "source": "interview", "quality": {"specificity": 3, "measurability": 3, "testability": 3}},
+      {"id": "B2", "type": "goal", "source": "interview", "quality": {"specificity": 3, "measurability": 3, "testability": 2}},
+      {"id": "B3", "type": "goal", "source": "interview", "quality": {"specificity": 2, "measurability": 2, "testability": 2}}
+    ],
+    "technical": [
+      {"id": "T1", "type": "invariant", "source": "interview", "challenger": "technical-reality", "quality": {"specificity": 3, "measurability": 3, "testability": 3}},
+      {"id": "T2", "type": "goal", "source": "interview", "quality": {"specificity": 2, "measurability": 2, "testability": 2}},
+      {"id": "T3", "type": "invariant", "source": "interview", "challenger": "technical-reality", "quality": {"specificity": 3, "measurability": 3, "testability": 3}},
+      {"id": "T4", "type": "invariant", "source": "interview", "challenger": "technical-reality", "quality": {"specificity": 3, "measurability": 3, "testability": 3}},
+      {"id": "T5", "type": "invariant", "source": "interview", "quality": {"specificity": 3, "measurability": 3, "testability": 3}}
+    ],
+    "user_experience": [
+      {"id": "U1", "type": "goal", "source": "interview", "quality": {"specificity": 3, "measurability": 3, "testability": 2}},
+      {"id": "U2", "type": "goal", "source": "interview", "quality": {"specificity": 3, "measurability": 3, "testability": 2}},
+      {"id": "U3", "type": "goal", "source": "interview", "quality": {"specificity": 3, "measurability": 2, "testability": 2}}
+    ],
+    "security": [
+      {"id": "S1", "type": "boundary", "source": "interview", "challenger": "technical-reality", "quality": {"specificity": 2, "measurability": 2, "testability": 1}}
+    ],
+    "operational": [
+      {"id": "O1", "type": "invariant", "source": "interview", "challenger": "technical-reality", "quality": {"specificity": 3, "measurability": 3, "testability": 3}},
+      {"id": "O2", "type": "invariant", "source": "interview", "quality": {"specificity": 3, "measurability": 3, "testability": 3}},
+      {"id": "O3", "type": "goal", "source": "interview", "quality": {"specificity": 2, "measurability": 2, "testability": 2}}
+    ]
+  },
+  "tensions": [
+    {"id": "TN1", "type": "trade_off", "between": ["B1", "O2"], "status": "resolved", "decision": "Full rewrite — SKILL.md has no downstream consumers", "propagation_effects": []},
+    {"id": "TN2", "type": "hidden_dependency", "between": ["T3", "T1"], "status": "resolved", "decision": "Use manifold solve --json instead of non-existent --dry-run", "propagation_effects": []},
+    {"id": "TN3", "type": "trade_off", "between": ["U2", "B3"], "status": "resolved", "decision": "Minimal keyword gate at start of m-quick, user can override", "propagation_effects": [{"constraint_id": "B3", "effect": "TIGHTENED", "note": "Adds ~5 lines to m-quick"}]},
+    {"id": "TN4", "type": "trade_off", "between": ["B2", "O2"], "status": "resolved", "decision": "Replace wrong content with correct content; remove duplicated section with cross-reference", "propagation_effects": []}
+  ],
+  "anchors": {
+    "required_truths": [
+      {"id": "RT-1", "status": "NOT_SATISFIED", "maps_to": ["B1", "T1"], "evidence": [
+        {"id": "E1", "type": "content_match", "path": "install/manifold/SKILL.md", "pattern": "JSON\\+Markdown hybrid format", "status": "VERIFIED"},
+        {"id": "E2", "type": "content_match", "path": "install/manifold/SKILL.md", "pattern": "Creates TWO files", "status": "VERIFIED"}
+      ]},
+      {"id": "RT-2", "status": "NOT_SATISFIED", "maps_to": ["T3"], "evidence": [
+        {"id": "E3", "type": "content_match", "path": "install/commands/m4-generate.md", "pattern": "manifold solve.*--json", "status": "VERIFIED"}
+      ]},
+      {"id": "RT-3", "status": "NOT_SATISFIED", "maps_to": ["T2"], "evidence": [
+        {"id": "E4", "type": "content_match", "path": "install/commands/m4-generate.md", "pattern": "STEP 0.*Binding Constraint", "status": "VERIFIED"}
+      ]},
+      {"id": "RT-4", "status": "NOT_SATISFIED", "maps_to": ["U1"], "evidence": [
+        {"id": "E5", "type": "content_match", "path": "install/commands/m0-init.md", "pattern": "Mandatory Post-Phase Validation", "status": "VERIFIED"}
+      ]},
+      {"id": "RT-5", "status": "NOT_SATISFIED", "maps_to": ["U1", "U2"], "evidence": [
+        {"id": "E6", "type": "content_match", "path": "install/commands/m-quick.md", "pattern": "manifold validate", "status": "VERIFIED"},
+        {"id": "E7", "type": "content_match", "path": "install/commands/m-quick.md", "pattern": "Security Intent Detection", "status": "VERIFIED"}
+      ]},
+      {"id": "RT-6", "status": "NOT_SATISFIED", "maps_to": ["U3"], "evidence": [
+        {"id": "E8", "type": "content_match", "path": "install/commands/m1-constrain.md", "pattern": "6 months from now", "status": "VERIFIED"}
+      ]},
+      {"id": "RT-7", "status": "NOT_SATISFIED", "maps_to": ["T5"], "evidence": [
+        {"id": "E9", "type": "content_match", "path": "install/commands/m0-init.md", "pattern": "from-quick", "status": "VERIFIED"}
+      ]},
+      {"id": "RT-8", "status": "NOT_SATISFIED", "maps_to": ["T5"], "evidence": [
+        {"id": "E10", "type": "content_match", "path": "install/commands/m4-generate.md", "pattern": "--prd.*flag", "status": "VERIFIED"}
+      ]},
+      {"id": "RT-9", "status": "NOT_SATISFIED", "maps_to": ["T2"], "evidence": [
+        {"id": "E11", "type": "content_match", "path": "install/commands/m2-tension.md", "pattern": "lost due to compaction", "status": "VERIFIED"}
+      ]},
+      {"id": "RT-10", "status": "NOT_SATISFIED", "maps_to": ["B2"], "evidence": [
+        {"id": "E12", "type": "content_match", "path": "install/commands/m2-tension.md", "pattern": "When Required.*caching", "status": "VERIFIED"}
+      ]},
+      {"id": "RT-11", "status": "PARTIAL", "maps_to": ["B2"], "evidence": [
+        {"id": "E13", "type": "content_match", "path": "install/commands/m4-generate.md", "pattern": "@constraint.*annotation", "status": "VERIFIED"}
+      ]},
+      {"id": "RT-12", "status": "NOT_SATISFIED", "maps_to": ["B2"], "evidence": [
+        {"id": "E14", "type": "content_match", "path": "install/commands/m3-anchor.md", "pattern": "Forward planning starts with a spec", "status": "VERIFIED"}
+      ]}
+    ],
+    "recommended_option": "A",
+    "binding_constraint": {
+      "required_truth_id": "RT-1",
+      "reason": "SKILL.md is the largest change and highest-impact fix — entry point contamination affects all new sessions.",
+      "dependency_chain": ["B1"]
+    },
+    "tension_validation": [
+      {"tension_id": "TN1", "status": "CONFIRMED", "by_option": "A"},
+      {"tension_id": "TN2", "status": "CONFIRMED", "by_option": "A"},
+      {"tension_id": "TN3", "status": "CONFIRMED", "by_option": "A"},
+      {"tension_id": "TN4", "status": "CONFIRMED", "by_option": "A"}
+    ]
+  },
+  "generation": {
+    "option": "A",
+    "timestamp": "2026-04-08T00:00:00Z",
+    "artifacts": [
+      {"path": "install/manifold/SKILL.md", "type": "code", "satisfies": ["RT-1"], "status": "generated", "artifact_class": "substantive"},
+      {"path": "install/commands/m4-generate.md", "type": "code", "satisfies": ["RT-2", "RT-3", "RT-8", "RT-11"], "status": "generated", "artifact_class": "substantive"},
+      {"path": "install/commands/m-quick.md", "type": "code", "satisfies": ["RT-5"], "status": "generated", "artifact_class": "substantive"},
+      {"path": "install/commands/m1-constrain.md", "type": "code", "satisfies": ["RT-6"], "status": "generated", "artifact_class": "substantive"},
+      {"path": "install/commands/m0-init.md", "type": "code", "satisfies": ["RT-4", "RT-7"], "status": "generated", "artifact_class": "substantive"},
+      {"path": "install/commands/m2-tension.md", "type": "code", "satisfies": ["RT-9", "RT-10"], "status": "generated", "artifact_class": "substantive"},
+      {"path": "install/commands/m3-anchor.md", "type": "code", "satisfies": ["RT-12"], "status": "generated", "artifact_class": "substantive"},
+      {"path": "install/commands/parallel.md", "type": "code", "satisfies": ["RT-1"], "status": "generated", "artifact_class": "substantive"},
+      {"path": "install/templates/pm/README.md", "type": "code", "satisfies": ["RT-1"], "status": "generated", "artifact_class": "substantive"},
+      {"path": "install/templates/pm/lean-canvas.md", "type": "code", "satisfies": ["RT-1"], "status": "generated", "artifact_class": "substantive"},
+      {"path": "install/templates/pm/product-vision.md", "type": "code", "satisfies": ["RT-1"], "status": "generated", "artifact_class": "substantive"},
+      {"path": "install/templates/pm/pr-faq.md", "type": "code", "satisfies": ["RT-1"], "status": "generated", "artifact_class": "substantive"},
+      {"path": "install/templates/pm/mvp-definition.md", "type": "code", "satisfies": ["RT-1"], "status": "generated", "artifact_class": "substantive"},
+      {"path": "install/templates/pm/opportunity-assessment.md", "type": "code", "satisfies": ["RT-1"], "status": "generated", "artifact_class": "substantive"}
+    ],
+    "coverage": {
+      "constraints_addressed": 15,
+      "constraints_total": 15,
+      "percentage": 100
+    }
+  },
+  "iterations": [
+    {
+      "number": 1, "phase": "constrain", "timestamp": "2026-04-08T00:00:00Z",
+      "result": "Discovered 15 constraints across 5 categories. Reconciled eval against codebase: P3 and P6 already resolved."
+    },
+    {
+      "number": 2, "phase": "tension", "timestamp": "2026-04-08T00:00:00Z",
+      "result": "Found 4 tensions, resolved 4. Key finding: --dry-run flag doesn't exist, use --json instead."
+    },
+    {
+      "number": 3, "phase": "anchor", "timestamp": "2026-04-08T00:00:00Z",
+      "result": "Derived 12 required truths. Further dropped P10 and P13. Binding constraint: RT-1. Recommended Option A."
+    },
+    {
+      "number": 4, "phase": "generate", "timestamp": "2026-04-08T00:00:00Z",
+      "result": "Generated 7 artifact edits across 7 files. All 12 RTs addressed. All 14 evidence items VERIFIED via content_match. Plugin synced (61 files)."
+    },
+    {
+      "number": 5, "phase": "generate", "timestamp": "2026-04-08T00:00:00Z",
+      "result": "Fixed broken references to non-plugin files (docs/, cli/) across 14 files. Inlined TRIZ parameter lookup table, non-software interview questions, non-software artifact templates, glossary terms, and parallel architecture summary. Rebuilt Codex (11 skills) and Gemini (11 commands) agent translations. Plugin re-synced. Zero broken external references remaining in install/."
+    },
+    {
+      "number": 6, "phase": "verify", "timestamp": "2026-04-08T00:00:00Z",
+      "result": "Verification complete. 14/14 artifacts exist on disk. 14/14 evidence items VERIFIED. 6/6 invariants SATISFIED (100%). 5/7 goals SATISFIED, 2 PARTIAL (B3 quality score unmeasurable without re-eval, O3 full eval infra out of scope). 1 boundary PARTIAL (S1 prompt injection — low risk, acceptable). Enhancement checks all PASS. 3 non-blocking gaps identified. Phase set to VERIFIED, convergence CONVERGED."
+    },
+    {
+      "number": 7, "phase": "generate", "timestamp": "2026-04-08T00:00:00Z",
+      "result": "Closed all 3 gaps. G1/B3: Re-scored all 8 files — aggregate improved from 3.7 to 4.25 (all files above 3.0, target met). G2/S1: Added prompt injection guard to m1 pre-mortem template. G3/O3: Built tests/evals/ with 3 golden test cases (payment-retry, login-timeout, data-export), assertion schema, and bun-based runner (run-golden.ts). Runner verified working."
+    }
+  ],
+  "convergence": {
+    "status": "CONVERGED"
+  },
+  "constraint_graph": {
+    "version": 1,
+    "nodes": {},
+    "edges": {
+      "dependencies": [],
+      "conflicts": [],
+      "satisfies": []
+    }
+  },
+  "reversibility_log": [
+    {"action_step": 1, "description": "Rewrite SKILL.md to v3 accuracy", "reversibility": "TWO_WAY"},
+    {"action_step": 2, "description": "Replace AutoSuggester TS block with CLI command", "reversibility": "TWO_WAY"},
+    {"action_step": 3, "description": "Elevate binding constraint to STEP 0 in m4", "reversibility": "TWO_WAY"},
+    {"action_step": 4, "description": "Add @constraint annotation guidance to m4", "reversibility": "TWO_WAY"},
+    {"action_step": 5, "description": "Add PRD/stories execution instructions to m4", "reversibility": "TWO_WAY"},
+    {"action_step": 6, "description": "Add validation and security gate to m-quick", "reversibility": "TWO_WAY"},
+    {"action_step": 7, "description": "Fix TIMEFRAME placeholder in m1", "reversibility": "TWO_WAY"},
+    {"action_step": 8, "description": "Add --from-quick flag and validation to m0-init", "reversibility": "TWO_WAY"},
+    {"action_step": 9, "description": "Fix context dedup and GAP-16 firing condition in m2", "reversibility": "TWO_WAY"},
+    {"action_step": 10, "description": "Replace duplicated Why Backward section in m3 with inline explanation", "reversibility": "TWO_WAY"},
+    {"action_step": 11, "description": "Plugin sync install/ to plugin/", "reversibility": "TWO_WAY"},
+    {"action_step": 12, "description": "Inline GLOSSARY terms into m2-tension and m3-anchor (replace dead link)", "reversibility": "TWO_WAY"},
+    {"action_step": 13, "description": "Inline TRIZ parameter pair lookup table and Tier A principles into m2-tension (replace docs/triz-principles.md ref)", "reversibility": "TWO_WAY"},
+    {"action_step": 14, "description": "Inline non-software interview questions into m1-constrain (replace docs/non-programming/guide.md ref)", "reversibility": "TWO_WAY"},
+    {"action_step": 15, "description": "Inline non-software artifact templates and generation rules into m4-generate (replace docs/m4-generate-nonsoftware.md ref)", "reversibility": "TWO_WAY"},
+    {"action_step": 16, "description": "Replace cli/lib/structure-schema.ts refs with manifold validate + SCHEMA_REFERENCE.md in m0-init and m1-constrain", "reversibility": "TWO_WAY"},
+    {"action_step": 17, "description": "Inline parallel architecture summary into parallel.md (replace docs/parallel-agents/README.md ref)", "reversibility": "TWO_WAY"},
+    {"action_step": 18, "description": "Replace docs/pm/guide.md and docs/WHEN_NOT_TO_USE.md refs in PM templates with inline content", "reversibility": "TWO_WAY"},
+    {"action_step": 19, "description": "Rebuild Codex and Gemini agent translations via bun run build:commands", "reversibility": "TWO_WAY"},
+    {"action_step": 20, "description": "Final plugin sync install/ to plugin/", "reversibility": "TWO_WAY"}
+  ],
+  "blocking_dependencies": [],
+  "gap_checklist_compliance": [
+    {"gap": "GAP-03", "status": "SKIPPED", "skip_reason": "No data flow — prompt file editing"},
+    {"gap": "GAP-09", "status": "SKIPPED", "skip_reason": "No crypto/auth constraints"},
+    {"gap": "GAP-10", "status": "SKIPPED", "skip_reason": "No endpoints"},
+    {"gap": "GAP-11", "status": "SKIPPED", "skip_reason": "No external HTTP dependencies"},
+    {"gap": "GAP-14", "status": "SKIPPED", "skip_reason": "No data format inputs"},
+    {"gap": "GAP-17", "status": "SKIPPED", "skip_reason": "No shared state"}
+  ]
+}

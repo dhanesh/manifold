@@ -224,13 +224,18 @@ When this command is invoked:
 1. Parse the feature name from arguments
 2. Extract optional `--outcome` flag
 3. Extract optional `--domain` flag (default: `software`). When `non-software`, the manifold uses universal constraint categories and generates non-software artifacts in m4.
-4. **If no `--domain` flag:** Run domain auto-detection (see above). If non-software signals detected, suggest the flag via AskUserQuestion before proceeding.
-5. Check if `.manifold/` directory exists, create if not
-6. Check if manifold already exists for this feature (warn if so)
-7. **Create TWO files (JSON+Markdown hybrid format)**:
+4. Extract optional `--from-quick` flag. When present:
+   - Read existing light-mode manifold from `.manifold/<feature>.json` and `.manifold/<feature>.md`
+   - Preserve existing constraints (do NOT discard them)
+   - Expand the structure to full manifold format (add empty categories for any missing categories, ensure all v3 schema fields are present)
+   - Set phase to `INITIALIZED` (ready for full m1-constrain to expand)
+   - Display: "Upgraded from light mode. Existing constraints preserved. Run `/manifold:m1-constrain <feature>` to expand constraint coverage."
+5. **If no `--domain` flag:** Run domain auto-detection (see above). If non-software signals detected, suggest the flag via AskUserQuestion before proceeding.
+6. Check if `.manifold/` directory exists, create if not
+7. Check if manifold already exists for this feature (warn if so, unless `--from-quick`)
+8. **Create TWO files (JSON+Markdown hybrid format)**:
    - `.manifold/<feature>.json` — Structure with IDs, types, phases, `"domain": "software"` or `"non-software"` (NO text content)
    - `.manifold/<feature>.md` — Content with outcome, section headings. For non-software: use universal category headings (Obligations, Desires, Resources, Risks, Dependencies)
-8. **Run `manifold validate <feature>`** — confirm the new manifold is valid
 9. Display confirmation with file paths, domain, and domain-aware next step
 
 ### Generation Guidelines
@@ -239,7 +244,7 @@ When this command is invoked:
 - Include `"$schema": "https://raw.githubusercontent.com/dhanesh/manifold/main/install/manifold-structure.schema.json"` for IDE validation
 - Include only IDs, types, phases, and references
 - NO text content (no `statement`, no `description`, no `rationale`)
-- Use Zod-compatible structure (see `cli/lib/structure-schema.ts`)
+- Use the structure validated by `manifold validate` (see `SCHEMA_REFERENCE.md` for valid fields)
 
 **For the Markdown file:**
 - Start with `# <feature-name>` heading
@@ -247,6 +252,15 @@ When this command is invoked:
 - Include empty category sections with comment placeholders
 - Use heading conventions: `####` for constraints, `###` for tensions/truths
 
+### ⚠️ Mandatory Post-Phase Validation
+
+After creating both files, run validation before showing results:
+
+```bash
+manifold validate <feature>
+```
+
+If validation fails, fix the JSON structure before proceeding. Common issues: missing required fields (`$schema`, `schema_version`), invalid domain value.
 
 ## Interaction Rules (MANDATORY)
 <!-- Satisfies: RT-1 (next-step templates), RT-3 (structured input), U1 (suggest next), U2 (AskUserQuestion) -->

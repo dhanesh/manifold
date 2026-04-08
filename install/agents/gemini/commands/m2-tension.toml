@@ -26,7 +26,7 @@ Surface and resolve constraint conflicts. A "tension" is when two requirements c
 
 > **Plain Language**: This phase asks "Which requirements conflict, and how do we balance them?"
 >
-> See [GLOSSARY.md](../../docs/GLOSSARY.md) for terminology explanations.
+> **Key terms**: A *tension* is when two requirements compete — satisfying one makes satisfying the other harder. Types: `trade_off` (competing goals), `resource_tension` (limited resources), `hidden_dependency` (one must happen before another). A *resolution* records the decision and rationale in the manifold.
 
 ## Scope Guard (MANDATORY)
 
@@ -255,6 +255,8 @@ During `/manifold:m5-verify`, these criteria are checked programmatically.
 
 ## Cache Invalidation Sub-Constraints (GAP-16)
 
+**When Required:** Any tension where the resolution involves caching, memoization, or stored computed results.
+
 When tensions involve caching, generate sub-constraints for invalidation triggers beyond TTL:
 - On validation failure, should the cache be refreshed before rejecting?
 - What happens during key/credential rotation?
@@ -262,7 +264,7 @@ When tensions involve caching, generate sub-constraints for invalidation trigger
 
 ## TRIZ Contradiction Classification (Enhancement 3)
 
-After detecting a tension and before proposing resolution options, classify it using TRIZ methodology. See `docs/triz-principles.md` for the full principle reference.
+After detecting a tension and before proposing resolution options, classify it using TRIZ methodology.
 
 ### Step 1: Classify the contradiction type
 
@@ -276,7 +278,40 @@ Example: API must be public (usability) and private (security).
 
 ### Step 2: Map to parameter pairs
 
-Match the tension to the parameter pair lookup table in `docs/triz-principles.md`. Surface top 2-3 principles per tension.
+Match the tension to the parameter pair lookup table below. Surface top 2-3 principles per tension.
+
+**Parameter Pair Lookup Table:**
+
+| Parameters in Conflict | Principles to Apply |
+|------------------------|---------------------|
+| Performance vs. Reliability | P10 (Prior action: caching/precompute), P25 (Self-service: self-healing), P35 (Parameter changes: runtime tuning) |
+| Speed vs. Safety | P10 (Prior action), P24 (Intermediary: proxy/adapter), P35 (Parameter changes) |
+| Simplicity vs. Capability | P1 (Segmentation: break into parts), P15 (Dynamization: feature flags), P35 (Parameter changes) |
+| Cost vs. Quality | P1 (Segmentation), P10 (Prior action), P27 (Cheap short-living: ephemeral/disposable) |
+| Flexibility vs. Consistency | P1 (Segmentation), P15 (Dynamization), P40 (Composite: polyglot/hybrid) |
+| Privacy vs. Usability | P1 (Segmentation), P10 (Prior action), P24 (Intermediary) |
+| Autonomy vs. Control | P10 (Prior action), P15 (Dynamization), P35 (Parameter changes) |
+| Speed vs. Correctness | P10 (Prior action), P11 (Beforehand cushioning: fallbacks), P25 (Self-service) |
+| Global vs. Local optimum | P3 (Local quality: different strategies per context), P1 (Segmentation), P17 (Another dimension: add layer) |
+| Standardisation vs. Flexibility | P1 (Segmentation), P15 (Dynamization), P3 (Local quality) |
+
+**Key Tier A principles (always applicable):**
+- **P1 Segmentation** — Divide into independent parts (microservices, modules, sub-decisions)
+- **P2 Extraction** — Separate the problematic part from the useful part
+- **P5 Merging** — Combine similar operations (batching, pooling)
+- **P10 Prior action** — Pre-compute, cache, prepare in advance
+- **P11 Beforehand cushioning** — Circuit breakers, fallbacks, Plan B
+- **P13 The other way round** — Invert the approach (push vs pull, event-driven vs polling)
+- **P15 Dynamization** — Make it adaptive (feature flags, A/B testing, runtime config)
+- **P17 Another dimension** — Add a layer (cache layer, message queue, abstraction)
+- **P22 Blessing in disguise** — Turn the constraint into an advantage
+- **P24 Intermediary** — Use a proxy, adapter, or broker to absorb conflict
+- **P25 Self-service** — Self-healing, auto-scaling, self-documenting
+- **P27 Cheap short-living** — Containers, ephemeral infra, throwaway prototypes
+- **P35 Parameter changes** — Change config/environment instead of code
+- **P40 Composite** — Combine different approaches (polyglot persistence, hybrid architectures)
+
+**Tier C principles (P18, P29-P33, P36-P39):** Engineering-specific with no abstract analog. Never surface in non-engineering contexts.
 
 **Quality gate (U5):** If the parameter pair has no close match in the lookup table, say "No strong TRIZ mapping — resolve via direct analysis" rather than forcing a weak match. If the match is approximate, label it: "Approximate match (nearest: [pair]) — principles may not apply directly."
 
@@ -484,7 +519,7 @@ DOMAIN CONTEXT (via web search):
 ### When to Skip
 
 - `--skip-lookup` flag is passed
-- Context lookup was already performed in m1-constrain within the same session and the domain context is still in the conversation
+- Context lookup was already performed in m1-constrain within the same session and the domain context is still visible in the conversation. **If context may have been lost due to compaction**, re-run the lookup for tension-relevant topics rather than assuming prior results are still available.
 
 ### Why This Matters
 

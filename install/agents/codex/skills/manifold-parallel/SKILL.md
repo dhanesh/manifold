@@ -126,7 +126,14 @@ When this command is invoked:
 - `/manifold:m0-init` - Initialize a constraint manifold
 - `/manifold:m-status` - Show current manifold state
 
-## See Also
+## How It Works
 
-- [Parallel Agents Documentation](../../docs/parallel-agents/README.md)
-- [Constraint Manifold](../../.manifold/parallel-agents.yaml)
+The parallel execution system:
+1. **TaskAnalyzer** parses task descriptions and builds dependency graphs
+2. **FilePredictor** predicts which files each task will modify using keyword/path heuristics
+3. **OverlapDetector** identifies file conflicts between tasks — overlapping tasks cannot run in parallel
+4. **WorktreeManager** creates isolated git worktrees for each parallel group
+5. **ResourceMonitor** checks disk/memory/CPU to determine safe parallelism level
+6. After execution, results are merged back to the main worktree
+
+Use `--dry-run` to see the analysis without executing.

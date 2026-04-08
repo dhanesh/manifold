@@ -121,4 +121,4 @@ Success metrics, risk factors, and recommendation criteria are defined so the go
 
 ---
 
-**See Also:** Next in greenfield workflow -> [Product Vision](./product-vision.md) | [Greenfield Workflow Guide](../../docs/pm/guide.md#greenfield-workflow)
+**See Also:** Next in greenfield workflow -> [Product Vision](./product-vision.md) | Greenfield workflow: opportunity-assessment → product-vision → lean-canvas → mvp-definition → feature-launch

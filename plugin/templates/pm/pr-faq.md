@@ -129,4 +129,4 @@ Business justification is accepted and all departments are prepared for launch.
 
 ---
 
-**See Also:** Alternative to [Product Vision](./product-vision.md) — use PR/FAQ when customer empathy is the priority | [Greenfield Workflow Guide](../../docs/pm/guide.md#greenfield-workflow)
+**See Also:** Alternative to [Product Vision](./product-vision.md) — use PR/FAQ when customer empathy is the priority | Greenfield workflow: opportunity-assessment → product-vision → lean-canvas → mvp-definition → feature-launch

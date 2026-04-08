@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Manifold Eval Assertions",
+  "description": "Schema for assertion files that validate prompt outputs against golden test cases",
+  "type": "object",
+  "properties": {
+    "phases": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "assertions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "schema_valid",
+                    "phase_correct",
+                    "scope_guard",
+                    "field_exists",
+                    "constraint_exists",
+                    "constraint_count_min",
+                    "constraint_count_max",
+                    "security_constraint_min",
+                    "gap_checklist_present",
+                    "quality_scores_present",
+                    "tension_count_min",
+                    "tension_resolved",
+                    "required_truth_count_min",
+                    "binding_constraint_present",
+                    "solution_options_min",
+                    "artifact_count_min",
+                    "evidence_populated",
+                    "artifact_class_present",
+                    "invariant_coverage",
+                    "security_detection_skip"
+                  ]
+                },
+                "id": { "type": "string" },
+                "contains": { "type": "string" },
+                "expected": { "type": "string" },
+                "field": { "type": "string" },
+                "min": { "type": "number" },
+                "max": { "type": "number" },
+                "min_percentage": { "type": "number" },
+                "gaps": { "type": "array", "items": { "type": "string" } },
+                "description": { "type": "string" }
+              },
+              "required": ["type"]
+            }
+          }
+        },
+        "required": ["assertions"]
+      }
+    }
+  },
+  "required": ["phases"]
+}

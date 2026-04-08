@@ -1,0 +1,31 @@
+# Data Export — Eval Assertions
+# Security-heavy: PII handling, access control, audit logging
+# Tests GAP-09, GAP-10, GAP-14
+
+phases:
+  m1-constrain:
+    assertions:
+      - type: schema_valid
+      - type: phase_correct
+        expected: CONSTRAINED
+      - type: scope_guard
+      - type: constraint_exists
+        id: S1
+        contains: "PII"
+      - type: constraint_count_min
+        min: 6
+        description: Security-heavy feature should discover at least 6 constraints
+      - type: gap_checklist_present
+        gaps: [GAP-03, GAP-09, GAP-10, GAP-14]
+      - type: security_constraint_min
+        min: 2
+        description: Must discover at least 2 security constraints
+
+  m2-tension:
+    assertions:
+      - type: schema_valid
+      - type: phase_correct
+        expected: TENSIONED
+      - type: tension_count_min
+        min: 1
+        description: Speed vs size tension should be detected

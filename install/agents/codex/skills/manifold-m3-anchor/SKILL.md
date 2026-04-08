@@ -26,7 +26,7 @@ Backward reasoning from desired outcome to required conditions.
 
 > **Plain Language**: Instead of planning forward ("build X, then Y, then Z"), we work backward from the goal: "For our goal to be achieved, what MUST be true?" This surfaces hidden requirements early.
 >
-> See [GLOSSARY.md](../../docs/GLOSSARY.md) for terminology explanations.
+> **Key terms**: A *required truth* (RT) is a precondition — something that MUST be true for the outcome to succeed. An *anchor* is the result of backward reasoning from the outcome. The *binding constraint* is the single hardest-to-close required truth that, if unresolved, blocks all solution options. *Convergence* is the point where all required truths are satisfied.
 
 ## Scope Guard (MANDATORY)
 
@@ -167,14 +167,7 @@ Retries are idempotent via transaction idempotency keys.
 
 ## Why Backward Reasoning?
 
-**Forward planning** (traditional): Start with spec → implement features → hope it works
-- Misses implicit requirements
-- Discovers edge cases late
-
-**Backward reasoning** (Manifold): Start with outcome → ask "What must be TRUE?" → derive requirements
-- Surfaces hidden assumptions
-- Identifies gaps early
-- Constrains solution space
+Forward planning starts with a spec and discovers missing requirements late. Backward reasoning starts with the outcome and asks "What must be TRUE?" — this surfaces hidden assumptions and implicit requirements early, before implementation begins.
 
 ## Process
 

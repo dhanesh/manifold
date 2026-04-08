@@ -373,17 +373,36 @@ Record in `.manifold/<feature>.json`:
 
 ### Non-software domain branching
 
-When `--domain=non-software` is set (from m0-init), generate the non-software artifact set instead of code artifacts. See `docs/m4-generate-nonsoftware.md` for templates:
+When `--domain=non-software` is set (from m0-init), generate the non-software artifact set instead of code artifacts:
 
-| Non-Software Artifact | Output Path |
-|----------------------|-------------|
-| Decision Brief | `docs/<feature>/DECISION_BRIEF.md` |
-| Scenario Stress-Tests | `docs/<feature>/STRESS_TESTS.md` |
-| Narrative Guide | `docs/<feature>/NARRATIVE_GUIDE.md` |
-| Recovery Playbook | `docs/<feature>/RECOVERY_PLAYBOOK.md` |
-| Risk Watch List | `docs/<feature>/RISK_WATCH_LIST.md` |
+| Non-Software Artifact | Software Equivalent | Output Path |
+|----------------------|---------------------|-------------|
+| Decision Brief | Implementation code | `docs/<feature>/DECISION_BRIEF.md` |
+| Scenario Stress-Tests | Test suite | `docs/<feature>/STRESS_TESTS.md` |
+| Narrative Guide | Documentation | `docs/<feature>/NARRATIVE_GUIDE.md` |
+| Recovery Playbook | Runbooks | `docs/<feature>/RECOVERY_PLAYBOOK.md` |
+| Risk Watch List | Dashboards + Alerts | `docs/<feature>/RISK_WATCH_LIST.md` |
 
 All non-software artifacts maintain full constraint traceability. Reversibility tagging applies to both software and non-software domains.
+
+**Non-software generation rules:**
+1. Every artifact traces to constraints — no free-standing content
+2. Invariant constraints appear in ALL artifacts — they shape everything
+3. Tension resolutions appear in Narrative Guide and Stress-Tests — they are key design decisions
+4. ONE_WAY decisions get special treatment — listed in Decision Brief, covered in Recovery Playbook
+5. Assumptions must be visible — `challenger: assumption` constraints appear in Decision Brief and Risk Watch List
+6. Pre-mortem findings inform Stress-Tests — `source: pre-mortem` constraints become scenarios
+7. Binding constraint is front-and-center — appears in Decision Brief with dependency chain
+
+**Decision Brief template structure:** Decision Statement → Constraint Satisfaction table → Options Considered (with reversibility) → What This Decision Closes (ONE_WAY consequences) → Binding Constraint → Open Assumptions table.
+
+**Scenario Stress-Tests template structure:** One scenario per invariant/boundary constraint and per resolved tension. Each has: Setup (adversarial condition) → Expected behavior → Constraint tested → Pass criteria. Include Scenario Matrix table.
+
+**Narrative Guide template structure:** Prose narrative (not bullets) of why the decision was made → Immovable constraints (invariants with challenger tags) → Negotiable constraints → Key tensions and resolutions → What we chose NOT to do → When to revisit.
+
+**Recovery Playbook template structure:** One procedure per watch-list risk. Each has: Trigger → Related constraint → Severity → Reversibility of response → Steps → Escalation path (3 levels).
+
+**Risk Watch List template structure:** Active risks (source, probability, monitoring method, review trigger) → Assumption Watch table → Review Schedule → Decision Reversal Criteria checklist.
 
 ## STEP 0: Parallel Execution Check (MANDATORY)
 
@@ -402,27 +421,26 @@ When the generation plan includes **3+ files across different modules/directorie
    - Documentation (independent, can parallelize)
    - Operational artifacts (runbooks, dashboards, alerts - independent)
 
-2. **Invoke Auto-Suggester**
-   ```typescript
-   // The auto-suggester analyzes tasks for parallelization opportunities
-   // Use the /manifold:parallel command when parallelization is beneficial:
-   // /manifold:parallel "task1" "task2" "task3" --dry-run
+2. **Run Parallelization Analysis via CLI**
+   ```bash
+   # Analyze the constraint network for parallel execution opportunities
+   manifold solve <feature> --json
+   ```
 
-   const suggester = new AutoSuggester(process.cwd());
-   const tasks = [
-     "Generate PaymentRetryClient.ts with error classification",
-     "Generate PaymentRetryQueue.ts with durable queue logic",
-     "Generate IdempotencyService.ts with duplicate prevention",
-     "Generate all test files for retry module",
-     "Generate documentation for payment-retry feature"
-   ];
-
-   const suggestion = await suggester.suggest(tasks);
-   if (suggestion.shouldParallelize) {
-     // Display suggestion to user
-     console.log(suggester.formatSuggestion(suggestion));
+   The CLI outputs a JSON execution plan. Parse it to identify parallel groups:
+   ```json
+   {
+     "waves": [
+       {"id": 1, "tasks": ["code-module-A", "code-module-B"], "parallel": true},
+       {"id": 2, "tasks": ["tests-A", "tests-B"], "parallel": true, "depends_on": [1]},
+       {"id": 3, "tasks": ["docs", "ops"], "parallel": true}
+     ],
+     "critical_path": ["code-module-A", "tests-A"],
+     "estimated_speedup": "2.5x"
    }
    ```
+
+   If the plan shows multiple independent waves, suggest parallel generation to the user.
 
 3. **User Approval Prompt**
    When parallelization is suggested, display:
@@ -477,18 +495,24 @@ User runs: /manifold:m4-generate payment-retry --option=C
 
 ## Execution Instructions
 
+### ⚡ STEP 0: Binding Constraint Check (MANDATORY)
+
+Before any planning or generation, read `anchors.binding_constraint` from `.manifold/<feature>.json`.
+
+If present:
+- Display: `BINDING CONSTRAINT: [RT-ID] — [reason]`
+- Artifacts satisfying the binding constraint's required truth MUST be generated FIRST
+- Tag these artifacts in the generation summary: `⚡ Binding constraint`
+- If the binding constraint's RT has unresolved evidence after generation, WARN before completing m4
+
+If absent: proceed normally (backward compatible with pre-enhancement manifolds).
+
 ### Phase 1: Planning (BEFORE any file writes)
 
 1. Read manifold from `.manifold/<feature>.json` (or `.yaml` for legacy)
 2. Read anchoring from JSON `anchors` section (or `.manifold/<feature>.anchor.yaml` for legacy)
 3. Select solution option (from `--option` or prompt user)
-3b. **READ BINDING CONSTRAINT** from `anchors.binding_constraint` in JSON (Enhancement 5b).
-    If present:
-    - Display: `BINDING CONSTRAINT: [RT-ID] — [reason]`
-    - Reorder the artifact generation plan so artifacts satisfying the binding constraint's RT are generated FIRST
-    - In the generation summary, tag these artifacts: `⚡ Binding constraint`
-    If absent: proceed normally (backward compatible with pre-enhancement manifolds)
-4. **BUILD ARTIFACT LIST** - List ALL files that will be generated
+4. **BUILD ARTIFACT LIST** - List ALL files that will be generated, ordered by binding constraint priority
 5. **MANDATORY PARALLELIZATION CHECK** (See "STEP 0" above)
    - Count the artifact groups (code, tests, docs, ops)
    - If ≥3 files across different directories:
@@ -515,9 +539,16 @@ User runs: /manifold:m4-generate payment-retry --option=C
 7. For each artifact type:
    - Generate artifact with constraint traceability
    - Add comments linking to constraint IDs: `// Satisfies: B1, T2`
+   - For test files, include `@constraint` annotations so m5-verify can build the traceability matrix:
+     ```typescript
+     // @constraint B1 - No duplicate payments
+     it('rejects duplicate payment attempts', async () => { ... });
+     ```
    - **Place in correct directory per Artifact Placement Rules**
 8. Create all files in appropriate directories
 9. **Update install script** if adding new distributable commands
+9b. **If `--prd` flag**: Generate `docs/<feature>/PRD.md` using the PRD Generation section below. Map constraints to PRD sections per the Constraint-to-PRD Mapping Rules.
+9c. **If `--stories` flag**: Generate `docs/<feature>/STORIES.md` using the User Story Generation section below. Derive stories from UX constraints, cross-reference PRD if both flags are set.
 
 ### Phase 3: Finalization
 

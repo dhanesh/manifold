@@ -299,7 +299,7 @@ For brand new products, use templates in this recommended progression:
 
 Alternative: Use `pm/pr-faq` instead of `pm/product-vision` when customer empathy is the priority.
 
-See [Greenfield Workflow Guide](../../docs/pm/guide.md#greenfield-workflow) for detailed guidance.
+Run each template through the full Manifold workflow (`m0-init --template=pm/<name>` → `m1-constrain` → `m2-tension` → `m3-anchor` → `m4-generate --prd --stories`) to produce constraint-traced PRDs and user stories.
 
 ## Customization Guidelines
 
@@ -351,7 +351,7 @@ This workflow produces:
 - **Exploratory spikes**: Don't constrain exploration
 - **Internal tooling**: Consider starting directly with standard templates (auth, crud, api) unless there's market uncertainty
 
-See [When NOT to Use](../../docs/WHEN_NOT_TO_USE.md) for more guidance.
+**When in doubt:** If you can describe the change in one sentence and it doesn't involve multiple stakeholders or compliance, skip Manifold or use `/manifold:m-quick`.
 
 ## Contributing PM Templates
 
@@ -366,7 +366,4 @@ To add a new PM template:
 
 ## See Also
 
-- [PM Adaptation Guide](../../docs/pm/guide.md) - Full guide for PMs
 - [Constraint Templates](../README.md) - All templates (technical + PM)
-- [Feature Prioritization Example](../../docs/pm/scenario-feature-prioritization.md)
-- [Product Launch Example](../../docs/pm/scenario-product-launch.md)

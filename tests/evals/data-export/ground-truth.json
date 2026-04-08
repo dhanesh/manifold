@@ -1,0 +1,33 @@
+{
+  "feature": "data-export",
+  "outcome": "Users can export their data in CSV and JSON formats within 30 seconds for datasets up to 1M rows",
+  "description": "Security-heavy feature: PII handling, access control, audit logging. Tests GAP-09, GAP-10, GAP-14.",
+  "expected_constraints": {
+    "business": [
+      {"id": "B1", "type": "invariant", "contains": "authoriz|access control", "description": "Only authorized users can export"},
+      {"id": "B2", "type": "goal", "contains": "CSV|JSON|format", "description": "Multiple export formats"}
+    ],
+    "technical": [
+      {"id": "T1", "type": "boundary", "contains": "30 second|timeout", "description": "Export time limit"},
+      {"id": "T2", "type": "boundary", "contains": "1M|million|rows", "description": "Dataset size limit"}
+    ],
+    "security": [
+      {"id": "S1", "type": "invariant", "contains": "PII|redact|mask", "description": "PII handling in exports"},
+      {"id": "S2", "type": "invariant", "contains": "audit|log|track", "description": "Export actions audited"},
+      {"id": "S3", "type": "boundary", "contains": "rate limit|throttle", "description": "Export rate limiting"}
+    ],
+    "operational": [
+      {"id": "O1", "type": "goal", "contains": "monitor|alert|queue", "description": "Export job monitoring"}
+    ]
+  },
+  "expected_tensions": [
+    {"type": "trade_off", "between_contains": ["30 second", "1M rows"], "description": "Speed vs dataset size"},
+    {"type": "trade_off", "between_contains": ["PII", "format"], "description": "Data completeness vs PII protection"}
+  ],
+  "expected_required_truths": [
+    {"contains": "authoriz|permission|role", "description": "Authorization check exists"},
+    {"contains": "PII|redact|filter", "description": "PII filtering pipeline"},
+    {"contains": "stream|chunk|paginate", "description": "Large dataset handling strategy"}
+  ],
+  "gap_checklists_required": ["GAP-03", "GAP-09", "GAP-10", "GAP-14"]
+}

@@ -1,0 +1,79 @@
+# Payment Retry — Eval Assertions
+# Complex feature: auth, idempotency, rate limits
+# Tests full constraint discovery, tension detection, and artifact generation
+
+phases:
+  m0-init:
+    assertions:
+      - type: schema_valid
+      - type: phase_correct
+        expected: INITIALIZED
+      - type: scope_guard
+        description: No files created outside .manifold/
+      - type: field_exists
+        field: domain
+        expected: software
+
+  m1-constrain:
+    assertions:
+      - type: schema_valid
+      - type: phase_correct
+        expected: CONSTRAINED
+      - type: scope_guard
+      - type: constraint_exists
+        id: B1
+        contains: "duplicate"
+      - type: constraint_count_min
+        min: 8
+        description: Complex feature should discover at least 8 constraints
+      - type: gap_checklist_present
+        gaps: [GAP-03, GAP-09, GAP-10, GAP-14]
+      - type: quality_scores_present
+        description: All constraints should have quality scores
+
+  m2-tension:
+    assertions:
+      - type: schema_valid
+      - type: phase_correct
+        expected: TENSIONED
+      - type: scope_guard
+      - type: tension_count_min
+        min: 1
+        description: Performance vs safety tension should be detected
+      - type: tension_resolved
+        description: At least one tension should be resolved
+
+  m3-anchor:
+    assertions:
+      - type: schema_valid
+      - type: phase_correct
+        expected: ANCHORED
+      - type: scope_guard
+      - type: required_truth_count_min
+        min: 3
+      - type: binding_constraint_present
+        description: Binding constraint should be identified
+      - type: solution_options_min
+        min: 2
+
+  m4-generate:
+    assertions:
+      - type: schema_valid
+      - type: phase_correct
+        expected: GENERATED
+      - type: artifact_count_min
+        min: 5
+        description: Should generate code, tests, docs, runbook, alerts
+      - type: evidence_populated
+        description: All RTs should have evidence items
+      - type: artifact_class_present
+        description: All artifacts should have artifact_class
+
+  m5-verify:
+    assertions:
+      - type: schema_valid
+      - type: phase_correct
+        expected: VERIFIED
+      - type: invariant_coverage
+        min_percentage: 100
+        description: All invariants must be SATISFIED
