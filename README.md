@@ -50,6 +50,35 @@ Forward reasoning                    Backward from outcome
 - **Native CLI** -- Fast, deterministic operations (<100ms) for CI/CD
 - **Multi-Agent Support** -- Works with Claude Code, AMP, Gemini CLI, and Codex CLI
 
+## Recent Changes
+
+### v2.30.2 (Current)
+
+**Prompt Quality Overhaul** -- Comprehensive evaluation and fix of all 8 phase command prompts, raising aggregate quality from 3.7/5 to 4.25/5.
+
+- **SKILL.md rewritten** -- Was documenting deprecated YAML format; now accurately reflects v3 JSON+Markdown hybrid, all command summaries, and CLI commands
+- **m4 AutoSuggester fixed** -- Non-executable TypeScript block replaced with `manifold solve --json` CLI invocation that LLMs can actually run
+- **Binding constraint elevated** -- m4 now reads `anchors.binding_constraint` as a dedicated STEP 0 before artifact planning, ensuring the bottleneck is addressed first
+- **Validation consistency** -- m0-init and m-quick now have the same `⚠️ Mandatory Post-Phase Validation` pattern as m1-m5
+- **Security gate for m-quick** -- Light mode now detects security-relevant feature names (auth, token, password, etc.) and suggests full workflow before proceeding
+- **Self-contained prompts** -- All references to repo-only files (docs/GLOSSARY.md, docs/triz-principles.md, cli/lib/structure-schema.ts) replaced with inlined content so the plugin works standalone
+- **TRIZ principles inlined** -- Full parameter pair lookup table (10 conflict patterns + 14 Tier A principles) now embedded directly in m2-tension
+- **Eval infrastructure** -- Golden test framework with 3 test cases (payment-retry, login-timeout, data-export) and assertion-based runner
+- **Prompt injection guard** -- Pre-mortem template in m1 now explicitly instructs LLM to treat outcome text as data, not instructions
+
+### v2.30.0
+
+- **Enhanced thinking prompts** -- Cross-phase data flow tracking and quality gates for constraint handoff between phases
+
+### v2.29.0
+
+- **Cross-platform hooks** -- Hooks now work on macOS, Linux, and Windows
+- **Structured logging** -- Hook output uses structured format for better debugging
+- **File splitting** -- Large manifold files can be split for better context management
+- **Windows support** -- Full Windows compatibility for CLI binary, installer, and hooks
+
+See [CHANGELOG.md](CHANGELOG.md) for complete version history.
+
 ## Install
 
 ### Claude Code Plugin (Recommended for Claude Code users)
