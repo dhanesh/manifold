@@ -1,7 +1,15 @@
 ---
 description: "Interview-driven constraint discovery across 5 categories (business, technical, UX, security, operational)"
 argument-hint: "<feature-name>"
+model-routing: in-context
 ---
+
+## Model Routing
+
+**Recommended model**: sonnet (or opus for complex domains)
+**Interactive**: yes -- this phase interviews the user across 5 constraint categories.
+**Dispatch**: Runs in main conversation context (cannot be dispatched to agent due to multi-turn Q&A).
+**Token impact**: ~4K input + manifold state, ~3K output. Scales +200 tokens per constraint discovered.
 
 # /manifold:m1-constrain - Constraint Discovery
 
@@ -513,8 +521,9 @@ Without context lookup, the AI may:
 7. **Update TWO files:**
    - `.manifold/<feature>.json` — Add `{"id": "B1", "type": "invariant"}` to constraints
    - `.manifold/<feature>.md` — Add `#### B1: Title` + statement + rationale
-8. Set phase to CONSTRAINED in JSON
-9. Display summary and next step
+8. **Record GAP checklist compliance** — Add `"gap_checklist_compliance"` array to JSON with each GAP's status (COMPLETED or SKIPPED with skip_reason). This is MANDATORY — the golden tests assert this field exists.
+9. Set phase to CONSTRAINED in JSON
+10. Display summary and next step
 
 ### For Legacy YAML Format
 

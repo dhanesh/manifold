@@ -21,12 +21,12 @@ claude --plugin-dir /path/to/manifold/plugin
 
 ## Prerequisites
 
-- **Bun** runtime (required for PreCompact hook)
+- **Manifold CLI** binary (install via `/manifold:setup` or `install/install.sh`)
 - **Claude Code** v1.0+
 
 ## What's Included
 
-### Commands (12)
+### Commands (13)
 
 | Command | Purpose |
 |---------|---------|
@@ -40,6 +40,7 @@ claude --plugin-dir /path/to/manifold/plugin
 | `/manifold:m-status` | Show current state and next action |
 | `/manifold:m-solve` | Generate parallel execution plan |
 | `/manifold:m-quick` | Light mode: 3-phase workflow for simple changes |
+| `/manifold:m-budget` | Show token budget estimates and model routing |
 | `/manifold:parallel` | Execute tasks in parallel worktrees |
 | `/manifold:setup` | Install/update the native CLI binary |
 
@@ -47,10 +48,12 @@ claude --plugin-dir /path/to/manifold/plugin
 
 - `/manifold` - Overview skill with quick start guide
 
-### Hooks (2)
+### Hooks (4)
 
 - **SessionStart** - Injects schema quick reference into session context
 - **PreCompact** - Preserves manifold state across context compaction
+- **PostToolUse** - Validates manifold schema on file writes (Write/Edit/MultiEdit)
+- **UserPromptSubmit** - Enforces interaction rules for manifold phase commands
 
 ### Templates
 

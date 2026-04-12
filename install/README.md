@@ -14,20 +14,22 @@ The installer auto-detects which AI coding agents are present and installs Manif
 
 | Agent | Commands | Hooks | Parallel Library | Instruction File |
 |-------|----------|-------|------------------|------------------|
-| Claude Code | `.md` files (canonical) | `.ts` hooks | `.ts` source files | `~/.claude/CLAUDE.md` |
-| AMP | `.md` files (canonical) | `.ts` hooks | `.ts` source files | `~/.amp/CLAUDE.md` |
+| Claude Code | `.md` files (canonical) + worker agents | `.ts` hooks | `.ts` source files | `~/.claude/CLAUDE.md` |
+| AMP | `.md` files (canonical) + worker agents | `.ts` hooks | `.ts` source files | `~/.amp/CLAUDE.md` |
 | Gemini CLI | `.toml` files (translated) | `.ts` hook | `parallel.bundle.js` | `~/.gemini/GEMINI.md` |
-| Codex CLI | `SKILL.md` files (translated) | Skills-as-hooks | `parallel.bundle.js` | `~/.codex/AGENTS.md` |
+| Codex CLI | `SKILL.md` files (translated) + personal plugin bundle | Global `hooks.json` via `manifold hook ...` | `parallel.bundle.js` | `~/.codex/AGENTS.md` |
 
 ## Installation Locations
 
 | Agent | Location | What |
 |-------|----------|------|
 | Claude Code | `~/.claude/commands/` | 12 command files (`.md`) |
+| Claude Code | `~/.claude/agents/` | Worker agents for routed phases |
 | Claude Code | `~/.claude/skills/manifold/` | `/manifold` overview skill |
 | Claude Code | `~/.claude/hooks/` | Context & auto-suggest hooks |
 | Claude Code | `~/.claude/lib/parallel/` | Parallel execution library (`.ts`) |
 | AMP | `~/.amp/commands/` | 12 command files (`.md`) |
+| AMP | `~/.amp/agents/` | Worker agents for routed phases |
 | AMP | `~/.amp/skills/manifold/` | `/manifold` overview skill |
 | AMP | `~/.amp/hooks/` | Context & auto-suggest hooks |
 | AMP | `~/.amp/lib/parallel/` | Parallel execution library (`.ts`) |
@@ -35,6 +37,10 @@ The installer auto-detects which AI coding agents are present and installs Manif
 | Gemini CLI | `~/.gemini/hooks/` | Context hook (`.ts`) |
 | Gemini CLI | `~/.gemini/lib/parallel/` | Parallel library bundle (`.js`) |
 | Codex CLI | `~/.agents/skills/manifold-*/` | 13 skill directories (`SKILL.md`) |
+| Codex CLI | `~/.codex/agents/` | Global custom agents (`.toml`) |
+| Codex CLI | `~/.codex/hooks.json` | Global hook registrations |
+| Codex CLI | `~/.codex/plugins/manifold-codex/` | Personal plugin bundle |
+| Codex CLI | `~/.agents/plugins/marketplace.json` | Personal marketplace entry |
 | Codex CLI | `~/.codex/lib/parallel/` | Parallel library bundle (`.js`) |
 
 ## Available Commands After Install
@@ -123,10 +129,17 @@ install/
 │   │   ├── commands/*.toml             # Pre-built Gemini commands (11)
 │   │   └── hooks/manifold-context.ts   # Gemini-specific context hook
 │   └── codex/
+│       ├── agents/*.toml               # Global Codex custom agents
+│       ├── hooks.json                  # Global Codex hooks
 │       └── skills/                     # Pre-built Codex skills
 │           ├── manifold-context/       # Context preservation skill
 │           ├── manifold-suggest/       # Auto-suggestion skill
-│           └── manifold-m*/            # Command skills (11)
+│           └── manifold-m*/            # Command skills (11+)
+├── ../plugins/
+│   └── manifold-codex/                 # Distributable Codex plugin bundle
+│       ├── .codex-plugin/plugin.json   # Codex plugin manifest
+│       ├── commands/*.md               # Generated command-style markdown
+│       └── skills/manifold-*/SKILL.md  # Bundled Codex skills
 └── templates/                          # Constraint templates
     ├── auth.md, crud.md, api.md, payment.md
     └── pm/                             # PM templates

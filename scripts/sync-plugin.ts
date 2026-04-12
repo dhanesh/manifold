@@ -105,4 +105,17 @@ const countFiles = (dir: string): number => {
 };
 copied += countFiles(templatesDest);
 
+// 6. Claude agents: install/agents/claude/*.md -> plugin/agents/
+const agentsSrc = join(install, "agents", "claude");
+const agentsDest = join(plugin, "agents");
+
+if (existsSync(agentsSrc)) {
+  ensureDir(agentsDest);
+  for (const file of readdirSync(agentsSrc)) {
+    if (file.endsWith(".md")) {
+      syncFile(join(agentsSrc, file), join(agentsDest, file));
+    }
+  }
+}
+
 console.log(`Synced ${copied} files from install/ -> plugin/`);

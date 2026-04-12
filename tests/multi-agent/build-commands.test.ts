@@ -12,6 +12,8 @@ const TEST_DIR = join(import.meta.dir, '__fixtures__', 'build-commands');
 const SOURCE_DIR = join(TEST_DIR, 'source');
 const GEMINI_OUT = join(TEST_DIR, 'gemini');
 const CODEX_OUT = join(TEST_DIR, 'codex');
+const CODEX_PLUGIN_COMMANDS_OUT = join(TEST_DIR, 'codex-plugin-commands');
+const CODEX_PLUGIN_SKILLS_OUT = join(TEST_DIR, 'codex-plugin-skills');
 
 beforeAll(() => {
   // Create test fixtures
@@ -21,15 +23,19 @@ beforeAll(() => {
   writeFileSync(join(SOURCE_DIR, 'm0-init.md'), `---
 description: "Initialize a new constraint manifold"
 argument-hint: "<feature-name>"
+model-routing: haiku
 ---
 # Initialize Manifold
 
 Create a new constraint manifold for the given feature.
 
 ## Steps
-1. Create .manifold/<feature>.json
-2. Create .manifold/<feature>.md
-3. Set phase to INITIALIZED
+1. Spawn an Agent with:
+   - \`subagent_type\`: "manifold:m0-init-worker"
+   - \`model\`: "haiku"
+2. Create .manifold/<feature>.json
+3. Create .manifold/<feature>.md
+4. Set phase to INITIALIZED
 `);
 
   // Command without argument-hint
@@ -66,11 +72,19 @@ afterAll(() => {
 
 describe('buildCommands', () => {
   it('generates correct number of Gemini and Codex outputs', () => {
-    const { geminiCount, codexCount } = buildCommands(SOURCE_DIR, GEMINI_OUT, CODEX_OUT);
+    const { geminiCount, codexCount, codexPluginCommandCount, codexPluginSkillCount } = buildCommands(
+      SOURCE_DIR,
+      GEMINI_OUT,
+      CODEX_OUT,
+      CODEX_PLUGIN_COMMANDS_OUT,
+      CODEX_PLUGIN_SKILLS_OUT,
+    );
 
     // Should generate for m0-init, m-status, parallel (skip SCHEMA_REFERENCE)
     expect(geminiCount).toBe(3);
     expect(codexCount).toBe(3);
+    expect(codexPluginCommandCount).toBe(3);
+    expect(codexPluginSkillCount).toBe(3);
   });
 
   it('creates Gemini .toml files with correct format', () => {
@@ -110,6 +124,17 @@ describe('buildCommands', () => {
     // Should have command body
     expect(skillContent).toContain('# /manifold:m0-init');
     expect(skillContent).toContain('# Initialize Manifold');
+    expect(skillContent).toContain('Spawn a Codex subagent with:');
+    expect(skillContent).toContain('`agent`: `manifold_m0_init_worker`');
+    expect(skillContent).toContain('`model`: `gpt-5.4-mini`');
+  });
+
+  it('creates Codex plugin commands with Codex-native agent routing', () => {
+    const commandContent = readFileSync(join(CODEX_PLUGIN_COMMANDS_OUT, 'm0-init.md'), 'utf-8');
+
+    expect(commandContent).toContain('Spawn a Codex subagent with:');
+    expect(commandContent).toContain('`agent`: `manifold_m0_init_worker`');
+    expect(commandContent).toContain('`model`: `gpt-5.4-mini`');
   });
 
   it('handles parallel command (non-m prefix)', () => {
@@ -131,10 +156,22 @@ describe('buildCommands', () => {
   });
 
   it('is idempotent (running twice produces same result)', () => {
-    const { geminiCount: count1 } = buildCommands(SOURCE_DIR, GEMINI_OUT, CODEX_OUT);
+    const { geminiCount: count1 } = buildCommands(
+      SOURCE_DIR,
+      GEMINI_OUT,
+      CODEX_OUT,
+      CODEX_PLUGIN_COMMANDS_OUT,
+      CODEX_PLUGIN_SKILLS_OUT,
+    );
     const content1 = readFileSync(join(GEMINI_OUT, 'm0-init.toml'), 'utf-8');
 
-    const { geminiCount: count2 } = buildCommands(SOURCE_DIR, GEMINI_OUT, CODEX_OUT);
+    const { geminiCount: count2 } = buildCommands(
+      SOURCE_DIR,
+      GEMINI_OUT,
+      CODEX_OUT,
+      CODEX_PLUGIN_COMMANDS_OUT,
+      CODEX_PLUGIN_SKILLS_OUT,
+    );
     const content2 = readFileSync(join(GEMINI_OUT, 'm0-init.toml'), 'utf-8');
 
     expect(count1).toBe(count2);
@@ -154,7 +191,13 @@ Use backslash \\ and triple quotes """ carefully.
 Also handles "double quotes" inside body.
 `);
 
-    buildCommands(SOURCE_DIR, GEMINI_OUT, CODEX_OUT);
+    buildCommands(
+      SOURCE_DIR,
+      GEMINI_OUT,
+      CODEX_OUT,
+      CODEX_PLUGIN_COMMANDS_OUT,
+      CODEX_PLUGIN_SKILLS_OUT,
+    );
 
     const toml = readFileSync(join(GEMINI_OUT, 'm-special.toml'), 'utf-8');
     // Backslashes should be escaped

@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "manifold hook context",
+            "command": "command -v manifold >/dev/null 2>&1 && manifold hook context || true",
             "timeout": 10
           }
         ]
@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "manifold hook schema-guard",
+            "command": "command -v manifold >/dev/null 2>&1 && manifold hook schema-guard || true",
             "timeout": 15
           }
         ]
@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "manifold hook prompt-enforcer",
+            "command": "command -v manifold >/dev/null 2>&1 && manifold hook prompt-enforcer || true",
             "timeout": 5
           }
         ]

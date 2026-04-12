@@ -1,0 +1,255 @@
+## Model Routing
+
+**Recommended model**: sonnet (lightweight 3-phase combined workflow)
+**Interactive**: yes -- this phase combines constrain+generate+verify with inline user decisions.
+**Dispatch**: Runs in main conversation context (cannot be dispatched to agent due to inline Q&A).
+**Token impact**: ~3K input, ~5K output. Scales +200 tokens per constraint.
+
+# /manifold:m-quick - Light Mode Workflow
+
+Streamlined 3-phase workflow for simple changes that don't require full constraint analysis.
+
+## When to Use Light Mode
+
+| Scenario | Use Light Mode? | Use Full Workflow? |
+|----------|-----------------|-------------------|
+| Bug fix (single file) | YES | No |
+| Add simple feature | YES | No |
+| Refactor existing code | YES | No |
+| New system/subsystem | No | YES |
+| Cross-cutting concern | No | YES |
+| Security-critical change | No | YES |
+| Multi-team coordination | No | YES |
+
+**Rule of Thumb**: If you can describe the change in one sentence, use light mode.
+
+## Light Mode Phases
+
+```
+FULL WORKFLOW (7 phases):
+INITIALIZED → CONSTRAINED → TENSIONED → ANCHORED → GENERATED → VERIFIED
+     ↑                                                              |
+     └──────────────────── (iteration) ─────────────────────────────┘
+
+LIGHT MODE (3 phases):
+CONSTRAINED → GENERATED → VERIFIED
+      ↑                       |
+      └─── (quick fix) ───────┘
+```
+
+## Usage
+
+```
+/manifold:m-quick <feature-name> [--outcome="<brief description>"]
+```
+
+## Process
+
+### Phase 1: Quick Constrain
+
+Simplified constraint discovery focusing on:
+- **1-3 key constraints** (not exhaustive)
+- **Primary category only** (usually technical or business)
+- **No formal tension analysis** (handle conflicts inline)
+
+**Questions to answer:**
+1. What MUST this change accomplish? (invariant)
+2. What must NOT break? (boundary)
+3. What should improve? (goal)
+
+### Phase 2: Quick Generate
+
+Generate artifacts with minimal ceremony:
+- Code changes
+- Essential tests only (happy path + one edge case)
+- No runbooks/alerts (unless production-critical)
+
+### Phase 3: Quick Verify
+
+Lightweight verification:
+- Tests pass
+- Key constraint satisfied
+- No regressions
+
+## Example
+
+```
+User: /manifold:m-quick fix-login-timeout --outcome="Fix 504 timeout on login"
+
+Response:
+LIGHT MODE: fix-login-timeout
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+QUICK CONSTRAIN (1/3)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Key Constraints:
+- T1 [boundary]: Login must complete in <5s
+- T2 [invariant]: Auth token must be valid
+- T3 [goal]: Reduce timeout errors by 95%
+
+No formal tension analysis needed.
+
+QUICK GENERATE (2/3)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Files to create/modify:
+- src/auth/login.ts (modify timeout handling)
+- tests/auth/login.test.ts (add timeout test)
+
+[Implementation proceeds...]
+
+QUICK VERIFY (3/3)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✓ T1: Login completes in 2.3s (< 5s boundary)
+✓ T2: Auth token valid in all test cases
+✓ T3: Timeout errors: 0 in test suite
+
+COMPLETE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Light mode workflow complete.
+
+Upgrade to full workflow? /manifold:m0-init fix-login-timeout --from-quick
+```
+
+## Manifold File (Minimal)
+
+Light mode creates a minimal manifold for traceability:
+
+**`.manifold/fix-login-timeout.json`** (structure):
+```json
+{
+  "schema_version": 3,
+  "feature": "fix-login-timeout",
+  "phase": "VERIFIED",
+  "mode": "light",
+  "constraints": {
+    "technical": [
+      { "id": "T1", "type": "boundary" },
+      { "id": "T2", "type": "invariant" },
+      { "id": "T3", "type": "goal" }
+    ],
+    "business": [], "user_experience": [], "security": [], "operational": []
+  },
+  "tensions": [],
+  "anchors": { "required_truths": [] },
+  "iterations": [],
+  "convergence": { "status": "CONVERGED" },
+  "quick_summary": {
+    "started": "2026-01-21T10:00:00Z",
+    "completed": "2026-01-21T10:15:00Z",
+    "files_changed": 2,
+    "tests_added": 1
+  }
+}
+```
+
+**`.manifold/fix-login-timeout.md`** (content):
+```markdown
+# fix-login-timeout
+
+## Outcome
+Fix 504 timeout on login
+
+## Constraints
+### Technical
+#### T1: Login Response Time
+Login must complete in <5s
+#### T2: Auth Token Validity
+Auth token must be valid
+#### T3: Timeout Error Reduction
+Reduce timeout errors by 95%
+```
+
+## Upgrading to Full Workflow
+
+If a "simple" change turns out to be complex:
+
+```
+/manifold:m0-init <feature> --from-quick
+```
+
+This:
+1. Preserves existing constraints
+2. Expands to full manifold structure
+3. Prompts for additional constraint categories
+4. Sets phase to CONSTRAINED (ready for /manifold:m2-tension)
+
+## Comparison: Light vs Full
+
+| Aspect | Light Mode | Full Workflow |
+|--------|------------|---------------|
+| Phases | 3 | 6 |
+| Constraints | 1-3 key | Comprehensive (5 categories) |
+| Tensions | Inline | Formal analysis |
+| Anchoring | Skip | Backward reasoning |
+| Artifacts | Code + tests | Code + tests + docs + ops |
+| Time | Minutes | Hours to days |
+| Traceability | Basic | Complete |
+
+## Best Practices
+
+1. **Start Light, Upgrade if Needed**
+   - Begin with `/manifold:m-quick` for new work
+   - If complexity emerges, upgrade to full workflow
+   - Don't feel guilty about upgrading
+
+2. **Don't Force Light Mode**
+   - If you're struggling to fit in 3 constraints, use full workflow
+   - Security and compliance ALWAYS need full workflow
+   - Multi-team changes need full workflow
+
+3. **Keep the Trail**
+   - Light mode still creates a manifold file
+   - Future developers can see what constraints were considered
+   - Audit trail is preserved
+
+## Security Intent Detection (MANDATORY)
+
+Before proceeding with light mode, check the feature name and outcome for security-relevant keywords: `auth`, `token`, `password`, `permission`, `secret`, `encrypt`, `certificate`, `credential`, `oauth`, `session`, `login`.
+
+If any keyword is detected, use AskUserQuestion:
+> "This feature appears security-related (detected: [keyword]). Security changes benefit from full constraint analysis (GAP-09 crypto/auth checks, GAP-10 resource exhaustion). Would you like to:
+> A. Switch to full workflow (`/manifold:m0-init <feature>`)
+> B. Continue with light mode (I understand the risk)"
+
+If the user chooses B, proceed with light mode but note the override in the manifold.
+
+## Execution Instructions
+
+When this command is invoked:
+
+1. Parse feature name and outcome from arguments
+1b. **Run Security Intent Detection** (see above) — check for security keywords before proceeding
+2. Create `.manifold/` directory if needed
+3. Begin interactive quick constrain session:
+   - Ask for 1-3 key constraints
+   - Categorize as invariant/boundary/goal
+   - Skip tension analysis
+4. Generate code and minimal tests
+5. Run verification checks
+6. Create minimal manifold file with `mode: light`
+7. **Run `manifold validate <feature>`** — the light-mode manifold must pass schema validation before displaying results. Fix any errors; do not display the confirmation summary until validation passes.
+8. Display completion summary
+
+### ⚠️ Mandatory Post-Phase Validation
+
+After creating manifold files, you MUST run validation before showing results:
+
+```bash
+manifold validate <feature>
+```
+
+If validation fails, fix the JSON structure before proceeding. The light-mode manifold must conform to the same schema as full-mode manifolds.
+
+## Related Commands
+
+- `/manifold:m0-init` - Full workflow initialization
+- `/manifold:m-status` - Check manifold status (works with light mode)
+- `/manifold:m5-verify` - Full verification (can be run on light mode manifolds)
+
+
+## Interaction Rules (MANDATORY)
+<!-- Satisfies: RT-1 (next-step templates), RT-3 (structured input), U1 (suggest next), U2 (AskUserQuestion) -->
+
+1. **Questions → AskUserQuestion**: When you need user input during this phase, use the `AskUserQuestion` tool with structured options. NEVER ask questions as plain text without options.
+2. **Phase complete → Suggest next**: After completing this phase, ALWAYS include the concrete next command (`/manifold:mN-xxx <feature>`) and a one-line explanation of what the next phase does.
+3. **Trade-offs → Labeled options**: When presenting alternatives, use `AskUserQuestion` with labeled choices (A, B, C) and descriptions.

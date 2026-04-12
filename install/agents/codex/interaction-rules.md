@@ -2,7 +2,7 @@
 # Satisfies: RT-4, U4 (Codex-specific patterns)
 #
 # Extends shared rules with Codex-appropriate interaction patterns.
-# Codex does not have hooks or AskUserQuestion — instruction-only enforcement.
+# Codex supports hooks and custom agents, but interaction enforcement still relies primarily on instructions.
 
 ## Interaction Rules (MANDATORY)
 

@@ -38,6 +38,7 @@ COMMAND_FILES=(
     "m4-generate.md"
     "m5-verify.md"
     "m6-integrate.md"
+    "m-budget.md"
     "m-status.md"
     "m-solve.md"
     "m-quick.md"
@@ -71,9 +72,25 @@ uninstall_native() {
         ((removed++))
     fi
 
+    # Remove worker agents used by model-routed commands
+    local agents_dir="$base_dir/agents"
+    if [[ -d "$agents_dir" ]]; then
+        for agent_file in \
+            "m0-init-worker.md" \
+            "m-status-worker.md" \
+            "m-solve-worker.md" \
+            "m4-generate-worker.md" \
+            "m5-verify-worker.md" \
+            "m6-integrate-worker.md"; do
+            rm -f "$agents_dir/$agent_file"
+        done
+        print_success "Removed worker agent files"
+        ((removed++))
+    fi
+
     # Remove hooks
     local hooks_dir="$base_dir/hooks"
-    for hook_file in "manifold-context.ts" "auto-suggester.ts"; do
+    for hook_file in "manifold-context.ts" "auto-suggester.ts" "prompt-enforcer.ts"; do
         if [[ -f "$hooks_dir/$hook_file" ]]; then
             rm -f "$hooks_dir/$hook_file"
         fi
@@ -186,6 +203,90 @@ uninstall_codex() {
             print_success "Removed $skill_removed Codex skill directories"
             ((removed++))
         fi
+    fi
+
+    # Remove Codex custom agents
+    local agents_dir="$base_dir/agents"
+    if [[ -d "$agents_dir" ]]; then
+        local agent_removed=0
+        for agent_file in "$agents_dir"/manifold-*.toml; do
+            if [[ -f "$agent_file" ]]; then
+                rm -f "$agent_file"
+                ((agent_removed++))
+            fi
+        done
+        if [[ $agent_removed -gt 0 ]]; then
+            print_success "Removed $agent_removed Codex custom agents"
+            ((removed++))
+        fi
+    fi
+
+    # Remove Manifold hook registrations from the global hooks.json
+    local hooks_path="$base_dir/hooks.json"
+    if [[ -f "$hooks_path" ]] && grep -q 'manifold hook' "$hooks_path" 2>/dev/null && command -v python3 >/dev/null 2>&1; then
+        python3 - "$hooks_path" <<'PY'
+import json
+import os
+import sys
+
+path = sys.argv[1]
+
+with open(path, "r", encoding="utf-8") as f:
+    data = json.load(f)
+
+hooks = data.get("hooks", {})
+for event, groups in list(hooks.items()):
+    kept = []
+    for group in groups:
+        group_hooks = group.get("hooks", [])
+        filtered = [hook for hook in group_hooks if "manifold hook" not in hook.get("command", "")]
+        if filtered:
+            next_group = dict(group)
+            next_group["hooks"] = filtered
+            kept.append(next_group)
+    if kept:
+        hooks[event] = kept
+    else:
+        hooks.pop(event, None)
+
+if hooks:
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+        f.write("\n")
+else:
+    os.remove(path)
+PY
+        print_success "Removed Manifold Codex hook registrations"
+        ((removed++))
+    fi
+
+    # Remove installed Codex plugin bundle
+    local plugin_dir="$base_dir/plugins/manifold-codex"
+    if [[ -d "$plugin_dir" ]]; then
+        rm -rf "$plugin_dir"
+        print_success "Removed Codex plugin bundle"
+        ((removed++))
+    fi
+
+    # Remove personal marketplace entry when possible
+    local marketplace_path="$HOME/.agents/plugins/marketplace.json"
+    if [[ -f "$marketplace_path" ]] && command -v python3 >/dev/null 2>&1; then
+        python3 - "$marketplace_path" <<'PY'
+import json
+import sys
+
+path = sys.argv[1]
+with open(path, "r", encoding="utf-8") as f:
+    data = json.load(f)
+
+plugins = data.get("plugins", [])
+data["plugins"] = [plugin for plugin in plugins if plugin.get("name") != "manifold-codex"]
+
+with open(path, "w", encoding="utf-8") as f:
+    json.dump(data, f, indent=2)
+    f.write("\n")
+PY
+        print_success "Removed Codex marketplace entry"
     fi
 
     # Remove parallel library

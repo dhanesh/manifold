@@ -199,6 +199,10 @@ function getCodexManifoldConfig(): Map<string, Map<string, string>> {
   skills.set('custom_skills_path', '"~/.agents/skills"');
   sections.set('skills', skills);
 
+  const features = new Map<string, string>();
+  features.set('codex_hooks', 'true');
+  sections.set('features', features);
+
   return sections;
 }
 

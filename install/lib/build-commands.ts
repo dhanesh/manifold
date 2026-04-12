@@ -6,6 +6,7 @@
  * Translates canonical .md commands (with YAML frontmatter) into:
  * - Gemini CLI: .toml files in install/agents/gemini/commands/
  * - Codex CLI: SKILL.md files in install/agents/codex/skills/manifold-<cmd>/
+ * - Codex plugin: command markdown + bundled skills in plugins/manifold-codex/
  *
  * Claude Code and AMP receive the canonical .md files directly (no translation).
  *
@@ -22,6 +23,7 @@ import { join, basename, parse as parsePath } from 'path';
 interface CommandMeta {
   description: string;
   'argument-hint'?: string;
+  'model-routing'?: string;
 }
 
 interface ParsedCommand {
@@ -71,6 +73,7 @@ function parseCanonicalCommand(filepath: string): ParsedCommand {
     meta: {
       description: meta.description || `Manifold ${commandName} command`,
       'argument-hint': meta['argument-hint'],
+      'model-routing': meta['model-routing'],
     },
     body,
     filename,
@@ -126,12 +129,93 @@ function writeGeminiCommands(commands: ParsedCommand[], outDir: string): number 
 // Codex: Emit SKILL.md skill directories
 // ============================================================
 
+const CODEX_AGENT_MAP: Record<string, { agentName: string; model: string; reasoning: string }> = {
+  'm0-init': {
+    agentName: 'manifold_m0_init_worker',
+    model: 'gpt-5.4-mini',
+    reasoning: 'low',
+  },
+  'm-status': {
+    agentName: 'manifold_m_status_worker',
+    model: 'gpt-5.4-mini',
+    reasoning: 'low',
+  },
+  'm-solve': {
+    agentName: 'manifold_m_solve_worker',
+    model: 'gpt-5.4-mini',
+    reasoning: 'medium',
+  },
+  'm4-generate': {
+    agentName: 'manifold_m4_generate_worker',
+    model: 'gpt-5.4',
+    reasoning: 'high',
+  },
+  'm5-verify': {
+    agentName: 'manifold_m5_verify_worker',
+    model: 'gpt-5.4-mini',
+    reasoning: 'medium',
+  },
+  'm6-integrate': {
+    agentName: 'manifold_m6_integrate_worker',
+    model: 'gpt-5.4-mini',
+    reasoning: 'medium',
+  },
+};
+
+function toCodexAgentName(claudeWorkerName: string): string {
+  return claudeWorkerName
+    .replace(/^manifold:/, 'manifold_')
+    .replace(/-/g, '_');
+}
+
+function rewriteForCodexSkill(cmd: ParsedCommand, content: string): string {
+  const route = CODEX_AGENT_MAP[cmd.commandName];
+  if (!route) return content;
+
+  let rewritten = content;
+  rewritten = rewritten.replace(
+    'Dispatch using the Agent tool.',
+    `Dispatch using the Codex subagent system. Prefer the custom agent \`${route.agentName}\` configured for \`${route.model}\` with \`${route.reasoning}\` reasoning.`,
+  );
+  rewritten = rewritten.replace(
+    /Spawn an Agent with:/g,
+    'Spawn a Codex subagent with:',
+  );
+  rewritten = rewritten.replace(
+    /`subagent_type`:\s*`?"([^"]+)"`?/g,
+    (_match, agentType) => `\`agent\`: \`${toCodexAgentName(agentType)}\``,
+  );
+  rewritten = rewritten.replace(
+    /`model`:\s*`?"([^"]+)"`?/g,
+    `\`model\`: \`${route.model}\`\n   - \`reasoning_effort\`: \`${route.reasoning}\``,
+  );
+  rewritten = rewritten.replace(
+    /Return the agent's result to the user verbatim/g,
+    "Return the subagent's result to the user verbatim",
+  );
+  rewritten = rewritten.replace(
+    /Agent\(/g,
+    'spawn_agent(',
+  );
+  rewritten = rewritten.replace(
+    /subagent_type:\s*"([^"]+)"/g,
+    (_match, agentType) => `agent: "${toCodexAgentName(agentType)}"`,
+  );
+  rewritten = rewritten.replace(
+    /model:\s*"([^"]+)"/g,
+    `model: "${route.model}",\n  reasoning_effort: "${route.reasoning}"`,
+  );
+
+  return rewritten;
+}
+
 function toCodexSkillMd(cmd: ParsedCommand): string {
   // Codex SKILL.md uses name + description metadata at the top,
   // followed by the skill content as markdown instructions
   const name = `manifold-${cmd.commandName}`;
   // Quote description to avoid YAML parsing issues with colons
   const desc = cmd.meta.description.replace(/"/g, '\\"');
+  const body = rewriteForCodexSkill(cmd, cmd.body.trim());
 
   return `---
 name: ${name}
@@ -140,7 +224,7 @@ description: "${desc}"
 
 # /manifold:${cmd.commandName}
 
-${cmd.body.trim()}
+${body}
 `;
 }
 
@@ -161,10 +245,41 @@ function writeCodexSkills(commands: ParsedCommand[], outDir: string): number {
 }
 
 // ============================================================
+// Codex plugin: emit command markdown + bundled skills
+// ============================================================
+
+function toCodexPluginCommand(cmd: ParsedCommand): string {
+  return rewriteForCodexSkill(cmd, cmd.body.trim()) + '\n';
+}
+
+function writeCodexPluginCommands(commands: ParsedCommand[], outDir: string): number {
+  mkdirSync(outDir, { recursive: true });
+  let count = 0;
+  for (const cmd of commands) {
+    if (!cmd.commandName.startsWith('m') && cmd.commandName !== 'parallel') continue;
+
+    const commandMd = toCodexPluginCommand(cmd);
+    writeFileSync(join(outDir, `${cmd.commandName}.md`), commandMd, 'utf-8');
+    count++;
+  }
+  return count;
+}
+
+function writeCodexPluginSkills(commands: ParsedCommand[], outDir: string): number {
+  return writeCodexSkills(commands, outDir);
+}
+
+// ============================================================
 // Verification mode
 // ============================================================
 
-function verifyOutputs(geminiDir: string, codexDir: string, expectedCount: number): boolean {
+function verifyOutputs(
+  geminiDir: string,
+  codexDir: string,
+  codexPluginCommandsDir: string,
+  codexPluginSkillsDir: string,
+  expectedCount: number,
+): boolean {
   let ok = true;
 
   // Check Gemini .toml files
@@ -201,6 +316,34 @@ function verifyOutputs(geminiDir: string, codexDir: string, expectedCount: numbe
     }
   }
 
+  if (!existsSync(codexPluginCommandsDir)) {
+    console.error(`✗ Codex plugin commands directory missing: ${codexPluginCommandsDir}`);
+    ok = false;
+  } else {
+    const commandFiles = readdirSync(codexPluginCommandsDir).filter(f => f.endsWith('.md'));
+    if (commandFiles.length !== expectedCount) {
+      console.error(`✗ Expected ${expectedCount} Codex plugin command files, found ${commandFiles.length}`);
+      ok = false;
+    } else {
+      console.log(`✓ ${commandFiles.length} Codex plugin command files`);
+    }
+  }
+
+  if (!existsSync(codexPluginSkillsDir)) {
+    console.error(`✗ Codex plugin skills directory missing: ${codexPluginSkillsDir}`);
+    ok = false;
+  } else {
+    const skillDirs = readdirSync(codexPluginSkillsDir).filter(d =>
+      existsSync(join(codexPluginSkillsDir, d, 'SKILL.md'))
+    );
+    if (skillDirs.length !== expectedCount) {
+      console.error(`✗ Expected ${expectedCount} Codex plugin skill dirs, found ${skillDirs.length}`);
+      ok = false;
+    } else {
+      console.log(`✓ ${skillDirs.length} Codex plugin skill directories`);
+    }
+  }
+
   return ok;
 }
 
@@ -212,7 +355,9 @@ export function buildCommands(
   sourceDir: string,
   geminiOutDir: string,
   codexOutDir: string,
-): { geminiCount: number; codexCount: number } {
+  codexPluginCommandsDir: string,
+  codexPluginSkillsDir: string,
+): { geminiCount: number; codexCount: number; codexPluginCommandCount: number; codexPluginSkillCount: number } {
   // Read all canonical .md commands
   const mdFiles = readdirSync(sourceDir)
     .filter(f => f.endsWith('.md'))
@@ -226,7 +371,11 @@ export function buildCommands(
   // Generate Codex SKILL.md directories
   const codexCount = writeCodexSkills(commands, codexOutDir);
 
-  return { geminiCount, codexCount };
+  // Generate Codex plugin command markdown + bundled skills
+  const codexPluginCommandCount = writeCodexPluginCommands(commands, codexPluginCommandsDir);
+  const codexPluginSkillCount = writeCodexPluginSkills(commands, codexPluginSkillsDir);
+
+  return { geminiCount, codexCount, codexPluginCommandCount, codexPluginSkillCount };
 }
 
 // CLI entry point
@@ -235,6 +384,8 @@ if (import.meta.main) {
   const sourceDir = join(projectRoot, 'install', 'commands');
   const geminiOutDir = join(projectRoot, 'install', 'agents', 'gemini', 'commands');
   const codexOutDir = join(projectRoot, 'install', 'agents', 'codex', 'skills');
+  const codexPluginCommandsDir = join(projectRoot, 'plugins', 'manifold-codex', 'commands');
+  const codexPluginSkillsDir = join(projectRoot, 'plugins', 'manifold-codex', 'skills');
 
   const isVerify = process.argv.includes('--verify');
 
@@ -248,16 +399,35 @@ if (import.meta.main) {
       })
       .length;
 
-    const ok = verifyOutputs(geminiOutDir, codexOutDir, expectedCount);
+    const ok = verifyOutputs(
+      geminiOutDir,
+      codexOutDir,
+      codexPluginCommandsDir,
+      codexPluginSkillsDir,
+      expectedCount,
+    );
     process.exit(ok ? 0 : 1);
   }
 
   console.log('Building agent-specific command files...');
   console.log(`  Source: ${sourceDir}`);
 
-  const { geminiCount, codexCount } = buildCommands(sourceDir, geminiOutDir, codexOutDir);
+  const {
+    geminiCount,
+    codexCount,
+    codexPluginCommandCount,
+    codexPluginSkillCount,
+  } = buildCommands(
+    sourceDir,
+    geminiOutDir,
+    codexOutDir,
+    codexPluginCommandsDir,
+    codexPluginSkillsDir,
+  );
 
   console.log(`  ✓ Gemini CLI: ${geminiCount} .toml files → ${geminiOutDir}`);
   console.log(`  ✓ Codex CLI:  ${codexCount} SKILL.md dirs → ${codexOutDir}`);
+  console.log(`  ✓ Codex plugin: ${codexPluginCommandCount} commands → ${codexPluginCommandsDir}`);
+  console.log(`  ✓ Codex plugin: ${codexPluginSkillCount} skills → ${codexPluginSkillsDir}`);
   console.log('Done.');
 }

@@ -70,6 +70,10 @@ CONTEXT+="- Evidence Statuses: VERIFIED | PENDING | FAILED | STALE\n\n"
 CONTEXT+="Constraint ID Prefixes: Business=B, Technical=T, UX=U, Security=S, Operational=O\n\n"
 CONTEXT+="CRITICAL: Use ONLY these exact values. Do NOT invent new phases, types, or statuses.\n"
 CONTEXT+="Run /manifold:SCHEMA_REFERENCE for full documentation.\n\n"
+CONTEXT+="Model Routing: Manifold auto-dispatches non-interactive phases to optimal models.\n"
+CONTEXT+="m0-init/m-status -> haiku | m5-verify/m6-integrate/m-solve -> sonnet | m4-generate -> opus\n"
+CONTEXT+="Interactive phases (m1/m2/m3/m-quick) run on your session model.\n"
+CONTEXT+="Run /manifold:m-budget [feature] for token estimates.\n\n"
 CONTEXT+="$(json_escape "$CLI_STATUS")"
 
 cat << HOOKEOF

@@ -1,7 +1,15 @@
 ---
 description: "Surface and resolve constraint conflicts (trade-offs). Identifies direct conflicts, resource tensions, and competing requirements"
 argument-hint: "<feature-name> [--resolve]"
+model-routing: in-context
 ---
+
+## Model Routing
+
+**Recommended model**: opus (TRIZ classification + cascade analysis requires deep reasoning)
+**Interactive**: yes -- this phase asks users to resolve conflicts between competing constraints.
+**Dispatch**: Runs in main conversation context (cannot be dispatched to agent due to resolution Q&A).
+**Token impact**: ~6K input + manifold state, ~4K output. Scales +500 tokens per tension.
 
 # /manifold:m2-tension - Conflict Resolution (Trade-offs)
 

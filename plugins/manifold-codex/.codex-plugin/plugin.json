@@ -1,0 +1,40 @@
+{
+  "name": "manifold-codex",
+  "version": "2.0.0",
+  "description": "Constraint-first development workflows for Codex. Bundles Manifold commands, skills, and hook-aware project guidance.",
+  "author": {
+    "name": "Dhanesh",
+    "url": "https://github.com/dhanesh/manifold"
+  },
+  "homepage": "https://github.com/dhanesh/manifold",
+  "repository": "https://github.com/dhanesh/manifold",
+  "license": "MIT",
+  "keywords": [
+    "constraints",
+    "workflow",
+    "codex",
+    "planning",
+    "verification"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Manifold",
+    "shortDescription": "Constraint-first workflows for Codex",
+    "longDescription": "Manifold for Codex packages command-style workflows, reusable skills, and distribution-friendly plugin scaffolding around the initialize, constrain, tension, anchor, generate, verify, integrate, and parallel phases.",
+    "developerName": "Dhanesh",
+    "category": "Coding",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/dhanesh/manifold",
+    "privacyPolicyURL": "https://github.com/dhanesh/manifold",
+    "termsOfServiceURL": "https://github.com/dhanesh/manifold",
+    "defaultPrompt": [
+      "Use Manifold to initialize a feature and discover its constraints.",
+      "Use Manifold to verify whether generated artifacts satisfy all invariants."
+    ],
+    "brandColor": "#0B6E4F"
+  }
+}

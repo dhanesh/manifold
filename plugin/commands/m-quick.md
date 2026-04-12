@@ -1,7 +1,15 @@
 ---
 description: "Light mode: 3-phase workflow for simple changes. Use instead of full workflow for bug fixes, small features, or quick iterations."
 argument-hint: "<feature-name> --outcome='...'"
+model-routing: in-context
 ---
+
+## Model Routing
+
+**Recommended model**: sonnet (lightweight 3-phase combined workflow)
+**Interactive**: yes -- this phase combines constrain+generate+verify with inline user decisions.
+**Dispatch**: Runs in main conversation context (cannot be dispatched to agent due to inline Q&A).
+**Token impact**: ~3K input, ~5K output. Scales +200 tokens per constraint.
 
 # /manifold:m-quick - Light Mode Workflow
 

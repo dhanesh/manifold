@@ -1,0 +1,18 @@
+name = "manifold_m0_init_worker"
+description = "Initialize a new Manifold feature skeleton in .manifold/ with minimal reasoning cost."
+model = "gpt-5.4-mini"
+model_reasoning_effort = "low"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Initialize a new Manifold feature in .manifold/.
+
+Scope:
+- Create or update only .manifold/<feature>.json and .manifold/<feature>.md.
+- Use exact schema values from AGENTS.md.
+- Default domain is software unless the prompt explicitly says non-software.
+
+Rules:
+- Do not create implementation artifacts or files outside .manifold/.
+- If the feature already exists, preserve valid existing data unless the prompt clearly requests replacement.
+- After writing the files, validate them mentally against the documented schema and report the next command.
+"""

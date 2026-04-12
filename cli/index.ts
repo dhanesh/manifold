@@ -22,6 +22,7 @@ import { registerMigrateCommand } from './commands/migrate.js';
 import { registerShowCommand } from './commands/show.js';
 import { registerCompletionCommand } from './commands/completion.js';
 import { registerHookCommand } from './commands/hook.js';
+import { registerBudgetCommand } from './commands/budget.js';
 import { setColorMode } from './lib/output.js';
 import { configureLogger, startTimer, endTimer, emitTimingSummary, type LogMode } from './lib/logger.js';
 import pkg from './package.json';
@@ -35,6 +36,7 @@ const program = new Command();
 program
   .name('manifold')
   .description('Native CLI for Manifold constraint-first development framework')
+  .enablePositionalOptions()
   .version(VERSION, '-v, --version', 'Output version number')
   .option('--no-color', 'Disable colored output')
   .option('--force-color', 'Force colored output even when not a TTY')
@@ -42,8 +44,12 @@ program
   .option('--quiet', 'Show errors only')
   .option('--json', 'Output structured JSON (machine-readable)')
   .option('--debug', 'Show timing, cache stats, and diagnostic metadata')
-  .hook('preAction', (thisCommand) => {
-    const opts = thisCommand.opts();
+  .hook('preAction', (thisCommand, actionCommand) => {
+    // Merge program-level and subcommand-level opts so --json works
+    // whether passed before or after the subcommand name
+    const programOpts = thisCommand.opts();
+    const subOpts = actionCommand?.opts?.() ?? {};
+    const opts = { ...programOpts, ...subOpts };
 
     // Handle color options (Satisfies: O3)
     if (opts.forceColor) {
@@ -83,6 +89,7 @@ registerMigrateCommand(program);
 registerShowCommand(program);
 registerCompletionCommand(program);
 registerHookCommand(program);
+registerBudgetCommand(program);
 
 // Parse arguments
 program.parse();

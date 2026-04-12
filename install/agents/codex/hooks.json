@@ -1,0 +1,43 @@
+{
+  "description": "Global Manifold hooks for Codex. Uses the manifold CLI hook handlers so no Bun runtime is required in Codex sessions.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "manifold hook context",
+            "statusMessage": "Loading Manifold state",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "manifold hook schema-guard",
+            "statusMessage": "Validating Manifold schema",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "manifold hook prompt-enforcer",
+            "statusMessage": "Applying Manifold interaction rules",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

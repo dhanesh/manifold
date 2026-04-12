@@ -71,8 +71,16 @@ function runAssertion(manifold: any, feature: string, assertion: Assertion): Ass
     }
 
     case 'phase_correct': {
-      const passed = manifold.phase === assertion.expected;
-      return result(passed, passed ? `Phase is ${assertion.expected}` : `Expected phase ${assertion.expected}, got ${manifold.phase}`);
+      // Accept exact match OR a later phase in the workflow progression.
+      // When running a full workflow, the final phase is VERIFIED but earlier
+      // phase assertions should still pass since those phases were completed.
+      const PHASE_ORDER = ['INITIALIZED', 'CONSTRAINED', 'TENSIONED', 'ANCHORED', 'GENERATED', 'VERIFIED'];
+      const expectedIndex = PHASE_ORDER.indexOf(assertion.expected!);
+      const actualIndex = PHASE_ORDER.indexOf(manifold.phase);
+      const passed = actualIndex >= expectedIndex && expectedIndex >= 0;
+      return result(passed, passed
+        ? `Phase is ${manifold.phase} (>= ${assertion.expected})`
+        : `Expected phase >= ${assertion.expected}, got ${manifold.phase}`);
     }
 
     case 'scope_guard': {

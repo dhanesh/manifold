@@ -20,6 +20,11 @@ export interface TestTierPatterns {
   e2e?: string[];           // e.g., ["*.e2e.ts"]
 }
 
+export interface ModelRoutingConfig {
+  context_window?: number;          // user's context window size in tokens (default: 200000)
+  overrides?: Record<string, 'haiku' | 'sonnet' | 'opus'>; // per-phase model override
+}
+
 export interface ManifoldConfig {
   test_runner?: string;           // e.g., "bun test", "pytest", "jest"
   test_args?: string[];           // additional args passed to runner
@@ -27,6 +32,7 @@ export interface ManifoldConfig {
   drift_hooks?: {
     on_drift?: string;            // command to run when drift detected
   };
+  models?: ModelRoutingConfig;    // model routing configuration
 }
 
 // ============================================================
@@ -48,6 +54,10 @@ const ManifoldConfigSchema = z.object({
   }).optional(),
   drift_hooks: z.object({
     on_drift: z.string().optional(),
+  }).optional(),
+  models: z.object({
+    context_window: z.number().optional(),
+    overrides: z.record(z.enum(['haiku', 'sonnet', 'opus'])).optional(),
   }).optional(),
 }).passthrough();
 

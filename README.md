@@ -105,10 +105,10 @@ The installer auto-detects which AI agents you have and installs per-agent:
 
 | Agent | What Gets Installed | Location |
 |-------|-------------------|----------|
-| **Claude Code** | 12 slash commands (`.md`), parallel library, hooks, schema snippet in `CLAUDE.md` | `~/.claude/commands/`, `lib/`, `hooks/` |
-| **AMP** | Same as Claude Code | `~/.amp/commands/`, `lib/`, `hooks/` |
+| **Claude Code** | 12 slash commands (`.md`), worker agents for routed phases, parallel library, hooks, schema snippet in `CLAUDE.md` | `~/.claude/commands/`, `~/.claude/agents/`, `lib/`, `hooks/` |
+| **AMP** | Same as Claude Code | `~/.amp/commands/`, `~/.amp/agents/`, `lib/`, `hooks/` |
 | **Gemini CLI** | Translated `.toml` commands, parallel bundle (`.js`), schema snippet in `GEMINI.md` | `~/.gemini/commands/`, `lib/` |
-| **Codex CLI** | `SKILL.md` skill dirs, hook skills, parallel bundle, schema snippet in `AGENTS.md` | `~/.agents/skills/manifold-*/`, `~/.codex/lib/` |
+| **Codex CLI** | `SKILL.md` skill dirs, global custom agents, global hooks, personal plugin bundle, parallel bundle, schema snippet in `AGENTS.md` | `~/.agents/skills/manifold-*/`, `~/.codex/agents/`, `~/.codex/hooks.json`, `~/.codex/plugins/manifold-codex/`, `~/.codex/lib/` |
 | **CLI binary** | `manifold` binary for your platform (darwin/linux/windows, arm64/x64) | `/usr/local/bin/`, `~/.local/bin/`, or `%LOCALAPPDATA%\manifold\bin\` |
 
 **Specifically, the installer creates:**
@@ -116,6 +116,8 @@ The installer auto-detects which AI agents you have and installs per-agent:
 - `lib/parallel/` -- 12 TypeScript modules + pre-built bundle for git worktree-based parallel execution
 - `hooks/` -- 4 hooks: `manifold-context.ts` (context preservation), `auto-suggester.ts` (parallel suggestions), `manifold-schema-guard.ts` (schema validation), `prompt-enforcer.ts` (phase discipline)
 - `skills/manifold/SKILL.md` -- Overview skill for `/manifold` command
+- `plugins/manifold-codex/` -- Codex plugin bundle with generated `commands/` + `skills/`
+- `.agents/plugins/marketplace.json` -- Repo-local Codex marketplace entry for the bundled plugin
 - Schema snippet appended to your agent's instruction file (CLAUDE.md, GEMINI.md, or AGENTS.md)
 
 The installer is idempotent -- running it again updates existing files without duplication. Run `install.sh --validate` to check what was installed. See [Uninstall](#uninstall) to remove.

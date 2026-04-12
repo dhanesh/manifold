@@ -1,0 +1,40 @@
+{
+  "description": "Plugin-local Manifold hooks for Codex. Mirrors the globally installed Codex hooks and delegates execution to the manifold CLI.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "manifold hook context",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "manifold hook schema-guard",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "manifold hook prompt-enforcer",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

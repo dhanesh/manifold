@@ -1,7 +1,15 @@
 ---
 description: "Backward reasoning from desired outcome. Derives required conditions by asking 'What must be TRUE?'"
 argument-hint: "<feature-name>"
+model-routing: in-context
 ---
+
+## Model Routing
+
+**Recommended model**: opus (recursive backward chaining depth 1-4, Theory of Constraints)
+**Interactive**: yes -- this phase asks users about solution preferences and trade-offs.
+**Dispatch**: Runs in main conversation context (cannot be dispatched to agent due to solution selection Q&A).
+**Token impact**: ~5K input + manifold state, ~5K output. Scales +300 tokens per required truth.
 
 # /manifold:m3-anchor - Outcome Anchoring (Requirements Derivation)
 
@@ -385,10 +393,11 @@ Without context lookup, the AI may:
 8. Generate 2-4 solution options
 9. Recommend best option with rationale
 10. **Update TWO files:**
-   - `.manifold/<feature>.json` — Add required truths to `anchors.required_truths` with id, status, maps_to
-   - `.manifold/<feature>.md` — Add `### RT-1: Title` + statement + gap under `## Required Truths`
-11. Set phase to ANCHORED in JSON
-12. **⚠️ Run `manifold validate <feature>`** — fix any errors before proceeding
+    - `.manifold/<feature>.json` — Add required truths to `anchors.required_truths` with id, status, maps_to
+    - `.manifold/<feature>.md` — Add `### RT-1: Title` + statement + gap under `## Required Truths`
+11. **Record iteration with solution_options** — Append to `"iterations"` array in JSON: `{"phase": "anchor", "timestamp": "<ISO>", "result": "N solution options generated", "solution_options": N, "number": <next>}`. This is MANDATORY — golden tests assert `solution_options` exists.
+12. Set phase to ANCHORED in JSON
+13. **⚠️ Run `manifold validate <feature>`** — fix any errors before proceeding
 
 ### For Legacy YAML Format
 

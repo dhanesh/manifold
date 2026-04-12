@@ -1,0 +1,182 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dhanesh/manifold/main/install/manifold-structure.schema.json",
+  "schema_version": 3,
+  "feature": "payment-retry",
+  "phase": "CONSTRAINED",
+  "domain": "software",
+  "created": "2026-04-08T00:00:00Z",
+  "constraints": {
+    "business": [
+      {
+        "id": "B1",
+        "type": "invariant",
+        "quality": {"specificity": 3, "measurability": 3, "testability": 3},
+        "genealogy": {"source": "regulatory+customer-trust", "challenger": null}
+      },
+      {
+        "id": "B2",
+        "type": "goal",
+        "quality": {"specificity": 3, "measurability": 3, "testability": 3},
+        "genealogy": {"source": "product-goal", "challenger": "B4"}
+      },
+      {
+        "id": "B3",
+        "type": "boundary",
+        "quality": {"specificity": 3, "measurability": 3, "testability": 3},
+        "genealogy": {"source": "payment-network-rules", "challenger": null}
+      },
+      {
+        "id": "B4",
+        "type": "boundary",
+        "quality": {"specificity": 3, "measurability": 3, "testability": 3},
+        "genealogy": {"source": "card-network-rules", "challenger": "B2"}
+      },
+      {
+        "id": "B5",
+        "type": "invariant",
+        "quality": {"specificity": 3, "measurability": 3, "testability": 3},
+        "genealogy": {"source": "compliance", "challenger": null}
+      }
+    ],
+    "technical": [
+      {
+        "id": "T1",
+        "type": "invariant",
+        "quality": {"specificity": 3, "measurability": 2, "testability": 3},
+        "genealogy": {"source": "distributed-systems", "challenger": "T5"}
+      },
+      {
+        "id": "T2",
+        "type": "boundary",
+        "quality": {"specificity": 3, "measurability": 3, "testability": 3},
+        "genealogy": {"source": "distributed-systems-best-practices", "challenger": "U1"}
+      },
+      {
+        "id": "T3",
+        "type": "goal",
+        "quality": {"specificity": 3, "measurability": 3, "testability": 3},
+        "genealogy": {"source": "engineering", "challenger": null}
+      },
+      {
+        "id": "T4",
+        "type": "boundary",
+        "quality": {"specificity": 3, "measurability": 3, "testability": 3},
+        "genealogy": {"source": "payment-processor-sla", "challenger": "T5"}
+      },
+      {
+        "id": "T5",
+        "type": "boundary",
+        "quality": {"specificity": 3, "measurability": 3, "testability": 2},
+        "genealogy": {"source": "capacity-planning", "challenger": "T1"}
+      },
+      {
+        "id": "T6",
+        "type": "invariant",
+        "quality": {"specificity": 3, "measurability": 3, "testability": 3},
+        "genealogy": {"source": "security", "challenger": null}
+      }
+    ],
+    "user_experience": [
+      {
+        "id": "U1",
+        "type": "goal",
+        "quality": {"specificity": 3, "measurability": 3, "testability": 2},
+        "genealogy": {"source": "merchant-feedback", "challenger": "T2"}
+      },
+      {
+        "id": "U2",
+        "type": "boundary",
+        "quality": {"specificity": 3, "measurability": 3, "testability": 3},
+        "genealogy": {"source": "merchant-sla", "challenger": null}
+      },
+      {
+        "id": "U3",
+        "type": "invariant",
+        "quality": {"specificity": 3, "measurability": 2, "testability": 3},
+        "genealogy": {"source": "merchant-trust", "challenger": null}
+      }
+    ],
+    "security": [
+      {
+        "id": "S1",
+        "type": "invariant",
+        "quality": {"specificity": 3, "measurability": 3, "testability": 3},
+        "genealogy": {"source": "owasp-cryptographic-failures", "challenger": null}
+      },
+      {
+        "id": "S2",
+        "type": "boundary",
+        "quality": {"specificity": 3, "measurability": 2, "testability": 3},
+        "genealogy": {"source": "pci-dss", "challenger": null}
+      },
+      {
+        "id": "S3",
+        "type": "invariant",
+        "quality": {"specificity": 3, "measurability": 2, "testability": 3},
+        "genealogy": {"source": "payment-network-rules", "challenger": "T5"}
+      },
+      {
+        "id": "S4",
+        "type": "boundary",
+        "quality": {"specificity": 3, "measurability": 3, "testability": 3},
+        "genealogy": {"source": "rate-limiting", "challenger": "B2"}
+      }
+    ],
+    "operational": [
+      {
+        "id": "O1",
+        "type": "boundary",
+        "quality": {"specificity": 3, "measurability": 2, "testability": 3},
+        "genealogy": {"source": "operational-safety", "challenger": null}
+      },
+      {
+        "id": "O2",
+        "type": "goal",
+        "quality": {"specificity": 3, "measurability": 3, "testability": 2},
+        "genealogy": {"source": "sre-sla", "challenger": null}
+      },
+      {
+        "id": "O3",
+        "type": "boundary",
+        "quality": {"specificity": 2, "measurability": 2, "testability": 2},
+        "genealogy": {"source": "operational-maturity", "challenger": null}
+      },
+      {
+        "id": "O4",
+        "type": "boundary",
+        "quality": {"specificity": 3, "measurability": 3, "testability": 3},
+        "genealogy": {"source": "resilience-engineering", "challenger": "B2"}
+      }
+    ]
+  },
+  "gap_checklist_compliance": [
+    {"gap": "GAP-03", "status": "COMPLETED"},
+    {"gap": "GAP-09", "status": "COMPLETED"},
+    {"gap": "GAP-10", "status": "COMPLETED"},
+    {"gap": "GAP-14", "status": "COMPLETED"}
+  ],
+  "tensions": [],
+  "anchors": {
+    "required_truths": []
+  },
+  "iterations": [
+    {
+      "number": 1,
+      "phase": "constrain",
+      "timestamp": "2026-04-08T00:00:00Z",
+      "result": "22 constraints discovered across 5 categories. 4 GAP checklists completed (GAP-03, GAP-09, GAP-10, GAP-14).",
+      "constraints_added": 22,
+      "by_category": {
+        "business": 5,
+        "technical": 6,
+        "user_experience": 3,
+        "security": 4,
+        "operational": 4
+      },
+      "gap_checklists_run": ["GAP-03", "GAP-09", "GAP-10", "GAP-14"]
+    }
+  ],
+  "convergence": {
+    "status": "NOT_STARTED"
+  }
+}
