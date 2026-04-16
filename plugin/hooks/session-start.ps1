@@ -44,15 +44,31 @@ $manifoldCmd = Get-Command "manifold" -ErrorAction SilentlyContinue
 
 if ($manifoldCmd) {
     $CliVersion = (& manifold --version 2>$null | Select-Object -First 1) -replace "^v", ""
+    $needsUpdate = $false
 
+    # Update if plugin version is ahead
     if ($PluginVersion -and (Compare-Version $PluginVersion $CliVersion)) {
-        # Plugin is newer than CLI - auto-update
+        $needsUpdate = $true
+    }
+
+    # Also update if hooks.json references phase-commons but CLI doesn't have it
+    if (-not $needsUpdate -and $env:CLAUDE_PLUGIN_ROOT) {
+        $hooksJson = Join-Path $env:CLAUDE_PLUGIN_ROOT "hooks" "hooks.json"
+        if ((Test-Path $hooksJson) -and (Select-String -Path $hooksJson -Pattern "phase-commons" -Quiet)) {
+            $phaseCommonsCheck = & manifold hook phase-commons --help 2>$null
+            if ($LASTEXITCODE -ne 0) {
+                $needsUpdate = $true
+            }
+        }
+    }
+
+    if ($needsUpdate) {
         $installScript = Join-Path $env:CLAUDE_PLUGIN_ROOT "bin" "install-cli.ps1"
         if ($env:CLAUDE_PLUGIN_ROOT -and (Test-Path $installScript)) {
             & powershell -ExecutionPolicy Bypass -File $installScript 2>$null | Out-Null
             $CliVersion = (& manifold --version 2>$null | Select-Object -First 1) -replace "^v", ""
             if ($CliVersion) {
-                $CliStatus = "Manifold CLI: $CliVersion (auto-updated from plugin v$PluginVersion)"
+                $CliStatus = "Manifold CLI: $CliVersion (auto-updated)"
             } else {
                 $CliStatus = "Manifold CLI: auto-update failed. Run /manifold:setup to update manually."
             }

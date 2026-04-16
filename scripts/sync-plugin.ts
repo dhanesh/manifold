@@ -59,7 +59,16 @@ for (const file of readdirSync(hooksSrc)) {
   syncFile(join(hooksSrc, file), join(hooksDest, file));
 }
 
-// 3. Parallel bundle: install/lib/parallel/parallel.bundle.js -> plugin/lib/parallel/
+// 3. Bin scripts: install/bin/* -> plugin/bin/
+const binSrc = join(install, "bin");
+const binDest = join(plugin, "bin");
+ensureDir(binDest);
+
+for (const file of readdirSync(binSrc)) {
+  syncFile(join(binSrc, file), join(binDest, file));
+}
+
+// 4. Parallel bundle: install/lib/parallel/parallel.bundle.js -> plugin/lib/parallel/
 syncFile(
   join(install, "lib", "parallel", "parallel.bundle.js"),
   join(plugin, "lib", "parallel", "parallel.bundle.js")

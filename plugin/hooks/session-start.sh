@@ -23,16 +23,31 @@ fi
 
 # Check CLI status and auto-update if needed
 CLI_STATUS=""
+needs_update=0
+
 if command -v manifold &>/dev/null; then
     CLI_VERSION=$(manifold --version 2>/dev/null | head -1 | sed 's/^v//')
 
+    # Update if plugin version is ahead
     if [ -n "$PLUGIN_VERSION" ] && version_gt "$PLUGIN_VERSION" "$CLI_VERSION"; then
-        # Plugin is newer than CLI — auto-update
+        needs_update=1
+    fi
+
+    # Also update if hooks.json references phase-commons but CLI doesn't have it
+    if [ $needs_update -eq 0 ] && [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then
+        if grep -q "phase-commons" "${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json" 2>/dev/null; then
+            if ! manifold hook phase-commons --help >/dev/null 2>&1; then
+                needs_update=1
+            fi
+        fi
+    fi
+
+    if [ $needs_update -eq 1 ]; then
         if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -f "${CLAUDE_PLUGIN_ROOT}/bin/install-cli.sh" ]; then
             bash "${CLAUDE_PLUGIN_ROOT}/bin/install-cli.sh" >/dev/null 2>&1
             CLI_VERSION=$(manifold --version 2>/dev/null | head -1 | sed 's/^v//')
             if [ -n "$CLI_VERSION" ]; then
-                CLI_STATUS="Manifold CLI: ${CLI_VERSION} (auto-updated from plugin v${PLUGIN_VERSION})"
+                CLI_STATUS="Manifold CLI: ${CLI_VERSION} (auto-updated)"
             else
                 CLI_STATUS="Manifold CLI: auto-update failed. Run /manifold:setup to update manually."
             fi
