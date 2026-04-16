@@ -1,0 +1,81 @@
+# Golden-file regression fixture: reduce-context-rot
+#
+# Drives the m0->m5 workflow and asserts the resulting signature matches the
+# recorded golden within tolerance. Bootstrap baseline is the existing verified
+# .manifold/reduce-context-rot.* files (produced by Opus 4.7).
+
+feature: reduce-context-rot
+
+outcome: >
+  Zero context rot and token optimization as a first-class feature across the
+  entire m0-m6 workflow. Every phase reads manifold state from disk, output is
+  maximally visual, and cross-phase information transfer uses file references
+  rather than inline repetition.
+
+# Keywords that MUST appear in the markdown output. These are constraint-level
+# invariants of the fixture — if the model fails to surface them, the run is a
+# regression regardless of other dimensions. Lower-cased substring match.
+must_have_keywords:
+  - "context compaction"
+  - "read from disk"
+  - "400 lines"
+  - "50 lines"
+  - "phase-commons"
+  - "smart delta"
+
+# Dimension-specific tolerance overrides. Keys are dotted paths into the Signature.
+# If a dimension is not listed, it uses the default tolerance defined in compare.ts.
+#
+# Tolerance kinds:
+#   exact       — value must equal golden
+#   range       — numeric, within [min, max]
+#   ratio       — numeric, within golden * [1-r, 1+r]
+#   superset    — set of strings, must include all golden entries
+#   bool_exact  — boolean, must equal golden
+tolerance:
+  # Phase + convergence are contract — any drift is a regression.
+  phase: exact
+  convergence_status: exact
+  schema_version: exact
+  domain: exact
+
+  # Anchor structure is a strong quality signal; require the binding constraint
+  # and recommended option every time.
+  anchors.binding_constraint_present: bool_exact
+  anchors.recommended_option_present: bool_exact
+
+  # Constraint count ratios — Opus may surface ±20% constraints depending on
+  # which sub-tensions it decomposes, but the shape must stay stable.
+  constraints.total: { kind: ratio, r: 0.25 }
+  constraints.by_category.business: { kind: range, min: 1, max: 4 }
+  constraints.by_category.technical: { kind: range, min: 3, max: 8 }
+  constraints.by_category.user_experience: { kind: range, min: 2, max: 5 }
+  constraints.by_category.security: { kind: range, min: 0, max: 3 }
+  constraints.by_category.operational: { kind: range, min: 1, max: 4 }
+
+  # Must have at least one invariant — the feature has safety-critical constraints.
+  constraints.by_type.invariant: { kind: range, min: 2 }
+
+  # Tensions: must find multiple; resolution should be near-total.
+  tensions.total: { kind: range, min: 3, max: 8 }
+  tensions.resolved: { kind: range, min: 3 }
+
+  # Anchors: 6 ± 2 root RTs. At least some recursive decomposition (children).
+  anchors.required_truths_root: { kind: range, min: 4, max: 8 }
+  anchors.required_truths_with_children: { kind: range, min: 2 }
+
+  # Evidence: VERIFIED status must dominate the terminal phase.
+  evidence.by_status.VERIFIED: { kind: range, min: 5 }
+
+  # Generation: full coverage expected post-m5.
+  generation.coverage_pct: { kind: range, min: 90, max: 100 }
+  generation.artifacts_total: { kind: range, min: 6, max: 15 }
+
+  # Iterations: m0-m5 = 5 phase iterations (m0 doesn't record one in current impl).
+  iterations.total: { kind: range, min: 4, max: 6 }
+
+  # Markdown presence is contract.
+  markdown.has_outcome: bool_exact
+  markdown.has_constraints: bool_exact
+  markdown.has_tensions: bool_exact
+  markdown.has_required_truths: bool_exact
