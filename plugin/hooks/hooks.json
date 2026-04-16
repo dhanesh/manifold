@@ -42,6 +42,11 @@
             "type": "command",
             "command": "manifold hook prompt-enforcer",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "manifold hook phase-commons",
+            "timeout": 10
           }
         ]
       }
