@@ -1,0 +1,55 @@
+{
+  "description": "Manifold plugin hooks for context preservation, schema validation, and interaction enforcement. Uses compiled CLI binary for cross-platform support (no Bun/Node runtime required).",
+  "hooks": {
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "manifold hook context",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh\" 2>/dev/null || powershell.exe -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.ps1\" 2>$null",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "manifold hook schema-guard",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "manifold hook prompt-enforcer",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "manifold hook phase-commons",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

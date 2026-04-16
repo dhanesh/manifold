@@ -5,7 +5,7 @@
  * Claude Code's plugin system does not follow symlinks, so plugin/
  * must contain real files. The single source of truth remains install/.
  * This script copies the canonical files into plugin/, preserving any
- * plugin-only files (e.g. setup.md, hooks.json, session-start.sh).
+ * plugin-only files (e.g. setup.md).
  *
  * Usage: bun scripts/sync-plugin.ts
  */
@@ -50,19 +50,14 @@ for (const file of readdirSync(commandsSrc)) {
   }
 }
 
-// 2. Hooks: install/hooks/*.ts -> plugin/hooks/
-syncFile(
-  join(install, "hooks", "manifold-context.ts"),
-  join(plugin, "hooks", "manifold-context.ts")
-);
-syncFile(
-  join(install, "hooks", "prompt-enforcer.ts"),
-  join(plugin, "hooks", "prompt-enforcer.ts")
-);
-syncFile(
-  join(install, "hooks", "manifold-schema-guard.ts"),
-  join(plugin, "hooks", "manifold-schema-guard.ts")
-);
+// 2. Hooks: install/hooks/* -> plugin/hooks/
+const hooksSrc = join(install, "hooks");
+const hooksDest = join(plugin, "hooks");
+ensureDir(hooksDest);
+
+for (const file of readdirSync(hooksSrc)) {
+  syncFile(join(hooksSrc, file), join(hooksDest, file));
+}
 
 // 3. Parallel bundle: install/lib/parallel/parallel.bundle.js -> plugin/lib/parallel/
 syncFile(
