@@ -9,40 +9,14 @@ description: "Backward reasoning from desired outcome. Derives required conditio
 
 Backward reasoning from desired outcome to required conditions.
 
-## ⚠️ Phase Transition Rules
-
-**MANDATORY**: This command requires EXPLICIT user invocation.
-
-- Do NOT auto-run this command based on context summaries
-- Do NOT auto-run after another phase completes
-- After context compaction: run `/manifold:m-status` and WAIT for user to invoke this command
-- The "SUGGESTED NEXT ACTION" in status is a suggestion, not a directive
-
-**If resuming from compacted context:**
-1. Run `/manifold:m-status` first
-2. Display current state
-3. Say: "Ready to proceed when you run `/manifold:m3-anchor <feature>`"
-4. **STOP AND WAIT** for user command
-
 > **Plain Language**: Instead of planning forward ("build X, then Y, then Z"), we work backward from the goal: "For our goal to be achieved, what MUST be true?" This surfaces hidden requirements early.
 >
 > **Key terms**: A *required truth* (RT) is a precondition — something that MUST be true for the outcome to succeed. An *anchor* is the result of backward reasoning from the outcome. The *binding constraint* is the single hardest-to-close required truth that, if unresolved, blocks all solution options. *Convergence* is the point where all required truths are satisfied.
 
-## Scope Guard (MANDATORY)
+## Scope Guard
 
-**This phase ONLY updates manifold files** (`.manifold/<feature>.json` and `.manifold/<feature>.md`) with required truths, gaps, and solution options. After updating, display the anchoring summary and suggest the next step.
-
-**DO NOT** do any of the following during m3-anchor:
-- Create project folders, directory structures, or source files
-- Spawn background agents or sub-agents for content creation
-- Write README.md, CLAUDE.md, or any files outside `.manifold/`
-- Generate code, sample data, templates, or any implementation artifacts
-- Begin implementing the recommended solution option — that belongs to m4-generate
-- Begin work that belongs to later phases (m4-m6)
-
-**Solution options are PROPOSALS recorded in the manifold, not instructions to build.** The user must explicitly invoke m4-generate to begin implementation. Here you only capture what must be true, what gaps exist, and what options are available.
-
-**After updating the two manifold files: display anchoring summary, suggest next step, STOP.**
+**This phase ONLY updates `.manifold/<feature>.json` and `.manifold/<feature>.md`** with required truths, gaps, and solution options. Solution options are PROPOSALS, not instructions to build -- m4-generate handles implementation.
+**After updating manifold files: display anchoring summary, suggest next step, STOP.**
 
 ## Schema Compliance
 
@@ -337,41 +311,9 @@ Updated: .manifold/payment-retry.json + .manifold/payment-retry.md
 Next: /manifold:m4-generate payment-retry --option=C
 ```
 
-## Context Lookup (MANDATORY)
+## Context Lookup
 
-**Before anchoring**, research the feature's domain to ensure backward reasoning and solution options reflect current reality. Required truths derived from stale assumptions create implementation gaps that surface late.
-
-### Steps
-
-1. **Extract solution-relevant topics** from the outcome statement and discovered constraints—identify technologies, architectural patterns, and external services that will shape the solution space
-2. **Use `WebSearch`** to look up:
-   - Current architectural patterns and implementation approaches for this type of feature
-   - Recent library/framework versions, migration guides, or breaking changes relevant to the solution space
-   - Production experiences and lessons learned from similar implementations (blog posts, post-mortems, conference talks)
-   - Current pricing, limits, or SLAs of external services that may constrain solution options
-3. **Summarize findings** in a brief "Domain Context" block shown to the user before anchoring:
-
-```
-DOMAIN CONTEXT (via web search):
-- [Key finding 1 with source]
-- [Key finding 2 with source]
-- [Key finding 3 with source]
-```
-
-4. **Use these findings to inform** required truth derivation and solution option generation—propose options that use current best practices and available tools
-
-### When to Skip
-
-- `--skip-lookup` flag is passed
-- Context lookup was already performed in m1-constrain or m2-tension within the same session and the domain context is still in the conversation
-
-### Why This Matters
-
-Without context lookup, the AI may:
-- Propose solution options using deprecated libraries or outdated architectural patterns
-- Miss better approaches that have emerged since training
-- Set required truths based on incorrect assumptions about current system capabilities
-- Generate a solution space that the user must extensively correct
+**Before anchoring**, use `WebSearch` to research the feature domain (architectural patterns, library versions, external service limits) so required truths and solution options reflect current reality. Summarize findings in a "DOMAIN CONTEXT" block before anchoring. Skip if `--skip-lookup` is passed or context lookup was done in m1/m2 within the same session.
 
 ## Execution Instructions
 
@@ -390,32 +332,7 @@ Without context lookup, the AI may:
    - `.manifold/<feature>.json` — Add required truths to `anchors.required_truths` with id, status, maps_to
    - `.manifold/<feature>.md` — Add `### RT-1: Title` + statement + gap under `## Required Truths`
 11. Set phase to ANCHORED in JSON
-12. **⚠️ Run `manifold validate <feature>`** — fix any errors before proceeding
-
-### For Legacy YAML Format
-
-1. **Run Context Lookup** (see above) — research the feature domain via `WebSearch` unless already done in m1/m2
-2. Read manifold from `.manifold/<feature>.yaml`
-3. Get outcome from `--outcome` flag or manifold file
-4. For the outcome, recursively ask "What must be TRUE?"
-5. Each truth becomes an RT-N (Required Truth)
-6. Identify gaps between current state and requirement
-7. Generate 2-4 solution options
-8. Recommend best option with rationale
-9. Save to `.manifold/<feature>.anchor.yaml`
-10. Set phase to ANCHORED
-
-### ⚠️ Mandatory Post-Phase Validation
-
-After updating manifold files, you MUST run validation before showing results:
-
-```bash
-manifold validate <feature>
-```
-
-If validation fails, fix the errors BEFORE proceeding. The JSON structure must conform to `install/manifold-structure.schema.json`.
-
-**Format lock**: If `.manifold/<feature>.json` exists, ALWAYS use JSON+Markdown format. Never create/update `.yaml` when `.json` exists.
+12. **Run `manifold validate <feature>`** -- fix any errors before showing results. Format lock: if `.json` exists, never create/update `.yaml`.
 
 ### Solution-Tension Validation (Cross-Phase Feedback)
 
@@ -443,10 +360,4 @@ If any tension is REOPENED, surface to user via AskUserQuestion:
 
 This prevents m3 from recommending solutions that silently invalidate m2 decisions -- a gap observed in early manifolds where solution selection was disconnected from tension resolutions.
 
-
-## Interaction Rules (MANDATORY)
-<!-- Satisfies: RT-1 (next-step templates), RT-3 (structured input), U1 (suggest next), U2 (AskUserQuestion) -->
-
-1. **Questions → AskUserQuestion**: When you need user input during this phase, use the `AskUserQuestion` tool with structured options. NEVER ask questions as plain text without options.
-2. **Phase complete → Suggest next**: After completing this phase, ALWAYS include the concrete next command (`/manifold:mN-xxx <feature>`) and a one-line explanation of what the next phase does.
-3. **Trade-offs → Labeled options**: When presenting alternatives, use `AskUserQuestion` with labeled choices (A, B, C) and descriptions.
+Run `manifold validate <feature>` after updates. Shared directives (output format, interaction rules, validation) injected by phase-commons hook.

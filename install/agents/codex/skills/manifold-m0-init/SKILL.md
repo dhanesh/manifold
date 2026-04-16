@@ -254,19 +254,5 @@ When this command is invoked:
 - Include empty category sections with comment placeholders
 - Use heading conventions: `####` for constraints, `###` for tensions/truths
 
-### ⚠️ Mandatory Post-Phase Validation
-
-After creating both files, run validation before showing results:
-
-```bash
-manifold validate <feature>
-```
-
-If validation fails, fix the JSON structure before proceeding. Common issues: missing required fields (`$schema`, `schema_version`), invalid domain value.
-
-## Interaction Rules (MANDATORY)
-<!-- Satisfies: RT-1 (next-step templates), RT-3 (structured input), U1 (suggest next), U2 (AskUserQuestion) -->
-
-1. **Questions → AskUserQuestion**: When you need user input during this phase, use the `AskUserQuestion` tool with structured options. NEVER ask questions as plain text without options.
-2. **Phase complete → Suggest next**: After completing this phase, ALWAYS include the concrete next command (`/manifold:mN-xxx <feature>`) and a one-line explanation of what the next phase does.
+Run `manifold validate <feature>` after creating files. Shared directives (output format, interaction rules, validation) injected by phase-commons hook.
 3. **Trade-offs → Labeled options**: When presenting alternatives, use `AskUserQuestion` with labeled choices (A, B, C) and descriptions.
