@@ -15,10 +15,21 @@ json_escape() {
     printf '%s' "$1" | tr -cd '[:print:]' | sed 's/\\/\\\\/g; s/"/\\"/g'
 }
 
-# Read plugin version from plugin.json (no jq dependency)
+# Read plugin version from manifest (no jq dependency).
+# Prefer spec-compliant .claude-plugin/plugin.json; fall back to legacy root location
+# during the dual-write migration. Both copies are written by sync-plugin.ts and must be
+# byte-identical — if they ever drift, treat the spec-compliant location as authoritative.
 PLUGIN_VERSION=""
-if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -f "${CLAUDE_PLUGIN_ROOT}/plugin.json" ]; then
-    PLUGIN_VERSION=$(grep '"version"' "${CLAUDE_PLUGIN_ROOT}/plugin.json" | sed 's/.*"\([0-9][^"]*\)".*/\1/')
+PLUGIN_MANIFEST=""
+if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then
+    if [ -f "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json" ]; then
+        PLUGIN_MANIFEST="${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json"
+    elif [ -f "${CLAUDE_PLUGIN_ROOT}/plugin.json" ]; then
+        PLUGIN_MANIFEST="${CLAUDE_PLUGIN_ROOT}/plugin.json"
+    fi
+fi
+if [ -n "$PLUGIN_MANIFEST" ]; then
+    PLUGIN_VERSION=$(grep '"version"' "$PLUGIN_MANIFEST" | sed 's/.*"\([0-9][^"]*\)".*/\1/')
 fi
 
 # Check CLI status and auto-update if needed
@@ -33,13 +44,21 @@ if command -v manifold &>/dev/null; then
         needs_update=1
     fi
 
-    # Also update if hooks.json references phase-commons but CLI doesn't have it
-    if [ $needs_update -eq 0 ] && [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then
-        if grep -q "phase-commons" "${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json" 2>/dev/null; then
-            if ! manifold hook phase-commons --help >/dev/null 2>&1; then
+    # Capability check: for every "manifold hook X" command referenced in hooks.json,
+    # verify the installed CLI supports it. Any missing subcommand means the CLI is
+    # older than hooks.json expects — trigger an update. This is robust to new hooks
+    # being added without hardcoding specific capability names (e.g. phase-commons).
+    if [ $needs_update -eq 0 ] && [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -f "${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json" ]; then
+        # Extract unique hook subcommand names. Matches: "command": "manifold hook NAME"
+        required_hooks=$(grep -oE '"manifold[[:space:]]+hook[[:space:]]+[a-zA-Z][a-zA-Z0-9_-]*' \
+            "${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json" 2>/dev/null \
+            | awk '{print $NF}' | sort -u)
+        for hook_name in $required_hooks; do
+            if ! manifold hook "$hook_name" --help >/dev/null 2>&1; then
                 needs_update=1
+                break
             fi
-        fi
+        done
     fi
 
     if [ $needs_update -eq 1 ]; then

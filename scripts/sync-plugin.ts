@@ -80,6 +80,13 @@ syncFile(
   join(plugin, "manifold-structure.schema.json")
 );
 
+// 4b. Manifest: install/plugin.json -> plugin/plugin.json AND plugin/.claude-plugin/plugin.json
+// Dual-write during the expand-migrate-contract migration. Both copies must be identical
+// bytes — session-start reads them to decide whether to trigger a CLI update, and drift
+// would cause spurious or missed upgrades.
+syncFile(join(install, "plugin.json"), join(plugin, "plugin.json"));
+syncFile(join(install, "plugin.json"), join(plugin, ".claude-plugin", "plugin.json"));
+
 // 5. Templates: install/templates/ -> plugin/templates/ (recursive)
 const templatesSrc = join(install, "templates");
 const templatesDest = join(plugin, "templates");

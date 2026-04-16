@@ -15,22 +15,42 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 RELEASES="https://github.com/dhanesh/manifold/releases/download"
-FALLBACK_VERSION="2.21.0"
 
 print_step() { echo -e "${BLUE}>${NC} $1"; }
 print_success() { echo -e "${GREEN}ok${NC} $1"; }
 print_warning() { echo -e "${YELLOW}!${NC} $1"; }
 print_error() { echo -e "${RED}x${NC} $1"; }
 
-get_latest_version() {
-    local version
-    version=$(curl -fsSL "https://api.github.com/repos/dhanesh/manifold/releases/latest" 2>/dev/null \
-        | grep '"tag_name"' | sed -E 's/.*"v?([^"]+)".*/\1/')
-    if [ -z "$version" ]; then
-        echo "$FALLBACK_VERSION"
-    else
-        echo "$version"
+# Read version from the plugin manifest. The plugin ships a specific CLI version it
+# was built against; pinning prevents installing a newer CLI without matching hooks, or
+# a stale CLI missing capabilities hooks.json references. Prefer the spec-compliant
+# .claude-plugin/plugin.json location, fall back to the legacy root during dual-write.
+get_plugin_version() {
+    local manifest=""
+    if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then
+        if [ -f "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json" ]; then
+            manifest="${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json"
+        elif [ -f "${CLAUDE_PLUGIN_ROOT}/plugin.json" ]; then
+            manifest="${CLAUDE_PLUGIN_ROOT}/plugin.json"
+        fi
     fi
+    if [ -n "$manifest" ]; then
+        grep '"version"' "$manifest" | sed 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' | head -1
+    fi
+}
+
+get_latest_version() {
+    curl -fsSL "https://api.github.com/repos/dhanesh/manifold/releases/latest" 2>/dev/null \
+        | grep '"tag_name"' | sed -E 's/.*"v?([^"]+)".*/\1/'
+}
+
+# Priority: plugin manifest, then GitHub latest (for standalone installer without
+# CLAUDE_PLUGIN_ROOT). No stale hardcoded fallback — prefer a clear failure.
+resolve_version() {
+    local v
+    v=$(get_plugin_version)
+    if [ -n "$v" ]; then echo "$v"; return; fi
+    get_latest_version
 }
 
 detect_platform() {
@@ -60,7 +80,12 @@ install_cli() {
     fi
 
     local version
-    version=$(get_latest_version)
+    version=$(resolve_version)
+    if [ -z "$version" ]; then
+        print_error "Could not resolve manifold CLI version (no plugin manifest, no network)."
+        print_warning "Build from source: cd cli && bun run compile"
+        return 1
+    fi
 
     # Windows binaries have .exe suffix
     local binary_name="manifold-${platform}"

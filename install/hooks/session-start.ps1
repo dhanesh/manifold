@@ -31,11 +31,24 @@ function ConvertTo-JsonSafe {
     return $Text
 }
 
-# Read plugin version from plugin.json
+# Read plugin version from manifest. Prefer spec-compliant .claude-plugin/plugin.json;
+# fall back to legacy root location during the dual-write migration.
 $PluginVersion = ""
-if ($env:CLAUDE_PLUGIN_ROOT -and (Test-Path "$env:CLAUDE_PLUGIN_ROOT\plugin.json")) {
-    $pluginJson = Get-Content "$env:CLAUDE_PLUGIN_ROOT\plugin.json" -Raw | ConvertFrom-Json
-    $PluginVersion = $pluginJson.version
+$PluginManifest = $null
+if ($env:CLAUDE_PLUGIN_ROOT) {
+    $candidates = @(
+        (Join-Path $env:CLAUDE_PLUGIN_ROOT ".claude-plugin" "plugin.json"),
+        (Join-Path $env:CLAUDE_PLUGIN_ROOT "plugin.json")
+    )
+    foreach ($path in $candidates) {
+        if (Test-Path $path) { $PluginManifest = $path; break }
+    }
+}
+if ($PluginManifest) {
+    try {
+        $pluginJson = Get-Content $PluginManifest -Raw | ConvertFrom-Json
+        $PluginVersion = $pluginJson.version
+    } catch {}
 }
 
 # Check CLI status and auto-update if needed
@@ -51,13 +64,27 @@ if ($manifoldCmd) {
         $needsUpdate = $true
     }
 
-    # Also update if hooks.json references phase-commons but CLI doesn't have it
+    # Capability check: for every "manifold hook X" command referenced in hooks.json,
+    # verify the installed CLI supports it. Any missing subcommand means the CLI is
+    # older than hooks.json expects — trigger an update. Robust to new hooks being
+    # added without hardcoding specific capability names (e.g. phase-commons).
     if (-not $needsUpdate -and $env:CLAUDE_PLUGIN_ROOT) {
         $hooksJson = Join-Path $env:CLAUDE_PLUGIN_ROOT "hooks" "hooks.json"
-        if ((Test-Path $hooksJson) -and (Select-String -Path $hooksJson -Pattern "phase-commons" -Quiet)) {
-            $phaseCommonsCheck = & manifold hook phase-commons --help 2>$null
-            if ($LASTEXITCODE -ne 0) {
-                $needsUpdate = $true
+        if (Test-Path $hooksJson) {
+            $hookMatches = Select-String -Path $hooksJson -Pattern '"manifold\s+hook\s+([a-zA-Z][a-zA-Z0-9_-]*)' -AllMatches
+            $requiredHooks = @()
+            foreach ($line in $hookMatches) {
+                foreach ($m in $line.Matches) {
+                    $requiredHooks += $m.Groups[1].Value
+                }
+            }
+            $requiredHooks = $requiredHooks | Select-Object -Unique
+            foreach ($hookName in $requiredHooks) {
+                & manifold hook $hookName --help 2>$null | Out-Null
+                if ($LASTEXITCODE -ne 0) {
+                    $needsUpdate = $true
+                    break
+                }
             }
         }
     }

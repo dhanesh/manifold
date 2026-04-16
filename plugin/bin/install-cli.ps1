@@ -14,12 +14,30 @@ param(
 $ErrorActionPreference = "Stop"
 
 $Releases = "https://github.com/dhanesh/manifold/releases/download"
-$FallbackVersion = "2.28.4"
 
 function Write-Step { param([string]$Msg) Write-Host "> " -ForegroundColor Blue -NoNewline; Write-Host $Msg }
 function Write-Ok { param([string]$Msg) Write-Host "ok " -ForegroundColor Green -NoNewline; Write-Host $Msg }
 function Write-Warn { param([string]$Msg) Write-Host "! " -ForegroundColor Yellow -NoNewline; Write-Host $Msg }
 function Write-Err { param([string]$Msg) Write-Host "x " -ForegroundColor Red -NoNewline; Write-Host $Msg }
+
+# Read version from plugin manifest. Prefer spec-compliant .claude-plugin/plugin.json,
+# fall back to legacy root during dual-write migration.
+function Get-PluginVersion {
+    if (-not $env:CLAUDE_PLUGIN_ROOT) { return $null }
+    $candidates = @(
+        (Join-Path $env:CLAUDE_PLUGIN_ROOT ".claude-plugin" "plugin.json"),
+        (Join-Path $env:CLAUDE_PLUGIN_ROOT "plugin.json")
+    )
+    foreach ($path in $candidates) {
+        if (Test-Path $path) {
+            try {
+                $json = Get-Content $path -Raw | ConvertFrom-Json
+                if ($json.version) { return $json.version }
+            } catch {}
+        }
+    }
+    return $null
+}
 
 function Get-LatestVersion {
     try {
@@ -27,7 +45,15 @@ function Get-LatestVersion {
         $version = $response.tag_name -replace "^v", ""
         if ($version) { return $version }
     } catch {}
-    return $FallbackVersion
+    return $null
+}
+
+# Priority: plugin manifest, then GitHub latest (for standalone installer). No stale
+# hardcoded fallback — prefer a clear failure.
+function Resolve-Version {
+    $v = Get-PluginVersion
+    if ($v) { return $v }
+    return Get-LatestVersion
 }
 
 function Get-Platform {
@@ -53,7 +79,12 @@ function Install-ManifoldCli {
         return $false
     }
 
-    $version = Get-LatestVersion
+    $version = Resolve-Version
+    if (-not $version) {
+        Write-Err "Could not resolve manifold CLI version (no plugin manifest, no network)."
+        Write-Warn "Build from source: cd cli && bun run compile"
+        return $false
+    }
     $binaryName = "manifold-${Platform}.exe"
     $downloadUrl = "${Releases}/v${version}/${binaryName}"
     $destPath = Join-Path $Dir "manifold.exe"
