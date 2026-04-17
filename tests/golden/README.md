@@ -146,9 +146,28 @@ Partial m0→m2 run against `reduce-context-rot` (m3 blocked by Anthropic 5-hour
 
 **Non-determinism observation.** Across earlier harness runs, `/manifold:m1-constrain` was non-deterministic in headless mode: most runs wrote constraints to disk; at least one narrated the discovery without writing. The post-condition check exists specifically to surface this without inflating cost by cascading through the remaining phases.
 
-**m4 fixture-scope finding (`pilot/validation-run-1-resumed.json`).** After the rate limit reset, resuming m3→m5 exposed a second headless-mode quirk: when m4 is invoked on a *meta* feature like `reduce-context-rot` (whose real implementation target is the manifold repo itself, not the sandbox), m4's scope-guard rule kicks in and asks "prototype here, spec-only, or point me at the real repo?" — then stops, because there is no interactive human to answer. Post-condition flags this as FAIL at m4 with phase still ANCHORED; no cascade. The harness works as designed; the fixture simply asks a non-sandboxable question. A non-meta fixture (e.g. a future `payment-retry` regression) should progress through m4 cleanly. Combined cost of the two-part run was $4.92 for m0→ANCHORED + m4 scope probe.
+**Harness-mode override (fix for interactive-only skill behavior).** The initial run stalled at m4 because skills use `AskUserQuestion` to clarify scope, pick between solution options, and acknowledge ONE_WAY steps — behavior that is correct in interactive use but silently dead-ends in `claude -p`. The harness now passes two flags to every subprocess:
 
-**Golden calibration is deferred** until a full m0→m5 run completes on a non-meta fixture.
+- `--disallowedTools AskUserQuestion` — the tool call fails outright, so the model cannot wait on input.
+- `--append-system-prompt HARNESS_SYSTEM_APPEND` — explicit directive to auto-select Recommended options, assume the sandbox IS the target, acknowledge ONE_WAY steps, and always write the manifold to disk. The auto-selection is recorded in the phase's `result` string for later review.
+
+This override only applies inside harness subprocesses; it does not change skill behavior anywhere else.
+
+**Full-run pilot (`pilot/validation-run-1*.json`).** After the override was added, the full m0→m5 pipeline completed cleanly on `reduce-context-rot`:
+
+| Phase | Cost | Turns | Duration | Outcome |
+|-------|------|-------|----------|---------|
+| m0 | $0.34 | 6 | 43s | INITIALIZED |
+| m1 | $0.69 | 9 | 149s | CONSTRAINED (16 constraints) |
+| m2 | $1.67 | 22 | 345s | TENSIONED (6 tensions, all resolved) |
+| m3 | $1.68 | 20 | 304s | ANCHORED (9 required truths) |
+| m4 | $2.90 | 34 | 456s | GENERATED (22 artifacts) |
+| m5 | $1.04 | 15 | 214s | **VERIFIED** (94% coverage) |
+| **Total** | **$8.32** | **106** | **25.2 min** | ✅ |
+
+The signature diverged from the hand-curated golden in expected ways — 22 artifacts vs the golden's 8–15 band, 14 RTs vs 4–8, missing domain-specific keywords like "context compaction" that reflect a human author's phrasing. These diffs are the raw material for golden-calibration: tolerance bands need to either widen to admit fresh regenerations or the golden should be re-bootstrapped from a canonical regenerated run.
+
+**Next step for Phase 2:** bootstrap a regeneration-native golden, then run 2 more full regenerations to measure per-dimension variance and tighten tolerances back down.
 
 ### Rate limits
 
