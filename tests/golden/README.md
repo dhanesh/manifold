@@ -146,7 +146,9 @@ Partial m0→m2 run against `reduce-context-rot` (m3 blocked by Anthropic 5-hour
 
 **Non-determinism observation.** Across earlier harness runs, `/manifold:m1-constrain` was non-deterministic in headless mode: most runs wrote constraints to disk; at least one narrated the discovery without writing. The post-condition check exists specifically to surface this without inflating cost by cascading through the remaining phases.
 
-**Golden calibration is deferred** until a full m0→m5 run completes. Once rate limits allow, resume via `--sandbox <dir>` to preserve the $2+ of m0-m2 work.
+**m4 fixture-scope finding (`pilot/validation-run-1-resumed.json`).** After the rate limit reset, resuming m3→m5 exposed a second headless-mode quirk: when m4 is invoked on a *meta* feature like `reduce-context-rot` (whose real implementation target is the manifold repo itself, not the sandbox), m4's scope-guard rule kicks in and asks "prototype here, spec-only, or point me at the real repo?" — then stops, because there is no interactive human to answer. Post-condition flags this as FAIL at m4 with phase still ANCHORED; no cascade. The harness works as designed; the fixture simply asks a non-sandboxable question. A non-meta fixture (e.g. a future `payment-retry` regression) should progress through m4 cleanly. Combined cost of the two-part run was $4.92 for m0→ANCHORED + m4 scope probe.
+
+**Golden calibration is deferred** until a full m0→m5 run completes on a non-meta fixture.
 
 ### Rate limits
 
