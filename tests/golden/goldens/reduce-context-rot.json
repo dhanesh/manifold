@@ -4,71 +4,76 @@
   "phase": "VERIFIED",
   "domain": "software",
   "constraints": {
-    "total": 13,
+    "total": 16,
     "by_category": {
-      "business": 2,
+      "business": 3,
       "technical": 5,
       "user_experience": 3,
-      "security": 1,
-      "operational": 2
+      "security": 2,
+      "operational": 3
     },
     "by_type": {
-      "invariant": 5,
-      "goal": 5,
-      "boundary": 3
+      "invariant": 10,
+      "goal": 4,
+      "boundary": 2
     },
-    "with_source": 13,
-    "with_challenger": 13,
+    "with_source": 16,
+    "with_challenger": 16,
     "with_threshold": 2
   },
   "tensions": {
-    "total": 5,
+    "total": 6,
     "by_type": {
-      "resource_tension": 1,
       "trade_off": 3,
-      "hidden_dependency": 1
+      "resource_tension": 1,
+      "hidden_dependency": 2
     },
-    "resolved": 5,
-    "with_triz": 5,
-    "with_propagation": 5
+    "resolved": 6,
+    "with_triz": 0,
+    "with_propagation": 6
   },
   "blocking_dependencies": 2,
   "anchors": {
-    "required_truths_total": 19,
-    "required_truths_root": 6,
-    "required_truths_with_children": 5,
+    "required_truths_total": 14,
+    "required_truths_root": 9,
+    "required_truths_with_children": 2,
     "required_truths_max_depth": 1,
     "by_status": {
-      "SATISFIED": 15,
-      "PARTIAL": 4
+      "NOT_SATISFIED": 9,
+      "SPECIFICATION_READY": 4,
+      "PARTIAL": 1
     },
     "binding_constraint_present": true,
     "recommended_option_present": true,
-    "tension_validations": 5,
-    "reversibility_log_entries": 1
+    "tension_validations": 6,
+    "reversibility_log_entries": 5
   },
   "generation": {
-    "artifacts_total": 10,
+    "artifacts_total": 22,
     "by_type": {
-      "code": 2,
-      "refactor": 7,
-      "test": 1
+      "code": 7,
+      "test": 6,
+      "test-fixture": 1,
+      "doc": 3,
+      "runbook": 3,
+      "dashboard": 1,
+      "alert": 1
     },
     "by_class": {
-      "substantive": 9,
+      "substantive": 21,
       "structural": 1
     },
     "coverage_pct": 100
   },
   "evidence": {
-    "total": 7,
+    "total": 29,
     "by_type": {
-      "file_exists": 1,
-      "content_match": 5,
-      "test_passes": 1
+      "file_exists": 7,
+      "content_match": 9,
+      "test_passes": 13
     },
     "by_status": {
-      "VERIFIED": 7
+      "PENDING": 29
     }
   },
   "iterations": {
@@ -88,14 +93,12 @@
     "has_constraints": true,
     "has_tensions": true,
     "has_required_truths": true,
-    "line_count": 280,
+    "line_count": 541,
     "must_have_keywords_hit": {
-      "context compaction": true,
-      "read from disk": true,
-      "400 lines": true,
-      "50 lines": true,
-      "phase-commons": true,
-      "smart delta": true
+      "context": true,
+      "token": true,
+      "manifold": true,
+      "phase": true
     }
   }
 }

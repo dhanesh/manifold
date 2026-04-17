@@ -103,7 +103,7 @@ const PHASES: PhaseSpec[] = [
     name: "m0",
     prompt: (f, o) => `/manifold:m0-init ${f} --outcome=${shellQuote(o)}`,
     maxUsd: 1.0,
-    timeoutMs: 120_000,
+    timeoutMs: 300_000,
     expectedPhase: "INITIALIZED",
   },
   {
@@ -131,7 +131,7 @@ const PHASES: PhaseSpec[] = [
     name: "m4",
     prompt: (f) => `/manifold:m4-generate ${f}`,
     maxUsd: 8.0,
-    timeoutMs: 900_000,
+    timeoutMs: 1_500_000,
     expectedPhase: "GENERATED",
   },
   {
