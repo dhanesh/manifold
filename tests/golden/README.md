@@ -87,43 +87,94 @@ bun tests/golden/bootstrap.ts <feature>
 
 Review the git diff on the JSON before committing — large jumps in counts are a signal to double-check the change was intentional.
 
-## Phase 2 — claude -p subprocess harness (planned)
+## Phase 2 — claude -p subprocess harness (implemented)
 
-Phase 1 catches regressions from *hand edits* to a verified manifold. It does **not** yet catch regressions from changes to the skill prompts themselves — because it compares the current on-disk manifold to golden, not a freshly-regenerated one.
+Phase 1 catches regressions from *hand edits* to a verified manifold. It does **not** catch regressions from changes to the skill prompts themselves — because it compares the current on-disk manifold to golden, not a freshly-regenerated one.
 
-Phase 2 closes that gap by regenerating the manifold from scratch before comparing:
+Phase 2 closes that gap by regenerating the manifold from scratch via `claude -p` subprocesses, then comparing:
 
 ```
 for phase in m0 m1 m2 m3 m4 m5:
-    claude -p --dangerously-skip-permissions \
+    claude -p --plugin-dir=<repo>/plugin \
             --output-format json \
-            "/manifold:{phase} <feature> [args from fixture]"
+            --dangerously-skip-permissions \
+            --no-session-persistence \
+            --max-budget-usd <cap> \
+            "/manifold:{phase} <feature> [args]"
 then: extractSignature → compareSignatures → golden
+```
+
+### Usage
+
+```bash
+# Full m0→m5 run (~$5–10, ~10–15 min)
+bun tests/golden/harness.ts reduce-context-rot --budget 25 --out run-1.json
+
+# Single-phase diagnostic
+bun tests/golden/harness.ts reduce-context-rot --phases m0 --budget 2
+
+# Resume a partial run (picks up where a previous run stopped — preserves cost)
+bun tests/golden/harness.ts reduce-context-rot \
+    --sandbox /var/folders/.../manifold-harness-abc \
+    --phases m3,m4,m5 --budget 20 --out run-1-resumed.json
 ```
 
 ### Harness design
 
-- `tests/golden/harness.ts` — runs the full m0→m5 sequence in a sandboxed temp directory
-- Sandboxing: `cp -R` the minimum required files (skill definitions, schema, CLI binary) into a `mktemp -d` dir; set `cwd` to it; run each phase as a subprocess
-- Output format: `--output-format json` so we can parse status/cost/duration per phase
-- Budget: estimated ~$5 and ~45 min for 3 pilot runs of `reduce-context-rot`
+- `tests/golden/harness.ts` — runs the m0→m5 sequence in a sandboxed temp dir
+- Sandbox: `mktemp -d` + `git init`; the `plugin/` directory is loaded via `--plugin-dir` (no copying)
+- Per-phase cost caps in `PHASES[]` provide a hard ceiling even if something loops
+- `--skip-lookup` on m1/m2/m3 suppresses web-search cost and variance
+- `--no-session-persistence` ensures each phase reads state from `.manifold/` on disk (the whole point)
+- Model pinned to `claude-opus-4-7`
 
-### Pilot plan
+### Post-condition check (silent-failure guard)
 
-1. Run 3 full regenerations of `reduce-context-rot` back-to-back
-2. Extract signatures from each
-3. Compute per-dimension variance across runs
-4. Calibrate tolerance bands: tighten dimensions that are stable, loosen ones that drift
-5. Commit calibrated tolerance back into the fixture
+A subprocess can exit cleanly while the model merely *narrates* the phase work without writing the manifold. Without a check, this cascades: m1 "succeeds" with no constraints, m2 "succeeds" with no tensions, etc., and the whole run looks green at the subprocess level while producing useless state.
+
+After each subprocess, the harness re-reads `.manifold/<feature>.json` and fails the phase if `phase` didn't advance to `expectedPhase`. This turns silent no-ops into loud FAILs at the originating phase. The per-phase `PhaseResult` records both `observed_phase` and `phase_advanced` so the run log captures the discrepancy.
+
+### Pilot findings (`pilot/validation-run-1.json`)
+
+Partial m0→m2 run against `reduce-context-rot` (m3 blocked by Anthropic 5-hour usage cap):
+
+- **m0** ok, $0.34, 6 turns — phase INITIALIZED
+- **m1** ok, $0.69, 9 turns — phase CONSTRAINED (16 constraints)
+- **m2** ok, $1.67, 22 turns — phase TENSIONED (6 tensions, all resolved)
+- **m3** FAIL, $0, 1 turn — rate-limited before any work
+- Total: $2.69, 9.4 min
+
+**Non-determinism observation.** Across earlier harness runs, `/manifold:m1-constrain` was non-deterministic in headless mode: most runs wrote constraints to disk; at least one narrated the discovery without writing. The post-condition check exists specifically to surface this without inflating cost by cascading through the remaining phases.
+
+**Golden calibration is deferred** until a full m0→m5 run completes. Once rate limits allow, resume via `--sandbox <dir>` to preserve the $2+ of m0-m2 work.
+
+### Rate limits
+
+Cost caps (`--max-budget-usd`, `--budget`) guard against runaway per-request spend. They are orthogonal to the Anthropic 5-hour rolling usage cap, which causes clean `claude -p` subprocess exits with a human-readable "You've hit your limit" message. The harness treats this as a phase FAIL (cost_usd=0, num_turns=1); the `--sandbox` flag then lets the same sandbox be reused after the cap resets.
 
 ### Why not run the harness in CI yet
 
 - Cost per run is non-trivial; running on every PR is wasteful
-- Non-determinism needs calibration first; otherwise we get flaky failures
+- Non-determinism (m1 behavior above) needs calibration first; otherwise we get flaky failures
 - Plan: gate behind a `--regenerate` flag, run nightly or on skill-file changes only
+
+## Skill-text fingerprint sentinel (free)
+
+Orthogonal to the subprocess harness: a SHA-256 hash of each `install/commands/*.md`. This runs in <10ms as a bun test, has zero API cost, and catches unintentional edits between commits.
+
+```bash
+# Regenerate fingerprints after an INTENTIONAL skill edit
+bun tests/golden/bootstrap-fingerprints.ts
+
+# Check — this is what CI/bun test runs
+bun test tests/golden/fingerprint.test.ts
+```
+
+Three assertions: no skill added without fingerprinting, no skill removed without updating fingerprints, and each skill's current content hash matches the recorded baseline. Failure mode tells the committer exactly which command to run to accept the change.
 
 ## Known limitations
 
 - **Structural only.** If a skill regresses in *quality of statements* but preserves counts, Phase 1 won't catch it. Must-have keywords partially mitigate this but are coarse.
 - **Single fixture today.** `reduce-context-rot` is the pilot. More fixtures needed for coverage breadth (auth, crud, payment, pm/feature-launch).
 - **Golden assumes the *current* manifold is correct.** Bootstrap from a verified, reviewed manifold — don't snapshot a freshly-generated one without review.
+- **Phase 2 golden not yet calibrated.** A full m0→m5 regeneration is needed before the fixture's tolerance bands can be tuned to real per-dimension variance.
