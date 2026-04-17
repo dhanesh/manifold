@@ -36,6 +36,50 @@ const pluginDir = join(repoRoot, "plugin");
 const fixturesDir = join(repoRoot, "tests/golden/fixtures");
 const goldenDir = join(repoRoot, "tests/golden/goldens");
 
+/**
+ * Harness-mode override injected into every phase as --append-system-prompt.
+ *
+ * Skills routinely invoke AskUserQuestion to clarify scope, pick between
+ * solution options, or acknowledge ONE_WAY steps. That is the correct
+ * interactive behavior, but in `claude -p` mode there is no human to
+ * answer — so the subprocess either stalls or exits silently without
+ * writing. Combined with `--disallowedTools AskUserQuestion`, this
+ * override forces the model to auto-select and continue, so the regression
+ * harness can actually exercise downstream phases. The original skill
+ * behavior is untouched; this only applies inside the subprocess.
+ */
+const HARNESS_SYSTEM_APPEND = `
+HARNESS MODE — non-interactive regression run.
+
+There is NO human in this session. AskUserQuestion is disabled. You MUST NOT
+halt to request clarification. Apply these rules to any decision a skill
+would normally delegate to the user:
+
+1. If a skill presents labeled options (A/B/C, 1/2/3, etc.) and one is
+   marked "Recommended" or "Recommendation:" in the analysis, pick that
+   option. If none is recommended, pick the first option.
+
+2. If a skill asks for scope clarification (e.g. m4-generate detecting an
+   ambiguous target directory, or asking whether to prototype-in-sandbox
+   vs. target a real repo), assume the current working directory IS the
+   target. Generate artifacts in-place.
+
+3. If a skill asks to acknowledge ONE_WAY / irreversible steps, acknowledge
+   them — this is an isolated sandbox; nothing here is production state.
+
+4. If a skill asks to confirm an assumption (source: assumption), confirm
+   it. The goal is to exercise the full phase pipeline, not to litigate
+   individual assumptions.
+
+5. Document every auto-decision in your final output with a line like:
+   "HARNESS AUTO-SELECTED: <what you chose and why>"
+   so the golden diff reflects the choice.
+
+6. Always advance the manifold's phase field by writing \`.manifold/<feature>.json\`
+   and \`.manifold/<feature>.md\` on disk. Narrating the work without writing
+   it fails the regression check.
+`.trim();
+
 interface FixtureSpec {
   feature: string;
   outcome: string;
@@ -145,6 +189,8 @@ async function runPhase(
     "--no-session-persistence",
     "--max-budget-usd", String(spec.maxUsd),
     "--model", "claude-opus-4-7",
+    "--disallowedTools", "AskUserQuestion",
+    "--append-system-prompt", HARNESS_SYSTEM_APPEND,
   ];
 
   const started = Date.now();
