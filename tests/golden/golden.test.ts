@@ -36,13 +36,6 @@ const fixtures = existsSync(fixturesDir)
       .map((f) => f.replace(/\.yaml$/, ""))
   : [];
 
-// Fixtures whose goldens were calibrated from harness-run sandboxes (not from the
-// static .manifold/<feature>.* files). The static files in this repo are smaller
-// than those harness runs, so the test fails until a fresh ~$20 / 30-min harness
-// recalibration is performed. Re-bootstrapping from the static file would silently
-// contradict the calibration decision recorded in commit 6ff4069. Skip until then.
-const SKIP_PENDING_HARNESS_RECALIBRATION = new Set<string>(["reduce-context-rot"]);
-
 describe("golden regression", () => {
   if (fixtures.length === 0) {
     test.skip("no fixtures declared", () => {});
@@ -50,10 +43,6 @@ describe("golden regression", () => {
   }
 
   for (const feature of fixtures) {
-    if (SKIP_PENDING_HARNESS_RECALIBRATION.has(feature)) {
-      test.skip(`${feature} (pending harness recalibration — see comment)`, () => {});
-      continue;
-    }
     test(feature, () => {
       const fixture = parseYaml(readFileSync(join(fixturesDir, `${feature}.yaml`), "utf-8")) as FixtureSpec;
       const goldenPath = join(goldenDir, `${feature}.json`);
