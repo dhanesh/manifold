@@ -5,6 +5,19 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.31.0](https://github.com/dhanesh/manifold/compare/v2.30.2...v2.31.0) (2026-04-18)
+
+### Features
+
+* add phase-commons hook and reduce context rot across all phases ([ea96ec5](https://github.com/dhanesh/manifold/commit/ea96ec561330b4f9a5825580aabb50ee6752b3fe))
+* **schema:** non-software domain branch + prompt-eval polish (closes prompt-eval-fixes-v2) ([f36ecd6](https://github.com/dhanesh/manifold/commit/f36ecd6188233b806a876ce70b9c2d7c9bbb7fb7))
+
+### Bug Fixes
+
+* auto-update cli binary when hooks.json references unsupported commands ([9bb0108](https://github.com/dhanesh/manifold/commit/9bb0108b3604221da8384ae3a4a09cc06f2819b1))
+* make hooks.json canonical in install/ and sync to plugin/ ([0fccd91](https://github.com/dhanesh/manifold/commit/0fccd9143bbeb430c0cecc3a3fb8ab560fcda44f))
+* pin cli version to plugin manifest and dual-write manifest ([31a9d3a](https://github.com/dhanesh/manifold/commit/31a9d3aece683c0bea9ac3693c3557cfdb9fd9a3))
+
 ## [2.30.2](https://github.com/dhanesh/manifold/compare/v2.30.1...v2.30.2) (2026-04-08)
 
 ### Bug Fixes
