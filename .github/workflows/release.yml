@@ -154,17 +154,30 @@ jobs:
           bun build ./index.ts --compile --target=${{ matrix.target }} --outfile ./dist/${{ matrix.outfile }}
           ls -lh dist/${{ matrix.outfile }}
 
-      # Ad-hoc sign darwin Mach-O outputs. The signature is what the arm64
-      # kernel checks on launch; a missing signature is the root cause of
-      # exit 137 crashes. Asserting `Signature=adhoc` afterwards turns any
-      # future regression (Bun, runner image, codesign) into a CI failure
-      # instead of a silent, user-facing install-time crash.
-      - name: Ad-hoc sign Mach-O and verify signature
+      # Ensure darwin Mach-O outputs carry an ad-hoc signature — the macOS
+      # arm64 kernel SIGKILLs unsigned binaries at exec, so a missing
+      # signature is the root cause of the v2.31.0 exit-137 crashes.
+      #
+      # On macos-latest Bun's native compile already embeds an ad-hoc
+      # "linker-signed" signature (flags=0x20002), which `codesign --sign -`
+      # refuses to replace ("invalid or unsupported format for signature"
+      # on --force). We therefore only invoke codesign when no signature is
+      # present — e.g. if a future cross-compile path or Bun regression
+      # drops it. The final assertion guarantees both paths converge on an
+      # ad-hoc signature.
+      - name: Ensure ad-hoc signature on Mach-O and verify
         if: matrix.sign
         working-directory: cli
         run: |
-          codesign --sign - --force --timestamp=none ./dist/${{ matrix.outfile }}
-          codesign -dv ./dist/${{ matrix.outfile }} 2>&1 | tee /tmp/codesign.out
+          set -euo pipefail
+          BIN="./dist/${{ matrix.outfile }}"
+          if codesign -dv "$BIN" 2>&1 | tee /tmp/codesign-pre.out | grep -q "Signature=adhoc"; then
+            echo "Toolchain already applied ad-hoc signature; skipping explicit codesign."
+          else
+            echo "No toolchain signature detected; applying ad-hoc signature."
+            codesign --sign - --force --timestamp=none "$BIN"
+          fi
+          codesign -dv "$BIN" 2>&1 | tee /tmp/codesign.out
           if ! grep -q "Signature=adhoc" /tmp/codesign.out; then
             echo "::error::Expected ad-hoc signature on ${{ matrix.outfile }}, found none."
             exit 1
