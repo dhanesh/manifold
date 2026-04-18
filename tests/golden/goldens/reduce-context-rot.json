@@ -1,0 +1,99 @@
+{
+  "schema_version": 3,
+  "feature": "reduce-context-rot",
+  "phase": "VERIFIED",
+  "domain": "software",
+  "constraints": {
+    "total": 13,
+    "by_category": {
+      "business": 2,
+      "technical": 5,
+      "user_experience": 3,
+      "security": 1,
+      "operational": 2
+    },
+    "by_type": {
+      "invariant": 5,
+      "goal": 5,
+      "boundary": 3
+    },
+    "with_source": 13,
+    "with_challenger": 13,
+    "with_threshold": 2
+  },
+  "tensions": {
+    "total": 5,
+    "by_type": {
+      "resource_tension": 1,
+      "trade_off": 3,
+      "hidden_dependency": 1
+    },
+    "resolved": 5,
+    "with_triz": 5,
+    "with_propagation": 5
+  },
+  "blocking_dependencies": 2,
+  "anchors": {
+    "required_truths_total": 19,
+    "required_truths_root": 6,
+    "required_truths_with_children": 5,
+    "required_truths_max_depth": 1,
+    "by_status": {
+      "SATISFIED": 15,
+      "PARTIAL": 4
+    },
+    "binding_constraint_present": true,
+    "recommended_option_present": true,
+    "tension_validations": 5,
+    "reversibility_log_entries": 1
+  },
+  "generation": {
+    "artifacts_total": 10,
+    "by_type": {
+      "code": 2,
+      "refactor": 7,
+      "test": 1
+    },
+    "by_class": {
+      "substantive": 9,
+      "structural": 1
+    },
+    "coverage_pct": 100
+  },
+  "evidence": {
+    "total": 7,
+    "by_type": {
+      "file_exists": 1,
+      "content_match": 5,
+      "test_passes": 1
+    },
+    "by_status": {
+      "VERIFIED": 7
+    }
+  },
+  "iterations": {
+    "total": 5,
+    "phases": [
+      "constrain",
+      "tension",
+      "anchor",
+      "generate",
+      "verify"
+    ]
+  },
+  "convergence_status": "CONVERGED",
+  "gap_checklist_entries": 6,
+  "markdown": {
+    "has_outcome": true,
+    "has_constraints": true,
+    "has_tensions": true,
+    "has_required_truths": true,
+    "line_count": 280,
+    "must_have_keywords_hit": {
+      "context": true,
+      "token": true,
+      "manifold": true,
+      "phase": true
+    }
+  }
+}

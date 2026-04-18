@@ -1,0 +1,348 @@
+{
+  "feature": "reduce-context-rot",
+  "started_at": "2026-04-17T05:56:43.265Z",
+  "sandbox": "/var/folders/jm/_b8ln86524b258rld120t6kw0000gp/T/manifold-harness-HMIdfy",
+  "phases": [
+    {
+      "phase": "m4",
+      "success": true,
+      "cost_usd": 2.9033114999999996,
+      "duration_ms": 456403,
+      "num_turns": 34,
+      "result": "`manifold validate` ✓ Valid. 22 artifacts, phase=GENERATED.\n\n★ Insight ─────────────────────────────────────\nThe JSON is 27 KB — over the 8 KB RT-1.2 budget, but that budget applies to a *representative* feature (≤20 constraints, ≤10 tensions) per TN4's validation criteria. This file carries verbose iteration summaries from m1-m3 that predate the new `writePhase` helper — exactly the scenario TN5's read-tolerant / write-strict resolution anticipates. Future writes through the helper will enforce the cap.\n─────────────────────────────────────────────────\n\n---\n\n## Phase output (≤30 lines)\n\n```\n[GENERATED] reduce-context-rot\nconstraints:16 · tensions:6 · RTs:9 · artifacts:22\n\nBinding constraint addressed first: RT-1 · compact JSON\n  ├ lib/reduce-context-rot/phase-write.ts        → RT-1, RT-1.1, RT-1.2, RT-6, RT-7\n  └ lib/reduce-context-rot/json-prose-linter.ts  → RT-1.1, RT-1.2\n\nOption C (helper + linter + tests + docs + ops) generated:\n  ├ code (lib):  7 files (1 structural barrel)\n  ├ tests:       6 files + 1 fixture\n  ├ docs:        3 files (README, API, DECISIONS)\n  └ ops:         5 files (3 runbooks, 1 dashboard, 1 alerts)\n\nEvidence: file_exists + content_match verified inline; test_passes pending m5.\nReversibility: 5 steps · all TWO_WAY · 0 ONE_WAY.\nCoverage: 9/9 required truths addressed · 16/16 constraints traced.\n\nNext: /manifold:m5-verify reduce-context-rot\n```\n\n---\n\n## HARNESS AUTO-SELECTIONS\n\n1. **Option C** — recommended by anchoring; no prompt possible, so the recommendation stands.\n2. **Sequential generation** (no parallel worktrees) — the parallelization prompt is interactive; harness is non-interactive.\n3. **Target = CWD** — the `/private/var/...manifold-harness-HMIdfy/` sandbox IS the target repo.\n4. **Artifact placement = `lib/`, `tests/`, `docs/`, `ops/`** — standard manifold placement from the instruction table.\n5. **DRT-3 / DRT-4 low-confidence assumptions** — accepted as load-bearing (DRT-4 proxy encoded in RT-4.1/4.2/4.3 anchor tests).\n6. **Toke",
+      "observed_phase": "GENERATED",
+      "phase_advanced": true
+    }
+  ],
+  "signature": {
+    "schema_version": 3,
+    "feature": "reduce-context-rot",
+    "phase": "GENERATED",
+    "domain": "software",
+    "constraints": {
+      "total": 16,
+      "by_category": {
+        "business": 3,
+        "technical": 5,
+        "user_experience": 3,
+        "security": 2,
+        "operational": 3
+      },
+      "by_type": {
+        "invariant": 10,
+        "goal": 4,
+        "boundary": 2
+      },
+      "with_source": 16,
+      "with_challenger": 16,
+      "with_threshold": 2
+    },
+    "tensions": {
+      "total": 6,
+      "by_type": {
+        "trade_off": 3,
+        "resource_tension": 1,
+        "hidden_dependency": 2
+      },
+      "resolved": 6,
+      "with_triz": 0,
+      "with_propagation": 6
+    },
+    "blocking_dependencies": 2,
+    "anchors": {
+      "required_truths_total": 14,
+      "required_truths_root": 9,
+      "required_truths_with_children": 2,
+      "required_truths_max_depth": 1,
+      "by_status": {
+        "NOT_SATISFIED": 9,
+        "SPECIFICATION_READY": 4,
+        "PARTIAL": 1
+      },
+      "binding_constraint_present": true,
+      "recommended_option_present": true,
+      "tension_validations": 6,
+      "reversibility_log_entries": 5
+    },
+    "generation": {
+      "artifacts_total": 22,
+      "by_type": {
+        "code": 7,
+        "test": 6,
+        "test-fixture": 1,
+        "doc": 3,
+        "runbook": 3,
+        "dashboard": 1,
+        "alert": 1
+      },
+      "by_class": {
+        "substantive": 21,
+        "structural": 1
+      },
+      "coverage_pct": 100
+    },
+    "evidence": {
+      "total": 29,
+      "by_type": {
+        "file_exists": 7,
+        "content_match": 9,
+        "test_passes": 13
+      },
+      "by_status": {
+        "PENDING": 29
+      }
+    },
+    "iterations": {
+      "total": 4,
+      "phases": [
+        "constrain",
+        "tension",
+        "anchor",
+        "generate"
+      ]
+    },
+    "convergence_status": "IN_PROGRESS",
+    "gap_checklist_entries": 6,
+    "markdown": {
+      "has_outcome": true,
+      "has_constraints": true,
+      "has_tensions": true,
+      "has_required_truths": true,
+      "line_count": 491,
+      "must_have_keywords_hit": {
+        "context compaction": false,
+        "read from disk": false,
+        "400 lines": false,
+        "50 lines": false,
+        "phase-commons": false,
+        "smart delta": false
+      }
+    }
+  },
+  "diffs": [
+    {
+      "path": "phase",
+      "golden": "VERIFIED",
+      "actual": "GENERATED",
+      "rule": "exact",
+      "reason": "expected \"VERIFIED\", got \"GENERATED\""
+    },
+    {
+      "path": "convergence_status",
+      "golden": "CONVERGED",
+      "actual": "IN_PROGRESS",
+      "rule": "exact",
+      "reason": "expected \"CONVERGED\", got \"IN_PROGRESS\""
+    },
+    {
+      "path": "anchors.required_truths_root",
+      "golden": 6,
+      "actual": 9,
+      "rule": "range [4, 8]",
+      "reason": "9 above maximum 8"
+    },
+    {
+      "path": "evidence.by_status.VERIFIED",
+      "golden": 7,
+      "rule": "range",
+      "reason": "actual is not a number"
+    },
+    {
+      "path": "generation.artifacts_total",
+      "golden": 10,
+      "actual": 22,
+      "rule": "range [6, 15]",
+      "reason": "22 above maximum 15"
+    },
+    {
+      "path": "constraints.by_type.boundary",
+      "golden": 3,
+      "actual": 2,
+      "rule": "ratio ±30%",
+      "reason": "2 outside [2.10, 3.90]"
+    },
+    {
+      "path": "tensions.by_type.hidden_dependency",
+      "golden": 1,
+      "actual": 2,
+      "rule": "ratio ±30%",
+      "reason": "2 outside [0.70, 1.30]"
+    },
+    {
+      "path": "tensions.with_triz",
+      "golden": 5,
+      "actual": 0,
+      "rule": "ratio ±30%",
+      "reason": "0 outside [3.50, 6.50]"
+    },
+    {
+      "path": "anchors.by_status.SATISFIED",
+      "golden": 15,
+      "rule": "ratio",
+      "reason": "non-numeric value"
+    },
+    {
+      "path": "anchors.by_status.PARTIAL",
+      "golden": 4,
+      "actual": 1,
+      "rule": "ratio ±30%",
+      "reason": "1 outside [2.80, 5.20]"
+    },
+    {
+      "path": "anchors.reversibility_log_entries",
+      "golden": 1,
+      "actual": 5,
+      "rule": "ratio ±30%",
+      "reason": "5 outside [0.70, 1.30]"
+    },
+    {
+      "path": "generation.by_type.code",
+      "golden": 2,
+      "actual": 7,
+      "rule": "ratio ±30%",
+      "reason": "7 outside [1.40, 2.60]"
+    },
+    {
+      "path": "generation.by_type.refactor",
+      "golden": 7,
+      "rule": "ratio",
+      "reason": "non-numeric value"
+    },
+    {
+      "path": "generation.by_type.test",
+      "golden": 1,
+      "actual": 6,
+      "rule": "ratio ±30%",
+      "reason": "6 outside [0.70, 1.30]"
+    },
+    {
+      "path": "generation.by_class.substantive",
+      "golden": 9,
+      "actual": 21,
+      "rule": "ratio ±30%",
+      "reason": "21 outside [6.30, 11.70]"
+    },
+    {
+      "path": "evidence.total",
+      "golden": 7,
+      "actual": 29,
+      "rule": "ratio ±30%",
+      "reason": "29 outside [4.90, 9.10]"
+    },
+    {
+      "path": "evidence.by_type.file_exists",
+      "golden": 1,
+      "actual": 7,
+      "rule": "ratio ±30%",
+      "reason": "7 outside [0.70, 1.30]"
+    },
+    {
+      "path": "evidence.by_type.content_match",
+      "golden": 5,
+      "actual": 9,
+      "rule": "ratio ±30%",
+      "reason": "9 outside [3.50, 6.50]"
+    },
+    {
+      "path": "evidence.by_type.test_passes",
+      "golden": 1,
+      "actual": 13,
+      "rule": "ratio ±30%",
+      "reason": "13 outside [0.70, 1.30]"
+    },
+    {
+      "path": "markdown.line_count",
+      "golden": 280,
+      "actual": 491,
+      "rule": "ratio ±30%",
+      "reason": "491 outside [196.00, 364.00]"
+    },
+    {
+      "path": "markdown.must_have_keywords_hit.context compaction",
+      "golden": true,
+      "actual": false,
+      "rule": "bool_exact",
+      "reason": "expected true, got false"
+    },
+    {
+      "path": "markdown.must_have_keywords_hit.read from disk",
+      "golden": true,
+      "actual": false,
+      "rule": "bool_exact",
+      "reason": "expected true, got false"
+    },
+    {
+      "path": "markdown.must_have_keywords_hit.400 lines",
+      "golden": true,
+      "actual": false,
+      "rule": "bool_exact",
+      "reason": "expected true, got false"
+    },
+    {
+      "path": "markdown.must_have_keywords_hit.50 lines",
+      "golden": true,
+      "actual": false,
+      "rule": "bool_exact",
+      "reason": "expected true, got false"
+    },
+    {
+      "path": "markdown.must_have_keywords_hit.phase-commons",
+      "golden": true,
+      "actual": false,
+      "rule": "bool_exact",
+      "reason": "expected true, got false"
+    },
+    {
+      "path": "markdown.must_have_keywords_hit.smart delta",
+      "golden": true,
+      "actual": false,
+      "rule": "bool_exact",
+      "reason": "expected true, got false"
+    },
+    {
+      "path": "markdown.must_have_keywords_hit.context compaction",
+      "golden": true,
+      "actual": false,
+      "rule": "must_have_keyword",
+      "reason": "required keyword \"context compaction\" not found in markdown output"
+    },
+    {
+      "path": "markdown.must_have_keywords_hit.read from disk",
+      "golden": true,
+      "actual": false,
+      "rule": "must_have_keyword",
+      "reason": "required keyword \"read from disk\" not found in markdown output"
+    },
+    {
+      "path": "markdown.must_have_keywords_hit.400 lines",
+      "golden": true,
+      "actual": false,
+      "rule": "must_have_keyword",
+      "reason": "required keyword \"400 lines\" not found in markdown output"
+    },
+    {
+      "path": "markdown.must_have_keywords_hit.50 lines",
+      "golden": true,
+      "actual": false,
+      "rule": "must_have_keyword",
+      "reason": "required keyword \"50 lines\" not found in markdown output"
+    },
+    {
+      "path": "markdown.must_have_keywords_hit.phase-commons",
+      "golden": true,
+      "actual": false,
+      "rule": "must_have_keyword",
+      "reason": "required keyword \"phase-commons\" not found in markdown output"
+    },
+    {
+      "path": "markdown.must_have_keywords_hit.smart delta",
+      "golden": true,
+      "actual": false,
+      "rule": "must_have_keyword",
+      "reason": "required keyword \"smart delta\" not found in markdown output"
+    }
+  ],
+  "total_cost_usd": 2.9033114999999996,
+  "total_duration_ms": 463240,
+  "sandbox_kept": false
+}

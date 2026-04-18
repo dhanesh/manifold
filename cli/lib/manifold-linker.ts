@@ -11,12 +11,16 @@
 
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
+import type { ZodIssue } from 'zod';
 import {
   ManifoldStructureSchema,
   type ManifoldStructure,
   collectStructureIds,
   validateTensionReferences,
   validateRequiredTruthReferences,
+  getCategoryKeys,
+  SOFTWARE_CATEGORY_KEYS,
+  NON_SOFTWARE_CATEGORY_KEYS,
 } from './structure-schema.js';
 import {
   parseManifoldMarkdown,
@@ -91,8 +95,9 @@ export function validateManifoldLink(
   // ============================================================
 
   if (structure.constraints) {
-    for (const category of ['business', 'technical', 'user_experience', 'security', 'operational'] as const) {
-      for (const constraint of structure.constraints[category] || []) {
+    const constraintsByCategory = structure.constraints as Record<string, Array<{ id: string }> | undefined>;
+    for (const category of getCategoryKeys(structure.domain)) {
+      for (const constraint of constraintsByCategory[category] || []) {
         if (!content.constraints.has(constraint.id)) {
           errors.push({
             type: 'missing_content',
@@ -260,8 +265,9 @@ export function validateManifoldLink(
   let totalRequiredTruths = structure.anchors?.required_truths?.length || 0;
 
   if (structure.constraints) {
-    for (const category of ['business', 'technical', 'user_experience', 'security', 'operational'] as const) {
-      totalConstraints += structure.constraints[category]?.length || 0;
+    const constraintsByCategory = structure.constraints as Record<string, Array<unknown> | undefined>;
+    for (const category of getCategoryKeys(structure.domain)) {
+      totalConstraints += constraintsByCategory[category]?.length || 0;
     }
   }
 
@@ -283,6 +289,42 @@ export function validateManifoldLink(
 // ============================================================
 // File-Based Linking
 // ============================================================
+
+/**
+ * Format a Zod issue as a single-line, actionable error. Adds a domain-aware hint
+ * when the discriminated union rejects crossover category keys or when the
+ * discriminator is missing or invalid.
+ */
+function formatZodError(issue: ZodIssue, declaredDomain: unknown): string {
+  const path = issue.path.length > 0 ? issue.path.join('.') : '(root)';
+  const base = `${path}: ${issue.message}`;
+
+  if (issue.code === 'unrecognized_keys' && path === 'constraints') {
+    const keys = (issue as ZodIssue & { keys?: string[] }).keys ?? [];
+    const hitSoftware = keys.some((k) => (SOFTWARE_CATEGORY_KEYS as readonly string[]).includes(k));
+    const hitNonSoftware = keys.some((k) => (NON_SOFTWARE_CATEGORY_KEYS as readonly string[]).includes(k));
+    if (declaredDomain === 'non-software' && hitSoftware) {
+      return `${base}\n      hint: domain is "non-software" — use ${NON_SOFTWARE_CATEGORY_KEYS.join('/')} (not ${SOFTWARE_CATEGORY_KEYS.join('/')}).`;
+    }
+    if (declaredDomain === 'software' && hitNonSoftware) {
+      return `${base}\n      hint: domain is "software" — use ${SOFTWARE_CATEGORY_KEYS.join('/')} (not ${NON_SOFTWARE_CATEGORY_KEYS.join('/')}).`;
+    }
+    // Missing-domain case: preprocess silently mapped to software, but the user
+    // actually wrote non-software category keys. The declaredDomain is absent,
+    // so the two branches above don't fire — emit an explicit hint to set it.
+    if (declaredDomain === undefined && hitNonSoftware) {
+      return `${base}\n      hint: this looks like a non-software manifold — set "domain": "non-software" at the top level.`;
+    }
+  }
+
+  // Zod emits invalid_union_discriminator with path === ['domain'] (not root),
+  // so match on code alone. Fires for missing domain and invalid values like "hybrid".
+  if (issue.code === 'invalid_union_discriminator') {
+    return `${base}\n      hint: set domain to either "software" or "non-software" at the top level.`;
+  }
+
+  return base;
+}
 
 /**
  * Load and validate a manifold from JSON and Markdown files
@@ -323,12 +365,13 @@ export function loadAndValidateManifold(
     const result = ManifoldStructureSchema.safeParse(parsed);
 
     if (!result.success) {
+      const declaredDomain = (parsed as { domain?: unknown })?.domain;
       const errors = result.error.errors
-        .map((e) => `${e.path.join('.')}: ${e.message}`)
-        .join('; ');
+        .map((e) => formatZodError(e, declaredDomain))
+        .join('\n    ');
       return {
         success: false,
-        error: `Invalid JSON structure: ${errors}`,
+        error: `Invalid JSON structure:\n    ${errors}`,
       };
     }
 

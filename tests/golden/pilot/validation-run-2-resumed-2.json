@@ -1,0 +1,331 @@
+{
+  "feature": "reduce-context-rot",
+  "started_at": "2026-04-17T07:26:07.110Z",
+  "sandbox": "/var/folders/jm/_b8ln86524b258rld120t6kw0000gp/T/manifold-harness-Uiu6bM",
+  "phases": [
+    {
+      "phase": "m4",
+      "success": false,
+      "cost_usd": 0,
+      "duration_ms": 1511695,
+      "num_turns": 0,
+      "result": "",
+      "error": "failed to parse JSON output. stderr: "
+    }
+  ],
+  "signature": {
+    "schema_version": 3,
+    "feature": "reduce-context-rot",
+    "phase": "ANCHORED",
+    "domain": "software",
+    "constraints": {
+      "total": 14,
+      "by_category": {
+        "business": 3,
+        "technical": 4,
+        "user_experience": 3,
+        "security": 2,
+        "operational": 2
+      },
+      "by_type": {
+        "invariant": 6,
+        "goal": 4,
+        "boundary": 4
+      },
+      "with_source": 14,
+      "with_challenger": 14,
+      "with_threshold": 3
+    },
+    "tensions": {
+      "total": 6,
+      "by_type": {
+        "trade_off": 3,
+        "resource_tension": 1,
+        "hidden_dependency": 2
+      },
+      "resolved": 6,
+      "with_triz": 0,
+      "with_propagation": 6
+    },
+    "blocking_dependencies": 2,
+    "anchors": {
+      "required_truths_total": 23,
+      "required_truths_root": 8,
+      "required_truths_with_children": 7,
+      "required_truths_max_depth": 1,
+      "by_status": {
+        "NOT_SATISFIED": 20,
+        "PARTIAL": 2,
+        "SPECIFICATION_READY": 1
+      },
+      "binding_constraint_present": true,
+      "recommended_option_present": true,
+      "tension_validations": 6,
+      "reversibility_log_entries": 0
+    },
+    "generation": {
+      "artifacts_total": 0,
+      "by_type": {},
+      "by_class": {},
+      "coverage_pct": 0
+    },
+    "evidence": {
+      "total": 0,
+      "by_type": {},
+      "by_status": {}
+    },
+    "iterations": {
+      "total": 3,
+      "phases": [
+        "constrain",
+        "tension",
+        "anchor"
+      ]
+    },
+    "convergence_status": "IN_PROGRESS",
+    "gap_checklist_entries": 6,
+    "markdown": {
+      "has_outcome": true,
+      "has_constraints": true,
+      "has_tensions": true,
+      "has_required_truths": true,
+      "line_count": 411,
+      "must_have_keywords_hit": {
+        "context compaction": false,
+        "read from disk": false,
+        "400 lines": false,
+        "50 lines": false,
+        "phase-commons": false,
+        "smart delta": false
+      }
+    }
+  },
+  "diffs": [
+    {
+      "path": "phase",
+      "golden": "VERIFIED",
+      "actual": "ANCHORED",
+      "rule": "exact",
+      "reason": "expected \"VERIFIED\", got \"ANCHORED\""
+    },
+    {
+      "path": "convergence_status",
+      "golden": "CONVERGED",
+      "actual": "IN_PROGRESS",
+      "rule": "exact",
+      "reason": "expected \"CONVERGED\", got \"IN_PROGRESS\""
+    },
+    {
+      "path": "evidence.by_status.VERIFIED",
+      "rule": "range",
+      "reason": "actual is not a number"
+    },
+    {
+      "path": "generation.coverage_pct",
+      "golden": 100,
+      "actual": 0,
+      "rule": "range [90, 100]",
+      "reason": "0 below minimum 90"
+    },
+    {
+      "path": "generation.artifacts_total",
+      "golden": 22,
+      "actual": 0,
+      "rule": "range [6, 15]",
+      "reason": "0 below minimum 6"
+    },
+    {
+      "path": "iterations.total",
+      "golden": 5,
+      "actual": 3,
+      "rule": "range [4, 6]",
+      "reason": "3 below minimum 4"
+    },
+    {
+      "path": "constraints.by_type.boundary",
+      "golden": 2,
+      "actual": 4,
+      "rule": "ratio ±30%",
+      "reason": "4 outside [1.40, 2.60]"
+    },
+    {
+      "path": "constraints.with_threshold",
+      "golden": 2,
+      "actual": 3,
+      "rule": "ratio ±30%",
+      "reason": "3 outside [1.40, 2.60]"
+    },
+    {
+      "path": "anchors.required_truths_total",
+      "golden": 14,
+      "actual": 23,
+      "rule": "ratio ±30%",
+      "reason": "23 outside [9.80, 18.20]"
+    },
+    {
+      "path": "anchors.by_status.NOT_SATISFIED",
+      "golden": 9,
+      "actual": 20,
+      "rule": "ratio ±30%",
+      "reason": "20 outside [6.30, 11.70]"
+    },
+    {
+      "path": "anchors.by_status.SPECIFICATION_READY",
+      "golden": 4,
+      "actual": 1,
+      "rule": "ratio ±30%",
+      "reason": "1 outside [2.80, 5.20]"
+    },
+    {
+      "path": "anchors.by_status.PARTIAL",
+      "golden": 1,
+      "actual": 2,
+      "rule": "ratio ±30%",
+      "reason": "2 outside [0.70, 1.30]"
+    },
+    {
+      "path": "anchors.reversibility_log_entries",
+      "golden": 5,
+      "actual": 0,
+      "rule": "ratio ±30%",
+      "reason": "0 outside [3.50, 6.50]"
+    },
+    {
+      "path": "generation.by_type.code",
+      "golden": 7,
+      "rule": "ratio",
+      "reason": "non-numeric value"
+    },
+    {
+      "path": "generation.by_type.test",
+      "golden": 6,
+      "rule": "ratio",
+      "reason": "non-numeric value"
+    },
+    {
+      "path": "generation.by_type.test-fixture",
+      "golden": 1,
+      "rule": "ratio",
+      "reason": "non-numeric value"
+    },
+    {
+      "path": "generation.by_type.doc",
+      "golden": 3,
+      "rule": "ratio",
+      "reason": "non-numeric value"
+    },
+    {
+      "path": "generation.by_type.runbook",
+      "golden": 3,
+      "rule": "ratio",
+      "reason": "non-numeric value"
+    },
+    {
+      "path": "generation.by_type.dashboard",
+      "golden": 1,
+      "rule": "ratio",
+      "reason": "non-numeric value"
+    },
+    {
+      "path": "generation.by_type.alert",
+      "golden": 1,
+      "rule": "ratio",
+      "reason": "non-numeric value"
+    },
+    {
+      "path": "generation.by_class.substantive",
+      "golden": 21,
+      "rule": "ratio",
+      "reason": "non-numeric value"
+    },
+    {
+      "path": "generation.by_class.structural",
+      "golden": 1,
+      "rule": "ratio",
+      "reason": "non-numeric value"
+    },
+    {
+      "path": "evidence.total",
+      "golden": 29,
+      "actual": 0,
+      "rule": "ratio ±30%",
+      "reason": "0 outside [20.30, 37.70]"
+    },
+    {
+      "path": "evidence.by_type.file_exists",
+      "golden": 7,
+      "rule": "ratio",
+      "reason": "non-numeric value"
+    },
+    {
+      "path": "evidence.by_type.content_match",
+      "golden": 9,
+      "rule": "ratio",
+      "reason": "non-numeric value"
+    },
+    {
+      "path": "evidence.by_type.test_passes",
+      "golden": 13,
+      "rule": "ratio",
+      "reason": "non-numeric value"
+    },
+    {
+      "path": "evidence.by_status.PENDING",
+      "golden": 29,
+      "rule": "ratio",
+      "reason": "non-numeric value"
+    },
+    {
+      "path": "iterations.phases.length",
+      "golden": 5,
+      "actual": 3,
+      "rule": "ratio ±30%",
+      "reason": "3 outside [3.50, 6.50]"
+    },
+    {
+      "path": "markdown.must_have_keywords_hit.context compaction",
+      "golden": true,
+      "actual": false,
+      "rule": "must_have_keyword",
+      "reason": "required keyword \"context compaction\" not found in markdown output"
+    },
+    {
+      "path": "markdown.must_have_keywords_hit.read from disk",
+      "golden": true,
+      "actual": false,
+      "rule": "must_have_keyword",
+      "reason": "required keyword \"read from disk\" not found in markdown output"
+    },
+    {
+      "path": "markdown.must_have_keywords_hit.400 lines",
+      "golden": true,
+      "actual": false,
+      "rule": "must_have_keyword",
+      "reason": "required keyword \"400 lines\" not found in markdown output"
+    },
+    {
+      "path": "markdown.must_have_keywords_hit.50 lines",
+      "golden": true,
+      "actual": false,
+      "rule": "must_have_keyword",
+      "reason": "required keyword \"50 lines\" not found in markdown output"
+    },
+    {
+      "path": "markdown.must_have_keywords_hit.phase-commons",
+      "golden": true,
+      "actual": false,
+      "rule": "must_have_keyword",
+      "reason": "required keyword \"phase-commons\" not found in markdown output"
+    },
+    {
+      "path": "markdown.must_have_keywords_hit.smart delta",
+      "golden": true,
+      "actual": false,
+      "rule": "must_have_keyword",
+      "reason": "required keyword \"smart delta\" not found in markdown output"
+    }
+  ],
+  "total_cost_usd": 0,
+  "total_duration_ms": 1511708,
+  "sandbox_kept": false
+}

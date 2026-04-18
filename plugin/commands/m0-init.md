@@ -202,6 +202,67 @@ When non-software is detected, use AskUserQuestion to confirm:
 - Software: `Next: /manifold:m1-constrain <feature>`
 - Non-software: `Next: /manifold:m1-constrain <feature>` with note: "(non-software mode: uses universal constraint categories — Obligations, Desires, Resources, Risks, Dependencies)"
 
+## Domain: non-software
+
+When `--domain=non-software`, the manifold's `constraints` object uses **different JSON keys and ID prefixes** than the software branch. Do NOT use `business`/`technical`/`user_experience`/`security`/`operational` keys under a non-software manifold — the schema rejects it.
+
+**Shape at a glance:** `constraints: { obligations: [...], desires: [...], resources: [...], risks: [...], dependencies: [...] }` with IDs `OB1`, `D1`, `R1`, `RK1`, `DP1`.
+
+| JSON key       | ID prefix | Meaning |
+|----------------|-----------|---------|
+| `obligations`  | `OB`      | Legal/regulatory/ethical must-holds |
+| `desires`      | `D`       | Success outcomes |
+| `resources`    | `R`       | Time/money/capability/energy limits |
+| `risks`        | `RK`      | Irreversible downsides |
+| `dependencies` | `DP`      | External factors that must hold |
+
+**Non-software example JSON:**
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/dhanesh/manifold/main/install/manifold-structure.schema.json",
+  "schema_version": 3,
+  "feature": "<feature-name>",
+  "phase": "INITIALIZED",
+  "domain": "non-software",
+  "created": "<timestamp>",
+  "constraints": {
+    "obligations": [{ "id": "OB1", "type": "invariant" }],
+    "desires": [{ "id": "D1", "type": "goal" }],
+    "resources": [{ "id": "R1", "type": "boundary" }],
+    "risks": [{ "id": "RK1", "type": "invariant" }],
+    "dependencies": [{ "id": "DP1", "type": "boundary" }]
+  },
+  "tensions": [],
+  "anchors": { "required_truths": [] },
+  "iterations": [],
+  "convergence": { "status": "NOT_STARTED" }
+}
+```
+
+**Non-software example Markdown headings:**
+
+```markdown
+## Constraints
+
+### Obligations
+<!-- #### OB1: Title -->
+
+### Desires
+<!-- #### D1: Title -->
+
+### Resources
+<!-- #### R1: Title -->
+
+### Risks
+<!-- #### RK1: Title -->
+
+### Dependencies
+<!-- #### DP1: Title -->
+```
+
+**Common mistake to avoid:** The earlier guidance told the model to keep software keys (`business`, `technical`, ...) and only rename the IDs. That produces a hybrid-broken manifold that the schema discriminated union now rejects at parse time. The JSON keys themselves must change.
+
 ## Scope Guard (MANDATORY)
 
 **This phase ONLY creates manifold files.** After creating `.manifold/<feature>.json` and `.manifold/<feature>.md`, display the confirmation table and **STOP**.
@@ -252,19 +313,4 @@ When this command is invoked:
 - Include empty category sections with comment placeholders
 - Use heading conventions: `####` for constraints, `###` for tensions/truths
 
-### ⚠️ Mandatory Post-Phase Validation
-
-After creating both files, run validation before showing results:
-
-```bash
-manifold validate <feature>
-```
-
-If validation fails, fix the JSON structure before proceeding. Common issues: missing required fields (`$schema`, `schema_version`), invalid domain value.
-
-## Interaction Rules (MANDATORY)
-<!-- Satisfies: RT-1 (next-step templates), RT-3 (structured input), U1 (suggest next), U2 (AskUserQuestion) -->
-
-1. **Questions → AskUserQuestion**: When you need user input during this phase, use the `AskUserQuestion` tool with structured options. NEVER ask questions as plain text without options.
-2. **Phase complete → Suggest next**: After completing this phase, ALWAYS include the concrete next command (`/manifold:mN-xxx <feature>`) and a one-line explanation of what the next phase does.
-3. **Trade-offs → Labeled options**: When presenting alternatives, use `AskUserQuestion` with labeled choices (A, B, C) and descriptions.
+Run `manifold validate <feature>` after creating files. Shared directives (output format, interaction rules, validation) injected by phase-commons hook.

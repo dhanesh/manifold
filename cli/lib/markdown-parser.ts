@@ -62,9 +62,10 @@ export interface ManifoldContent {
 // ============================================================
 
 /**
- * Match constraint heading pattern: #### B1: Title
+ * Match constraint heading pattern: #### B1: Title (software)
+ * or #### OB1: Title / #### D1: Title / #### R1: Title / #### RK1: Title / #### DP1: Title (non-software)
  */
-const CONSTRAINT_PATTERN = /^([BTUSO]\d+):\s*(.+)$/;
+const CONSTRAINT_PATTERN = /^((?:OB|RK|DP|[BTUSODR])\d+):\s*(.+)$/;
 
 /**
  * Match tension heading pattern: ### TN1: Title
@@ -225,7 +226,10 @@ export function parseManifoldMarkdown(markdown: string): ManifoldContent {
 
   // State machine for tracking current context
   let currentSection: 'outcome' | 'constraints' | 'tensions' | 'required_truths' | 'other' = 'other';
-  let currentCategory: 'business' | 'technical' | 'user_experience' | 'security' | 'operational' | null = null;
+  let currentCategory:
+    | 'business' | 'technical' | 'user_experience' | 'security' | 'operational'
+    | 'obligations' | 'desires' | 'resources' | 'risks' | 'dependencies'
+    | null = null;
   let currentConstraint: ConstraintContent | null = null;
   let currentTension: TensionContent | null = null;
   let currentRequiredTruth: RequiredTruthContent | null = null;
@@ -328,13 +332,18 @@ export function parseManifoldMarkdown(markdown: string): ManifoldContent {
           continue;
         }
 
-        // Otherwise it's a category
+        // Otherwise it's a category (software or non-software)
         const lowerText = text.toLowerCase();
         if (lowerText === 'business') currentCategory = 'business';
         else if (lowerText === 'technical') currentCategory = 'technical';
         else if (lowerText === 'user experience' || lowerText === 'ux') currentCategory = 'user_experience';
         else if (lowerText === 'security') currentCategory = 'security';
         else if (lowerText === 'operational') currentCategory = 'operational';
+        else if (lowerText === 'obligations') currentCategory = 'obligations';
+        else if (lowerText === 'desires') currentCategory = 'desires';
+        else if (lowerText === 'resources') currentCategory = 'resources';
+        else if (lowerText === 'risks') currentCategory = 'risks';
+        else if (lowerText === 'dependencies') currentCategory = 'dependencies';
         continue;
       }
 

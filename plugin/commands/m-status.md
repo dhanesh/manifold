@@ -198,20 +198,31 @@ Active Manifolds: 3
 
 Use `manifold show <feature>` or CLI status for format details.
 
+## Context Restoration (Post-Compaction)
+
+When resuming after context compaction, m-status MUST include a **context restoration block** that tells the AI exactly which `.manifold/<feature>.md` sections to read before the next phase:
+
+```
+CONTEXT RESTORATION:
+Read .manifold/<feature>.md sections before next phase:
+→ <next-phase>: <sections to read>
+```
+
+**Section map by next phase:**
+
+| Next Phase | Sections to Read from `.md` |
+|------------|----------------------------|
+| m1-constrain | `## Outcome` |
+| m2-tension | `## Constraints` |
+| m3-anchor | `## Constraints`, `## Tensions` |
+| m4-generate | `## Tensions`, `## Required Truths`, `## Solution Space` |
+| m5-verify | `## Required Truths` |
+| m6-integrate | `## Required Truths` |
+
+This ensures zero context rot: the next phase reads fresh state from disk rather than relying on degraded conversation context.
+
 ## Post-Display Behavior
 
-**CRITICAL**: After displaying status:
-1. If this is a normal check → Display status, **STOP**
-2. If resuming from compaction → Display status, say "Waiting for your command", **STOP**
-3. **NEVER** auto-invoke the suggested next action
-4. The user **MUST** explicitly run the next phase command
+After displaying status: say "Waiting for your command" and **STOP**. Never auto-invoke the suggested next action. Phase transitions require explicit user invocation.
 
-The "SUGGESTED NEXT ACTION" is informational only. Phase transitions require explicit user invocation.
-
-
-## Interaction Rules (MANDATORY)
-<!-- Satisfies: RT-1 (next-step templates), RT-3 (structured input), U1 (suggest next), U2 (AskUserQuestion) -->
-
-1. **Questions → AskUserQuestion**: When you need user input during this phase, use the `AskUserQuestion` tool with structured options. NEVER ask questions as plain text without options.
-2. **Phase complete → Suggest next**: After completing this phase, ALWAYS include the concrete next command (`/manifold:mN-xxx <feature>`) and a one-line explanation of what the next phase does.
-3. **Trade-offs → Labeled options**: When presenting alternatives, use `AskUserQuestion` with labeled choices (A, B, C) and descriptions.
+Run `manifold validate <feature>` after updates. Shared directives (output format, interaction rules, validation) injected by phase-commons hook.

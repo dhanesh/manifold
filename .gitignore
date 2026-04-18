@@ -52,6 +52,11 @@ dist/
 build/
 *.log
 
+# Locally compiled CLI binary (semantic-release produces signed binaries
+# for distribution — local dev builds are Mach-O/ELF artifacts that must
+# never be committed).
+cli/manifold
+
 # ===========================================
 # Note: .manifold/ is NOT ignored - it should be tracked
 # for team collaboration and cross-machine continuity

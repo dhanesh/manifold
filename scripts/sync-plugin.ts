@@ -5,7 +5,7 @@
  * Claude Code's plugin system does not follow symlinks, so plugin/
  * must contain real files. The single source of truth remains install/.
  * This script copies the canonical files into plugin/, preserving any
- * plugin-only files (e.g. setup.md, hooks.json, session-start.sh).
+ * plugin-only files (e.g. setup.md).
  *
  * Usage: bun scripts/sync-plugin.ts
  */
@@ -50,21 +50,25 @@ for (const file of readdirSync(commandsSrc)) {
   }
 }
 
-// 2. Hooks: install/hooks/*.ts -> plugin/hooks/
-syncFile(
-  join(install, "hooks", "manifold-context.ts"),
-  join(plugin, "hooks", "manifold-context.ts")
-);
-syncFile(
-  join(install, "hooks", "prompt-enforcer.ts"),
-  join(plugin, "hooks", "prompt-enforcer.ts")
-);
-syncFile(
-  join(install, "hooks", "manifold-schema-guard.ts"),
-  join(plugin, "hooks", "manifold-schema-guard.ts")
-);
+// 2. Hooks: install/hooks/* -> plugin/hooks/
+const hooksSrc = join(install, "hooks");
+const hooksDest = join(plugin, "hooks");
+ensureDir(hooksDest);
 
-// 3. Parallel bundle: install/lib/parallel/parallel.bundle.js -> plugin/lib/parallel/
+for (const file of readdirSync(hooksSrc)) {
+  syncFile(join(hooksSrc, file), join(hooksDest, file));
+}
+
+// 3. Bin scripts: install/bin/* -> plugin/bin/
+const binSrc = join(install, "bin");
+const binDest = join(plugin, "bin");
+ensureDir(binDest);
+
+for (const file of readdirSync(binSrc)) {
+  syncFile(join(binSrc, file), join(binDest, file));
+}
+
+// 4. Parallel bundle: install/lib/parallel/parallel.bundle.js -> plugin/lib/parallel/
 syncFile(
   join(install, "lib", "parallel", "parallel.bundle.js"),
   join(plugin, "lib", "parallel", "parallel.bundle.js")
@@ -75,6 +79,13 @@ syncFile(
   join(install, "manifold-structure.schema.json"),
   join(plugin, "manifold-structure.schema.json")
 );
+
+// 4b. Manifest: install/plugin.json -> plugin/plugin.json AND plugin/.claude-plugin/plugin.json
+// Dual-write during the expand-migrate-contract migration. Both copies must be identical
+// bytes — session-start reads them to decide whether to trigger a CLI update, and drift
+// would cause spurious or missed upgrades.
+syncFile(join(install, "plugin.json"), join(plugin, "plugin.json"));
+syncFile(join(install, "plugin.json"), join(plugin, ".claude-plugin", "plugin.json"));
 
 // 5. Templates: install/templates/ -> plugin/templates/ (recursive)
 const templatesSrc = join(install, "templates");

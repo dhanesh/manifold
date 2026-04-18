@@ -218,22 +218,4 @@ With `--auto-wire`, safe integrations are performed automatically:
 9. **⚠️ Run `manifold validate <feature>`** — fix any errors before proceeding
 10. Recommend `/manifold:m5-verify` after integration
 
-### ⚠️ Mandatory Post-Phase Validation
-
-After updating manifold files, you MUST run validation:
-
-```bash
-manifold validate <feature>
-```
-
-If validation fails, fix the errors BEFORE proceeding. The JSON structure must conform to `install/manifold-structure.schema.json`.
-
-**Format lock**: If `.manifold/<feature>.json` exists, ALWAYS use JSON+Markdown format. Never create/update `.yaml` when `.json` exists.
-
-
-## Interaction Rules (MANDATORY)
-<!-- Satisfies: RT-1 (next-step templates), RT-3 (structured input), U1 (suggest next), U2 (AskUserQuestion) -->
-
-1. **Questions → AskUserQuestion**: When you need user input during this phase, use the `AskUserQuestion` tool with structured options. NEVER ask questions as plain text without options.
-2. **Phase complete → Suggest next**: After completing this phase, ALWAYS include the concrete next command (`/manifold:mN-xxx <feature>`) and a one-line explanation of what the next phase does.
-3. **Trade-offs → Labeled options**: When presenting alternatives, use `AskUserQuestion` with labeled choices (A, B, C) and descriptions.
+Run `manifold validate <feature>` after updates. Shared directives (output format, interaction rules, validation) injected by phase-commons hook.

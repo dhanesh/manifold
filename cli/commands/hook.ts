@@ -269,6 +269,200 @@ async function promptEnforcer(): Promise<void> {
   ].join('\n'));
 }
 
+// ─── phase-commons (UserPromptSubmit) ───────────────────────────
+// Satisfies: RT-1 (context injection), T1 (disk reads), T4 (shared logic), T5 (smart delta)
+
+/** Detect manifold phase commands and extract phase + feature */
+function detectManifoldCommand(prompt: string): { phase: string; feature: string | null } | null {
+  // Match: /manifold:m2-tension feature-name --flags
+  const withFeature = prompt.match(/\/manifold:(m\d-\w+|m-\w+|parallel)\s+([a-zA-Z0-9_-]+)/);
+  if (withFeature) {
+    const command = withFeature[1];
+    const feature = withFeature[2];
+    const phase = command.match(/^(m\d|m-\w+)/)?.[1] || command;
+    return { phase, feature };
+  }
+
+  // Match: /manifold:m-status (no feature = all features)
+  const noFeature = prompt.match(/\/manifold:(m-status|m-solve)\b/);
+  if (noFeature) {
+    return { phase: noFeature[1], feature: null };
+  }
+
+  return null;
+}
+
+/** Build compact state summary — varies by phase (smart delta) */
+function buildCompactSummary(data: any, phase: string): string {
+  const lines: string[] = [];
+
+  // Constraint counts (always useful)
+  const cc = data.constraints || {};
+  const catMap: Record<string, string> = {
+    business: 'B', technical: 'T', user_experience: 'U', security: 'S', operational: 'O',
+  };
+  const counts = Object.entries(cc)
+    .map(([cat, items]) => `${catMap[cat] || cat[0]}:${(items as any[]).length}`)
+    .filter(s => !s.endsWith(':0'));
+  const total = Object.values(cc).reduce((sum, items) => sum + (items as any[]).length, 0);
+  if (total > 0) {
+    lines.push(`Constraints: ${counts.join(' ')} (${total} total)`);
+  }
+
+  // Tensions (m2+ phases)
+  if (['m2', 'm3', 'm4', 'm5', 'm6', 'm-status', 'm-solve'].includes(phase)) {
+    const tensions = data.tensions || [];
+    if (tensions.length) {
+      const resolved = tensions.filter((t: any) => t.status === 'resolved').length;
+      const ids = tensions.map((t: any) => `${t.id}(${t.status === 'resolved' ? '✓' : '○'})`).join(' ');
+      lines.push(`Tensions: ${ids} — ${resolved}/${tensions.length} resolved`);
+    }
+  }
+
+  // Blocking dependencies (m3+ phases)
+  if (['m3', 'm4', 'm5', 'm6', 'm-status', 'm-solve'].includes(phase)) {
+    const blocking = data.blocking_dependencies || [];
+    if (blocking.length) {
+      lines.push(`Blocking: ${blocking.map((b: any) => `${b.blocker}→${b.blocked}`).join(', ')}`);
+    }
+  }
+
+  // Draft required truths (m3 seed)
+  if (phase === 'm3') {
+    const drafts = data.draft_required_truths || [];
+    if (drafts.length) {
+      lines.push(`Draft RTs: ${drafts.length} seeded from m1`);
+    }
+  }
+
+  // Required truths + binding constraint (m4+ phases)
+  if (['m4', 'm5', 'm6', 'm-status', 'm-solve'].includes(phase)) {
+    const rts = data.anchors?.required_truths || [];
+    if (rts.length) {
+      const byStatus: Record<string, number> = {};
+      for (const rt of rts) {
+        byStatus[rt.status] = (byStatus[rt.status] || 0) + 1;
+      }
+      const statusStr = Object.entries(byStatus).map(([s, n]) => `${n} ${s}`).join(', ');
+      lines.push(`Required Truths: ${rts.length} (${statusStr})`);
+    }
+    const binding = data.anchors?.binding_constraint;
+    if (binding) {
+      lines.push(`Binding: ${binding.required_truth_id} → deps: ${(binding.dependency_chain || []).join(', ')}`);
+    }
+    if (data.anchors?.recommended_option) {
+      lines.push(`Option: ${data.anchors.recommended_option}`);
+    }
+  }
+
+  // Generation status (m5+ phases)
+  if (['m5', 'm6', 'm-status'].includes(phase)) {
+    const gen = data.generation;
+    if (gen) {
+      const artifacts = gen.artifacts || [];
+      const generated = artifacts.filter((a: any) => a.status === 'generated').length;
+      lines.push(`Artifacts: ${generated}/${artifacts.length} generated`);
+      if (gen.coverage) lines.push(`Coverage: ${gen.coverage.percentage}%`);
+    }
+  }
+
+  return lines.join('\n');
+}
+
+/** Smart delta: which MD sections each phase needs */
+function getMdReadDirective(phase: string, feature: string): string {
+  const mdPath = `.manifold/${feature}.md`;
+  const sectionMap: Record<string, string[]> = {
+    'm0': [],
+    'm1': ['Outcome'],
+    'm2': ['Constraints'],
+    'm3': ['Constraints', 'Tensions'],
+    'm4': ['Tensions', 'Required Truths', 'Solution Space'],
+  };
+  const sections = sectionMap[phase];
+  if (!sections) return `Read \`${mdPath}\` (full content)`;
+  if (sections.length === 0) return '';
+  return `Read \`${mdPath}\` sections: ${sections.map(s => `## ${s}`).join(', ')}`;
+}
+
+/** Summarize all features for m-status without feature arg */
+function summarizeAllFeatures(manifoldDir: string): string {
+  const files = readdirSync(manifoldDir).filter(f => f.endsWith('.json') && !f.endsWith('.verify.json'));
+  if (files.length === 0) return 'No manifold features found.';
+
+  const lines: string[] = [`Active manifolds: ${files.length}`];
+  for (const file of files.slice(0, 10)) {
+    try {
+      const data = JSON.parse(readFileSync(join(manifoldDir, file), 'utf-8'));
+      const feature = file.replace('.json', '');
+      const phase = data.phase || 'UNKNOWN';
+      lines.push(`  ${feature}: ${phase} → ${getNextAction(phase, feature)}`);
+    } catch { /* skip invalid */ }
+  }
+  return lines.join('\n');
+}
+
+async function phaseCommons(): Promise<void> {
+  const input = await readStdin();
+  const hookData = parseHookInput(input);
+  if (!hookData?.prompt) return;
+
+  const detection = detectManifoldCommand(hookData.prompt);
+  if (!detection) return;
+
+  const { phase, feature } = detection;
+  const manifoldDir = join(process.cwd(), '.manifold');
+
+  if (!existsSync(manifoldDir)) return;
+
+  // No-feature case: summarize all
+  if (!feature) {
+    emitContext(summarizeAllFeatures(manifoldDir));
+    return;
+  }
+
+  // m0-init creates new files — no existing state to inject
+  if (phase === 'm0') return;
+
+  const jsonPath = join(manifoldDir, `${feature}.json`);
+  if (!existsSync(jsonPath)) return;
+
+  let data: any;
+  try {
+    data = JSON.parse(readFileSync(jsonPath, 'utf-8'));
+  } catch { return; }
+
+  const mdExists = existsSync(join(manifoldDir, `${feature}.md`));
+
+  // Build output
+  const parts: string[] = [
+    'MANIFOLD PHASE CONTEXT (phase-commons)',
+    `Feature: ${feature} | Phase: ${data.phase} | Domain: ${data.domain || 'software'} | v${data.schema_version}`,
+    '',
+    buildCompactSummary(data, phase),
+  ];
+
+  if (mdExists) {
+    const mdDirective = getMdReadDirective(phase, feature);
+    if (mdDirective) parts.push('', mdDirective);
+  }
+
+  parts.push(
+    '',
+    'DIRECTIVES:',
+    '• Phase transitions require EXPLICIT user commands — never auto-continue',
+    '• After compaction: /manifold:m-status then WAIT',
+    '• AskUserQuestion for decisions (structured options, not plain text)',
+    '• After phase complete: suggest next command + one-line explanation',
+    '• Run `manifold validate <feature>` after updating manifold files',
+    '• Output: ≤50 lines, visual tables/trees, status→next footer in ≤3 lines',
+    '• JSON=structure only, MD=all text. .json exists → use JSON+MD format',
+    '• Manifold files on disk are truth — don\'t trust stale conversation context',
+  );
+
+  emitContext(parts.join('\n'));
+}
+
 // ─── Command registration ───────────────────────────────────────
 
 export function registerHookCommand(program: Command): void {
@@ -280,11 +474,13 @@ Subcommands:
   schema-guard     PostToolUse: validate .manifold/*.json after edits
   context          PreCompact: inject manifold state before compaction
   prompt-enforcer  UserPromptSubmit: advisory interaction rules
+  phase-commons    UserPromptSubmit: inject manifold state + directives before phase commands
 
 Usage in hooks.json:
   "command": "manifold hook schema-guard"
   "command": "manifold hook context"
   "command": "manifold hook prompt-enforcer"
+  "command": "manifold hook phase-commons"
 `);
 
   hook
@@ -308,6 +504,14 @@ Usage in hooks.json:
     .description('UserPromptSubmit hook: advisory interaction rules for manifold projects')
     .action(async () => {
       try { await promptEnforcer(); } catch { /* never crash hooks */ }
+      process.exit(0);
+    });
+
+  hook
+    .command('phase-commons')
+    .description('UserPromptSubmit hook: inject manifold state + shared directives before phase commands')
+    .action(async () => {
+      try { await phaseCommons(); } catch { /* never crash hooks */ }
       process.exit(0);
     });
 }
