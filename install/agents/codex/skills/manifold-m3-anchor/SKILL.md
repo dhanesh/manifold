@@ -44,7 +44,10 @@ Update `.manifold/<feature>.json` with required truth references:
       {
         "id": "RT-1",
         "status": "NOT_SATISFIED",
-        "maps_to": ["B1", "T1"]
+        "maps_to": ["B1", "T1"],
+        "evidence": [
+          {"id": "E1", "type": "file_exists", "path": "src/retry/error-classifier.ts", "status": "PENDING"}
+        ]
       },
       {
         "id": "RT-2",
@@ -152,107 +155,23 @@ Forward planning starts with a spec and discovers missing requirements late. Bac
 5. **Identify gaps** - What's missing between current state and requirements?
 6. **Generate solution space** - Options that satisfy all required truths
 
-## Recursive Backward Chaining (Enhancement 7)
+## Recursive Backward Chaining
 
-After the first-pass required truths are generated, for each truth with status NOT_SATISFIED or PARTIAL:
+Default: flat mode (`--depth=1`). The always-loaded body of this file covers flat-mode elicitation and produces the first-pass required truths.
 
-1. Take the truth as the new sub-outcome
-2. Ask: "For [required truth] to hold, what MUST be true?"
-3. Generate second-order required truths with dotted IDs (RT-1.1, RT-1.2)
-4. Check each against the constraint set and current state
-5. Tag each: SATISFIED (already holds) | PRIMITIVE (verifiable fact, recursion stops) | REQUIRES_FURTHER_DECOMPOSITION
+For multi-level decomposition (when `--depth > 1`, range 1-4), load [`references/recursive-decomposition.md`](references/recursive-decomposition.md). That file covers recursion rules, tree output format, termination conditions, schema additions (`depth`, `children`), and variance guardrails (target RT band `[10, 28]` from the eval baseline).
 
-6. For each REQUIRES_FURTHER_DECOMPOSITION truth, recurse to `--depth` (default: 2, maximum: 4)
+## Binding Constraint (Enhancement 5)
 
-7. Recursion stops when:
-   - All leaves are SATISFIED or PRIMITIVE
-   - Maximum depth is reached (flag remaining gaps explicitly)
-   - A circular dependency is detected (flag and surface to user)
+Among RTs with status PARTIAL or NOT_SATISFIED, identify the single binding constraint — the one that is hardest to close, unlocks the others when closed, and blocks all options when unclosed. Surface it as `BINDING CONSTRAINT: [RT-ID] [reason] — chain: RT-[n], RT-[n]`. Order solution options by how directly they address it; solutions that skip it are deprioritized.
 
-Output the full dependency tree, not just the leaf nodes:
+**Schema:** `{"anchors": {"binding_constraint": {"required_truth_id": "RT-3", "reason": "...", "dependency_chain": ["RT-1", "RT-5"]}}}`
 
-```
-REQUIRED TRUTH: RT-1 Retries are idempotent [NOT_SATISFIED]
-  ├── RT-1.1 Unique request IDs generated per call [NOT_SATISFIED]
-  │     ├── RT-1.1.1 ID generation library available [SATISFIED]
-  │     └── RT-1.1.2 ID stored with TTL matching retry window [NOT_SATISFIED]
-  │           └── RT-1.1.2.1 Persistence layer with TTL support exists [PRIMITIVE — verify]
-  └── RT-1.2 Server-side deduplication check on ID [NOT_SATISFIED]
-        └── RT-1.2.1 Deduplication store accessible at request time [NOT_SATISFIED]
-```
+**Handoff to m4:** m4-generate reads `anchors.binding_constraint`, tags artifacts satisfying its RT with `"priority": "binding"`, and generates them first (when context is freshest).
 
-**Parameter:** `--depth=N` (default: 2, range: 1-4). Depth 1 is current behavior. Surface a warning if depth 4 is reached without all leaves resolving.
+### Reversibility Tagging (Enhancement 4)
 
-**Schema:** Required truths gain `depth` and `children` fields:
-```json
-{"id": "RT-1", "status": "NOT_SATISFIED", "depth": 0, "children": [
-  {"id": "RT-1.1", "status": "NOT_SATISFIED", "depth": 1, "children": []}
-]}
-```
-
-## Theory of Constraints Bottleneck Identification (Enhancement 5)
-
-After generating required truths (and recursive sub-truths if --depth > 1), identify the binding constraint before generating solution options.
-
-For all required truths with status PARTIAL or NOT_SATISFIED:
-
-1. Ask: Which of these is hardest to close given current state?
-2. Ask: Which of these, if closed, would make the others easier or automatically satisfied?
-3. Ask: Which of these, if not closed, blocks all solution options regardless of how the others are handled?
-
-The answer to all three is the binding constraint. Surface it explicitly:
-
-```
-BINDING CONSTRAINT: [RT-ID] [statement]
-  Status: PARTIAL | NOT_SATISFIED
-  Reason: [why this is the binding limit]
-  Dependency chain: RT-[n] depends on this, RT-[n] depends on this
-```
-
-Generate solution options ordered by their approach to the binding constraint first. Solutions that do not address the binding constraint are deprioritized regardless of how elegantly they handle the others.
-
-**Schema:** Add `binding_constraint` to anchors in `.manifold/<feature>.json`:
-```json
-{"anchors": {"binding_constraint": {"required_truth_id": "RT-3", "reason": "...", "dependency_chain": ["RT-1", "RT-5"]}}}
-```
-
-### Binding Constraint Handoff to m4 (Enhancement 5b)
-
-The binding constraint identified above MUST be communicated to m4-generate. It is already stored in JSON as `anchors.binding_constraint`.
-
-**m4-generate MUST:**
-1. Read `anchors.binding_constraint` from JSON before building the artifact plan
-2. Generate artifacts that address the binding constraint's required truth FIRST
-3. Tag binding-constraint artifacts in the generation plan: `"priority": "binding"`
-4. If the binding constraint's RT has unresolved evidence after generation, WARN before completing m4
-
-This ensures the most critical, highest-risk artifact is generated first, when context is freshest and attention is highest. Without this handoff, m4 generates in arbitrary order and the binding constraint may be addressed last (or inadequately).
-
-**Evidence for need:** In `engineering-hardening`, RT-4 (file splitting) was the binding constraint. It was the highest-risk item but would have been generated last without explicit prioritization.
-
-### Reversibility Tagging for Solution Options (Enhancement 4)
-
-When generating solution options, tag each option with its reversibility:
-
-| Tag | Meaning | Implication |
-|-----|---------|-------------|
-| `TWO_WAY` | Reversible with minimal cost | Proceed normally |
-| `REVERSIBLE_WITH_COST` | Can reverse with meaningful cost | Flag and note the cost |
-| `ONE_WAY` | Closes options permanently | Require explicit acknowledgment |
-
-Options that close doors should be surfaced distinctly from options that don't:
-
-```
-SOLUTION OPTIONS:
-  Option A: [description]
-    Reversibility: TWO_WAY
-    Satisfies: RT-1, RT-3
-
-  Option B: [description]
-    Reversibility: ONE_WAY ⚠️
-    What this closes: [consequences]
-    Satisfies: RT-1, RT-2, RT-3
-```
+Tag every solution option: `TWO_WAY` (reversible), `REVERSIBLE_WITH_COST` (note the cost), `ONE_WAY` (flag consequences, require explicit acknowledgment). Surface ONE_WAY options distinctly and list what they close.
 
 ## Example
 
@@ -261,54 +180,18 @@ SOLUTION OPTIONS:
 
 OUTCOME ANCHORING: payment-retry
 
-Outcome: 95% retry success for transient failures
-
-BACKWARD REASONING:
-
-For 95% retry success, what MUST be true?
-
-RT-1: Can distinguish transient from permanent failures
-      └── Requires: Error classification system
-      └── Gap: No current error taxonomy
-
-RT-2: Retries are idempotent
-      └── Requires: Transaction idempotency keys
-      └── Gap: Current system lacks idempotency
-
-RT-3: Sufficient retry budget
-      └── Requires: At least 3 attempts with exponential backoff
-      └── Gap: Need to define retry policy
-
-RT-4: Downstream services recoverable
-      └── Requires: Circuit breaker for dependencies
-      └── Gap: No circuit breaker implementation
-
-RT-5: Retry state persists across failures
-      └── Requires: Durable retry queue
-      └── Gap: In-memory only currently
+RT-1: Can distinguish transient from permanent failures  [gap: no error taxonomy]
+RT-2: Retries are idempotent                              [gap: no idempotency]
+RT-3: Sufficient retry budget                             [gap: policy undefined]
+RT-4: Downstream services recoverable                     [gap: no circuit breaker]
+RT-5: Retry state persists across failures                [gap: in-memory only]
 
 SOLUTION SPACE:
+  Option A: Client-side backoff     — satisfies RT-3      [TWO_WAY]
+  Option B: Server-side workflow    — satisfies all       [ONE_WAY ⚠️]
+  Option C: Hybrid (client+queue)   — satisfies RT-1/3/5  [TWO_WAY]
 
-Option A: Client-side Exponential Backoff
-├── Satisfies: RT-3
-├── Gaps: RT-2, RT-4, RT-5
-└── Complexity: Low
-
-Option B: Server-side Workflow Engine
-├── Satisfies: RT-1, RT-2, RT-3, RT-4, RT-5
-├── Gaps: None
-└── Complexity: High
-
-Option C: Hybrid (Client retry + Server queue)
-├── Satisfies: RT-1, RT-3, RT-5
-├── Gaps: None (with implementation)
-└── Complexity: Medium
-
-RECOMMENDATION: Option C (Hybrid)
-
-Updated: .manifold/payment-retry.json + .manifold/payment-retry.md
-
-Next: /manifold:m4-generate payment-retry --option=C
+RECOMMENDATION: Option C  →  Next: /manifold:m4-generate payment-retry --option=C
 ```
 
 ## Context Lookup
@@ -334,30 +217,8 @@ Next: /manifold:m4-generate payment-retry --option=C
 11. Set phase to ANCHORED in JSON
 12. **Run `manifold validate <feature>`** -- fix any errors before showing results. Format lock: if `.json` exists, never create/update `.yaml`.
 
-### Solution-Tension Validation (Cross-Phase Feedback)
+### Solution-Tension Validation
 
-After the recommended solution option is selected, validate it against m2's tensions to close the feedback loop:
-
-1. Read all tensions from JSON
-2. For each RESOLVED tension:
-   - Does the recommended option's approach match the recorded resolution?
-   - If YES: Mark as `CONFIRMED by option [X]`
-   - If NO: Flag as `TENSION REOPENED — option [X] does not honor resolution for [TN-ID]`
-3. For each UNRESOLVED tension (if any):
-   - Does the option implicitly resolve it? If YES, suggest marking as resolved
-4. Record in JSON under `anchors.tension_validation`:
-```json
-{
-  "tension_validation": [
-    {"tension_id": "TN1", "status": "CONFIRMED", "by_option": "A"},
-    {"tension_id": "TN3", "status": "REOPENED", "reason": "Option A uses caching which conflicts with TN3 resolution"}
-  ]
-}
-```
-
-If any tension is REOPENED, surface to user via AskUserQuestion:
-> "The recommended option conflicts with tension [TN-ID]. Options: A. Accept and update the resolution. B. Choose a different option. C. Modify the option to honor the resolution."
-
-This prevents m3 from recommending solutions that silently invalidate m2 decisions -- a gap observed in early manifolds where solution selection was disconnected from tension resolutions.
+After selecting the recommended option, validate it against m2's tensions. For each RESOLVED tension, check whether the option honors the recorded resolution — mark `CONFIRMED` if yes, `REOPENED` if no. Record in JSON under `anchors.tension_validation` (array of `{tension_id, status, by_option | reason}`). If any tension is REOPENED, surface via AskUserQuestion with options to accept, change option, or modify the option.
 
 Run `manifold validate <feature>` after updates. Shared directives (output format, interaction rules, validation) injected by phase-commons hook.
