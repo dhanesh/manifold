@@ -172,8 +172,8 @@ export type EvidenceRef = z.infer<typeof EvidenceRefSchema>;
  * - Operational: O1, O2, ...
  */
 export const ConstraintIdSchema = z.string().regex(
-  /^[BTUSO]\d+$/,
-  'Constraint ID must match pattern like B1, T2, U3, S4, O5'
+  /^([BTUSO]|OB|D|R|RK|DP)\d+$/,
+  'Constraint ID must match software prefix (B1, T2, U3, S4, O5) or non-software prefix (OB1, D1, R1, RK1, DP1)'
 );
 
 // Enhancement 2: Constraint genealogy source taxonomy
@@ -338,9 +338,25 @@ export const ConstraintsByCategorySchema = z.object({
   user_experience: z.array(ConstraintRefSchema).default([]),
   security: z.array(ConstraintRefSchema).default([]),
   operational: z.array(ConstraintRefSchema).default([]),
-});
+}).strict();
 
 export type ConstraintsByCategory = z.infer<typeof ConstraintsByCategorySchema>;
+
+// Non-software category keys (universal decision framing)
+// - obligations: legal/regulatory/ethical must-holds (replaces business+security)
+// - desires: success outcomes (replaces ux+business goals)
+// - resources: time/money/capability limits (replaces technical)
+// - risks: irreversible downsides (replaces security, broadened)
+// - dependencies: external factors that must hold (replaces operational)
+export const NonSoftwareConstraintsByCategorySchema = z.object({
+  obligations: z.array(ConstraintRefSchema).default([]),
+  desires: z.array(ConstraintRefSchema).default([]),
+  resources: z.array(ConstraintRefSchema).default([]),
+  risks: z.array(ConstraintRefSchema).default([]),
+  dependencies: z.array(ConstraintRefSchema).default([]),
+}).strict();
+
+export type NonSoftwareConstraintsByCategory = z.infer<typeof NonSoftwareConstraintsByCategorySchema>;
 
 // ============================================================
 // Anchors Section
@@ -481,7 +497,12 @@ export type SuggestedConstraint = z.infer<typeof SuggestedConstraintSchema>;
  * - {"id": "B1", "type": "invariant"} → #### B1: Title in Markdown
  * - {"id": "TN1", ...} → ### TN1: Title in Markdown
  */
-export const ManifoldStructureSchema = z.object({
+/**
+ * Shared manifold fields — everything EXCEPT `domain` and `constraints`.
+ * Merged into each domain variant below. The discriminator `domain` and the
+ * domain-specific `constraints` shape live on the per-variant shape.
+ */
+const ManifoldBaseShape = z.object({
   // Schema metadata
   $schema: z.string().optional(),
   schema_version: z.literal(3).default(3),
@@ -490,8 +511,6 @@ export const ManifoldStructureSchema = z.object({
   feature: z.string().min(1, 'Feature name is required'),
   phase: PhaseSchema,
   mode: z.enum(['light', 'full']).optional(),
-  // Non-software domain: translation layer for non-engineering contexts
-  domain: z.enum(['software', 'non-software']).optional(),
 
   // Outcome reference (content in Markdown)
   outcome_ref: z.string().optional(),
@@ -503,9 +522,6 @@ export const ManifoldStructureSchema = z.object({
   // Timestamps
   created: z.string().optional(),
   updated: z.string().optional(),
-
-  // Constraints (structure only - content in Markdown)
-  constraints: ConstraintsByCategorySchema.optional(),
 
   // Tensions (structure only - content in Markdown)
   tensions: z.array(TensionRefSchema).default([]),
@@ -580,7 +596,83 @@ export const ManifoldStructureSchema = z.object({
   }).optional(),
 });
 
+/**
+ * Software variant: `domain: 'software'` + software category keys
+ * (business, technical, user_experience, security, operational)
+ */
+const SoftwareManifoldShape = z.object({
+  domain: z.literal('software'),
+  constraints: ConstraintsByCategorySchema.optional(),
+});
+
+/**
+ * Non-software variant: `domain: 'non-software'` + universal category keys
+ * (obligations, desires, resources, risks, dependencies)
+ */
+const NonSoftwareManifoldShape = z.object({
+  domain: z.literal('non-software'),
+  constraints: NonSoftwareConstraintsByCategorySchema.optional(),
+});
+
+/**
+ * Discriminated union on `domain`. Legacy manifolds without a `domain` field
+ * are pre-normalized to `{domain: 'software'}` via z.preprocess — this preserves
+ * backward compatibility with the entire existing software corpus while making
+ * the non-software branch type-safe and enforced at the schema level.
+ *
+ * ONE_WAY: the old "flat ConstraintsByCategorySchema regardless of domain"
+ * shape is no longer accepted. A manifold with domain: 'non-software' MUST
+ * use obligations/desires/resources/risks/dependencies keys; a manifold with
+ * domain: 'software' MUST use business/technical/user_experience/security/operational.
+ * Category crossover is rejected at parse time.
+ */
+export const ManifoldStructureSchema = z.preprocess(
+  (val) => {
+    if (val && typeof val === 'object' && !Array.isArray(val) && !('domain' in (val as Record<string, unknown>))) {
+      return { ...(val as Record<string, unknown>), domain: 'software' };
+    }
+    return val;
+  },
+  z.discriminatedUnion('domain', [
+    ManifoldBaseShape.merge(SoftwareManifoldShape),
+    ManifoldBaseShape.merge(NonSoftwareManifoldShape),
+  ]),
+);
+
 export type ManifoldStructure = z.infer<typeof ManifoldStructureSchema>;
+
+// ============================================================
+// Category Key Helpers (domain-aware iteration)
+// ============================================================
+
+export const SOFTWARE_CATEGORY_KEYS = [
+  'business',
+  'technical',
+  'user_experience',
+  'security',
+  'operational',
+] as const;
+
+export const NON_SOFTWARE_CATEGORY_KEYS = [
+  'obligations',
+  'desires',
+  'resources',
+  'risks',
+  'dependencies',
+] as const;
+
+export type SoftwareCategoryKey = (typeof SOFTWARE_CATEGORY_KEYS)[number];
+export type NonSoftwareCategoryKey = (typeof NON_SOFTWARE_CATEGORY_KEYS)[number];
+export type CategoryKey = SoftwareCategoryKey | NonSoftwareCategoryKey;
+
+/**
+ * Return the constraint-category keys valid for a given manifold domain.
+ * Used by every constraint-iteration site (linker, reference validation,
+ * ID collection) so non-software manifolds are traversed correctly.
+ */
+export function getCategoryKeys(domain: 'software' | 'non-software' | undefined): readonly CategoryKey[] {
+  return domain === 'non-software' ? NON_SOFTWARE_CATEGORY_KEYS : SOFTWARE_CATEGORY_KEYS;
+}
 
 // ============================================================
 // JSON Schema Export (for Claude tool_use and IDE support)
@@ -649,10 +741,11 @@ export function validateManifoldStructure(json: unknown): {
 export function collectStructureIds(structure: ManifoldStructure): Set<string> {
   const ids = new Set<string>();
 
-  // Collect constraint IDs
+  // Collect constraint IDs (domain-aware)
   if (structure.constraints) {
-    for (const category of ['business', 'technical', 'user_experience', 'security', 'operational'] as const) {
-      for (const constraint of structure.constraints[category] || []) {
+    const constraintsByCategory = structure.constraints as Record<string, Array<{ id: string }> | undefined>;
+    for (const category of getCategoryKeys(structure.domain)) {
+      for (const constraint of constraintsByCategory[category] || []) {
         ids.add(constraint.id);
       }
     }
@@ -682,10 +775,11 @@ export function validateTensionReferences(structure: ManifoldStructure): Array<{
 }> {
   const constraintIds = new Set<string>();
 
-  // Collect all constraint IDs
+  // Collect all constraint IDs (domain-aware)
   if (structure.constraints) {
-    for (const category of ['business', 'technical', 'user_experience', 'security', 'operational'] as const) {
-      for (const constraint of structure.constraints[category] || []) {
+    const constraintsByCategory = structure.constraints as Record<string, Array<{ id: string }> | undefined>;
+    for (const category of getCategoryKeys(structure.domain)) {
+      for (const constraint of constraintsByCategory[category] || []) {
         constraintIds.add(constraint.id);
       }
     }

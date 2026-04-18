@@ -263,6 +263,8 @@ Verification writes `.manifold/<feature>.verify.json`:
 
 ## Execution Instructions
 
+> **Always emit `.manifold/<feature>.verify.json`, regardless of result.** SATISFIED, PARTIAL, or blocked — the artifact is always written. Blockers keep the phase at `GENERATED` (not advanced to `VERIFIED`) but do NOT suppress the artifact. `.verify.json` presence is the signal that m5 ran; phase is the signal of whether it converged.
+
 1. Read structure from `.manifold/<feature>.json` and content from `.manifold/<feature>.md`
 2. **Validate linking** between JSON IDs and Markdown headings
 3. Read generation data from JSON (artifacts list)

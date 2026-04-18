@@ -26,8 +26,8 @@
   },
   {
     "path": "install/commands/m0-init.md",
-    "sha256": "ddfda253324b5b7e4179363aa828dbb294cae9fb42486c240d3eb5767b64a2e4",
-    "bytes": 9594
+    "sha256": "a678301b1a98fe98f8082d8f96bfdd82fa74cad9b942864dd9b6a7527ed77c13",
+    "bytes": 11596
   },
   {
     "path": "install/commands/m1-constrain.md",
@@ -41,8 +41,8 @@
   },
   {
     "path": "install/commands/m3-anchor.md",
-    "sha256": "cdb7538d149eff978b3c0850c8f495198c75dd62081bb95ce5917e5464340f11",
-    "bytes": 14390
+    "sha256": "d6b9590cf9e0677535d41aa8598d5e643b8c7167065d86ac41d1cd0f492d8439",
+    "bytes": 9701
   },
   {
     "path": "install/commands/m4-generate.md",
@@ -61,8 +61,8 @@
   },
   {
     "path": "install/commands/m5-verify.md",
-    "sha256": "764c687d99de2070545c9b0d8d1dd8b7308635642dbacdadca8e4d08117e69e2",
-    "bytes": 11947
+    "sha256": "1bd00da383730c607c2580c89dc90cea319d3d0d31c40793ea44cecd78229584",
+    "bytes": 12288
   },
   {
     "path": "install/commands/m6-integrate.md",
