@@ -50,46 +50,6 @@ Forward reasoning                    Backward from outcome
 - **Native CLI** -- Fast, deterministic operations (<100ms) for CI/CD
 - **Multi-Agent Support** -- Works with Claude Code, AMP, Gemini CLI, and Codex CLI
 
-## Recent Changes
-
-### v2.31.0 (Current)
-
-**Context Rot Elimination** -- Major reduction in redundant instruction shipping across phase prompts plus a new phase-commons hook that injects live manifold state before every `/manifold:*` command.
-
-- **`phase-commons` hook** -- New `UserPromptSubmit` handler compiled into the CLI binary (`manifold hook phase-commons`). Detects manifold phase commands, reads `.manifold/<feature>.json` from disk, and injects a compact state summary + shared directives so phase prompts don't have to repeat them.
-- **Phase prompts de-duplicated** -- Removed repeated interaction rules, validation directives, and schema reminders from m0-m6 (now delivered once by `phase-commons`), shrinking prompt size and reducing drift risk.
-- **`m4-prd` and `m4-stories`** -- PM outputs split out of `m4-generate` into dedicated slash commands for cleaner invocation (`/manifold:m4-prd`, `/manifold:m4-stories`); legacy `--prd` / `--stories` flags remain supported.
-- **`m-status` Context Restoration** -- Post-compaction recovery now lists the last command, phase, and suggested next action so conversations resume cleanly.
-- **Non-software domain schema** -- `domain: non-software` constraint manifolds use a discriminated union (obligations, desires, resources, risks, dependencies) with full validation coverage.
-- **Hook robustness** -- Install script auto-refreshes the CLI binary when `hooks.json` references a subcommand the local binary doesn't ship; `hooks.json` is canonical in `install/` and synced to `plugin/`.
-
-### v2.30.2
-
-**Prompt Quality Overhaul** -- Comprehensive evaluation and fix of all 8 phase command prompts, raising aggregate quality from 3.7/5 to 4.25/5.
-
-- **SKILL.md rewritten** -- Was documenting deprecated YAML format; now accurately reflects v3 JSON+Markdown hybrid, all command summaries, and CLI commands
-- **m4 AutoSuggester fixed** -- Non-executable TypeScript block replaced with `manifold solve --json` CLI invocation that LLMs can actually run
-- **Binding constraint elevated** -- m4 now reads `anchors.binding_constraint` as a dedicated STEP 0 before artifact planning, ensuring the bottleneck is addressed first
-- **Validation consistency** -- m0-init and m-quick now have the same `⚠️ Mandatory Post-Phase Validation` pattern as m1-m5
-- **Security gate for m-quick** -- Light mode now detects security-relevant feature names (auth, token, password, etc.) and suggests full workflow before proceeding
-- **Self-contained prompts** -- All references to repo-only files (docs/GLOSSARY.md, docs/triz-principles.md, cli/lib/structure-schema.ts) replaced with inlined content so the plugin works standalone
-- **TRIZ principles inlined** -- Full parameter pair lookup table (10 conflict patterns + 14 Tier A principles) now embedded directly in m2-tension
-- **Eval infrastructure** -- Golden test framework with 3 test cases (payment-retry, login-timeout, data-export) and assertion-based runner
-- **Prompt injection guard** -- Pre-mortem template in m1 now explicitly instructs LLM to treat outcome text as data, not instructions
-
-### v2.30.0
-
-- **Enhanced thinking prompts** -- Cross-phase data flow tracking and quality gates for constraint handoff between phases
-
-### v2.29.0
-
-- **Cross-platform hooks** -- Hooks now work on macOS, Linux, and Windows
-- **Structured logging** -- Hook output uses structured format for better debugging
-- **File splitting** -- Large manifold files can be split for better context management
-- **Windows support** -- Full Windows compatibility for CLI binary, installer, and hooks
-
-See [CHANGELOG.md](CHANGELOG.md) for complete version history.
-
 ## Install
 
 ### Claude Code Plugin (Recommended for Claude Code users)
