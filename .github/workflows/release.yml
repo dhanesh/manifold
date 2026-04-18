@@ -82,11 +82,47 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # Matrix build: darwin binaries must run on macOS runners so codesign can
+  # apply an ad-hoc signature. Cross-compiling darwin targets from Linux
+  # historically worked because Bun's linker embedded an ad-hoc signature
+  # automatically; that behaviour regressed in a Bun release shortly before
+  # v2.31.0 (2026-04-18), producing unsigned Mach-O output that the macOS
+  # arm64 kernel SIGKILLs on launch (exit 137). Linux/Windows targets don't
+  # need per-runner signing and stay on ubuntu-latest.
   build:
-    name: Build CLI Binaries
+    name: Build ${{ matrix.outfile }}
     needs: semantic-release
     if: needs.semantic-release.outputs.new_release_published == 'true'
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            target: bun-linux-x64
+            outfile: manifold-linux-x64
+            sign: false
+            run_tests: true
+          - runner: ubuntu-latest
+            target: bun-linux-arm64
+            outfile: manifold-linux-arm64
+            sign: false
+            run_tests: false
+          - runner: macos-latest
+            target: bun-darwin-arm64
+            outfile: manifold-darwin-arm64
+            sign: true
+            run_tests: false
+          - runner: macos-latest
+            target: bun-darwin-x64
+            outfile: manifold-darwin-x64
+            sign: true
+            run_tests: false
+          - runner: ubuntu-latest
+            target: bun-windows-x64
+            outfile: manifold-windows-x64.exe
+            sign: false
+            run_tests: false
+    runs-on: ${{ matrix.runner }}
 
     steps:
       - name: Checkout tagged commit
@@ -103,48 +139,42 @@ jobs:
         working-directory: cli
         run: bun install
 
+      # Run the test suite once (on the linux-x64 leg) rather than on every
+      # matrix leg. Keeps CI minutes linear in matrix size without losing
+      # the release-time gate that existed before.
       - name: Run tests
+        if: matrix.run_tests
         working-directory: cli
         run: bun test
 
-      - name: Build binaries for all platforms
+      - name: Compile binary
         working-directory: cli
         run: |
           mkdir -p dist
+          bun build ./index.ts --compile --target=${{ matrix.target }} --outfile ./dist/${{ matrix.outfile }}
+          ls -lh dist/${{ matrix.outfile }}
 
-          echo "Building darwin-arm64..."
-          bun build ./index.ts --compile --target=bun-darwin-arm64 --outfile ./dist/manifold-darwin-arm64
-
-          echo "Building darwin-x64..."
-          bun build ./index.ts --compile --target=bun-darwin-x64 --outfile ./dist/manifold-darwin-x64
-
-          echo "Building linux-x64..."
-          bun build ./index.ts --compile --target=bun-linux-x64 --outfile ./dist/manifold-linux-x64
-
-          echo "Building linux-arm64..."
-          bun build ./index.ts --compile --target=bun-linux-arm64 --outfile ./dist/manifold-linux-arm64
-
-          echo "Building windows-x64..."
-          bun build ./index.ts --compile --target=bun-windows-x64 --outfile ./dist/manifold-windows-x64.exe
-
-          echo "Build complete. Binary sizes:"
-          ls -lh dist/
-
-      - name: Report binary sizes
+      # Ad-hoc sign darwin Mach-O outputs. The signature is what the arm64
+      # kernel checks on launch; a missing signature is the root cause of
+      # exit 137 crashes. Asserting `Signature=adhoc` afterwards turns any
+      # future regression (Bun, runner image, codesign) into a CI failure
+      # instead of a silent, user-facing install-time crash.
+      - name: Ad-hoc sign Mach-O and verify signature
+        if: matrix.sign
         working-directory: cli
         run: |
-          echo "Binary sizes (bun compile bundles full runtime):"
-          for binary in dist/manifold-*; do
-            size=$(stat -c%s "$binary" 2>/dev/null || stat -f%z "$binary")
-            size_mb=$((size / 1024 / 1024))
-            echo "  $binary: ${size_mb}MB"
-          done
+          codesign --sign - --force --timestamp=none ./dist/${{ matrix.outfile }}
+          codesign -dv ./dist/${{ matrix.outfile }} 2>&1 | tee /tmp/codesign.out
+          if ! grep -q "Signature=adhoc" /tmp/codesign.out; then
+            echo "::error::Expected ad-hoc signature on ${{ matrix.outfile }}, found none."
+            exit 1
+          fi
 
-      - name: Upload binaries as artifacts
+      - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: cli-binaries
-          path: cli/dist/manifold-*
+          name: ${{ matrix.outfile }}
+          path: cli/dist/${{ matrix.outfile }}
           retention-days: 1
 
   release:
@@ -153,11 +183,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download binaries
+      # Matrix uploads one artifact per platform. `pattern` + `merge-multiple`
+      # gathers them all into a single flat directory so action-gh-release
+      # can upload them in one step.
+      - name: Download all binaries
         uses: actions/download-artifact@v8
         with:
-          name: cli-binaries
           path: binaries
+          pattern: manifold-*
+          merge-multiple: true
 
       - name: Upload binaries to GitHub Release
         uses: softprops/action-gh-release@v2
@@ -209,6 +243,56 @@ jobs:
           /tmp/manifold --help
 
           echo "CLI binary verified successfully!"
+
+  # Regression canary for the v2.31.0 SIGKILL issue: downloads the published
+  # darwin-arm64 binary on a real Apple Silicon runner, asserts the ad-hoc
+  # signature is present, and actually exec's the binary. The kernel
+  # SIGKILLs unsigned arm64 Mach-O before main() runs, so a successful
+  # --version here proves the release is installable by macOS arm64 users.
+  verify-darwin-arm64:
+    name: Verify macOS arm64 CLI Binary
+    needs: [semantic-release, release]
+    runs-on: macos-latest
+    continue-on-error: true
+
+    steps:
+      - name: Wait for release assets to propagate
+        run: sleep 30
+
+      - name: Download and test darwin-arm64 binary
+        run: |
+          VERSION="${{ needs.semantic-release.outputs.new_release_git_tag }}"
+          BINARY_URL="https://github.com/dhanesh/manifold/releases/download/${VERSION}/manifold-darwin-arm64"
+
+          echo "Downloading CLI from: $BINARY_URL"
+          for i in 1 2 3; do
+            if curl -fsSL "$BINARY_URL" -o /tmp/manifold 2>/dev/null; then
+              echo "Download successful on attempt $i"
+              break
+            fi
+            echo "Attempt $i failed, retrying in 20s..."
+            sleep 20
+          done
+
+          if [ ! -f /tmp/manifold ]; then
+            echo "WARNING: Could not download CLI binary after 3 attempts"
+            exit 0
+          fi
+
+          chmod +x /tmp/manifold
+
+          echo "Verifying code signature on published asset..."
+          codesign -dv /tmp/manifold 2>&1 | tee /tmp/codesign.out
+          if ! grep -q "Signature=adhoc" /tmp/codesign.out; then
+            echo "::error::Published darwin-arm64 binary is NOT ad-hoc signed. macOS arm64 kernel will SIGKILL it (exit 137) on user machines."
+            exit 1
+          fi
+
+          echo "Testing CLI execution..."
+          /tmp/manifold --version
+          /tmp/manifold --help
+
+          echo "macOS arm64 CLI binary verified successfully!"
 
   verify-windows:
     name: Verify Windows CLI Binary
