@@ -52,7 +52,18 @@ Forward reasoning                    Backward from outcome
 
 ## Recent Changes
 
-### v2.30.2 (Current)
+### v2.31.0 (Current)
+
+**Context Rot Elimination** -- Major reduction in redundant instruction shipping across phase prompts plus a new phase-commons hook that injects live manifold state before every `/manifold:*` command.
+
+- **`phase-commons` hook** -- New `UserPromptSubmit` handler compiled into the CLI binary (`manifold hook phase-commons`). Detects manifold phase commands, reads `.manifold/<feature>.json` from disk, and injects a compact state summary + shared directives so phase prompts don't have to repeat them.
+- **Phase prompts de-duplicated** -- Removed repeated interaction rules, validation directives, and schema reminders from m0-m6 (now delivered once by `phase-commons`), shrinking prompt size and reducing drift risk.
+- **`m4-prd` and `m4-stories`** -- PM outputs split out of `m4-generate` into dedicated slash commands for cleaner invocation (`/manifold:m4-prd`, `/manifold:m4-stories`); legacy `--prd` / `--stories` flags remain supported.
+- **`m-status` Context Restoration** -- Post-compaction recovery now lists the last command, phase, and suggested next action so conversations resume cleanly.
+- **Non-software domain schema** -- `domain: non-software` constraint manifolds use a discriminated union (obligations, desires, resources, risks, dependencies) with full validation coverage.
+- **Hook robustness** -- Install script auto-refreshes the CLI binary when `hooks.json` references a subcommand the local binary doesn't ship; `hooks.json` is canonical in `install/` and synced to `plugin/`.
+
+### v2.30.2
 
 **Prompt Quality Overhaul** -- Comprehensive evaluation and fix of all 8 phase command prompts, raising aggregate quality from 3.7/5 to 4.25/5.
 
@@ -88,8 +99,8 @@ claude plugin:install github:dhanesh/manifold#plugin
 ```
 
 This installs Manifold as a native Claude Code plugin, giving you:
-- 12 slash commands (`/manifold:m0-init` through `/manifold:parallel`)
-- 4 hooks (context preservation, parallel suggestions, schema validation, phase discipline)
+- 13 slash commands (`/manifold:m0-init` through `/manifold:parallel`, including `m4-prd` and `m4-stories` for PM workflows)
+- 4 hooks (context preservation, schema validation, interaction rules, phase context injection) plus a `SessionStart` script
 - Constraint templates (auth, CRUD, API, payment, + 13 PM templates)
 - `/manifold:setup` command to install the native CLI binary
 
@@ -105,16 +116,16 @@ The installer auto-detects which AI agents you have and installs per-agent:
 
 | Agent | What Gets Installed | Location |
 |-------|-------------------|----------|
-| **Claude Code** | 12 slash commands (`.md`), parallel library, hooks, schema snippet in `CLAUDE.md` | `~/.claude/commands/`, `lib/`, `hooks/` |
+| **Claude Code** | 13 slash commands (`.md`), parallel library, hooks, schema snippet in `CLAUDE.md` | `~/.claude/commands/`, `lib/`, `hooks/` |
 | **AMP** | Same as Claude Code | `~/.amp/commands/`, `lib/`, `hooks/` |
 | **Gemini CLI** | Translated `.toml` commands, parallel bundle (`.js`), schema snippet in `GEMINI.md` | `~/.gemini/commands/`, `lib/` |
 | **Codex CLI** | `SKILL.md` skill dirs, hook skills, parallel bundle, schema snippet in `AGENTS.md` | `~/.agents/skills/manifold-*/`, `~/.codex/lib/` |
 | **CLI binary** | `manifold` binary for your platform (darwin/linux/windows, arm64/x64) | `/usr/local/bin/`, `~/.local/bin/`, or `%LOCALAPPDATA%\manifold\bin\` |
 
 **Specifically, the installer creates:**
-- `commands/` -- 12 Manifold slash command files (m0-init through parallel, plus SCHEMA_REFERENCE)
-- `lib/parallel/` -- 12 TypeScript modules + pre-built bundle for git worktree-based parallel execution
-- `hooks/` -- 4 hooks: `manifold-context.ts` (context preservation), `auto-suggester.ts` (parallel suggestions), `manifold-schema-guard.ts` (schema validation), `prompt-enforcer.ts` (phase discipline)
+- `commands/` -- 13 Manifold slash command files (m0-init through parallel, plus `m4-prd`, `m4-stories`, and SCHEMA_REFERENCE)
+- `lib/parallel/` -- TypeScript modules + pre-built bundle for git worktree-based parallel execution (including the `AutoSuggester` library that powers `/manifold:parallel`)
+- `hooks/` -- 4 compiled hook handlers dispatched via `manifold hook <name>`: `context` (PreCompact — context preservation), `schema-guard` (PostToolUse — schema validation), `prompt-enforcer` (UserPromptSubmit — interaction rules), `phase-commons` (UserPromptSubmit — injects live manifold state before phase commands). A cross-platform `session-start.sh` / `session-start.ps1` script is also wired to the `SessionStart` event.
 - `skills/manifold/SKILL.md` -- Overview skill for `/manifold` command
 - Schema snippet appended to your agent's instruction file (CLAUDE.md, GEMINI.md, or AGENTS.md)
 
@@ -191,6 +202,8 @@ See [Quickstart](docs/quickstart.md) for a complete 15-minute guide, or [When NO
 | `/manifold:m2-tension` | Surface constraint conflicts | TENSIONED |
 | `/manifold:m3-anchor` | Backward reasoning from outcome | ANCHORED |
 | `/manifold:m4-generate` | Create all artifacts simultaneously | GENERATED |
+| `/manifold:m4-prd` | Generate a PRD document from the manifold (PM workflow) | - |
+| `/manifold:m4-stories` | Generate user stories with acceptance criteria (PM workflow) | - |
 | `/manifold:m5-verify` | Validate against constraints | VERIFIED |
 | `/manifold:m6-integrate` | Wire artifacts together | - |
 | `/manifold:m-status` | Show current state | - |
@@ -213,6 +226,8 @@ manifold solve [feature]           # Parallel execution plan
 manifold migrate [feature]         # Convert YAML -> JSON+MD
 manifold drift [feature]          # Detect post-verification file changes
 manifold completion [shell]        # Shell completions (bash/zsh/fish)
+manifold hook <name>               # Compiled hook handlers for Claude Code events
+                                   # Subcommands: context | schema-guard | prompt-enforcer | phase-commons
 ```
 
 **When to use CLI vs AI commands:**
@@ -346,7 +361,7 @@ Generate PRDs and user stories with constraint traceability:
 /manifold:m4-generate mobile-checkout --prd --stories
 ```
 
-See [PM Guide](docs/pm/guide.md) for detailed workflows and [PM Templates](install/templates/pm/README.md) for all 10 PM-specific templates.
+See [PM Guide](docs/pm/guide.md) for detailed workflows and [PM Templates](install/templates/pm/README.md) for all 13 PM-specific templates.
 
 ## Non-Programming Use Cases
 

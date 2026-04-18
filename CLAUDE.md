@@ -28,6 +28,8 @@ Forward reasoning                    Backward from outcome
 | `/manifold:m2-tension <feature>` | TENSIONED | Surface conflicts (trade-offs) between constraints |
 | `/manifold:m3-anchor <feature>` | ANCHORED | Backward reasoning from outcome |
 | `/manifold:m4-generate <feature>` | GENERATED | Create ALL artifacts simultaneously |
+| `/manifold:m4-prd <feature>` | - | Generate PRD document (PM workflow) |
+| `/manifold:m4-stories <feature>` | - | Generate user stories with acceptance criteria (PM workflow) |
 | `/manifold:m5-verify <feature>` | VERIFIED | Validate against constraints |
 | `/manifold:m6-integrate <feature>` | - | Wire artifacts together |
 | `/manifold:m-status` | - | Show current state and next action |
