@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.32.0](https://github.com/dhanesh/manifold/compare/v2.31.3...v2.32.0) (2026-05-01)
+
+### Features
+
+* **serve:** add manifold-serve pwa visualiser with apple-themed story spine ([861fadf](https://github.com/dhanesh/manifold/commit/861fadf237567e3296840b36488b171245d643e5))
+
 ## [2.31.3](https://github.com/dhanesh/manifold/compare/v2.31.2...v2.31.3) (2026-04-18)
 
 ### Bug Fixes

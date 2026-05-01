@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "manifold",
-      "version": "2.31.3",
+      "version": "2.32.0",
       "source": "./plugin",
       "description": "Constraint-first development framework with structured phases: initialize, constrain, tension, anchor, generate, verify.",
       "category": "development"

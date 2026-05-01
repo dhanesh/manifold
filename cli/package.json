@@ -1,6 +1,6 @@
 {
   "name": "@manifold/cli",
-  "version": "2.31.3",
+  "version": "2.32.0",
   "description": "Native CLI for Manifold constraint-first development framework",
   "type": "module",
   "bin": {
