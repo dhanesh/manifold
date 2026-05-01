@@ -22,6 +22,7 @@ import { registerMigrateCommand } from './commands/migrate.js';
 import { registerShowCommand } from './commands/show.js';
 import { registerCompletionCommand } from './commands/completion.js';
 import { registerHookCommand } from './commands/hook.js';
+import { registerServeCommand } from './commands/serve.js';
 import { setColorMode } from './lib/output.js';
 import { configureLogger, startTimer, endTimer, emitTimingSummary, type LogMode } from './lib/logger.js';
 import pkg from './package.json';
@@ -83,6 +84,7 @@ registerMigrateCommand(program);
 registerShowCommand(program);
 registerCompletionCommand(program);
 registerHookCommand(program);
+registerServeCommand(program);
 
 // Parse arguments
 program.parse();

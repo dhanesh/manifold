@@ -1,0 +1,569 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dhanesh/manifold/main/install/manifold-verify.schema.json",
+  "feature": "manifold-serve",
+  "verification": {
+    "timestamp": "2026-05-01T00:00:00Z",
+    "result": "VERIFIED",
+    "convergence_status": "CONVERGED",
+    "iteration": 12,
+    "matrix": [
+      {
+        "constraint": "B1",
+        "type": "GOAL",
+        "title": "One-Command Visualisation",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "level": "VERIFIED",
+        "rts_supporting": [
+          "RT-1",
+          "RT-2",
+          "RT-3"
+        ]
+      },
+      {
+        "constraint": "B2",
+        "type": "GOAL",
+        "title": "Cross-Audience Legibility",
+        "code": true,
+        "test": "manual",
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "level": "VERIFIED",
+        "rts_supporting": [],
+        "evidence": "Cross-audience walkthrough per LEGIBILITY-REVIEW.md scored 7/8 clear · 1/8 unclear. Q7 (synthesised vs native edge differentiation) flagged as informational follow-up. Pass threshold met (3+ unclear fails)."
+      },
+      {
+        "constraint": "T1",
+        "type": "INVARIANT",
+        "title": "All Assets Embedded",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "level": "VERIFIED",
+        "rts_supporting": [
+          "RT-1",
+          "RT-8",
+          "RT-9",
+          "RT-10"
+        ]
+      },
+      {
+        "constraint": "T2",
+        "type": "INVARIANT",
+        "title": "Read-Only Server",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "level": "VERIFIED",
+        "rts_supporting": [
+          "RT-3"
+        ]
+      },
+      {
+        "constraint": "T3",
+        "type": "BOUNDARY",
+        "title": "Default Port Derived From 'manifold', Overridable",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": true,
+        "status": "SATISFIED",
+        "level": "VERIFIED",
+        "rts_supporting": [
+          "RT-11"
+        ]
+      },
+      {
+        "constraint": "T4",
+        "type": "BOUNDARY",
+        "title": "Lightweight Performance",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "level": "VERIFIED",
+        "rts_supporting": [
+          "RT-6",
+          "RT-7",
+          "RT-10",
+          "RT-12"
+        ]
+      },
+      {
+        "constraint": "T5",
+        "type": "BOUNDARY",
+        "title": "Multi-Schema Tolerance v1/v2/v3",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "level": "VERIFIED",
+        "rts_supporting": [
+          "RT-4",
+          "RT-5"
+        ]
+      },
+      {
+        "constraint": "U1",
+        "type": "GOAL",
+        "title": "Constraint Graph Visualisation",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "level": "VERIFIED",
+        "rts_supporting": [
+          "RT-5",
+          "RT-6"
+        ]
+      },
+      {
+        "constraint": "U2",
+        "type": "GOAL",
+        "title": "Narrative Alongside Structure",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "level": "VERIFIED",
+        "rts_supporting": [
+          "RT-7"
+        ]
+      },
+      {
+        "constraint": "U3",
+        "type": "INVARIANT",
+        "title": "PWA, Offline-Capable",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "level": "VERIFIED",
+        "rts_supporting": [
+          "RT-8"
+        ]
+      },
+      {
+        "constraint": "U4",
+        "type": "GOAL",
+        "title": "Multi-Manifold Index",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "level": "VERIFIED",
+        "rts_supporting": [
+          "RT-4",
+          "RT-12"
+        ]
+      },
+      {
+        "constraint": "S1",
+        "type": "INVARIANT",
+        "title": "Loopback-Only Default",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "level": "VERIFIED",
+        "rts_supporting": [
+          "RT-3"
+        ]
+      },
+      {
+        "constraint": "S2",
+        "type": "INVARIANT",
+        "title": "Sanitised Markdown Rendering",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "level": "VERIFIED",
+        "rts_supporting": [
+          "RT-7"
+        ]
+      },
+      {
+        "constraint": "S3",
+        "type": "INVARIANT",
+        "title": "No Path Traversal",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "level": "VERIFIED",
+        "rts_supporting": [
+          "RT-3"
+        ]
+      },
+      {
+        "constraint": "O1",
+        "type": "BOUNDARY",
+        "title": "Port-In-Use Fail-Fast",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": true,
+        "status": "SATISFIED",
+        "level": "VERIFIED",
+        "rts_supporting": [
+          "RT-11"
+        ]
+      },
+      {
+        "constraint": "O2",
+        "type": "GOAL",
+        "title": "Graceful Shutdown ≤ 1s",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "level": "VERIFIED",
+        "rts_supporting": [
+          "RT-2"
+        ]
+      },
+      {
+        "constraint": "O3",
+        "type": "BOUNDARY",
+        "title": "Service-Worker Cache Versioning",
+        "code": true,
+        "test": true,
+        "docs": true,
+        "ops": false,
+        "status": "SATISFIED",
+        "level": "VERIFIED",
+        "rts_supporting": [
+          "RT-9"
+        ]
+      }
+    ],
+    "coverage": {
+      "by_type": {
+        "invariants": {
+          "satisfied": 6,
+          "total": 6,
+          "percentage": 100,
+          "ids": [
+            "T1",
+            "T2",
+            "U3",
+            "S1",
+            "S2",
+            "S3"
+          ]
+        },
+        "boundaries": {
+          "satisfied": 5,
+          "total": 5,
+          "percentage": 100,
+          "ids": [
+            "T3",
+            "T4",
+            "T5",
+            "O1",
+            "O3"
+          ]
+        },
+        "goals": {
+          "satisfied": 6,
+          "total": 6,
+          "percentage": 100,
+          "ids": [
+            "B1",
+            "B2",
+            "U1",
+            "U2",
+            "U4",
+            "O2"
+          ]
+        }
+      },
+      "by_level": {
+        "DOCUMENTED": 0,
+        "IMPLEMENTED": 0,
+        "TESTED": 0,
+        "VERIFIED": 17,
+        "note": "Top tier reached. Every constraint has every supporting evidence VERIFIED + at least one test_passes (or, for B2, a passing manual_review)."
+      },
+      "by_artifact": {
+        "code": {
+          "addressed": 17,
+          "total": 17,
+          "percentage": 100
+        },
+        "test": {
+          "addressed": 17,
+          "total": 17,
+          "percentage": 100
+        },
+        "docs": {
+          "addressed": 17,
+          "total": 17,
+          "percentage": 100
+        },
+        "ops": {
+          "addressed": 2,
+          "total": 17,
+          "percentage": 12
+        }
+      }
+    },
+    "evidence_verification": {
+      "checked": 39,
+      "verified": 39,
+      "stale": 0,
+      "pending": 0,
+      "failed": 0,
+      "by_type": {
+        "file_exists": {
+          "verified": 13,
+          "failed": 0
+        },
+        "content_match": {
+          "verified": 14,
+          "failed": 0
+        },
+        "test_passes": {
+          "verified": 9,
+          "failed": 0
+        },
+        "metric_value": {
+          "verified": 1,
+          "failed": 0
+        },
+        "manual_review": {
+          "verified": 2,
+          "pending": 0
+        }
+      }
+    },
+    "rt_status_propagation": {
+      "current": {
+        "SATISFIED": 12,
+        "PARTIAL": 0,
+        "NOT_SATISFIED": 0,
+        "SPECIFICATION_READY": 0
+      },
+      "note": "All 12 RTs SATISFIED with all evidence VERIFIED."
+    },
+    "legibility_review": {
+      "tool": "docs/manifold-serve/LEGIBILITY-REVIEW.md",
+      "executed_on": "2026-05-01",
+      "checklist_score": {
+        "clear": 7,
+        "partial": 0,
+        "unclear": 1,
+        "total": 8
+      },
+      "passes_threshold": true,
+      "threshold_rule": "≥3 unclear items fails (per LEGIBILITY-REVIEW.md)",
+      "items": [
+        {
+          "q": 1,
+          "topic": "ten-second 'what am I looking at'",
+          "result": "✅ clear"
+        },
+        {
+          "q": 2,
+          "topic": "what one node represents (without jargon)",
+          "result": "✅ clear"
+        },
+        {
+          "q": 3,
+          "topic": "what a line between two nodes means",
+          "result": "✅ clear"
+        },
+        {
+          "q": 4,
+          "topic": "outcome statement readable from the page",
+          "result": "✅ clear"
+        },
+        {
+          "q": 5,
+          "topic": "switching manifolds visible",
+          "result": "✅ clear"
+        },
+        {
+          "q": 6,
+          "topic": "graph node → matching narrative section",
+          "result": "✅ clear"
+        },
+        {
+          "q": 7,
+          "topic": "synthesised edge vs native edge differentiation",
+          "result": "✗ unclear"
+        },
+        {
+          "q": 8,
+          "topic": "would tell the reviewer something useful about a feature they didn't write",
+          "result": "✅ clear"
+        }
+      ]
+    },
+    "tests_executed": {
+      "bun": {
+        "command": "bun test tests/manifold-serve/",
+        "passed": 46,
+        "failed": 0,
+        "skipped": 0,
+        "expect_calls": 206
+      },
+      "playwright": {
+        "command": "bunx playwright test --config tests/manifold-serve/e2e/playwright.config.ts",
+        "discovered": 10,
+        "passed": 10,
+        "failed": 0,
+        "duration_ms": 20800
+      }
+    },
+    "linking": {
+      "constraints": "17/17 linked",
+      "tensions": "7/7 linked",
+      "required_truths": "12/12 linked",
+      "result": "VALID"
+    },
+    "binding_constraint_verification": {
+      "required_truth_id": "RT-1",
+      "status": "SATISFIED",
+      "level": "VERIFIED"
+    },
+    "genealogy_verification": {
+      "result": "PASS"
+    },
+    "statistical_verification": {
+      "constraints_with_statistical_thresholds": [
+        "T4",
+        "O2"
+      ],
+      "statistical_test_present": [
+        "T4: tests/manifold-serve/perf.test.ts (p50/p99 over 100 loopback requests)",
+        "O2: tests/manifold-serve/shutdown.test.ts (timed SIGINT exit)"
+      ],
+      "flagged": []
+    },
+    "reversibility_verification": {
+      "result": "PASS — no ONE_WAY actions in reversibility_log."
+    },
+    "propagation_verification": {
+      "result": "PASS — no VIOLATED propagation effects."
+    },
+    "tension_validation_drift": {
+      "rechecked": [
+        "TN1",
+        "TN2",
+        "TN3",
+        "TN4",
+        "TN5",
+        "TN6",
+        "TN7"
+      ],
+      "still_confirmed": [
+        "TN1",
+        "TN2",
+        "TN3",
+        "TN4",
+        "TN5",
+        "TN6",
+        "TN7"
+      ],
+      "reopened": []
+    },
+    "drift": {
+      "current_status": "CLEAN",
+      "needs_recapture": "after this iter — manifest writes invalidated prior baseline"
+    },
+    "gaps": [],
+    "informational_followups": [
+      {
+        "id": "F1",
+        "source": "LEGIBILITY-REVIEW.md Q7",
+        "issue": "Reviewer could not distinguish synthesised edges (dashed-stroke, derived from `tensions[].between` / anchor `maps_to`) from native edges (solid-stroke, from `constraint_graph.edges`). The visual cue exists in BackwardSankey.svelte but is not labelled.",
+        "suggested_change": "Add a small legend to the bottom or top-right of the Sankey: `— solid: declared in constraint_graph` / `– – – dashed: synthesised from relations`. ~10 lines of SVG + caption.",
+        "constraint": "B2",
+        "blocks_verified_phase": false,
+        "ux_value": "Modest. Most readers won't care about the distinction; teams with hand-curated `constraint_graph.edges` (rare in this repo) will appreciate it."
+      }
+    ],
+    "next_actions": {
+      "blocking": [],
+      "non_blocking": [],
+      "informational": [
+        "F1: Add edge-type legend to BackwardSankey.svelte (UX polish; non-blocking).",
+        "Recompile signed binaries (`bun --cwd cli compile:all`) so release-tag users pick up the Apple-themed visualiser.",
+        "Re-run `manifold drift manifold-serve --update` after this iteration to re-capture the post-iter-12 baseline."
+      ]
+    },
+    "phase_after_verify": "VERIFIED"
+  },
+  "file_hashes": {
+    "cli/lib/manifold-collection.ts": "caa131265b7fa6adf20d570c19688a7dbb4593b4d4ca92483b9e0c54c251c883",
+    "cli/lib/graph-synthesis.ts": "b968d32f49590e1370927e72ac61446b40e9381d6ea7074db4e93445bc680124",
+    "cli/lib/embedded-assets.ts": "816169731bfe8864f1cb6cdc981c814f317e5829c1697be2a49c33c037532f07",
+    "cli/lib/embedded-assets.generated.ts": "a199f9766ae404125c5255a4c4b1468c9040e9bc6e72a5e4250c6061e91319a2",
+    "cli/commands/serve.ts": "c9b299fb2a78ff8c39772236be786ff81d9df769cc7626c4abd3b7b79eafb462",
+    "cli/index.ts": "aa29ea185834bb031c88dadc0b2e788c64eb5fcb155548dfbedd01218c25839d",
+    "cli/web/server.ts": "f85aac78656ffd3c2a8503c14ef70dd73a8f22b2a8200b98b02289f1477ddb56",
+    "cli/web/package.json": "a002a0e005903d7ae96c0e6057b2bc761afed0c636c03385b6359182cb990664",
+    "cli/web/tsconfig.json": "d9cf7b3851ca9a42b8081ce543f8e1df4c1c0d046b30effe1c91134a5e9bee4a",
+    "cli/web/vite.config.ts": "56a5369e7bde551fac17d4699c4ad04fbdeaeb86842bac4d190c4bd41afb65d3",
+    "cli/web/index.html": "0bf7b3b7f1a664e78455f38aa228ba14b621e605e2de7b73f63dc6a7f0f33bfe",
+    "cli/web/src/main.ts": "56e05b66146716a1a876e693b8cce8ff23ea3ed8ff5838cc26c3a29348e8c7b7",
+    "cli/web/src/App.svelte": "a460ed0c95e9d8c056aaa2b77d76be5f15c99acedc8fca419c9051a42e72ead7",
+    "cli/web/src/lib/api.ts": "a2705c15111e0a7a228a0ed35d2024fbccb8cb1913ab9ed2c19ac883e9443d2c",
+    "cli/web/src/lib/markdown.ts": "1d2cde8c3dbcbf003e2f1bc49115672f15aee71ff862272773f95b16a91875e5",
+    "cli/web/src/components/ManifoldIndex.svelte": "91186d1378bc691380c6a08121dcd1e69af32657d1f238f40431febf1fa5f4c1",
+    "scripts/build-web.ts": "4062f99123ba2f8d9ba62e9584108e46087fc22ab0ac5448e0e5e333b9b17f7b",
+    "tests/manifold-serve/port.test.ts": "e77c2814d2c3b0269e3e46b1d6992c5cc664416974c52415393cc08e4b2df69a",
+    "tests/manifold-serve/graph-synthesis.test.ts": "6772d118c724332edad07813cbdf96c7da73526d76697e1f9d403926a1db929d",
+    "tests/manifold-serve/api.test.ts": "6d0ed824b89c934a9ded0495c8262a5e9df272b309c77f3502f1547a27f760ef",
+    "tests/manifold-serve/multi-schema.test.ts": "c64d369262895b9107609a790b6273c0d8aa159e74a4be43bd46bb5a4f7e24cd",
+    "tests/manifold-serve/server.test.ts": "2f1b380bdb9b84f1e4914abecd01d8dd843a9d0c4bb206d6b0b49507c640fc0a",
+    "tests/manifold-serve/markdown-sanitiser.test.ts": "30f23d556202e6e9597a01e3d5b7db0c4ee2b408d0df2acb3b7439bf40c85b04",
+    "docs/manifold-serve/README.md": "75fe53d511314fc787f64a482ae7aa99207ff3b39653891995a305aa822557fb",
+    "docs/manifold-serve/DECISIONS.md": "9f35db7e2d082146f0e6987271e100dc7ca84703fcb0b148f510a01aa794eb52",
+    "ops/runbooks/manifold-serve-port-conflict.md": "384866cd4302c36bcca149e0b4a2c2028c7ff2dab797c5a7b869de486e4275c6",
+    "tests/manifold-serve/perf.test.ts": "349deaaf4476377682708659546ab2b19fd46e541058d495fa6b03f615389ca9",
+    "tests/manifold-serve/collision.test.ts": "6ea4ac888c3b389fb3c376605456b054e3a9fe60f4faefc65508480ec0481aa7",
+    "tests/manifold-serve/shutdown.test.ts": "9cbd3c442adf7d6461961ef4e3acfb9dff4ef6f947b5f74a907f59a7f782ce29",
+    "tests/manifold-serve/sw-cache.test.ts": "49944c91f555203d02a6ea57563e4a6d24407d9cf6d70b9fc80c413db3945da5",
+    "tests/manifold-serve/e2e/playwright.config.ts": "79cd972497943c6f283a57ff5b7139d3b7b471e078d72acb484b9555491e8a7d",
+    "tests/manifold-serve/e2e/visualiser.e2e.ts": "2e9c19cff04bbe0df2387e261973af5c9a912f4e3cf8031408ccdf17b667f799",
+    "tests/manifold-serve/e2e/sw-cache-flip.e2e.ts": "2109566119bb5ad9407fe30e5c50b8f91159e29d20dc1b8dcd799bbd14edfcdd",
+    "tests/manifold-serve/e2e/README.md": "5181c3f4db01fcb2c2cf82349dbda350861d95459ecdf429bc39b0f6e69fc48f",
+    "docs/manifold-serve/LEGIBILITY-REVIEW.md": "991bd0054fcb7c07526075e15ae5b64218815ded9f80b841db5942b077d316f1",
+    "cli/web/src/components/BackwardSankey.svelte": "31171e5a1c640e8a7569d020b6ecee0a678251a13cb31ed8bfb35873c0b0672a",
+    "cli/web/src/components/OutcomeBanner.svelte": "b3cdef41a1b6d93675635eb3ef3acc2b36e8aff6494a868d5d89c05a83ed927f",
+    "cli/web/src/components/ConstraintsPanel.svelte": "7f3a023b0fe8ed89d8f6354e63c7460d5eaa998455e123ab1d4ab5b7f9235fbc",
+    "cli/web/src/components/TensionsPanel.svelte": "3000f4fe13173ffe6ea45673bdd091c3cd654758540212985801a5888124e489",
+    "cli/web/src/components/RequiredTruthsPanel.svelte": "1fb168e63e092aa705eb36265c7d4dbf306364131a016999217b7820d7c6dde1",
+    "cli/web/src/components/SolutionSpacePanel.svelte": "1eca4de3bd615b4005b7bb52c967cb6694bfb0892d6d96b450c9a87f1a842db2",
+    "cli/web/src/components/AccordionItem.svelte": "d9f44784c53ed27a0e2e910d088536fc26a9395729b180bd6b08bdb404993733",
+    "cli/web/src/components/MarkdownInline.svelte": "21633e6a1e779b0f3ca54fd598890e1ffbb872ee38d43760b97a56d82ceae56a",
+    "cli/web/src/components/ThemeToggle.svelte": "7fead122cd01b19b9f86b85fbe691ac5b84c342d8222fc5d30bfde10bce22d90",
+    "cli/web/src/lib/markdown-blocks.ts": "90f45f379eaf04ba79112369a36c3438aae440fc934a90b32068f8360228b555",
+    "cli/web/src/lib/themes.ts": "04e157d9dd56b2625c7f0c1d6106d92fa557d9ac6235e09bee9a19dfa50bcfeb",
+    "cli/web/src/lib/theme-store.ts": "69bbf44fb8cb50adfdec189adbfdd87b28c60c9c9c2efe115dd1fc7d1bd2cd86",
+    "cli/web/src/app.css": "2beb3ebafb3d2519ab335b95863b47caa9176f80b7cc8f3721b345a980d99aaf",
+    "docs/manifold-serve/THEMES.md": "8f8e3ccabbdf30140528f84b79432f8ab342e4ba1a92b5aaed9b90c0a4c5e11c"
+  },
+  "hashes_updated_at": "2026-05-01T12:06:51.736Z"
+}

@@ -1,0 +1,670 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dhanesh/manifold/main/install/manifold-structure.schema.json",
+  "schema_version": 3,
+  "feature": "manifold-serve",
+  "phase": "VERIFIED",
+  "domain": "software",
+  "created": "2026-04-30T00:00:00Z",
+  "constraints": {
+    "business": [
+      { "id": "B1", "type": "goal", "source": "interview", "challenger": "stakeholder", "quality": { "specificity": 2, "measurability": 2, "testability": 2 } },
+      { "id": "B2", "type": "goal", "source": "interview", "challenger": "stakeholder", "quality": { "specificity": 2, "measurability": 1, "testability": 1 }, "verified_by": [
+        { "id": "E-LEG-1", "type": "manual_review", "path": "docs/manifold-serve/LEGIBILITY-REVIEW.md", "verified_by": "human", "verified_at": "2026-05-01T00:00:00Z", "status": "VERIFIED", "score": "7/8 clear · 1/8 unclear", "passes_threshold": true, "message": "Reviewer walked the 8-item checklist: 7 items clear, 1 item unclear (Q7: distinguishing synthesised edges from native ones). Per the protocol's pass criterion (≥3 unclear fails), B2 passes. The Q7 finding is captured as informational follow-up — the synthesised-edge dashed-stroke cue is too subtle without a legend." }
+      ] }
+    ],
+    "technical": [
+      { "id": "T1", "type": "invariant", "source": "interview", "challenger": "stakeholder", "quality": { "specificity": 3, "measurability": 3, "testability": 3 } },
+      { "id": "T2", "type": "invariant", "source": "interview", "challenger": "stakeholder", "quality": { "specificity": 3, "measurability": 3, "testability": 3 } },
+      { "id": "T3", "type": "boundary", "source": "interview", "challenger": "stakeholder", "quality": { "specificity": 3, "measurability": 3, "testability": 3 }, "threshold": { "kind": "deterministic", "ceiling": "port in [1024,65535]; default derived from 'manifold' (e.g. T9 'MFLD'=6353 or 'MANI'=6264); not in common-conflict set {3000,3001,4200,5000,5173,8000,8080,8443,9000}" } },
+      { "id": "T4", "type": "boundary", "source": "interview", "challenger": "stakeholder", "quality": { "specificity": 3, "measurability": 3, "testability": 3 }, "threshold": { "kind": "statistical", "p99": "2000ms", "p50": "800ms" } },
+      { "id": "T5", "type": "boundary", "source": "interview", "challenger": "technical-reality", "quality": { "specificity": 3, "measurability": 3, "testability": 3 } }
+    ],
+    "user_experience": [
+      { "id": "U1", "type": "goal", "source": "interview", "challenger": "stakeholder", "quality": { "specificity": 2, "measurability": 2, "testability": 2 } },
+      { "id": "U2", "type": "goal", "source": "interview", "challenger": "stakeholder", "quality": { "specificity": 2, "measurability": 2, "testability": 2 } },
+      { "id": "U3", "type": "invariant", "source": "interview", "challenger": "stakeholder", "quality": { "specificity": 3, "measurability": 3, "testability": 3 } },
+      { "id": "U4", "type": "goal", "source": "interview", "challenger": "stakeholder", "quality": { "specificity": 2, "measurability": 2, "testability": 2 } }
+    ],
+    "security": [
+      { "id": "S1", "type": "invariant", "source": "interview", "challenger": "technical-reality", "quality": { "specificity": 3, "measurability": 3, "testability": 3 } },
+      { "id": "S2", "type": "invariant", "source": "interview", "challenger": "technical-reality", "quality": { "specificity": 3, "measurability": 3, "testability": 3 } },
+      { "id": "S3", "type": "invariant", "source": "interview", "challenger": "technical-reality", "quality": { "specificity": 3, "measurability": 3, "testability": 3 } }
+    ],
+    "operational": [
+      { "id": "O1", "type": "boundary", "source": "interview", "challenger": "stakeholder", "quality": { "specificity": 3, "measurability": 3, "testability": 3 } },
+      { "id": "O2", "type": "goal", "source": "interview", "challenger": "stakeholder", "quality": { "specificity": 3, "measurability": 3, "testability": 3 }, "threshold": { "kind": "deterministic", "ceiling": "1000ms" } },
+      { "id": "O3", "type": "boundary", "source": "pre-mortem", "challenger": "technical-reality", "quality": { "specificity": 3, "measurability": 2, "testability": 2 } }
+    ]
+  },
+  "tensions": [
+    {
+      "id": "TN1",
+      "type": "trade_off",
+      "between": ["T1", "T4", "U1", "U3"],
+      "status": "resolved",
+      "triz_principles": ["P1", "P15"],
+      "validation_criteria": [
+        "Initial HTML+critical-JS+critical-CSS payload ≤ 500 KB gzipped",
+        "Graph engine and additional manifold detail are loaded as separate JS chunks served from the same embedded asset map",
+        "Service worker pre-caches every chunk on first install so offline (U3) is preserved"
+      ],
+      "propagation_effects": [
+        { "constraint_id": "T4", "effect": "LOOSENED", "note": "Critical-path budget achievable once heavy chunks are deferred" },
+        { "constraint_id": "T1", "effect": "TIGHTENED", "note": "Build step must enumerate every chunk into the embedded map; no chunk may be CDN-resolved at runtime" },
+        { "constraint_id": "U1", "effect": "TIGHTENED", "note": "Graph view appears after a small lazy-load delay on first visit (within first-load PWA install window)" }
+      ]
+    },
+    {
+      "id": "TN2",
+      "type": "trade_off",
+      "between": ["T1", "O3", "U3"],
+      "status": "resolved",
+      "triz_principles": ["P15", "P3"],
+      "validation_criteria": [
+        "CLI binary stamps its own version into served HTML (e.g. <meta name='manifold-version'>) at request time",
+        "Service worker keys its cache namespace on that version string",
+        "Restarting the CLI from a newer binary causes the next browser visit to invalidate the previous cache and load fresh assets"
+      ],
+      "propagation_effects": [
+        { "constraint_id": "T1", "effect": "TIGHTENED", "note": "Asset bundle must include a version-aware service worker template; embedded assets cannot be fully static for all of HTML" },
+        { "constraint_id": "O3", "effect": "LOOSENED", "note": "Resolution gives O3 a concrete mechanism rather than 'TBD'" }
+      ]
+    },
+    {
+      "id": "TN3",
+      "type": "resource_tension",
+      "between": ["T3", "O1"],
+      "status": "resolved",
+      "triz_principles": ["P11", "P25"],
+      "validation_criteria": [
+        "If default port is bound, CLI prints the conflict, suggests `--port <n>`, and exits non-zero",
+        "Error message includes a kernel-suggested free port (queried via ephemeral bind) when available",
+        "Successful start prints the URL `http://127.0.0.1:<port>` to stdout"
+      ],
+      "propagation_effects": [
+        { "constraint_id": "O1", "effect": "TIGHTENED", "note": "Failure path probes for a free port to suggest, slightly more code than a bare error" },
+        { "constraint_id": "T3", "effect": "LOOSENED", "note": "Memorable default no longer needs to be globally collision-free; collisions are degraded gracefully" }
+      ]
+    },
+    {
+      "id": "TN4",
+      "type": "trade_off",
+      "between": ["S2", "U2"],
+      "status": "resolved",
+      "triz_principles": ["P1", "P24"],
+      "validation_criteria": [
+        "GFM features (tables, fenced code, task lists, autolinks) render correctly",
+        "Fenced ```mermaid blocks render via a dedicated Mermaid component, not raw HTML",
+        "Embedded raw <script>, inline event handlers, and javascript: URIs are stripped before render",
+        "Sanitiser test corpus (XSS payloads from OWASP cheat sheet) renders no executing code"
+      ],
+      "propagation_effects": [
+        { "constraint_id": "U2", "effect": "LOOSENED", "note": "Rich GFM + Mermaid expands narrative expressivity within the safe set" },
+        { "constraint_id": "T4", "effect": "TIGHTENED", "note": "Mermaid runtime adds bundle weight; mitigated by deferring to lazy chunk per TN1" }
+      ]
+    },
+    {
+      "id": "TN5",
+      "type": "hidden_dependency",
+      "between": ["T5", "U1"],
+      "status": "resolved",
+      "triz_principles": [],
+      "validation_criteria": [
+        "Renderer accepts a manifold whose constraint_graph is absent or empty without throwing",
+        "When constraint_graph is empty, edges are synthesised from tension `between[]` (conflict) and anchor `derived_from[]` (satisfies)",
+        "Synthesised graphs render with the same layout pipeline as native v3 graphs"
+      ],
+      "propagation_effects": [
+        { "constraint_id": "U1", "effect": "TIGHTENED", "note": "Renderer needs an edge-synthesis layer in addition to direct binding" }
+      ]
+    },
+    {
+      "id": "TN6",
+      "type": "trade_off",
+      "between": ["U4", "T4"],
+      "status": "resolved",
+      "triz_principles": ["P1", "P17"],
+      "validation_criteria": [
+        "/api/manifolds returns metadata only (feature, phase, outcome, constraint counts) — never full constraint arrays or Markdown",
+        "/api/manifolds/<feature> returns full JSON+Markdown content lazily on selection",
+        "Index payload size scales linearly with manifold count and stays under the lightweight budget for ≤ 100 manifolds"
+      ],
+      "propagation_effects": [
+        { "constraint_id": "U4", "effect": "TIGHTENED", "note": "Switching manifolds incurs a one-shot fetch; mitigated by SW caching after first read" }
+      ]
+    },
+    {
+      "id": "TN7",
+      "type": "hidden_dependency",
+      "between": ["O3", "T1"],
+      "status": "resolved",
+      "triz_principles": [],
+      "validation_criteria": [
+        "CLI exposes its package.json version (already imported in cli/index.ts) to the HTTP handler",
+        "Server injects that version into served HTML as a meta tag and into a Cache-Control / ETag header",
+        "Service worker reads the meta tag at registration time and uses it as the cache namespace key"
+      ],
+      "propagation_effects": []
+    }
+  ],
+  "anchors": {
+    "required_truths": [
+      {
+        "id": "RT-1",
+        "status": "SATISFIED",
+        "maps_to": ["T1", "T4", "B1"],
+        "evidence": [
+          { "id": "E1", "type": "file_exists", "path": "scripts/build-web.ts", "status": "VERIFIED" },
+          { "id": "E2", "type": "file_exists", "path": "cli/lib/embedded-assets.ts", "status": "VERIFIED" },
+          { "id": "E3", "type": "file_exists", "path": "cli/lib/embedded-assets.generated.ts", "status": "VERIFIED" },
+          { "id": "E4", "type": "file_exists", "path": "cli/web/dist/index.html", "status": "VERIFIED" }
+        ]
+      },
+      {
+        "id": "RT-2",
+        "status": "SATISFIED",
+        "maps_to": ["B1", "O2"],
+        "evidence": [
+          { "id": "E5", "type": "file_exists", "path": "cli/commands/serve.ts", "status": "VERIFIED" },
+          { "id": "E6", "type": "content_match", "path": "cli/index.ts", "pattern": "registerServeCommand", "status": "VERIFIED" },
+          { "id": "E7", "type": "test_passes", "path": "tests/manifold-serve/port.test.ts", "test_name": "parseServeOptions defaults", "test_tier": "unit", "verified_by": "cli", "verified_at": "2026-05-01T00:00:00Z", "status": "VERIFIED", "message": "46/46 in tests/manifold-serve/ passing (bun test)" }
+        ]
+      },
+      {
+        "id": "RT-3",
+        "status": "SATISFIED",
+        "maps_to": ["T2", "S1", "S3", "B1"],
+        "evidence": [
+          { "id": "E8", "type": "content_match", "path": "cli/commands/serve.ts", "pattern": "127\\.0\\.0\\.1", "status": "VERIFIED" },
+          { "id": "E9", "type": "content_match", "path": "cli/web/server.ts", "pattern": "SAFE_METHODS", "status": "VERIFIED" },
+          { "id": "E10", "type": "test_passes", "path": "tests/manifold-serve/server.test.ts", "test_name": "safe-methods invariant", "test_tier": "integration", "verified_by": "cli", "verified_at": "2026-05-01T00:00:00Z", "status": "VERIFIED" }
+        ]
+      },
+      {
+        "id": "RT-4",
+        "status": "SATISFIED",
+        "maps_to": ["T5", "U4"],
+        "evidence": [
+          { "id": "E11", "type": "file_exists", "path": "cli/lib/parser.ts", "status": "VERIFIED" },
+          { "id": "E12", "type": "file_exists", "path": "cli/lib/manifold-collection.ts", "status": "VERIFIED" },
+          { "id": "E13", "type": "test_passes", "path": "tests/manifold-serve/multi-schema.test.ts", "test_name": "all three versions load through the same call", "test_tier": "integration", "verified_by": "cli", "verified_at": "2026-05-01T00:00:00Z", "status": "VERIFIED" }
+        ]
+      },
+      {
+        "id": "RT-5",
+        "status": "SATISFIED",
+        "maps_to": ["T5", "U1"],
+        "evidence": [
+          { "id": "E14", "type": "file_exists", "path": "cli/lib/graph-synthesis.ts", "status": "VERIFIED" },
+          { "id": "E15", "type": "content_match", "path": "cli/lib/graph-synthesis.ts", "pattern": "synthesised", "status": "VERIFIED" },
+          { "id": "E16", "type": "test_passes", "path": "tests/manifold-serve/graph-synthesis.test.ts", "test_name": "synthesises conflict edges from tension between", "test_tier": "unit", "verified_by": "cli", "verified_at": "2026-05-01T00:00:00Z", "status": "VERIFIED" }
+        ]
+      },
+      {
+        "id": "RT-6",
+        "status": "SATISFIED",
+        "maps_to": ["U1", "T4"],
+        "evidence": [
+          { "id": "E17", "type": "file_exists", "path": "cli/web/src/components/BackwardSankey.svelte", "status": "VERIFIED", "note": "Path updated in iteration 10: ConstraintGraph.svelte was deleted during the Cytoscape→d3-sankey redesign and replaced by BackwardSankey.svelte." },
+          { "id": "E18", "type": "content_match", "path": "cli/web/package.json", "pattern": "d3-sankey", "status": "VERIFIED" },
+          { "id": "E19", "type": "manual_review", "path": "cli/web/src/components/BackwardSankey.svelte", "verified_by": "human", "verified_at": "2026-05-01T00:00:00Z", "status": "VERIFIED", "review_artifact": "docs/manifold-serve/LEGIBILITY-REVIEW.md", "score": "7/8 clear", "message": "Cross-audience walkthrough completed: BackwardSankey nodes/edges/binding-pin are legible (Q2, Q3, Q6 all clear); Q7 (synthesised vs native edge differentiation) flagged as unclear — informational follow-up." },
+          { "id": "E19b", "type": "test_passes", "path": "tests/manifold-serve/e2e/visualiser.e2e.ts", "test_name": "backward Sankey renders an SVG flow with constraint and RT nodes", "test_tier": "e2e", "verified_by": "cli", "verified_at": "2026-05-01T00:00:00Z", "status": "VERIFIED", "message": "10/10 Playwright tests passed in 20.8s" }
+        ]
+      },
+      {
+        "id": "RT-7",
+        "status": "SATISFIED",
+        "maps_to": ["S2", "U2", "T4"],
+        "evidence": [
+          { "id": "E20", "type": "file_exists", "path": "cli/web/src/lib/markdown.ts", "status": "VERIFIED" },
+          { "id": "E21", "type": "content_match", "path": "cli/web/src/lib/markdown.ts", "pattern": "rehype-sanitize", "status": "VERIFIED" },
+          { "id": "E22", "type": "test_passes", "path": "tests/manifold-serve/markdown-sanitiser.test.ts", "test_name": "OWASP corpus stripped (script, event handlers, javascript:, data: URIs)", "status": "VERIFIED" }
+        ]
+      },
+      {
+        "id": "RT-8",
+        "status": "SATISFIED",
+        "maps_to": ["U3", "T1"],
+        "evidence": [
+          { "id": "E23", "type": "content_match", "path": "cli/web/vite.config.ts", "pattern": "VitePWA", "status": "VERIFIED" },
+          { "id": "E24", "type": "content_match", "path": "cli/web/vite.config.ts", "pattern": "manifest", "status": "VERIFIED" },
+          { "id": "E25", "type": "file_exists", "path": "cli/web/dist/manifest.webmanifest", "status": "VERIFIED" },
+          { "id": "E25b", "type": "file_exists", "path": "cli/web/dist/sw.js", "status": "VERIFIED" }
+        ]
+      },
+      {
+        "id": "RT-9",
+        "status": "SATISFIED",
+        "maps_to": ["O3", "T1"],
+        "evidence": [
+          { "id": "E26", "type": "content_match", "path": "cli/web/server.ts", "pattern": "manifold-version", "status": "VERIFIED" },
+          { "id": "E27", "type": "content_match", "path": "cli/web/vite.config.ts", "pattern": "cacheId", "status": "VERIFIED" },
+          { "id": "E28", "type": "test_passes", "path": "tests/manifold-serve/server.test.ts", "test_name": "manifold-version header on every embedded asset response", "test_tier": "integration", "verified_by": "cli", "verified_at": "2026-05-01T00:00:00Z", "status": "VERIFIED" },
+          { "id": "E28b", "type": "test_passes", "path": "tests/manifold-serve/sw-cache.test.ts", "test_name": "the built service worker bakes in the CLI version as its cache namespace", "test_tier": "integration", "verified_by": "cli", "verified_at": "2026-05-01T00:00:00Z", "status": "VERIFIED" }
+        ]
+      },
+      {
+        "id": "RT-10",
+        "status": "SATISFIED",
+        "maps_to": ["T4", "T1"],
+        "evidence": [
+          { "id": "E29", "type": "content_match", "path": "cli/web/vite.config.ts", "pattern": "manualChunks", "status": "VERIFIED" },
+          { "id": "E30", "type": "metric_value", "path": "cli/web/dist/index.html", "metric_name": "critical_payload_kb_gz", "threshold": 500, "value": 17.04, "status": "VERIFIED", "message": "index.html (0.36 kB gz) + index-*.js (15.67 kB gz) + index-*.css (1.01 kB gz) = ~17.04 kB gz, well under 500 kB. Heavy chunks (graph-engine 176 kB gz, markdown 50 kB gz) are correctly lazy-loaded." }
+        ]
+      },
+      {
+        "id": "RT-11",
+        "status": "SATISFIED",
+        "maps_to": ["T3", "O1"],
+        "evidence": [
+          { "id": "E31", "type": "content_match", "path": "cli/commands/serve.ts", "pattern": "DEFAULT_PORT = 6353", "status": "VERIFIED" },
+          { "id": "E32", "type": "content_match", "path": "cli/commands/serve.ts", "pattern": "EADDRINUSE", "status": "VERIFIED" },
+          { "id": "E33", "type": "test_passes", "path": "tests/manifold-serve/port.test.ts", "test_name": "default port is not in the common-conflict set", "test_tier": "unit", "verified_by": "cli", "verified_at": "2026-05-01T00:00:00Z", "status": "VERIFIED" },
+          { "id": "E33b", "type": "test_passes", "path": "tests/manifold-serve/collision.test.ts", "test_name": "exits non-zero and suggests an alternate port when target is bound", "test_tier": "integration", "verified_by": "cli", "verified_at": "2026-05-01T00:00:00Z", "status": "VERIFIED" }
+        ]
+      },
+      {
+        "id": "RT-12",
+        "status": "SATISFIED",
+        "maps_to": ["U4", "T4"],
+        "evidence": [
+          { "id": "E34", "type": "content_match", "path": "cli/web/server.ts", "pattern": "/api/manifolds", "status": "VERIFIED" },
+          { "id": "E35", "type": "test_passes", "path": "tests/manifold-serve/api.test.ts", "test_name": "returns metadata-only summaries", "test_tier": "integration", "verified_by": "cli", "verified_at": "2026-05-01T00:00:00Z", "status": "VERIFIED" }
+        ]
+      }
+    ],
+    "binding_constraint": {
+      "required_truth_id": "RT-1",
+      "reason": "RT-1 (embedded asset bundle) is the foundation: every client-side RT (RT-6 graph, RT-7 markdown, RT-8 PWA shell, RT-9 cache versioning, RT-10 bundle split) presupposes that assets ship in the binary. m2 already flagged T1 as the blocker for both O3 and U1. Until the build-and-embed pipeline exists, no other client-side work can be exercised end-to-end.",
+      "dependency_chain": ["RT-3", "RT-6", "RT-7", "RT-8", "RT-9", "RT-10"]
+    },
+    "recommended_option": "C",
+    "tension_validation": [
+      { "tension_id": "TN1", "status": "CONFIRMED", "by_option": "C", "note": "Vite chunking + Svelte 5 compiler output keep critical bundle ≤ 500 KB gz; Cytoscape + Mermaid lazy-loaded as separate chunks." },
+      { "tension_id": "TN2", "status": "CONFIRMED", "by_option": "C", "note": "Static-assets + dynamic-meta strategy is framework-agnostic; Svelte template renders the version meta tag at request time." },
+      { "tension_id": "TN3", "status": "CONFIRMED", "by_option": "C", "note": "Port handling lives in the CLI command, independent of the web stack." },
+      { "tension_id": "TN4", "status": "CONFIRMED", "by_option": "C", "note": "rehype-sanitize on the Svelte side; beautiful-mermaid (already a dep) renders fenced ```mermaid blocks." },
+      { "tension_id": "TN5", "status": "CONFIRMED", "by_option": "C", "note": "Edge synthesis runs in cli/lib (server-side) before serialisation; client receives a uniform graph regardless of source schema." },
+      { "tension_id": "TN6", "status": "CONFIRMED", "by_option": "C", "note": "Two-tier API surface implemented in serve.ts; client lazy-fetches detail by feature name." },
+      { "tension_id": "TN7", "status": "CONFIRMED", "by_option": "C", "note": "pkg.version is already imported in cli/index.ts; CLI passes it to the HTTP handler and into the served HTML." }
+    ],
+    "solution_options": [
+      {
+        "id": "A",
+        "name": "Vanilla TS + Cytoscape.js + esbuild",
+        "reversibility": "TWO_WAY",
+        "satisfies": ["RT-1", "RT-2", "RT-3", "RT-4", "RT-5", "RT-6", "RT-8", "RT-9", "RT-10", "RT-11", "RT-12"],
+        "gaps": ["RT-7"],
+        "note": "Smallest possible critical bundle. No framework lock-in. Markdown rendering would need a hand-rolled allowlist sanitiser since there's no Svelte/React tooling to lean on."
+      },
+      {
+        "id": "B",
+        "name": "Svelte 5 + vis-network + Vite",
+        "reversibility": "REVERSIBLE_WITH_COST",
+        "satisfies": ["RT-1", "RT-2", "RT-3", "RT-4", "RT-5", "RT-6", "RT-7", "RT-8", "RT-9", "RT-11", "RT-12"],
+        "gaps": ["RT-10"],
+        "note": "Excellent dev velocity given project's existing Svelte 5 best-practice skills. vis-network is heavier than Cytoscape and harder to keep under the 500 KB critical-bundle target without aggressive code-splitting."
+      },
+      {
+        "id": "C",
+        "name": "Svelte 5 + d3-sankey + Vite",
+        "reversibility": "REVERSIBLE_WITH_COST",
+        "satisfies": ["RT-1", "RT-2", "RT-3", "RT-4", "RT-5", "RT-6", "RT-7", "RT-8", "RT-9", "RT-10", "RT-11", "RT-12"],
+        "gaps": [],
+        "note": "Hybrid: Svelte 5 runes for the narrative spine + UI shell (matches project's Svelte5 best-practice skills, compact runtime), d3-sankey for backward-reasoning flow (Constraints → RTs → Outcome — drastically smaller than the originally-considered Cytoscape force layout, ~2.9 KB gz lazy chunk). Vite for chunking + service-worker generation. Recommended. (Originally recorded with Cytoscape.js; switched to d3-sankey post-D3a — see docs/manifold-serve/DECISIONS.md.)"
+      }
+    ]
+  },
+  "draft_required_truths": [
+    { "id": "DRT-1", "seed_from": ["T1"], "draft_statement": "A build step bundles all HTML/CSS/JS/font assets into the CLI binary before release.", "confidence": "high" },
+    { "id": "DRT-2", "seed_from": ["T2", "S2", "S3"], "draft_statement": "The HTTP server exposes only GET handlers and reads exclusively from the embedded asset map and pre-parsed in-memory manifold list.", "confidence": "high" },
+    { "id": "DRT-3", "seed_from": ["T3"], "draft_statement": "A canonical default port is chosen at compile time (one of {6264, 6353}) and validated absent from the common-conflict allowlist.", "confidence": "medium" },
+    { "id": "DRT-4", "seed_from": ["U1"], "draft_statement": "A graph visualisation library that supports nodes, multi-edge types, and panning/zooming on ~50 nodes is selected and embedded.", "confidence": "high" },
+    { "id": "DRT-5", "seed_from": ["U3"], "draft_statement": "A web app manifest and a service worker that pre-caches all embedded assets are shipped with the bundle.", "confidence": "high" },
+    { "id": "DRT-6", "seed_from": ["S1"], "draft_statement": "The HTTP listener defaults to host 127.0.0.1; opting into a non-loopback host requires an explicit flag and emits a stderr warning.", "confidence": "high" },
+    { "id": "DRT-7", "seed_from": ["S2", "U3"], "draft_statement": "The Markdown renderer used to display manifold prose strips/sandboxes embedded HTML and disallows script execution.", "confidence": "high" },
+    { "id": "DRT-8", "seed_from": ["O3"], "draft_statement": "The service worker cache is keyed on the CLI binary version so binary upgrades invalidate stale assets.", "confidence": "medium" },
+    { "id": "DRT-9", "seed_from": ["T5"], "draft_statement": "Manifold parsing tolerates missing v3-only fields (constraint_graph, iterations, convergence) when the input declares schema_version 1 or 2.", "confidence": "high" }
+  ],
+  "iterations": [
+    {
+      "number": 1,
+      "phase": "constrain",
+      "timestamp": "2026-04-30T00:00:00Z",
+      "result": "Discovered 17 constraints across 5 categories from outcome statement; pre-mortem added 1 operational constraint (PWA cache invalidation on binary upgrade).",
+      "constraints_added": 17,
+      "by_category": {
+        "business": 2,
+        "technical": 5,
+        "user_experience": 4,
+        "security": 3,
+        "operational": 3
+      }
+    },
+    {
+      "number": 2,
+      "phase": "tension",
+      "timestamp": "2026-04-30T00:00:00Z",
+      "result": "Identified 7 tensions, all resolved via TRIZ-guided strategies (4 trade_off, 1 resource_tension, 2 hidden_dependency); propagation checks recorded; one cascade-tightened constraint (T4) is mitigated by chunked-bundle resolution.",
+      "tensions_found": 7,
+      "tensions_resolved": 7,
+      "by_type": {
+        "trade_offs": 4,
+        "resource_tensions": 1,
+        "hidden_dependencies": 2
+      }
+    },
+    {
+      "number": 3,
+      "phase": "anchor",
+      "timestamp": "2026-04-30T00:00:00Z",
+      "result": "Derived 12 required truths via backward reasoning; identified RT-1 (embedded asset bundle) as binding constraint; recommended Option C (Svelte 5 + Cytoscape.js + Vite); all 7 tensions CONFIRMED under recommended option.",
+      "required_truths": 12,
+      "by_status": {
+        "SATISFIED": 0,
+        "PARTIAL": 1,
+        "NOT_SATISFIED": 4,
+        "SPECIFICATION_READY": 7
+      },
+      "solution_options": 3,
+      "selected_option": "Option C"
+    },
+    {
+      "number": 4,
+      "phase": "generate",
+      "timestamp": "2026-05-01T00:00:00Z",
+      "result": "Generated 28 artifacts under Option C: 6 server-side modules, 1 CLI command + 1 wiring edit, 11 web frontend files, 1 build script, 6 test files, 2 docs, 1 runbook. Every required truth advanced from NOT_SATISFIED/SPECIFICATION_READY to PARTIAL — fully VERIFIED status awaits build (RT-1 final assets) and test runs (RT-2..RT-12).",
+      "artifacts_generated": 28,
+      "by_type": {
+        "code": 18,
+        "test": 6,
+        "docs": 2,
+        "ops": 1,
+        "build_script": 1
+      },
+      "selected_option": "Option C"
+    },
+    {
+      "number": 5,
+      "phase": "verify",
+      "timestamp": "2026-05-01T00:00:00Z",
+      "result": "PARTIAL convergence. 24/24 declared artifacts present on disk. 14/14 content_match evidence items VERIFIED. Test suite: 34 pass, 1 skip, 0 fail. 6/17 constraints SATISFIED (T2, T3, T5, U4, S1, S3); 11 PARTIAL across 3 invariants and 8 boundaries/goals. 3 blocking gaps (G1: build pipeline, G2: install cli/web deps, G3: PWA offline test). Phase remains GENERATED — invariants T1/U3/S2 must reach TESTED level before VERIFIED.",
+      "verification_result": "PARTIAL",
+      "matrix_entries": 17,
+      "satisfied_count": 6,
+      "partial_count": 11,
+      "missing_count": 0,
+      "gaps_blocking": 3,
+      "gaps_non_blocking": 6,
+      "gaps_informational": 1,
+      "tests_passed": 34,
+      "tests_skipped": 1,
+      "tests_failed": 0
+    },
+    {
+      "number": 6,
+      "phase": "verify",
+      "timestamp": "2026-05-01T00:00:00Z",
+      "result": "CONVERGED. User closed all 3 blocking gaps: cli/web bundle built (12 files, 775.8 KB embedded — critical chunk ~17 KB gz), cli/web deps installed (sanitiser test now runs and passes 5/5 OWASP corpus), PWA SW + manifest emitted by Vite. Live smoke test confirms manifold serve boots, returns the project index at /api/manifolds, and stamps manifold-version=2.31.3 into served HTML. Test suite: 39 pass, 0 skip, 0 fail. All 6 INVARIANTs at TESTED level. Phase advanced to VERIFIED.",
+      "verification_result": "SATISFIED",
+      "matrix_entries": 17,
+      "satisfied_count": 12,
+      "partial_count": 5,
+      "missing_count": 0,
+      "gaps_blocking": 0,
+      "gaps_non_blocking": 6,
+      "gaps_informational": 1,
+      "tests_passed": 39,
+      "tests_skipped": 0,
+      "tests_failed": 0,
+      "binding_constraint_closed": true
+    },
+    {
+      "number": 7,
+      "phase": "verify",
+      "timestamp": "2026-05-01T00:00:00Z",
+      "result": "Closed G4–G10. Added 4 Bun tests (perf, collision, shutdown, sw-cache) + 2 Playwright e2e files (visualiser, sw-cache-flip) + Playwright config + LEGIBILITY-REVIEW.md template. Bun-side suite: 46 pass / 0 fail / 206 expect() calls. Playwright suite discovers 6 tests under chromium (one-time `bunx playwright install chrome` required to run). All 17 constraints now SATISFIED at TESTED or higher; the qualitative B2 has VERIFIED-eligible manual_review evidence template.",
+      "verification_result": "SATISFIED",
+      "matrix_entries": 17,
+      "satisfied_count": 17,
+      "partial_count": 0,
+      "missing_count": 0,
+      "gaps_blocking": 0,
+      "gaps_non_blocking": 0,
+      "gaps_informational": 0,
+      "tests_passed": 46,
+      "tests_skipped": 0,
+      "tests_failed": 0,
+      "playwright_tests_discovered": 6,
+      "binding_constraint_closed": true
+    },
+    {
+      "number": 8,
+      "phase": "verify",
+      "timestamp": "2026-05-01T00:00:00Z",
+      "result": "Re-verified after three out-of-band redesign rounds (Cytoscape → d3-sankey, cards-then-narrative → emergence-ordered accordion spine, theme system with Apple Dark/Light + Nord + pluggable registry). All 17 constraints still SATISFIED at TESTED level; B2 strengthened by the redesigns and theme system; T4 bundle headroom improved (graph chunk 176→2.9 KB gz). 1 stale evidence pattern detected (cytoscape → d3-sankey) and updated. 14 new artifacts added on disk and now declared in generation.artifacts; 3 deleted artifacts removed. 46 Bun tests pass; Playwright now discovers 10 tests (was 6). Built CSS uses 115 theme tokens with 0 hardcoded hex.",
+      "verification_result": "SATISFIED",
+      "matrix_entries": 17,
+      "satisfied_count": 17,
+      "partial_count": 0,
+      "missing_count": 0,
+      "gaps_blocking": 0,
+      "gaps_non_blocking": 0,
+      "gaps_informational": 3,
+      "tests_passed": 46,
+      "tests_skipped": 0,
+      "tests_failed": 0,
+      "playwright_tests_discovered": 10,
+      "binding_constraint_closed": true,
+      "drift": {
+        "deleted": 3,
+        "added_undeclared": 14,
+        "stale_evidence_patterns": 1,
+        "manifest_synced": true
+      }
+    },
+    {
+      "number": 9,
+      "phase": "anchor",
+      "timestamp": "2026-05-01T00:00:00Z",
+      "result": "Surgical anchor patch (no structural change): Option C's library label corrected from 'Svelte 5 + Cytoscape.js + Vite' to 'Svelte 5 + d3-sankey + Vite' in both JSON anchors.solution_options[2] and the ## Solution Space section of the Markdown, reflecting the post-launch redesign documented in docs/manifold-serve/DECISIONS.md D3a. Required truths, maps_to chains, binding constraint, recommendation, and tension validations all unchanged. Phase deliberately NOT regressed from VERIFIED — this was a label correction, not a re-anchoring.",
+      "patch_only": true,
+      "fields_changed": [
+        "anchors.solution_options[2].name",
+        "anchors.solution_options[2].note",
+        ".md ## Solution Space → Option C heading",
+        ".md ## Solution Space → Option C body"
+      ],
+      "rts_unchanged": 12,
+      "tensions_unchanged": 7,
+      "phase_change": "none (stays VERIFIED)"
+    },
+    {
+      "number": 10,
+      "phase": "verify",
+      "timestamp": "2026-05-01T00:00:00Z",
+      "result": "Full evidence-aware verify (--verify-evidence --run-tests). Ran the Bun test suite (46 pass / 0 fail / 206 expect) and propagated results back into RT.evidence — 8 test_passes items flipped PENDING → VERIFIED. Fixed RT-6 stale evidence path (ConstraintGraph.svelte → BackwardSankey.svelte; the original was deleted in iteration 8). Added test_tier classifications (unit / integration / e2e) and verified_by/verified_at metadata to every test_passes evidence. Added the Playwright e2e spec for U1/RT-6 as STALE-tier evidence (suite configured + tests discovered, just not executed in this pass). Result: 12/12 RT statuses now SATISFIED (was 4/12); manifest staleness flagged at iter 8/9 m-status now resolved. Phase remains VERIFIED.",
+      "verification_result": "SATISFIED",
+      "matrix_entries": 17,
+      "satisfied_count": 17,
+      "partial_count": 0,
+      "rt_status_changes": {
+        "promoted_to_SATISFIED": ["RT-2", "RT-3", "RT-4", "RT-5", "RT-6", "RT-9", "RT-11", "RT-12"],
+        "remained_SATISFIED": ["RT-1", "RT-7", "RT-8", "RT-10"]
+      },
+      "evidence_changes": {
+        "test_passes_PENDING_to_VERIFIED": 8,
+        "test_passes_added_STALE": 1,
+        "test_passes_added_VERIFIED": 3,
+        "manual_review_PENDING": 1,
+        "stale_paths_corrected": 2
+      },
+      "tests_executed": {
+        "bun": { "passed": 46, "failed": 0, "skipped": 0, "expect_calls": 206 },
+        "playwright": { "discovered": 10, "executed": 0, "reason": "Browser install required (`bunx playwright install chrome`); marked STALE." }
+      },
+      "binding_constraint_closed": true
+    },
+    {
+      "number": 11,
+      "phase": "verify",
+      "timestamp": "2026-05-01T00:00:00Z",
+      "result": "Playwright e2e suite executed: 10/10 passed in 20.8s. RT-6's E19b evidence promoted STALE → VERIFIED. Constraint-level satisfaction levels lifted from TESTED to VERIFIED for 14 of 17 constraints — every constraint whose rts_supporting does NOT include RT-6 now has every evidence item with status VERIFIED + test passed. Three constraints stay at TESTED level: T4 and U1 (both include RT-6 with pending manual_review E19), and B2 (qualitative; awaits LEGIBILITY-REVIEW.md walkthrough). Phase remains VERIFIED. Convergence remains CONVERGED.",
+      "verification_result": "VERIFIED",
+      "matrix_entries": 17,
+      "level_distribution": { "DOCUMENTED": 0, "IMPLEMENTED": 0, "TESTED": 3, "VERIFIED": 14 },
+      "tests_executed": {
+        "playwright": { "discovered": 10, "passed": 10, "failed": 0, "duration_ms": 20800 }
+      },
+      "evidence_changes": {
+        "stale_to_verified": ["E19b"]
+      },
+      "constraints_promoted_to_verified": ["B1", "T1", "T2", "T3", "T5", "U2", "U3", "U4", "S1", "S2", "S3", "O1", "O2", "O3"],
+      "constraints_held_at_tested": [
+        { "id": "T4", "reason": "rts_supporting includes RT-6 which has pending manual_review E19" },
+        { "id": "U1", "reason": "rts_supporting includes RT-6 which has pending manual_review E19" },
+        { "id": "B2", "reason": "qualitative — awaits LEGIBILITY-REVIEW.md human walkthrough" }
+      ]
+    },
+    {
+      "number": 12,
+      "phase": "verify",
+      "timestamp": "2026-05-01T00:00:00Z",
+      "result": "Cross-audience legibility walkthrough completed per docs/manifold-serve/LEGIBILITY-REVIEW.md. Score: 7/8 clear, 1/8 unclear (Q7: synthesised vs native edge differentiation). Per the protocol's pass threshold (≥3 unclear fails), B2 passes. RT-6's E19 manual_review flipped PENDING → VERIFIED; B2 gained a constraint-level `verified_by` array with the same evidence. The three constraints previously held at TESTED (B2, T4, U1) all flip to VERIFIED. Final state: 17/17 constraints at level VERIFIED. Phase remains VERIFIED. One informational follow-up logged: the Q7 finding suggests adding a small legend to BackwardSankey.svelte distinguishing dashed (synthesised) from solid (native) edges — non-blocking UX polish.",
+      "verification_result": "VERIFIED",
+      "matrix_entries": 17,
+      "level_distribution": { "DOCUMENTED": 0, "IMPLEMENTED": 0, "TESTED": 0, "VERIFIED": 17 },
+      "review": {
+        "tool": "docs/manifold-serve/LEGIBILITY-REVIEW.md",
+        "checklist_score": { "clear": 7, "partial": 0, "unclear": 1 },
+        "passes_threshold": true,
+        "unclear_items": [
+          { "question": 7, "topic": "synthesised vs native edge differentiation", "follow_up": "Add a legend to BackwardSankey.svelte explaining that dashed edges are synthesised (derived from tension between[] / anchor maps_to) and solid edges are native (from constraint_graph.edges)." }
+        ]
+      },
+      "evidence_changes": {
+        "manual_review_pending_to_verified": ["E19"],
+        "constraint_level_verified_by_added": ["B2"]
+      },
+      "constraints_promoted_to_verified": ["B2", "T4", "U1"]
+    }
+  ],
+  "blocking_dependencies": [
+    { "blocker": "T1", "blocked": "O3", "tension_id": "TN7" },
+    { "blocker": "T1", "blocked": "U1", "tension_id": "TN1" }
+  ],
+  "generation": {
+    "option": "C",
+    "timestamp": "2026-05-01T00:00:00Z",
+    "binding_artifact": "scripts/build-web.ts",
+    "artifacts": [
+      { "path": "cli/lib/manifold-collection.ts", "type": "code", "satisfies": ["RT-4", "RT-12"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "cli/lib/graph-synthesis.ts", "type": "code", "satisfies": ["RT-5"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "cli/lib/embedded-assets.ts", "type": "code", "satisfies": ["RT-1"], "status": "generated", "artifact_class": "substantive", "priority": "binding" },
+      { "path": "cli/lib/embedded-assets.generated.ts", "type": "code", "satisfies": ["RT-1"], "status": "generated", "artifact_class": "structural", "priority": "binding" },
+      { "path": "cli/commands/serve.ts", "type": "code", "satisfies": ["RT-2", "RT-3", "RT-11"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "cli/index.ts", "type": "code", "satisfies": ["RT-2"], "status": "modified", "artifact_class": "structural" },
+      { "path": "cli/web/server.ts", "type": "code", "satisfies": ["RT-3", "RT-9", "RT-12"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "cli/web/package.json", "type": "code", "satisfies": ["RT-6", "RT-7", "RT-8"], "status": "generated", "artifact_class": "structural" },
+      { "path": "cli/web/tsconfig.json", "type": "code", "satisfies": [], "status": "generated", "artifact_class": "structural" },
+      { "path": "cli/web/vite.config.ts", "type": "code", "satisfies": ["RT-8", "RT-9", "RT-10"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "cli/web/index.html", "type": "code", "satisfies": ["RT-1"], "status": "generated", "artifact_class": "structural" },
+      { "path": "cli/web/src/main.ts", "type": "code", "satisfies": ["RT-6"], "status": "generated", "artifact_class": "structural" },
+      { "path": "cli/web/src/App.svelte", "type": "code", "satisfies": ["RT-6", "RT-7", "U4"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "cli/web/src/lib/api.ts", "type": "code", "satisfies": ["RT-12"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "cli/web/src/lib/markdown.ts", "type": "code", "satisfies": ["RT-7"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "cli/web/src/components/ConstraintGraph.svelte", "type": "code", "satisfies": ["RT-6"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "cli/web/src/components/ManifoldNarrative.svelte", "type": "code", "satisfies": ["RT-7"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "cli/web/src/components/ManifoldIndex.svelte", "type": "code", "satisfies": ["RT-12"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "scripts/build-web.ts", "type": "build_script", "satisfies": ["RT-1", "RT-10"], "status": "generated", "artifact_class": "substantive", "priority": "binding" },
+      { "path": "tests/manifold-serve/port.test.ts", "type": "test", "satisfies": ["RT-11"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "tests/manifold-serve/graph-synthesis.test.ts", "type": "test", "satisfies": ["RT-5"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "tests/manifold-serve/api.test.ts", "type": "test", "satisfies": ["RT-12", "T2"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "tests/manifold-serve/multi-schema.test.ts", "type": "test", "satisfies": ["RT-4", "T5"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "tests/manifold-serve/server.test.ts", "type": "test", "satisfies": ["RT-3", "RT-9", "T2", "S1", "S3"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "tests/manifold-serve/markdown-sanitiser.test.ts", "type": "test", "satisfies": ["RT-7", "S2"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "docs/manifold-serve/README.md", "type": "docs", "satisfies": ["B1", "B2"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "docs/manifold-serve/DECISIONS.md", "type": "docs", "satisfies": ["B2"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "ops/runbooks/manifold-serve-port-conflict.md", "type": "ops", "satisfies": ["O1", "RT-11"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "tests/manifold-serve/perf.test.ts", "type": "test", "satisfies": ["T4"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "tests/manifold-serve/collision.test.ts", "type": "test", "satisfies": ["O1", "RT-11"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "tests/manifold-serve/shutdown.test.ts", "type": "test", "satisfies": ["O2"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "tests/manifold-serve/sw-cache.test.ts", "type": "test", "satisfies": ["O3", "RT-9"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "tests/manifold-serve/e2e/playwright.config.ts", "type": "test_config", "satisfies": [], "status": "generated", "artifact_class": "structural" },
+      { "path": "tests/manifold-serve/e2e/visualiser.e2e.ts", "type": "test", "satisfies": ["U1", "U2", "U3", "U4", "RT-6", "RT-7", "RT-8"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "tests/manifold-serve/e2e/sw-cache-flip.e2e.ts", "type": "test", "satisfies": ["O3", "RT-9"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "tests/manifold-serve/e2e/README.md", "type": "docs", "satisfies": [], "status": "generated", "artifact_class": "structural" },
+      { "path": "docs/manifold-serve/LEGIBILITY-REVIEW.md", "type": "docs", "satisfies": ["B2"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "cli/web/src/components/BackwardSankey.svelte", "type": "code", "satisfies": ["U1", "RT-5", "RT-6"], "status": "generated", "artifact_class": "substantive", "added_in_iteration": 8 },
+      { "path": "cli/web/src/components/OutcomeBanner.svelte", "type": "code", "satisfies": ["B2"], "status": "generated", "artifact_class": "substantive", "added_in_iteration": 8 },
+      { "path": "cli/web/src/components/ConstraintsPanel.svelte", "type": "code", "satisfies": ["U1", "U2", "B2"], "status": "generated", "artifact_class": "substantive", "added_in_iteration": 8 },
+      { "path": "cli/web/src/components/TensionsPanel.svelte", "type": "code", "satisfies": ["U2", "B2"], "status": "generated", "artifact_class": "substantive", "added_in_iteration": 8 },
+      { "path": "cli/web/src/components/RequiredTruthsPanel.svelte", "type": "code", "satisfies": ["U2", "B2"], "status": "generated", "artifact_class": "substantive", "added_in_iteration": 8 },
+      { "path": "cli/web/src/components/SolutionSpacePanel.svelte", "type": "code", "satisfies": ["B1", "B2"], "status": "generated", "artifact_class": "substantive", "added_in_iteration": 8 },
+      { "path": "cli/web/src/components/AccordionItem.svelte", "type": "code", "satisfies": ["U2"], "status": "generated", "artifact_class": "substantive", "added_in_iteration": 8 },
+      { "path": "cli/web/src/components/MarkdownInline.svelte", "type": "code", "satisfies": ["S2", "U2"], "status": "generated", "artifact_class": "substantive", "added_in_iteration": 8 },
+      { "path": "cli/web/src/components/ThemeToggle.svelte", "type": "code", "satisfies": ["B2"], "status": "generated", "artifact_class": "substantive", "added_in_iteration": 8 },
+      { "path": "cli/web/src/lib/markdown-blocks.ts", "type": "code", "satisfies": ["U2", "B2"], "status": "generated", "artifact_class": "substantive", "added_in_iteration": 8 },
+      { "path": "cli/web/src/lib/themes.ts", "type": "code", "satisfies": ["B2"], "status": "generated", "artifact_class": "substantive", "added_in_iteration": 8 },
+      { "path": "cli/web/src/lib/theme-store.ts", "type": "code", "satisfies": ["B2"], "status": "generated", "artifact_class": "substantive", "added_in_iteration": 8 },
+      { "path": "cli/web/src/app.css", "type": "code", "satisfies": ["B2"], "status": "generated", "artifact_class": "substantive", "added_in_iteration": 8 },
+      { "path": "docs/manifold-serve/THEMES.md", "type": "docs", "satisfies": ["B2"], "status": "generated", "artifact_class": "substantive", "added_in_iteration": 8 }
+    ],
+    "removed_artifacts": [
+      { "path": "cli/web/src/components/ConstraintGraph.svelte", "removed_in_iteration": 8, "reason": "Replaced by BackwardSankey.svelte during the Cytoscape→d3-sankey redesign." },
+      { "path": "cli/web/src/components/ConstraintMatrix.svelte", "removed_in_iteration": 8, "reason": "Replaced by ConstraintsPanel.svelte (accordion-list grouped by category) during the spine redesign." },
+      { "path": "cli/web/src/components/ManifoldNarrative.svelte", "removed_in_iteration": 8, "reason": "Standalone narrative pane removed; per-element prose now rendered inline in each accordion via MarkdownInline.svelte." }
+    ],
+    "coverage": {
+      "constraints_addressed": 17,
+      "constraints_total": 17,
+      "percentage": 100,
+      "required_truths_addressed": 12,
+      "required_truths_total": 12,
+      "artifacts_total_after_iteration_8": 49,
+      "artifacts_added_in_iteration_8": 14,
+      "artifacts_removed_in_iteration_8": 3
+    },
+    "second_pass": {
+      "timestamp": "2026-05-01T00:00:00Z",
+      "trigger": "User asked to close G4–G10 from the verify report.",
+      "added_artifacts": 9,
+      "tests_added": 7,
+      "test_files_added": ["perf.test.ts", "collision.test.ts", "shutdown.test.ts", "sw-cache.test.ts", "e2e/visualiser.e2e.ts", "e2e/sw-cache-flip.e2e.ts"],
+      "docs_added": ["LEGIBILITY-REVIEW.md", "e2e/README.md"],
+      "new_dev_dep": "@playwright/test@^1.48.0"
+    }
+  },
+  "reversibility_log": [
+    { "action_step": 1, "description": "Add cli/lib/{manifold-collection, graph-synthesis, embedded-assets}.ts modules", "reversibility": "TWO_WAY" },
+    { "action_step": 2, "description": "Add cli/commands/serve.ts and wire registerServeCommand into cli/index.ts", "reversibility": "TWO_WAY" },
+    { "action_step": 3, "description": "Add cli/web/ Svelte 5 + Vite frontend project", "reversibility": "REVERSIBLE_WITH_COST", "one_way_consequence": "Reverting to Option A (vanilla TS) requires rewriting all components without rune syntax." },
+    { "action_step": 4, "description": "Add scripts/build-web.ts and check in cli/lib/embedded-assets.generated.ts", "reversibility": "TWO_WAY" },
+    { "action_step": 5, "description": "Add cli/web dependencies (cytoscape, cytoscape-fcose, unified, rehype-sanitize, vite-plugin-pwa, svelte 5)", "reversibility": "REVERSIBLE_WITH_COST", "one_way_consequence": "Removing these post-install requires re-implementing graph rendering and MD sanitisation." },
+    { "action_step": 6, "description": "Default port baked at 6353 (T9 'MFLD')", "reversibility": "TWO_WAY" },
+    { "action_step": 7, "description": "Add tests/manifold-serve/ suite", "reversibility": "TWO_WAY" },
+    { "action_step": 8, "description": "Add docs/manifold-serve/ + ops/runbooks/manifold-serve-port-conflict.md", "reversibility": "TWO_WAY" }
+  ],
+  "convergence": {
+    "status": "CONVERGED",
+    "blockers": [],
+    "summary": "All 17 constraints SATISFIED at TESTED level (or VERIFIED-eligible for B2 via manual_review template). 6 INVARIANTs ✓, 5 BOUNDARYs ✓, 6 GOALs ✓. Bun-side test suite 46 pass / 0 fail; Playwright suite 6 tests discovered. Binding constraint RT-1 closed."
+  },
+  "constraint_graph": {
+    "version": 1,
+    "nodes": {},
+    "edges": {
+      "dependencies": [],
+      "conflicts": [],
+      "satisfies": []
+    }
+  },
+  "gap_checklist_compliance": [
+    { "gap": "GAP-03", "status": "COMPLETED", "note": "Core data path: .manifold/*.{json,md} → in-memory parse → GET /api/manifolds → embedded SPA renderer. Single process boundary (HTTP loopback). Covered by T2, T5." },
+    { "gap": "GAP-09", "status": "SKIPPED", "skip_reason": "No authentication or cryptographic primitives; loopback-only server with read-only data." },
+    { "gap": "GAP-10", "status": "COMPLETED", "note": "Listener bound to 127.0.0.1 (S1) limits resource-exhaustion exposure to local user; payload bound (T4) limits initial transfer." },
+    { "gap": "GAP-11", "status": "SKIPPED", "skip_reason": "No outbound HTTP dependencies — all assets embedded (T1)." },
+    { "gap": "GAP-14", "status": "COMPLETED", "note": "Schema validation tolerates v1/v2/v3 (T5); Markdown sanitisation prevents script injection from authored content (S2)." },
+    { "gap": "GAP-17", "status": "COMPLETED", "note": "Multiple browser tabs sharing the listener — read-only handlers (T2) make concurrent reads safe; no shared mutable state." }
+  ]
+}

@@ -52,6 +52,10 @@ dist/
 build/
 *.log
 
+# Playwright trace + screenshot artifacts (per-run; never commit)
+test-results/
+playwright-report/
+
 # Locally compiled CLI binary (semantic-release produces signed binaries
 # for distribution — local dev builds are Mach-O/ELF artifacts that must
 # never be committed).
