@@ -53,9 +53,12 @@ manifold validate [feature]    # Validate YAML schema
 manifold init <feature>        # Initialize manifold
 manifold verify [feature]      # Verify artifacts exist
 manifold drift [feature]       # Detect post-verification file changes
+manifold serve [--port <n>]    # Local PWA visualiser (long-running; default port 6353)
 ```
 
 **Exit Codes**: 0 = Success, 1 = Error, 2 = Validation failure
+
+**`manifold serve` is the one CLI command that intentionally is *not* sub-100ms** — it boots a long-running HTTP listener bound to `127.0.0.1:6353` (T9 "MFLD"). All assets are embedded in the binary; the server reads `.manifold/<feature>.{json,md,verify.json}` from cwd and renders them as a vertical story spine (banner → backward-reasoning Sankey → accordion cards in m1→m4 emergence order → full sanitised Markdown). Three built-in themes (Apple Light / Apple Dark / Nord) plus a runtime-pluggable theme registry — see `docs/manifold-serve/THEMES.md`.
 
 ## Constraint System
 

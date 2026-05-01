@@ -185,10 +185,13 @@ manifold show [feature]            # Combined JSON+MD view
 manifold solve [feature]           # Parallel execution plan
 manifold migrate [feature]         # Convert YAML -> JSON+MD
 manifold drift [feature]          # Detect post-verification file changes
+manifold serve [--port <n>] [--host <addr>]  # Local PWA visualiser (default port 6353)
 manifold completion [shell]        # Shell completions (bash/zsh/fish)
 manifold hook <name>               # Compiled hook handlers for Claude Code events
                                    # Subcommands: context | schema-guard | prompt-enforcer | phase-commons
 ```
+
+**`manifold serve`** opens a lightweight web visualiser of every manifold in your project — outcome banner, backward-reasoning Sankey, accordion cards (constraints → tensions → required truths → solution space), and the full Markdown narrative inline. All assets are embedded in the CLI binary; no network access required. Default port is `6353` (T9 keypad encoding of "MFLD"). Apple Light / Apple Dark / Nord themes plus `prefers-color-scheme` auto-follow. See [docs/manifold-serve/](docs/manifold-serve/README.md) for the architecture and the [theming + plugin contract](docs/manifold-serve/THEMES.md).
 
 **When to use CLI vs AI commands:**
 - **CLI**: Status checks, CI/CD validation, visualization, quick verification

@@ -312,6 +312,64 @@ See [Evidence System — Drift Detection](evidence-system.md#drift-detection) fo
 
 ---
 
+### `manifold serve [options]`
+
+Boot a local Progressive Web App that visualises every manifold in the current project. The PWA bundle is embedded in the CLI binary at compile time, so `manifold serve` works air-gapped — no CDN, no `npm install`, no internet required.
+
+```bash
+manifold serve                       # http://127.0.0.1:6353
+manifold serve --port 7000           # override default port
+manifold serve --host 0.0.0.0        # bind LAN-visible (emits a warning)
+```
+
+**Options**
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--port <number>` | `6353` (T9 "MFLD") | Listen port. Validated as integer in [1024, 65535]. |
+| `--host <addr>` | `127.0.0.1` | Bind host. Anything other than loopback emits a stderr warning before the server starts (manifolds frequently contain unannounced strategy/security thresholds — don't expose them on a coffee-shop network by accident). |
+
+**What you see**
+
+- **Sidebar** — every `.manifold/<feature>.{json,md}` pair, sorted newest-first by `json.created` (file mtime fallback). Hosts the theme picker.
+- **Outcome banner** — feature, phase, convergence pill, binding-constraint badge, recommended option, full outcome statement.
+- **Backward-reasoning Sankey** — `Constraints → Required Truths → Outcome` rendered with `d3-sankey`. Width = dependency count. Binding RT highlighted in gold. Nodes coloured by `<feature>.verify.json` status when present. Click a node → expands the matching accordion below.
+- **Accordion panels** in m1 → m4 emergence order: **Constraints** (grouped by category, type pill + status chip per row), **Tensions** (type pill, `between` chips, propagation arrows TIGHTENED ↘ / LOOSENED ↗, resolution prose inline), **Required Truths** (binding pinned first, evidence count, `maps_to` chips), **Solution Space** (recommended starred, reversibility pill, satisfies/gaps counts).
+- Each accordion body shows that element's prose extracted from the manifold's `.md` and rendered through a sanitised pipeline (`unified` + `remark-gfm` + `rehype-sanitize`) — no scroll-jumping to a separate narrative section.
+
+**Themes**
+
+Three built-ins: `apple-light`, `apple-dark`, `nord`. Plus the meta choice `system`, which follows `prefers-color-scheme` at runtime. Theme picker lives in the sidebar header; choice persists to `localStorage`. New themes can be added at runtime via `window.manifold.registerTheme(theme)` from the browser console — see [docs/manifold-serve/THEMES.md](manifold-serve/THEMES.md).
+
+**Security posture**
+
+- Bind host defaults to `127.0.0.1`. Non-loopback hosts emit a stderr warning before the listener starts.
+- HTTP layer is **read-only** — only `GET` and `HEAD`; everything else returns `405 Method Not Allowed`.
+- File reads are bounded to the embedded asset map and the in-memory manifold list. No path-parameter route opens an arbitrary file.
+- Markdown is rendered with `rehype-sanitize` and `allowDangerousHtml: false`. Embedded `<script>`, inline event handlers, and `javascript:` URIs are stripped. CI runs an OWASP-derived XSS payload corpus.
+
+**Behaviour on collisions**
+
+```
+$ manifold serve
+✗ Error: Port 6353 on 127.0.0.1 is already in use
+  → try `manifold serve --port 6354`
+```
+
+The CLI exits non-zero on `EADDRINUSE` and includes a kernel-suggested free port in the hint. It does not silently auto-increment.
+
+**Graceful shutdown**
+
+`SIGINT` (Ctrl+C) and `SIGTERM` close the listener and exit `0` within ~1 s. In-flight requests are cancelled cleanly.
+
+**Cache versioning**
+
+The service worker's cache namespace is keyed on `pkg.version` (e.g. `manifold-2.31.3`). Upgrading the binary invalidates the previous PWA cache on the user's next visit — no stale UI after a release.
+
+**See also**: [docs/manifold-serve/README.md](manifold-serve/README.md), [docs/manifold-serve/DECISIONS.md](manifold-serve/DECISIONS.md), [docs/manifold-serve/THEMES.md](manifold-serve/THEMES.md).
+
+---
+
 ## Exit Code Summary
 
 | Code | Meaning | Commands |

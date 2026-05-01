@@ -123,6 +123,17 @@ Constraints: Business: 3, Technical: 4, UX: 4, Security: 2, Operational: 2
 Convergence: CONVERGED
 ```
 
+## Browse Visually
+
+Once you have a manifold or two, `manifold serve` opens a local web visualiser of every manifold in the project — outcome banner, backward-reasoning Sankey, and accordion cards for constraints / tensions / required truths / solution space, all with the full prose inline. All assets are embedded in the binary; no network access required.
+
+```bash
+manifold serve            # http://127.0.0.1:6353
+manifold serve --port 7000
+```
+
+Apple Light / Apple Dark / Nord themes plus `prefers-color-scheme` auto-follow. See [docs/manifold-serve/](manifold-serve/README.md) for architecture and [theming](manifold-serve/THEMES.md).
+
 ## What's Next?
 
 | Goal | Resource |
@@ -131,6 +142,7 @@ Convergence: CONVERGED
 | Quick fix that doesn't need full workflow | [Light Mode](../README.md#light-mode) (`/manifold:m-quick`) |
 | Use pre-built constraint patterns | [Templates](../install/templates/README.md) |
 | Full CLI command reference | [CLI Reference](cli-reference.md) |
+| Browse manifolds in a local PWA | [`manifold serve` docs](manifold-serve/README.md) |
 | Understand the terminology | [Glossary](GLOSSARY.md) |
 | Product Manager workflows | [PM Guide](pm/guide.md) |
 | Non-programming use cases | [Non-Programming Guide](non-programming/guide.md) |
