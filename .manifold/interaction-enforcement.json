@@ -164,6 +164,28 @@
       "phase": "integrate",
       "timestamp": "2026-03-07T00:00:00Z",
       "result": "All integration points already wired — no additional wiring needed"
+    },
+    {
+      "number": 7,
+      "phase": "integrate",
+      "timestamp": "2026-05-01T00:00:00Z",
+      "result": "Strengthened the AskUserQuestion enforcement language and added per-prompt User Interaction directives. Hook (prompt-enforcer.ts) and shared rules (interaction-rules.md, plus Gemini and Codex variants) now use 'REQUIRED' / 'MUST' wording; previously was 'avoid plain-text questions / use structured input'. Anti-pattern (markdown options ending in 'which one?' in prose) explicitly called out, with documented exceptions (rhetorical phrasing, assumption call-outs). Five phase prompts that previously relied solely on the runtime hook (m1-constrain, m2-tension, m4-generate, m5-verify, m6-integrate) now carry an in-body ## User Interaction block — defence-in-depth for cases where the hook is missing or the prompt is read by an agent without the hook installed. Build pipeline ran: Gemini .toml + Codex SKILL.md regenerated; plugin/ synced. Phase remains VERIFIED.",
+      "patch_only": true,
+      "phase_change": "none (stays VERIFIED)",
+      "files_changed": [
+        "install/hooks/prompt-enforcer.ts",
+        "install/agents/gemini/hooks/prompt-enforcer.ts",
+        "install/agents/interaction-rules.md",
+        "install/agents/gemini/interaction-rules.md",
+        "install/agents/codex/interaction-rules.md",
+        "install/commands/m1-constrain.md",
+        "install/commands/m2-tension.md",
+        "install/commands/m4-generate.md",
+        "install/commands/m5-verify.md",
+        "install/commands/m6-integrate.md"
+      ],
+      "build_pipeline_ran": ["bun run build:commands", "bun scripts/sync-plugin.ts"],
+      "advisory_vs_blocking": "Hook still T2-advisory (never blocks); the strengthening is in directive language, not enforcement mode."
     }
   ],
   "generation": {

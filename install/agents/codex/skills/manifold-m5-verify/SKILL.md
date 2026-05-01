@@ -294,4 +294,13 @@ When verifying JSON+Markdown manifolds, check:
 - `tension.between` references exist as constraint IDs
 - `required_truth.maps_to` references exist
 
+## User Interaction (MANDATORY)
+
+m5-verify is mostly read-only — its output is a verification matrix + `.verify.json` artifact + suggested next steps. The verify report itself does NOT need `AskUserQuestion` (it is a status report, end with "Waiting for your command"). However, two interactive paths can arise:
+
+- `--strict` failures: when blocking gaps appear, the model may need to ask the user how to proceed (e.g., "open a follow-up", "amend the manifold", "accept and re-verify"). Those questions MUST use `AskUserQuestion`, not prose.
+- Tension `REOPENED` findings during solution-tension validation: the user must decide accept / change option / modify, per the spec. That decision MUST use `AskUserQuestion`.
+
+If your reply contains a question soliciting a user response → use `AskUserQuestion`. Markdown options ending in "which one?" are the anti-pattern. See `install/agents/interaction-rules.md`; the `prompt-enforcer.ts` hook reinforces at runtime.
+
 Run `manifold validate <feature>` after updates. Shared directives (output format, interaction rules, validation) injected by phase-commons hook.

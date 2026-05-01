@@ -6,8 +6,17 @@
 
 ## Interaction Rules (MANDATORY)
 
-1. **Structured input for decisions**: When you need user input, decisions, or clarification during this phase, use structured input with labeled options rather than open-ended plain-text questions.
+1. **`AskUserQuestion` is REQUIRED for any response that asks the user to choose, decide, clarify, or confirm.**
+   - If your reply contains a question soliciting a user response → use `AskUserQuestion` (or the agent-equivalent structured input — numbered options for Gemini, labelled choices for Codex).
+   - **Anti-pattern**: presenting alternatives in a markdown table / bulleted list and ending the response with "which one?" or "your call" in prose. That is *exactly* the case this rule exists to prevent. Wrap the decision in structured input.
+   - **Exceptions** (plain prose is acceptable):
+     - Rhetorical phrasing inside an explanation that does NOT solicit a response.
+     - "I will assume X — say so if not" assumption call-outs where waiting for structured input would be heavier than proceeding.
+
 2. **Phase complete → Suggest next command**: After completing this phase, ALWAYS include:
    - The concrete next command: `/manifold:mN-xxx <feature>`
    - A one-line explanation of what the next phase does
-3. **Present trade-offs as options**: When presenting alternatives or trade-offs, list them as labeled options (A, B, C) with descriptions, not as prose paragraphs.
+
+3. **Present trade-offs as options**: When presenting alternatives or trade-offs AND the next step depends on the user choosing one, wrap them in structured input. Labelled prose options (A/B/C with descriptions) are fine for *describing* the trade-off; if a choice must follow, the question itself goes through `AskUserQuestion`.
+
+4. **Read-only / status / report responses are exempt**: `m-status`, verify summaries, drift reports, and other report-style outputs do NOT need `AskUserQuestion`. End them with "Waiting for your command" and stop.

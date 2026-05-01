@@ -269,5 +269,16 @@ Before interviewing, use `WebSearch` to research the feature domain (best practi
 7. Set phase to `CONSTRAINED`, append iteration, run `manifold validate <feature>`
 8. Display summary and suggest next step
 
+## User Interaction (MANDATORY)
+
+This phase is interview-driven. Many moments call for user input — choosing which category to constrain first, picking between alternative phrasings of a constraint, confirming pre-mortem stories, resolving ambiguous constraint genealogy. **Every such moment MUST go through `AskUserQuestion`** (or the agent-equivalent: numbered options for Gemini, labelled choices for Codex).
+
+- If your reply contains a question soliciting a user response → use `AskUserQuestion`.
+- Markdown options/tables/bulleted lists ending in "which one?" or "your call" are the anti-pattern this rule prevents.
+- Exceptions: rhetorical phrasing, or "I will assume X — say so if not" assumption call-outs.
+- Read-only summaries at the end of the phase do NOT need `AskUserQuestion` — end with the suggested next command.
+
+See `install/agents/interaction-rules.md` for the canonical contract; the `prompt-enforcer.ts` hook injects the same rules at runtime as defence-in-depth.
+
 Run `manifold validate <feature>` after updates. Shared directives (output format, interaction rules, validation) injected by phase-commons hook.
 """

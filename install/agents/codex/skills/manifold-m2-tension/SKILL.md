@@ -306,4 +306,15 @@ Next: /manifold:m3-anchor payment-retry
 10. Run `manifold validate <feature>` -- fix errors before proceeding
 11. Display summary and suggest next step
 
+## User Interaction (MANDATORY)
+
+Tension resolution is decision-heavy: picking among A/B/C resolution options, confirming TRIZ classifications, accepting propagation effects on tightened constraints. **Every decision-soliciting moment MUST go through `AskUserQuestion`** (or the agent-equivalent: numbered options for Gemini, labelled choices for Codex). The `--resolve` flag implies interactive resolution — the resolution prompts must use structured input.
+
+- If your reply contains a question soliciting a user response → use `AskUserQuestion`.
+- Presenting resolution options A/B/C in a markdown block and ending with "which one?" in prose is the exact anti-pattern this rule prevents. Wrap the choice in structured input.
+- Exceptions: rhetorical phrasing, or "I will assume X — say so if not" assumption call-outs.
+- Read-only summaries at the end of the phase do NOT need `AskUserQuestion` — end with the suggested next command.
+
+See `install/agents/interaction-rules.md` for the canonical contract; the `prompt-enforcer.ts` hook injects the same rules at runtime as defence-in-depth.
+
 Run `manifold validate <feature>` after updates. Shared directives (output format, interaction rules, validation) injected by phase-commons hook.

@@ -273,4 +273,16 @@ When the generation plan includes 3+ files across different modules/directories:
 18. Run `manifold validate <feature>` and fix errors before proceeding.
 19. Display summary with constraint coverage
 
+## User Interaction (MANDATORY)
+
+Generation has two recurring decision points: (a) parallel-execution approval (STEP 0) — user confirms before isolated worktrees spin up; (b) ONE_WAY action acknowledgement — explicit user accept on irreversible steps. **Every such confirmation MUST go through `AskUserQuestion`** (or the agent-equivalent: numbered options for Gemini, labelled choices for Codex).
+
+- The parallelisation prompt for ≥3-file/multi-module plans is mandatory and must use `AskUserQuestion` — not a prose "OK to proceed?" question.
+- ONE_WAY steps in the reversibility log require explicit acknowledgement; that acknowledgement question goes through `AskUserQuestion`.
+- If `--option` is omitted and the manifold has multiple solution options, the option-selection prompt uses `AskUserQuestion`.
+- Exceptions: rhetorical phrasing inside explanations, or "I will assume X — say so if not" assumption call-outs.
+- The final coverage summary at the end does NOT need `AskUserQuestion` — end with the suggested next command (`/manifold:m5-verify <feature>`).
+
+See `install/agents/interaction-rules.md` for the canonical contract; the `prompt-enforcer.ts` hook injects the same rules at runtime as defence-in-depth.
+
 Run `manifold validate <feature>` after updates. Shared directives (output format, interaction rules, validation) injected by phase-commons hook.
