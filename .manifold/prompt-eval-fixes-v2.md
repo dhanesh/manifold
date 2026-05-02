@@ -471,7 +471,7 @@ No tensions REOPENED.
 | `docs/prompt-eval-fixes-v2/DECISIONS.md` | doc | U1, O1 |
 | `ops/runbooks/non-software-schema-rollout.md` | runbook | O3, B2 |
 
-**Pending EDITs (7 files, status=pending — precise diffs in `docs/prompt-eval-fixes-v2/DECISIONS.md`):**
+**Planned EDITs (6 applied per iteration 6; precise diffs in `docs/prompt-eval-fixes-v2/DECISIONS.md`):**
 
 | Step | Path | Reversibility | EDIT ref |
 |------|------|---------------|----------|
@@ -480,7 +480,8 @@ No tensions REOPENED.
 | 2 | `install/commands/m0-init.md` | TWO_WAY | DECISIONS.md#edit-2 |
 | 3 | `install/commands/m3-anchor.md` | TWO_WAY | DECISIONS.md#edit-3 |
 | 4 | `install/commands/m4-generate.md` | TWO_WAY | DECISIONS.md#edit-4 |
-| 5 | `install/hooks/phase-commons` | TWO_WAY | DECISIONS.md#edit-5 |
-| 6 | `install/commands/m5-verify.md` | TWO_WAY | DECISIONS.md#edit-6 |
+| 5 | `install/commands/m5-verify.md` | TWO_WAY | DECISIONS.md#edit-6 |
 
-Tests are designed to FAIL today and PASS once each corresponding EDIT lands — giving m5-verify a meaningful NOT_SATISFIED → SATISFIED signal per gap. Step 1 (ONE_WAY) requires explicit user acknowledgment before application; see `reversibility_log[0].one_way_consequence`.
+A seventh EDIT against `install/hooks/phase-commons` was originally planned for the `iterations.result` injection path. It was retired during iteration 6: the template-audit approach (the `iterations-result-present` test plus the existing m1–m5 skill snippets) satisfies RT-9 directly, so no new hook was needed.
+
+Tests were designed to FAIL pre-EDIT and PASS post-EDIT — giving m5-verify a meaningful NOT_SATISFIED → SATISFIED signal per gap. Step 1 (ONE_WAY) was acknowledged and applied per `reversibility_log[0].one_way_consequence`.

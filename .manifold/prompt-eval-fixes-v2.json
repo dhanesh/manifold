@@ -294,7 +294,7 @@
     {"action_step": 1, "description": "Ship zod discriminated union on `domain` with software + non-software shapes", "reversibility": "ONE_WAY", "one_way_consequence": "Once non-software manifolds are authored against the new keys, reversing the key choice would require user data migration — publishing is the commit point."},
     {"action_step": 2, "description": "Update m0-init non-software branch to emit obligations/desires/resources/risks/dependencies keys and matching markdown headings", "reversibility": "TWO_WAY"},
     {"action_step": 3, "description": "Pre/post validation sweep on 19-manifold software corpus to enforce additive-only guarantee", "reversibility": "TWO_WAY"},
-    {"action_step": 4, "description": "Audit evidence.id and iterations.result in m1-m5 skill templates (or add phase-commons hook injection for result)", "reversibility": "TWO_WAY"},
+    {"action_step": 4, "description": "Audit evidence.id and iterations.result in m1-m5 skill templates", "reversibility": "TWO_WAY"},
     {"action_step": 5, "description": "m5 unconditional .verify.json emission on every completion code path", "reversibility": "TWO_WAY"},
     {"action_step": 6, "description": "Split m3-anchor recursion guidance behind references/recursive-decomposition.md; strengthen flat-mode elicitation", "reversibility": "TWO_WAY"},
     {"action_step": 7, "description": "Improve manifold validate error messages to include field path and required pattern", "reversibility": "TWO_WAY"}
