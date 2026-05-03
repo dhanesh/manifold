@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.32.1](https://github.com/dhanesh/manifold/compare/v2.32.0...v2.32.1) (2026-05-03)
+
+### Bug Fixes
+
+* **m1-constrain:** release the elicitation-pattern adoption from f4b8afc ([6fa5bd7](https://github.com/dhanesh/manifold/commit/6fa5bd78967eb71254a235280604e7b7cc06dcfb))
+
 ## [2.32.0](https://github.com/dhanesh/manifold/compare/v2.31.3...v2.32.0) (2026-05-01)
 
 ### Features
