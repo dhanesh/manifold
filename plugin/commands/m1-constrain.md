@@ -259,13 +259,14 @@ Before interviewing, use `WebSearch` to research the feature domain (best practi
 ## Execution Instructions
 
 1. Run Context Lookup (WebSearch) unless `--skip-lookup`
-2. Read `.manifold/<feature>.json` and `.manifold/<feature>.md`
-3. If `--category` specified, focus on that category only
-4. Interview each category, classify responses, assign IDs (B1, T1, U1, S1, O1...)
-5. Run GAP checklists, pre-mortem, quality check, draft required truths
-6. Update both files: JSON (IDs + types) and MD (statements + rationale)
-7. Set phase to `CONSTRAINED`, append iteration, run `manifold validate <feature>`
-8. Display summary and suggest next step
+2. **Investigate the codebase before asking.** When a constraint question can be answered by reading the repo (e.g., "what's the current rate-limit?", "which auth scheme is in use?", "is there an existing retry policy?"), use Read/Grep/Glob — and any available MCP tools that surface code structure or relationships — *before* asking the user. Surface findings as REPO CONTEXT alongside the WebSearch DOMAIN CONTEXT block. Only ask the user about facts the code cannot answer.
+3. Read `.manifold/<feature>.json` and `.manifold/<feature>.md`
+4. If `--category` specified, focus on that category only
+5. Interview each category, classify responses, assign IDs (B1, T1, U1, S1, O1...)
+6. Run GAP checklists, pre-mortem, quality check, draft required truths
+7. Update both files: JSON (IDs + types) and MD (statements + rationale)
+8. Set phase to `CONSTRAINED`, append iteration, run `manifold validate <feature>`
+9. Display summary and suggest next step
 
 ## User Interaction (MANDATORY)
 
@@ -275,6 +276,8 @@ This phase is interview-driven. Many moments call for user input — choosing wh
 - Markdown options/tables/bulleted lists ending in "which one?" or "your call" are the anti-pattern this rule prevents.
 - Exceptions: rhetorical phrasing, or "I will assume X — say so if not" assumption call-outs.
 - Read-only summaries at the end of the phase do NOT need `AskUserQuestion` — end with the suggested next command.
+
+**For each question, flag your recommended answer with rationale.** AskUserQuestion options should not be presented as a flat menu — name which option you would pick and why (in the question prose, not by re-ordering or hiding options). The user is then confirming or rejecting a position rather than choosing blind. The user can always override; the recommendation reduces cognitive load and prevents the "ten weak options" anti-pattern.
 
 See `install/agents/interaction-rules.md` for the canonical contract; the `prompt-enforcer.ts` hook injects the same rules at runtime as defence-in-depth.
 
