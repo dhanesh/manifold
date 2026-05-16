@@ -82,12 +82,19 @@ constraint.
 | Evidence available for the constraint | Maximum status |
 |---|---|
 | `file_exists` only | `◐ PARTIAL` |
+| `manual_review` only | `◐ PARTIAL` until the review is recorded `VERIFIED` |
 | `file_exists` + `content_match` | `✓ SATISFIED` (non-invariant constraints) |
 | `test_passes` with status `VERIFIED` or `STALE` | `✓ SATISFIED` (any constraint type) |
 
 Invariant constraints still require `test_passes` evidence to reach
-`SATISFIED` (unchanged). When only `file_exists` is present, cap the status at
-`◐ PARTIAL` and record the gap: "needs content_match or test_passes evidence".
+`SATISFIED` (unchanged — see Strictness Levels above). When only `file_exists`
+is present, cap the status at `◐ PARTIAL` and record the gap: "needs
+content_match or test_passes evidence".
+
+This floor governs the **`✓`/`◐` matrix status** only. It is a separate,
+orthogonal axis from the **satisfaction levels** (`DOCUMENTED` / `IMPLEMENTED`
+/ `TESTED` / `VERIFIED`) computed by Evidence Propagation below — the two do
+not override each other.
 
 ## Satisfaction Levels (v3.1)
 
