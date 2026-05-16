@@ -1,11 +1,11 @@
 ---
-description: "Generate ALL artifacts simultaneously from the constraint manifold - code, tests, docs, runbooks, alerts"
+description: "Generate ALL artifact types from the constraint manifold in one coordinated run - code, tests, docs, runbooks, alerts"
 argument-hint: "<feature-name> [--option=A|B|C]"
 ---
 
 # /manifold:m4-generate - Artifact Generation
 
-Generate ALL artifacts simultaneously from the constraint manifold.
+Generate all artifact types from the constraint manifold in a single coordinated run.
 
 ## Schema Compliance
 
@@ -138,7 +138,7 @@ Total: 15 artifacts | Next: /manifold:m5-verify payment-retry
 
 ## Task Tracking
 
-When generating artifacts, update `.manifold/<feature>.json` with completion status:
+As each task's reviews pass, the coordinator updates `.manifold/<feature>.json` with completion status:
 
 ```json
 {
@@ -271,7 +271,7 @@ All non-software artifacts maintain full constraint traceability. Reversibility 
 - **Recovery Playbook**: One procedure per watch-list risk. Each: Trigger, Related constraint, Severity, Reversibility of response, Steps, Escalation path (3 levels)
 - **Risk Watch List**: Active risks, Assumption Watch table, Review Schedule, Decision Reversal Criteria checklist
 
-## STEP 0: Binding Constraint Check (MANDATORY)
+## STEP 0-A: Binding Constraint Check (MANDATORY)
 
 Before any planning or generation, read `anchors.binding_constraint` from `.manifold/<feature>.json`.
 
@@ -283,7 +283,7 @@ If present:
 
 If absent: proceed normally (backward compatible).
 
-## STEP 0: Parallel Execution Check
+## STEP 0-B: Parallel Execution Check
 
 The coordinator dispatches generator subagents sequentially by default (see
 Coordinator Model). Worktree-level parallelism via `/manifold:parallel` remains
@@ -296,6 +296,13 @@ across different modules/directories:
 4. **If approved**: Use `/manifold:parallel` for generation in isolated worktrees
 5. **If declined**: Proceed with sequential generation
 
+**Parallel vs. the coordinator loop.** `/manifold:parallel` owns the full
+generation in isolated worktrees with its own merge flow; it does NOT run the
+per-task manifold/code-quality review loop. If the user opts into it, skip
+Phase 2 below and resume at Phase 3 (the final review still applies). The
+default coordinator path (Phase 2) is recommended because it keeps per-task
+review — choose parallel only when speed outweighs that.
+
 ## Execution Instructions
 
 > Read [`references/execution-discipline.md`](references/execution-discipline.md)
@@ -307,7 +314,10 @@ across different modules/directories:
 1. Confirm the manifold is at phase `ANCHORED` with required truths present.
 2. Confirm the working branch is NOT `main` / `master`. If it is, offer to
    create a feature branch via `AskUserQuestion` and STOP until the user agrees.
-3. Run the STEP 0 checks above (binding constraint; parallel-execution opt-in).
+3. Run the STEP 0-A and STEP 0-B checks above (binding constraint; parallel-execution opt-in).
+
+Before dispatching any generator, record `BASE_SHA = $(git rev-parse HEAD)` — the
+final reviewer (Phase 3) diffs `BASE_SHA..HEAD`.
 
 ### Phase 1: Derive Tasks
 
@@ -322,7 +332,7 @@ across different modules/directories:
 
 ### Phase 2: Per-Task Coordination Loop
 
-For each task, IN ORDER — never two generators at once:
+For each task, IN ORDER — never two generators at once. (Default path — skipped if the user opted into `/manifold:parallel` in STEP 0-B.)
 
 9. Dispatch a generator subagent using the
    [`references/subagent-prompts/generator.md`](references/subagent-prompts/generator.md)
@@ -335,11 +345,13 @@ For each task, IN ORDER — never two generators at once:
 11. On `DONE`, dispatch a manifold reviewer using
     [`references/subagent-prompts/manifold-reviewer.md`](references/subagent-prompts/manifold-reviewer.md).
     If `NON_COMPLIANT`, re-dispatch the same generator to fix the listed issues,
-    then re-review. Repeat until `COMPLIANT`.
+    then re-review. Repeat until `COMPLIANT` — if still `NON_COMPLIANT` after 3
+    rounds, escalate to the user via `AskUserQuestion`.
 12. Then dispatch a code-quality reviewer using
     [`references/subagent-prompts/code-quality-reviewer.md`](references/subagent-prompts/code-quality-reviewer.md).
     If `CHANGES_REQUESTED`, re-dispatch the generator to fix all Critical and
-    Important issues, then re-review. Repeat until `APPROVED`.
+    Important issues, then re-review. Repeat until `APPROVED` — if still
+    `CHANGES_REQUESTED` after 3 rounds, escalate to the user via `AskUserQuestion`.
 13. Mark the task complete in TodoWrite; set the artifact `status` to
     `generated` in `.manifold/<feature>.json`.
 
@@ -379,7 +391,7 @@ For each task, IN ORDER — never two generators at once:
 
 ## User Interaction (MANDATORY)
 
-Generation has two recurring decision points: (a) parallel-execution approval (STEP 0) — user confirms before isolated worktrees spin up; (b) ONE_WAY action acknowledgement — explicit user accept on irreversible steps. **Every such confirmation MUST go through `AskUserQuestion`** (or the agent-equivalent: numbered options for Gemini, labelled choices for Codex).
+Generation has two recurring decision points: (a) parallel-execution approval (STEP 0-B) — user confirms before isolated worktrees spin up; (b) ONE_WAY action acknowledgement — explicit user accept on irreversible steps. **Every such confirmation MUST go through `AskUserQuestion`** (or the agent-equivalent: numbered options for Gemini, labelled choices for Codex).
 
 - The parallelisation prompt for ≥3-file/multi-module plans is mandatory and must use `AskUserQuestion` — not a prose "OK to proceed?" question.
 - ONE_WAY steps in the reversibility log require explicit acknowledgement; that acknowledgement question goes through `AskUserQuestion`.
