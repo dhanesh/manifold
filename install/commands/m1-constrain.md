@@ -7,6 +7,8 @@ argument-hint: "<feature-name>"
 
 Interview-driven constraint discovery across 5 categories.
 
+> **Discipline:** This command follows [`references/execution-discipline.md`](references/execution-discipline.md) — the Iron Law of verification, the never-start-on-`main` rule, and the Red Flags below.
+
 ## Scope Guard
 
 This phase ONLY updates `.manifold/<feature>.json` and `.manifold/<feature>.md`. Do NOT create source files, spawn agents, or do work belonging to later phases. User answers are constraint INPUTS, not build instructions.
@@ -280,5 +282,13 @@ This phase is interview-driven. Many moments call for user input — choosing wh
 **For each question, flag your recommended answer with rationale.** AskUserQuestion options should not be presented as a flat menu — name which option you would pick and why (in the question prose, not by re-ordering or hiding options). The user is then confirming or rejecting a position rather than choosing blind. The user can always override; the recommendation reduces cognitive load and prevents the "ten weak options" anti-pattern.
 
 See `install/agents/interaction-rules.md` for the canonical contract; the `prompt-enforcer.ts` hook injects the same rules at runtime as defence-in-depth.
+
+## Red Flags
+
+| Thought | Reality |
+|---|---|
+| "I'll list the constraints I assume" | Constraints are discovered by interview and codebase investigation, not invented. |
+| "One big question covers it" | One question at a time; investigate the codebase before asking. |
+| "Every category must be filled" | An empty category is a valid finding, not a gap to pad. |
 
 Run `manifold validate <feature>` after updates. Shared directives (output format, interaction rules, validation) injected by phase-commons hook.
