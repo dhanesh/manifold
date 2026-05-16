@@ -9,6 +9,7 @@ import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
 import { mkdirSync, writeFileSync, rmSync, mkdtempSync, readFileSync, copyFileSync } from 'fs';
 import { join, resolve } from 'path';
 import { tmpdir } from 'os';
+import { spawnSync } from 'child_process';
 import {
   runDoctor,
   checkInvalidManifolds,
@@ -595,5 +596,190 @@ describe('runDoctor — integration on minimal healthy repo', () => {
     // invalid-manifolds check must pass for a valid manifold
     const invalidProblems = report.problems.filter(p => p.check === 'invalid-manifolds');
     expect(invalidProblems).toEqual([]);
+  });
+});
+
+// ─────────────────────────────────────────────
+// CLI command: manifold doctor
+// ─────────────────────────────────────────────
+
+const CLI = resolve(__dirname, '../../cli/index.ts');
+const REPO_ROOT = resolve(__dirname, '../..');
+
+function runCli(args: string[], cwd = REPO_ROOT): { status: number; stdout: string; stderr: string } {
+  const result = spawnSync('bun', [CLI, ...args], {
+    cwd,
+    encoding: 'utf-8',
+    timeout: 15000,
+  });
+  return {
+    status: result.status ?? 1,
+    stdout: result.stdout ?? '',
+    stderr: result.stderr ?? '',
+  };
+}
+
+// @constraint T1
+// @constraint O1
+describe('manifold doctor — CLI command registration', () => {
+  // RT-1: doctor command is registered and accessible via --help
+  test('doctor command appears in --help output', () => {
+    // @constraint T1
+    const result = runCli(['--help']);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('doctor');
+  });
+
+  // RT-1: doctor --help shows its own help text
+  test('doctor --help returns exit code 0 and shows description', () => {
+    // @constraint T1
+    const result = runCli(['doctor', '--help']);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('doctor');
+    // Should show the --json option
+    expect(result.stdout).toContain('--json');
+  });
+});
+
+// @constraint O1
+// @constraint U3
+describe('manifold doctor — exit codes (RT-6)', () => {
+  // RT-6: exit code 0 on healthy repo
+  test('exits 0 when the real manifold repo is healthy', () => {
+    // @constraint O1
+    const result = runCli(['doctor']);
+    // Accept 0 (healthy) or 2 (problems found — repo may have real sync issues)
+    // but NEVER 1 (which means command-not-found / not a manifold repo)
+    expect(result.status).not.toBe(1);
+  });
+
+  // RT-6: exit code 1 when outside a manifold repo
+  test('exits 1 when run from a directory without .manifold/', () => {
+    // @constraint O1
+    const tmpDir = mkdtempSync(join(tmpdir(), 'mfld-no-manifold-'));
+    try {
+      const result = runCli(['doctor'], tmpDir);
+      expect(result.status).toBe(1);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  // RT-6: exit code 2 when problems are found
+  test('exits 2 when the repo has detectable problems', () => {
+    // @constraint O1
+    const tmpDir = mkdtempSync(join(tmpdir(), 'mfld-unhealthy-'));
+    try {
+      // Create a .manifold/ dir with a broken manifold to ensure problems
+      mkdirSync(join(tmpDir, '.manifold'), { recursive: true });
+      writeFileSync(join(tmpDir, '.manifold', 'broken.json'), '{ not json }');
+      const result = runCli(['doctor'], tmpDir);
+      expect(result.status).toBe(2);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+});
+
+// @constraint U3
+// @constraint O2
+describe('manifold doctor --json (RT-6)', () => {
+  // RT-6: --json emits parseable JSON with DoctorReport shape
+  test('--json outputs valid JSON with problems array and healthy boolean', () => {
+    // @constraint U3
+    const result = runCli(['doctor', '--json']);
+    // Should not error as command (only 0 or 2 are valid)
+    expect(result.status).not.toBe(1);
+    // Output must be valid JSON
+    let parsed: { problems: unknown[]; healthy: boolean };
+    expect(() => {
+      parsed = JSON.parse(result.stdout);
+    }).not.toThrow();
+    parsed = JSON.parse(result.stdout);
+    expect(Array.isArray(parsed.problems)).toBe(true);
+    expect(typeof parsed.healthy).toBe('boolean');
+  });
+
+  // RT-6: --json reports healthy:true or false consistently with exit code
+  test('--json healthy:true corresponds to exit code 0', () => {
+    // @constraint U3
+    // Use a temp dir with a valid minimal manifold so we get a known-healthy state
+    const tmpDir = mkdtempSync(join(tmpdir(), 'mfld-json-healthy-'));
+    try {
+      mkdirSync(join(tmpDir, '.manifold'), { recursive: true });
+      const manifold = {
+        schema_version: 3,
+        feature: 'test',
+        phase: 'INITIALIZED',
+        constraints: { business: [], technical: [], user_experience: [], security: [], operational: [] },
+        tensions: [],
+        anchors: { required_truths: [] },
+        convergence: { status: 'NOT_STARTED' },
+      };
+      writeFileSync(join(tmpDir, '.manifold', 'test.json'), JSON.stringify(manifold, null, 2));
+      writeFileSync(join(tmpDir, '.manifold', 'test.md'), '# test\n\n## Outcome\nOK\n');
+
+      const result = runCli(['doctor', '--json'], tmpDir);
+      // With only a valid manifold and no plugin/ or fingerprints, should be healthy
+      const parsed = JSON.parse(result.stdout);
+      if (parsed.healthy) {
+        expect(result.status).toBe(0);
+      } else {
+        expect(result.status).toBe(2);
+      }
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  // RT-6: --json with problems gives healthy:false and exit code 2
+  test('--json healthy:false corresponds to exit code 2', () => {
+    // @constraint U3
+    const tmpDir = mkdtempSync(join(tmpdir(), 'mfld-json-unhealthy-'));
+    try {
+      mkdirSync(join(tmpDir, '.manifold'), { recursive: true });
+      writeFileSync(join(tmpDir, '.manifold', 'broken.json'), 'NOTJSON');
+      const result = runCli(['doctor', '--json'], tmpDir);
+      expect(result.status).toBe(2);
+      const parsed = JSON.parse(result.stdout);
+      expect(parsed.healthy).toBe(false);
+      expect(parsed.problems.length).toBeGreaterThan(0);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+});
+
+// @constraint S1
+describe('manifold doctor — read-only guarantee (RT-7)', () => {
+  // RT-7: doctor command must not create or modify files
+  test('does not write any files to the repo root', () => {
+    // @constraint S1
+    const tmpDir = mkdtempSync(join(tmpdir(), 'mfld-readonly-'));
+    try {
+      mkdirSync(join(tmpDir, '.manifold'), { recursive: true });
+      const manifold = {
+        schema_version: 3,
+        feature: 'test',
+        phase: 'INITIALIZED',
+        constraints: { business: [], technical: [], user_experience: [], security: [], operational: [] },
+        tensions: [],
+        anchors: { required_truths: [] },
+        convergence: { status: 'NOT_STARTED' },
+      };
+      writeFileSync(join(tmpDir, '.manifold', 'test.json'), JSON.stringify(manifold, null, 2));
+      writeFileSync(join(tmpDir, '.manifold', 'test.md'), '# test\n\n## Outcome\nOK\n');
+
+      const { readdirSync } = require('fs');
+      const before = new Set(readdirSync(tmpDir));
+      runCli(['doctor'], tmpDir);
+      const after = new Set(readdirSync(tmpDir));
+
+      for (const entry of after) {
+        expect(before.has(entry)).toBe(true);
+      }
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
   });
 });

@@ -23,6 +23,7 @@ import { registerShowCommand } from './commands/show.js';
 import { registerCompletionCommand } from './commands/completion.js';
 import { registerHookCommand } from './commands/hook.js';
 import { registerServeCommand } from './commands/serve.js';
+import { registerDoctorCommand } from './commands/doctor.js';
 import { setColorMode } from './lib/output.js';
 import { configureLogger, startTimer, endTimer, emitTimingSummary, type LogMode } from './lib/logger.js';
 import pkg from './package.json';
@@ -85,6 +86,7 @@ registerShowCommand(program);
 registerCompletionCommand(program);
 registerHookCommand(program);
 registerServeCommand(program);
+registerDoctorCommand(program);
 
 // Parse arguments
 program.parse();
