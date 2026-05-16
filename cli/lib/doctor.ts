@@ -10,7 +10,7 @@
  */
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
-import { dirname, join, relative } from 'path';
+import { dirname, join } from 'path';
 import {
   findManifoldDir,
   listFeatures,
@@ -199,7 +199,7 @@ export function buildSnapshot(repoRoot: string): RepoSnapshot {
   }
 
   // ── 4. Skill fingerprints ──────────────────────────────────
-  // Satisfies: RT-4 (reuses fingerprintSkills() from tests/golden/fingerprint.ts)
+  // Satisfies: RT-4 (reuses fingerprintSkills() from cli/lib/fingerprint.ts)
   const fingerprintBaseline = join(repoRoot, 'tests', 'golden', 'skill-fingerprints.json');
   let skillFingerprints: SkillFingerprint[] = [];
   if (existsSync(fingerprintBaseline)) {
@@ -211,7 +211,7 @@ export function buildSnapshot(repoRoot: string): RepoSnapshot {
   }
 
   // Compute live fingerprints from install/commands/*.md
-  // Satisfies: RT-4, T2 (reuses fingerprintSkills() from tests/golden/fingerprint.ts
+  // Satisfies: RT-4, T2 (reuses fingerprintSkills() from cli/lib/fingerprint.ts
   // to guarantee the doctor check cannot silently diverge from the golden-test sentinel)
   let currentFingerprints: SkillFingerprint[] = [];
   const commandsDir = join(repoRoot, 'install', 'commands');
@@ -379,7 +379,7 @@ export function checkPluginSync(snapshot: RepoSnapshot): Problem[] {
 
 /**
  * Detect when recorded skill fingerprints no longer match install/commands/.
- * Reuses fingerprintSkills() types from tests/golden/fingerprint.ts.
+ * Reuses fingerprintSkills() from cli/lib/fingerprint.ts.
  *
  * Satisfies: RT-4 (reuses fingerprintSkills() logic; no false positives on healthy repo)
  * Satisfies: RT-5 (fix command: bun tests/golden/bootstrap-fingerprints.ts)
