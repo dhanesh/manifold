@@ -20,21 +20,22 @@ export interface SkillFingerprint {
   bytes: number;
 }
 
-const repoRoot = resolve(import.meta.dir, "../..");
-const commandsDir = join(repoRoot, "install/commands");
+const defaultRepoRoot = resolve(import.meta.dir, "../..");
 
 /**
  * List the skill files whose content should be tracked. Returns relative paths
  * sorted deterministically so fingerprint output is stable across machines.
  */
-export function listSkillFiles(): string[] {
+export function listSkillFiles(repoRoot: string = defaultRepoRoot): string[] {
+  const commandsDir = join(repoRoot, "install/commands");
   return readdirSync(commandsDir)
     .filter((f) => f.endsWith(".md"))
     .sort();
 }
 
-export function fingerprintSkills(): SkillFingerprint[] {
-  return listSkillFiles().map((file) => {
+export function fingerprintSkills(repoRoot: string = defaultRepoRoot): SkillFingerprint[] {
+  const commandsDir = join(repoRoot, "install/commands");
+  return listSkillFiles(repoRoot).map((file) => {
     const abs = join(commandsDir, file);
     const content = readFileSync(abs);
     const sha256 = createHash("sha256").update(content).digest("hex");

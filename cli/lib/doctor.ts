@@ -17,7 +17,7 @@ import {
   loadFeature,
 } from './parser.js';
 import { computeFileHash, detectDrift } from './evidence.js';
-import type { SkillFingerprint } from '../../tests/golden/fingerprint.js';
+import { fingerprintSkills, type SkillFingerprint } from '../../tests/golden/fingerprint.js';
 
 // ============================================================
 // Public Types
@@ -211,28 +211,16 @@ export function buildSnapshot(repoRoot: string): RepoSnapshot {
   }
 
   // Compute live fingerprints from install/commands/*.md
+  // Satisfies: RT-4, T2 (reuses fingerprintSkills() from tests/golden/fingerprint.ts
+  // to guarantee the doctor check cannot silently diverge from the golden-test sentinel)
   let currentFingerprints: SkillFingerprint[] = [];
   const commandsDir = join(repoRoot, 'install', 'commands');
   if (existsSync(commandsDir)) {
-    const { createHash } = require('crypto');
-    currentFingerprints = safeReaddir(commandsDir)
-      .filter((f) => f.endsWith('.md'))
-      .sort()
-      .map((file) => {
-        const abs = join(commandsDir, file);
-        try {
-          const content = readFileSync(abs);
-          const sha256 = createHash('sha256').update(content).digest('hex');
-          return {
-            path: `install/commands/${file}`,
-            sha256,
-            bytes: content.length,
-          } as SkillFingerprint;
-        } catch {
-          return null;
-        }
-      })
-      .filter((fp): fp is SkillFingerprint => fp !== null);
+    try {
+      currentFingerprints = fingerprintSkills(repoRoot);
+    } catch {
+      currentFingerprints = [];
+    }
   }
 
   return {
