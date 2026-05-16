@@ -38,15 +38,35 @@ function syncFile(src: string, dest: string) {
   copied++;
 }
 
+// Recursively copy every .md file under srcDir into destDir, preserving structure.
+function copyTree(srcDir: string, destDir: string): number {
+  let count = 0;
+  ensureDir(destDir);
+  for (const entry of readdirSync(srcDir, { withFileTypes: true })) {
+    const srcPath = join(srcDir, entry.name);
+    const destPath = join(destDir, entry.name);
+    if (entry.isDirectory()) {
+      count += copyTree(srcPath, destPath);
+    } else if (entry.name.endsWith(".md")) {
+      syncFile(srcPath, destPath);
+      count++;
+    }
+  }
+  return count;
+}
+
 // 1. Commands: install/commands/*.md -> plugin/commands/
 //    Preserve plugin-only files (setup.md) by only copying files that exist in install/
 const commandsSrc = join(install, "commands");
 const commandsDest = join(plugin, "commands");
 ensureDir(commandsDest);
 
-for (const file of readdirSync(commandsSrc)) {
-  if (file.endsWith(".md")) {
-    syncFile(join(commandsSrc, file), join(commandsDest, file));
+for (const entry of readdirSync(commandsSrc, { withFileTypes: true })) {
+  const srcPath = join(commandsSrc, entry.name);
+  if (entry.isDirectory()) {
+    copyTree(srcPath, join(commandsDest, entry.name));
+  } else if (entry.name.endsWith(".md")) {
+    syncFile(srcPath, join(commandsDest, entry.name));
   }
 }
 
