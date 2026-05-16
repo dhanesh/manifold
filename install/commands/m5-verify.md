@@ -82,7 +82,7 @@ constraint.
 | Evidence available for the constraint | Maximum status |
 |---|---|
 | `file_exists` only | `◐ PARTIAL` |
-| `manual_review` only | `◐ PARTIAL` until the review is recorded `VERIFIED` |
+| `manual_review` only | `◐ PARTIAL` until a human sets its evidence `status` to `VERIFIED` |
 | `file_exists` + `content_match` | `✓ SATISFIED` (non-invariant constraints) |
 | `test_passes` with status `VERIFIED` or `STALE` | `✓ SATISFIED` (any constraint type) |
 
@@ -94,7 +94,11 @@ content_match or test_passes evidence".
 This floor governs the **`✓`/`◐` matrix status** only. It is a separate,
 orthogonal axis from the **satisfaction levels** (`DOCUMENTED` / `IMPLEMENTED`
 / `TESTED` / `VERIFIED`) computed by Evidence Propagation below — the two do
-not override each other.
+not override each other. `VERIFIED` above is an evidence-item `status` value
+(the schema defines `VERIFIED` / `PENDING` / `FAILED` / `STALE` for every
+evidence type, not just `test_passes`) — so a human-verified `manual_review`
+item can support `✓ SATISFIED` on the matrix axis even while the constraint
+stays at the `DOCUMENTED` satisfaction level.
 
 ## Satisfaction Levels (v3.1)
 
