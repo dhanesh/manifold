@@ -360,7 +360,10 @@ describe('checkStaleFingerprints', () => {
   });
 
   // @constraint RT-4
-  test('emits a problem when a new skill file is added without a baseline', () => {
+  test('is a no-op when baseline is empty (fresh checkout before bootstrap)', () => {
+    // When no baseline file exists (skillFingerprints is empty), the check must
+    // return no problems regardless of current fingerprints. This prevents
+    // false positives on a fresh checkout before bootstrap has been run.
     const baseline: Array<{ path: string; sha256: string; bytes: number }> = [];
     const current = [{ path: 'install/commands/new.md', sha256: 'abc', bytes: 50 }];
 
@@ -375,7 +378,31 @@ describe('checkStaleFingerprints', () => {
       currentFingerprints: current,
     });
 
-    // New file not in baseline is drift
+    // No baseline exists — check is a no-op, no false positives
+    expect(problems).toEqual([]);
+  });
+
+  // @constraint RT-4
+  test('emits a problem when a new skill file is added to a non-empty baseline', () => {
+    // When a baseline EXISTS but a new skill file is not in it, that is real drift.
+    const baseline = [{ path: 'install/commands/existing.md', sha256: 'existing', bytes: 100 }];
+    const current = [
+      { path: 'install/commands/existing.md', sha256: 'existing', bytes: 100 },
+      { path: 'install/commands/new.md', sha256: 'abc', bytes: 50 },
+    ];
+
+    const problems = checkStaleFingerprints({
+      manifoldDir: null,
+      features: [],
+      verifyHashes: {},
+      installFiles: [],
+      pluginFileContents: {},
+      installFileContents: {},
+      skillFingerprints: baseline,
+      currentFingerprints: current,
+    });
+
+    // New file not tracked in an existing baseline is drift
     expect(problems.length).toBeGreaterThanOrEqual(1);
     expect(problems[0].check).toBe('stale-fingerprints');
   });
@@ -541,7 +568,7 @@ describe('runDoctor — read-only guarantee', () => {
     );
     // No new entries at top level
     for (const entry of after) {
-      expect(before.has(entry) || entry === '.manifold').toBe(true);
+      expect(before.has(entry)).toBe(true);
     }
   });
 });

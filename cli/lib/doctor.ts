@@ -10,14 +10,14 @@
  */
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
-import { join, relative } from 'path';
+import { dirname, join, relative } from 'path';
 import {
   findManifoldDir,
   listFeatures,
   loadFeature,
 } from './parser.js';
 import { computeFileHash, detectDrift } from './evidence.js';
-import { fingerprintSkills, type SkillFingerprint } from '../../tests/golden/fingerprint.js';
+import { fingerprintSkills, type SkillFingerprint } from './fingerprint.js';
 
 // ============================================================
 // Public Types
@@ -124,7 +124,7 @@ export function buildSnapshot(repoRoot: string): RepoSnapshot {
     // Rule 1: install/commands/**/*.md (excluding subdirectory .md files go into commands/)
     const commandsSrc = join(installDir, 'commands');
     if (existsSync(commandsSrc)) {
-      collectMdFiles(commandsSrc, commandsSrc, 'commands', installFiles, installFileContents, installDir);
+      collectMdFiles(commandsSrc, 'commands', installFiles, installFileContents);
     }
 
     // Rule 2: install/hooks/* (all files)
@@ -184,7 +184,7 @@ export function buildSnapshot(repoRoot: string): RepoSnapshot {
     // Rule 7: install/templates/** (all files, recursive)
     const templatesSrc = join(installDir, 'templates');
     if (existsSync(templatesSrc)) {
-      collectAllFiles(templatesSrc, templatesSrc, 'templates', installFiles, installFileContents, installDir);
+      collectAllFiles(templatesSrc, 'templates', installFiles, installFileContents);
     }
 
     // Read corresponding plugin/ files
@@ -251,18 +251,16 @@ function safeReaddir(dir: string): string[] {
  */
 function collectMdFiles(
   srcDir: string,
-  baseDir: string,
   relPrefix: string,
   installFiles: string[],
   installFileContents: Record<string, string>,
-  installRoot: string,
 ): void {
   for (const entry of safeReaddir(srcDir)) {
     const srcPath = join(srcDir, entry);
     try {
       const st = statSync(srcPath);
       if (st.isDirectory()) {
-        collectMdFiles(srcPath, baseDir, `${relPrefix}/${entry}`, installFiles, installFileContents, installRoot);
+        collectMdFiles(srcPath, `${relPrefix}/${entry}`, installFiles, installFileContents);
       } else if (entry.endsWith('.md')) {
         const relPath = `${relPrefix}/${entry}`;
         installFiles.push(relPath);
@@ -279,18 +277,16 @@ function collectMdFiles(
  */
 function collectAllFiles(
   srcDir: string,
-  baseDir: string,
   relPrefix: string,
   installFiles: string[],
   installFileContents: Record<string, string>,
-  installRoot: string,
 ): void {
   for (const entry of safeReaddir(srcDir)) {
     const srcPath = join(srcDir, entry);
     try {
       const st = statSync(srcPath);
       if (st.isDirectory()) {
-        collectAllFiles(srcPath, baseDir, `${relPrefix}/${entry}`, installFiles, installFileContents, installRoot);
+        collectAllFiles(srcPath, `${relPrefix}/${entry}`, installFiles, installFileContents);
       } else {
         const relPath = `${relPrefix}/${entry}`;
         installFiles.push(relPath);
@@ -393,7 +389,7 @@ export function checkStaleFingerprints(snapshot: RepoSnapshot): Problem[] {
   const problems: Problem[] = [];
 
   // If no baseline exists (empty array), the check is a no-op
-  if (snapshot.skillFingerprints.length === 0 && snapshot.currentFingerprints.length === 0) {
+  if (snapshot.skillFingerprints.length === 0) {
     return problems;
   }
 
@@ -451,7 +447,7 @@ export function checkFileDrift(snapshot: RepoSnapshot): Problem[] {
 
   if (!snapshot.manifoldDir) return problems;
 
-  const repoRoot = snapshot.manifoldDir.replace(/\/\.manifold$/, '');
+  const repoRoot = dirname(snapshot.manifoldDir);
 
   for (const [feature, hashes] of Object.entries(snapshot.verifyHashes)) {
     const artifacts = Object.entries(hashes).map(([path, file_hash]) => ({
