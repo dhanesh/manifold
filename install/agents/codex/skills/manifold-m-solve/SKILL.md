@@ -9,6 +9,8 @@ description: "Generate parallel execution plan from constraint network. Identifi
 
 Generate parallel execution plan from constraint network.
 
+> **Discipline:** This command follows [`references/execution-discipline.md`](references/execution-discipline.md) — the Iron Law of verification, the never-start-on-`main` rule, and the Red Flags below.
+
 ## Schema Compliance
 
 | Field | Valid Values |
@@ -250,3 +252,11 @@ With flags:
 1. **Questions → AskUserQuestion**: When you need user input during this phase, use the `AskUserQuestion` tool with structured options. NEVER ask questions as plain text without options.
 2. **Phase complete → Suggest next**: After completing this phase, ALWAYS include the concrete next command (`/manifold:mN-xxx <feature>`) and a one-line explanation of what the next phase does.
 3. **Trade-offs → Labeled options**: When presenting alternatives, use `AskUserQuestion` with labeled choices (A, B, C) and descriptions.
+
+## Red Flags
+
+| Thought | Reality |
+|---|---|
+| "Parallelize everything" | Only group tasks with zero file overlap. |
+| "Ignore the critical path" | The critical path bounds the schedule — surface it. |
+| "The plan looks right, ship it" | Validate the dependency graph against the manifold first. |

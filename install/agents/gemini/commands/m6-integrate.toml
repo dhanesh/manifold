@@ -9,6 +9,8 @@ prompt = """
 
 Wire generated artifacts together by identifying integration points and producing actionable checklists.
 
+> **Discipline:** This command follows [`references/execution-discipline.md`](references/execution-discipline.md) — the Iron Law of verification, the never-start-on-`main` rule, and the Red Flags below.
+
 ## Usage
 
 ```
@@ -227,6 +229,14 @@ Integration produces a wiring checklist with copy-paste commands. Where the chec
 - Exceptions: rhetorical phrasing, or "I will assume X — say so if not" assumption call-outs.
 
 See `install/agents/interaction-rules.md` for the canonical contract; the `prompt-enforcer.ts` hook injects the same rules at runtime as defence-in-depth.
+
+## Red Flags
+
+| Thought | Reality |
+|---|---|
+| "The artifacts exist, so they're wired" | Existence is not integration — trace the seams. |
+| "Auto-wire everything" | Only auto-wire what is provably safe; flag the rest for manual review. |
+| "Integration done without a check" | Verify prerequisites before claiming anything is wired. |
 
 Run `manifold validate <feature>` after updates. Shared directives (output format, interaction rules, validation) injected by phase-commons hook.
 """

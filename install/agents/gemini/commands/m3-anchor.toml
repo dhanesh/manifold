@@ -9,6 +9,8 @@ prompt = """
 
 Backward reasoning from desired outcome to required conditions.
 
+> **Discipline:** This command follows [`references/execution-discipline.md`](references/execution-discipline.md) — the Iron Law of verification, the never-start-on-`main` rule, and the Red Flags below.
+
 > **Plain Language**: Instead of planning forward ("build X, then Y, then Z"), we work backward from the goal: "For our goal to be achieved, what MUST be true?" This surfaces hidden requirements early.
 >
 > **Key terms**: A *required truth* (RT) is a precondition — something that MUST be true for the outcome to succeed. An *anchor* is the result of backward reasoning from the outcome. The *binding constraint* is the single hardest-to-close required truth that, if unresolved, blocks all solution options. *Convergence* is the point where all required truths are satisfied.
@@ -220,6 +222,14 @@ RECOMMENDATION: Option C  →  Next: /manifold:m4-generate payment-retry --optio
 ### Solution-Tension Validation
 
 After selecting the recommended option, validate it against m2's tensions. For each RESOLVED tension, check whether the option honors the recorded resolution — mark `CONFIRMED` if yes, `REOPENED` if no. Record in JSON under `anchors.tension_validation` (array of `{tension_id, status, by_option | reason}`). If any tension is REOPENED, surface via AskUserQuestion with options to accept, change option, or modify the option.
+
+## Red Flags
+
+| Thought | Reality |
+|---|---|
+| "I'll forward-plan the steps" | m3 reasons backward: ask what must be TRUE for the outcome. |
+| "One required truth is enough" | Decompose until truths are concrete and verifiable. |
+| "Skip evidence on the truths" | Every required truth needs at least one evidence item. |
 
 Run `manifold validate <feature>` after updates. Shared directives (output format, interaction rules, validation) injected by phase-commons hook.
 """

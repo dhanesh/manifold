@@ -9,6 +9,8 @@ description: "Surface and resolve constraint conflicts (trade-offs). Identifies 
 
 Surface and resolve constraint conflicts. A "tension" is when two requirements compete -- satisfying one makes satisfying the other harder.
 
+> **Discipline:** This command follows [`references/execution-discipline.md`](references/execution-discipline.md) — the Iron Law of verification, the never-start-on-`main` rule, and the Red Flags below.
+
 > **Plain Language**: "Which requirements conflict, and how do we balance them?"
 
 ## Scope Guard
@@ -316,5 +318,13 @@ Tension resolution is decision-heavy: picking among A/B/C resolution options, co
 - Read-only summaries at the end of the phase do NOT need `AskUserQuestion` — end with the suggested next command.
 
 See `install/agents/interaction-rules.md` for the canonical contract; the `prompt-enforcer.ts` hook injects the same rules at runtime as defence-in-depth.
+
+## Red Flags
+
+| Thought | Reality |
+|---|---|
+| "No tensions found, move on" | Absence of found tensions is not absence of tensions — look harder. |
+| "Resolve it by dropping a constraint" | Invariants cannot be traded off. |
+| "Tension noted, done" | An unresolved tension is a latent bug — resolve it or log it explicitly. |
 
 Run `manifold validate <feature>` after updates. Shared directives (output format, interaction rules, validation) injected by phase-commons hook.

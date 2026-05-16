@@ -19,6 +19,8 @@ Verify ALL artifacts against ALL constraints.
 
 **Gaps are FINDINGS, not work orders.** Document gaps in the verification matrix and gap list. The user decides whether to fix them. **After creating/updating .verify.json: display verification matrix, list gaps, suggest next step, STOP.**
 
+> **Discipline:** This command follows [`references/execution-discipline.md`](references/execution-discipline.md) — the Iron Law of verification (no SATISFIED claim without fresh evidence) and the Red Flags below.
+
 ## Schema Compliance
 
 | Field | Valid Values |
@@ -70,6 +72,33 @@ Every constraint is checked across four artifact dimensions:
 **Default:** INVARIANTs must be ✓ in Code + Test. BOUNDARIEs must be ✓ in Code. GOALs can be ◐ or ✓.
 
 **Strict (`--strict`):** All constraints must be ✓ across all applicable artifacts. No ◐ allowed.
+
+## SATISFIED Floor (evidence minimum)
+
+A constraint MUST NOT be marked `✓ SATISFIED` on `file_exists` evidence alone.
+`file_exists` proves only that a file is on disk — not that it satisfies the
+constraint.
+
+| Evidence available for the constraint | Maximum status |
+|---|---|
+| `file_exists` only | `◐ PARTIAL` |
+| `manual_review` only | `◐ PARTIAL` until a human sets its evidence `status` to `VERIFIED` |
+| `file_exists` + `content_match` | `✓ SATISFIED` (non-invariant constraints) |
+| `test_passes` with status `VERIFIED` or `STALE` | `✓ SATISFIED` (any constraint type) |
+
+Invariant constraints still require `test_passes` evidence to reach
+`SATISFIED` (unchanged — see Strictness Levels above). When only `file_exists`
+is present, cap the status at `◐ PARTIAL` and record the gap: "needs
+content_match or test_passes evidence".
+
+This floor governs the **`✓`/`◐` matrix status** only. It is a separate,
+orthogonal axis from the **satisfaction levels** (`DOCUMENTED` / `IMPLEMENTED`
+/ `TESTED` / `VERIFIED`) computed by Evidence Propagation below — the two do
+not override each other. `VERIFIED` above is an evidence-item `status` value
+(the schema defines `VERIFIED` / `PENDING` / `FAILED` / `STALE` for every
+evidence type, not just `test_passes`) — so a human-verified `manual_review`
+item can support `✓ SATISFIED` on the matrix axis even while the constraint
+stays at the `DOCUMENTED` satisfaction level.
 
 ## Satisfaction Levels (v3.1)
 
@@ -300,5 +329,14 @@ m5-verify is mostly read-only — its output is a verification matrix + `.verify
 - Tension `REOPENED` findings during solution-tension validation: the user must decide accept / change option / modify, per the spec. That decision MUST use `AskUserQuestion`.
 
 If your reply contains a question soliciting a user response → use `AskUserQuestion`. Markdown options ending in "which one?" are the anti-pattern. See `install/agents/interaction-rules.md`; the `prompt-enforcer.ts` hook reinforces at runtime.
+
+## Red Flags
+
+| Thought | Reality |
+|---|---|
+| "The file exists, mark it SATISFIED" | `file_exists` alone caps the status at `◐ PARTIAL`. See the SATISFIED Floor. |
+| "I'll fix the gaps I found" | m5-verify only REPORTS gaps. Fixing them is a separate, user-decided step. |
+| "Tests probably pass, mark TESTED" | `test_passes` with status `PENDING` counts as `IMPLEMENTED`, not `TESTED`. Run the tests. |
+| "verify.json from the last run is fine" | Always emit a fresh `.verify.json` — stale results are not evidence. |
 
 Run `manifold validate <feature>` after updates. Shared directives (output format, interaction rules, validation) injected by phase-commons hook.

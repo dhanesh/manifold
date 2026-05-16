@@ -9,6 +9,8 @@ prompt = """
 
 Streamlined 3-phase workflow for simple changes that don't require full constraint analysis.
 
+> **Discipline:** This command follows [`references/execution-discipline.md`](references/execution-discipline.md) — the Iron Law of verification, the never-start-on-`main` rule, and the Red Flags below.
+
 ## When to Use Light Mode
 
 | Scenario | Use Light Mode? | Use Full Workflow? |
@@ -253,4 +255,12 @@ If validation fails, fix the JSON structure before proceeding. The light-mode ma
 1. **Questions → AskUserQuestion**: When you need user input during this phase, use the `AskUserQuestion` tool with structured options. NEVER ask questions as plain text without options.
 2. **Phase complete → Suggest next**: After completing this phase, ALWAYS include the concrete next command (`/manifold:mN-xxx <feature>`) and a one-line explanation of what the next phase does.
 3. **Trade-offs → Labeled options**: When presenting alternatives, use `AskUserQuestion` with labeled choices (A, B, C) and descriptions.
+
+## Red Flags
+
+| Thought | Reality |
+|---|---|
+| "Quick means skip verification" | Light mode still verifies — the Iron Law applies. |
+| "This is too small for a manifold" | If it needs changing, it needs constraints. |
+| "Generated it, so it's done" | Run the verification command before any completion claim. |
 """

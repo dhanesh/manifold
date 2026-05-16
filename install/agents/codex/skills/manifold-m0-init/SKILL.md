@@ -9,6 +9,8 @@ description: "Initialize a constraint manifold for a feature. Creates .manifold/
 
 Initialize a new constraint manifold for a feature.
 
+> **Discipline:** This command follows [`references/execution-discipline.md`](references/execution-discipline.md) — the Iron Law of verification, the never-start-on-`main` rule, and the Red Flags below.
+
 ## Schema Compliance
 
 | Field | Valid Values |
@@ -314,5 +316,13 @@ When this command is invoked:
 - Include `## Outcome` section with the outcome text
 - Include empty category sections with comment placeholders
 - Use heading conventions: `####` for constraints, `###` for tensions/truths
+
+## Red Flags
+
+| Thought | Reality |
+|---|---|
+| "I'll guess the outcome" | The outcome drives all backward reasoning. Ask the user. |
+| "Skip the template, just init" | Templates encode constraint patterns — check whether one fits first. |
+| "Init on `main` is fine" | Never start feature work on `main`; create a feature branch. |
 
 Run `manifold validate <feature>` after creating files. Shared directives (output format, interaction rules, validation) injected by phase-commons hook.
