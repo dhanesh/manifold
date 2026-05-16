@@ -99,7 +99,7 @@ describe('prompt-enforcer hook', () => {
     const result = await runHook(testDir);
     const parsed = JSON.parse(result.stdout);
 
-    expect(parsed.additionalContext).toContain('labeled choices');
+    expect(parsed.additionalContext).toContain('alternatives or trade-offs');
 
     rmSync(manifoldDir, { recursive: true });
   });
