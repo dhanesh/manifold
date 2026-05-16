@@ -34,7 +34,13 @@ Generate ALL artifacts simultaneously from the constraint manifold.
 ## Why All At Once?
 
 Traditional: Code then Tests then Docs then Ops (each phase loses context, tests miss constraints).
-Manifold: Constraints produce [Code, Tests, Docs, Ops] simultaneously -- all artifacts derive from the SAME source with full traceability.
+Manifold: Constraints produce [Code, Tests, Docs, Ops] from the SAME source with full traceability.
+
+**Execution model.** `m4-generate` does not write artifacts itself. It is a
+**coordinator**: it derives discrete tasks from the manifold, then dispatches a
+fresh **generator subagent** per task. Each task still derives its code, tests,
+and docs together from the same constraints — only the dispatch is sequential,
+which is what makes per-task review possible. See the Coordinator Model section.
 
 ## Artifacts Generated
 
@@ -46,6 +52,60 @@ Manifold: Constraints produce [Code, Tests, Docs, Ops] simultaneously -- all art
 | **Runbooks** | Operations | Each procedure addresses failure modes |
 | **Dashboards** | Monitoring | Each metric tracks a GOAL |
 | **Alerts** | Notification | Each alert detects INVARIANT violation |
+
+## Coordinator Model
+
+`m4-generate` runs as a coordinator. It dispatches subagents; it does not write
+artifacts directly. The main session stays a thin coordination context. Four
+subagent roles, all driven by templates in
+[`references/subagent-prompts/`](references/subagent-prompts/):
+
+| Role | Template | Responsibility |
+|------|----------|----------------|
+| **generator** | `generator.md` | Implements one task's artifacts via TDD |
+| **manifold reviewer** | `manifold-reviewer.md` | Checks artifacts against the constraint manifold — compliance + scope; not quality |
+| **code-quality reviewer** | `code-quality-reviewer.md` | Bugs, edge cases, design, idiom |
+| **final reviewer** | `final-reviewer.md` | Whole-implementation pass after all tasks |
+
+Generators are dispatched **strictly sequentially** — never two at once. The
+per-task loop:
+
+```dot
+digraph m4_loop {
+    rankdir=TB;
+    "Dispatch generator subagent" [shape=box];
+    "Status?" [shape=diamond];
+    "Handle DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED" [shape=box];
+    "Dispatch manifold reviewer" [shape=box];
+    "Constraint-compliant?" [shape=diamond];
+    "Generator fixes compliance gaps" [shape=box];
+    "Dispatch code-quality reviewer" [shape=box];
+    "Critical/Important issues?" [shape=diamond];
+    "Generator fixes quality issues" [shape=box];
+    "Mark task complete, set artifact status=generated" [shape=box];
+
+    "Dispatch generator subagent" -> "Status?";
+    "Status?" -> "Handle DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED" [label="not DONE"];
+    "Handle DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED" -> "Dispatch generator subagent" [label="re-dispatch"];
+    "Status?" -> "Dispatch manifold reviewer" [label="DONE"];
+    "Dispatch manifold reviewer" -> "Constraint-compliant?";
+    "Constraint-compliant?" -> "Generator fixes compliance gaps" [label="no"];
+    "Generator fixes compliance gaps" -> "Dispatch manifold reviewer" [label="re-review"];
+    "Constraint-compliant?" -> "Dispatch code-quality reviewer" [label="yes"];
+    "Dispatch code-quality reviewer" -> "Critical/Important issues?";
+    "Critical/Important issues?" -> "Generator fixes quality issues" [label="yes"];
+    "Generator fixes quality issues" -> "Dispatch code-quality reviewer" [label="re-review"];
+    "Critical/Important issues?" -> "Mark task complete, set artifact status=generated" [label="no"];
+}
+```
+
+**Model tiering** — pick the cheapest model that fits each dispatch:
+
+| Dispatch | Model |
+|----------|-------|
+| Generator — mechanical 1–2 file task with a complete constraint spec | fast / cheap |
+| Generator — multi-artifact integration task | standard |
+| Any reviewer (manifold / code-quality / final) | most capable available |
 
 ## Example
 
@@ -223,9 +283,12 @@ If present:
 
 If absent: proceed normally (backward compatible).
 
-## STEP 0: Parallel Execution Check (MANDATORY)
+## STEP 0: Parallel Execution Check
 
-When the generation plan includes 3+ files across different modules/directories:
+The coordinator dispatches generator subagents sequentially by default (see
+Coordinator Model). Worktree-level parallelism via `/manifold:parallel` remains
+available as an explicit opt-in when the generation plan includes 3+ files
+across different modules/directories:
 
 1. **Analyze artifact groups**: Code (parallel across modules), Tests (parallel across modules, depend on code), Documentation (independent), Operational artifacts (independent)
 2. **Run**: `manifold solve <feature> --json` to get execution plan with parallel waves
@@ -235,43 +298,84 @@ When the generation plan includes 3+ files across different modules/directories:
 
 ## Execution Instructions
 
-### Phase 1: Planning (BEFORE any file writes)
+> Read [`references/execution-discipline.md`](references/execution-discipline.md)
+> before starting. The Iron Law of verification, the never-start-on-`main`
+> rule, and the generator status protocol all apply to this phase.
 
-1. Read manifold from `.manifold/<feature>.json`
-2. Read anchoring from JSON `anchors` section
-3. Select solution option (from `--option` or prompt user)
-4. **Build artifact list** ordered by binding constraint priority
-5. **Parallelization check**: If 3+ files across different directories, prompt user (see STEP 0 above). Wait for response before proceeding.
+### Phase 0: Setup Gate
 
-### Phase 2: Generation (AFTER user approval)
+1. Confirm the manifold is at phase `ANCHORED` with required truths present.
+2. Confirm the working branch is NOT `main` / `master`. If it is, offer to
+   create a feature branch via `AskUserQuestion` and STOP until the user agrees.
+3. Run the STEP 0 checks above (binding constraint; parallel-execution opt-in).
 
-6. **Check project patterns** -- examine existing structure before placing files
-7. For each artifact type:
-   - Generate with constraint traceability comments: `// Satisfies: B1, T2`
-   - For test files, include `@constraint` annotations for m5-verify traceability matrix:
-     ```typescript
-     // @constraint B1 - No duplicate payments
-     it('rejects duplicate payment attempts', async () => { ... });
-     ```
-   - Place in correct directory per Artifact Placement Rules
-8. Create all files in appropriate directories
-9. Update install script if adding new distributable commands
-10. If `--prd` flag: Read `install/commands/m4-prd.md` for PRD generation instructions.
-11. If `--stories` flag: Read `install/commands/m4-stories.md` for user story generation instructions.
+### Phase 1: Derive Tasks
 
-### Phase 3: Finalization
+4. Read `.manifold/<feature>.json` and `.manifold/<feature>.md`.
+5. Select the solution option (from `--option`, or prompt via `AskUserQuestion`).
+6. Group the required truths + artifact map into cohesive TASKS — typically one
+   task per artifact group (e.g. "implement IdempotencyService + tests —
+   satisfies B1, RT-2"). Order tasks by binding-constraint priority.
+7. Display the task checklist and track it in TodoWrite.
+8. If `--prd` is set, read `install/commands/m4-prd.md`; if `--stories` is set,
+   read `install/commands/m4-stories.md`. These run after the task loop.
 
-12. **Update manifold** with generation tracking (artifacts, coverage) in `.manifold/<feature>.json`
-13. **Populate `evidence` arrays** on all required truths with concrete evidence items
-14. **Immediate evidence validation** -- check what CAN be verified now:
-    - `file_exists`: Check file exists on disk. If missing, flag as GENERATION_FAILED
-    - `content_match`: Grep the pattern. If no match, flag as CONTENT_MISMATCH
-    - `test_passes` / `manual_review`: Leave as PENDING (m5's job)
-15. **Set `artifact_class`** on every artifact (`substantive` or `structural`)
-16. **Verify invariant evidence**: Ensure at least one `test_passes` evidence exists via RT `maps_to` chain or `verified_by`
-17. Set phase to `GENERATED`
-18. Run `manifold validate <feature>` and fix errors before proceeding.
-19. Display summary with constraint coverage
+### Phase 2: Per-Task Coordination Loop
+
+For each task, IN ORDER — never two generators at once:
+
+9. Dispatch a generator subagent using the
+   [`references/subagent-prompts/generator.md`](references/subagent-prompts/generator.md)
+   template. Fill placeholders with the constraint text from `.manifold/<feature>.md`,
+   the target artifact paths (per Artifact Placement Rules), and the task
+   description. Pick the model per the Coordinator Model tiering. The subagent
+   receives NO session history.
+10. Handle the returned `STATUS:` line per the protocol in
+    `references/execution-discipline.md`.
+11. On `DONE`, dispatch a manifold reviewer using
+    [`references/subagent-prompts/manifold-reviewer.md`](references/subagent-prompts/manifold-reviewer.md).
+    If `NON_COMPLIANT`, re-dispatch the same generator to fix the listed issues,
+    then re-review. Repeat until `COMPLIANT`.
+12. Then dispatch a code-quality reviewer using
+    [`references/subagent-prompts/code-quality-reviewer.md`](references/subagent-prompts/code-quality-reviewer.md).
+    If `CHANGES_REQUESTED`, re-dispatch the generator to fix all Critical and
+    Important issues, then re-review. Repeat until `APPROVED`.
+13. Mark the task complete in TodoWrite; set the artifact `status` to
+    `generated` in `.manifold/<feature>.json`.
+
+### Phase 3: Final Pass
+
+14. After all tasks, dispatch a final reviewer using
+    [`references/subagent-prompts/final-reviewer.md`](references/subagent-prompts/final-reviewer.md)
+    over the full `BASE_SHA..HEAD` diff. On `CHANGES_REQUESTED`, re-dispatch
+    generators to fix the issues, then re-run the final reviewer.
+
+### Phase 4: Finalization
+
+15. **Update manifold** with generation tracking (artifacts, coverage) in
+    `.manifold/<feature>.json`.
+16. **Populate `evidence` arrays** on all required truths with concrete items.
+17. **Immediate evidence validation** — check what CAN be verified now:
+    - `file_exists`: check the file exists on disk; if missing, flag GENERATION_FAILED.
+    - `content_match`: grep the pattern; if no match, flag CONTENT_MISMATCH.
+    - `test_passes` / `manual_review`: leave as PENDING (m5's job).
+18. **Set `artifact_class`** on every artifact (`substantive` or `structural`).
+19. **Verify invariant evidence**: ensure at least one `test_passes` evidence
+    exists via the RT `maps_to` chain or `verified_by`.
+20. Set phase to `GENERATED`.
+21. Run `manifold validate <feature>` and fix errors.
+22. Display the coverage summary; end with the suggested next command
+    `/manifold:m5-verify <feature>`. Do NOT auto-advance to m5.
+
+## Red Flags
+
+| Thought | Reality |
+|---|---|
+| "I'll generate the artifacts inline, it's faster" | The coordinator dispatches generator subagents — inline generation pollutes the coordination context. |
+| "The generator said DONE, move on" | Dispatch the manifold reviewer, then the code-quality reviewer. A `DONE` is not a review. |
+| "Spec review passed, skip code-quality review" | Both reviews are required, in that order. |
+| "Reviewer found Minor issues only — but also one Important — ship it" | Critical and Important issues must be fixed and re-reviewed before the next task. |
+| "Generating on `main` is fine this once" | Never. Create a feature branch first. |
 
 ## User Interaction (MANDATORY)
 
