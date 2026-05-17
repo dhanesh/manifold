@@ -49,6 +49,13 @@ export interface RepoSnapshot {
   /** Feature names listed by listFeatures() */
   features: string[];
   /**
+   * For each feature, whether its .manifold/<feature>.md file exists and is readable.
+   * A missing or unreadable .md is a B1 violation.
+   * Only populated for json-md format features; undefined key = not applicable (yaml-only).
+   * Satisfies: B1 (detect invalid/unparseable .md content files)
+   */
+  featureMdReadable?: Record<string, boolean>;
+  /**
    * For each feature, file_hashes from .verify.json (if present).
    * Shape: { featureName: { filePath: sha256 } }
    */
@@ -60,14 +67,16 @@ export interface RepoSnapshot {
    */
   installFiles: string[];
   /**
-   * Contents of each install/ file to be synced (keyed by install/-relative path).
+   * SHA-256 hashes of each install/ file to be synced (keyed by install/-relative path).
+   * Satisfies: T2 (reuses computeFileHash from cli/lib/evidence — no duplicate hash logic)
    */
-  installFileContents: Record<string, string>;
+  installFileHashes: Record<string, string>;
   /**
-   * Contents of corresponding plugin/ files (keyed by install/-relative path).
+   * SHA-256 hashes of corresponding plugin/ files (keyed by install/-relative path).
    * Missing key = file is absent in plugin/.
+   * Satisfies: T2 (reuses computeFileHash from cli/lib/evidence — no duplicate hash logic)
    */
-  pluginFileContents: Record<string, string>;
+  pluginFileHashes: Record<string, string>;
   /**
    * Baseline fingerprints from tests/golden/skill-fingerprints.json.
    * Empty array means no baseline exists (check is a no-op).
@@ -94,6 +103,32 @@ export function buildSnapshot(repoRoot: string): RepoSnapshot {
   const manifoldDir = findManifoldDir(repoRoot);
   const features = manifoldDir ? listFeatures(manifoldDir) : [];
 
+  // ── 1a. .md readability check for B1 ──────────────────────
+  // For every json-format feature, record whether its .md companion is readable.
+  // This is done here (in buildSnapshot) so check functions stay I/O-free.
+  // Satisfies: B1 (detect missing/unreadable .md content files)
+  const featureMdReadable: Record<string, boolean> = {};
+  if (manifoldDir) {
+    for (const feature of features) {
+      const jsonPath = join(manifoldDir, `${feature}.json`);
+      if (existsSync(jsonPath)) {
+        // Feature uses JSON format — .md companion is required
+        const mdPath = join(manifoldDir, `${feature}.md`);
+        if (existsSync(mdPath)) {
+          try {
+            readFileSync(mdPath, 'utf-8');
+            featureMdReadable[feature] = true;
+          } catch {
+            featureMdReadable[feature] = false;
+          }
+        } else {
+          featureMdReadable[feature] = false;
+        }
+      }
+      // YAML-only features have no .md requirement; leave the key absent.
+    }
+  }
+
   // ── 2. Verify hashes from .verify.json files ──────────────
   // Satisfies: RT-2 (reuses parser abstractions for feature discovery)
   const verifyHashes: Record<string, Record<string, string>> = {};
@@ -114,17 +149,19 @@ export function buildSnapshot(repoRoot: string): RepoSnapshot {
 
   // ── 3. Plugin-sync inclusion rules (mirrors scripts/sync-plugin.ts) ───
   // Satisfies: RT-4 (mirrors sync-plugin.ts file-inclusion rules exactly)
+  // Satisfies: T2 (reuses computeFileHash from cli/lib/evidence — hash-based comparison
+  //             reduces memory and avoids duplicating hash logic)
   const installDir = join(repoRoot, 'install');
   const pluginDir = join(repoRoot, 'plugin');
   const installFiles: string[] = [];
-  const installFileContents: Record<string, string> = {};
-  const pluginFileContents: Record<string, string> = {};
+  const installFileHashes: Record<string, string> = {};
+  const pluginFileHashes: Record<string, string> = {};
 
   if (existsSync(installDir)) {
-    // Rule 1: install/commands/**/*.md (excluding subdirectory .md files go into commands/)
+    // Rule 1: Recursively collect all *.md files under install/commands/ (including subdirectories)
     const commandsSrc = join(installDir, 'commands');
     if (existsSync(commandsSrc)) {
-      collectMdFiles(commandsSrc, 'commands', installFiles, installFileContents);
+      collectMdFiles(commandsSrc, 'commands', installFiles, installFileHashes);
     }
 
     // Rule 2: install/hooks/* (all files)
@@ -132,10 +169,15 @@ export function buildSnapshot(repoRoot: string): RepoSnapshot {
     if (existsSync(hooksSrc)) {
       for (const file of safeReaddir(hooksSrc)) {
         const srcPath = join(hooksSrc, file);
-        if (!statSync(srcPath).isDirectory()) {
-          const relPath = `hooks/${file}`;
-          installFiles.push(relPath);
-          try { installFileContents[relPath] = readFileSync(srcPath, 'utf-8'); } catch { installFileContents[relPath] = ''; }
+        try {
+          if (!statSync(srcPath).isDirectory()) {
+            const relPath = `hooks/${file}`;
+            installFiles.push(relPath);
+            const hash = computeFileHash(srcPath);
+            if (hash) installFileHashes[relPath] = hash;
+          }
+        } catch {
+          // Skip entries that vanish between readdir and stat (e.g. broken symlinks)
         }
       }
     }
@@ -145,10 +187,15 @@ export function buildSnapshot(repoRoot: string): RepoSnapshot {
     if (existsSync(binSrc)) {
       for (const file of safeReaddir(binSrc)) {
         const srcPath = join(binSrc, file);
-        if (!statSync(srcPath).isDirectory()) {
-          const relPath = `bin/${file}`;
-          installFiles.push(relPath);
-          try { installFileContents[relPath] = readFileSync(srcPath, 'utf-8'); } catch { installFileContents[relPath] = ''; }
+        try {
+          if (!statSync(srcPath).isDirectory()) {
+            const relPath = `bin/${file}`;
+            installFiles.push(relPath);
+            const hash = computeFileHash(srcPath);
+            if (hash) installFileHashes[relPath] = hash;
+          }
+        } catch {
+          // Skip entries that vanish between readdir and stat (e.g. broken symlinks)
         }
       }
     }
@@ -158,7 +205,8 @@ export function buildSnapshot(repoRoot: string): RepoSnapshot {
     if (existsSync(bundleSrc)) {
       const relPath = 'lib/parallel/parallel.bundle.js';
       installFiles.push(relPath);
-      try { installFileContents[relPath] = readFileSync(bundleSrc, 'utf-8'); } catch { installFileContents[relPath] = ''; }
+      const hash = computeFileHash(bundleSrc);
+      if (hash) installFileHashes[relPath] = hash;
     }
 
     // Rule 5: install/manifold-structure.schema.json
@@ -166,7 +214,8 @@ export function buildSnapshot(repoRoot: string): RepoSnapshot {
     if (existsSync(schemaSrc)) {
       const relPath = 'manifold-structure.schema.json';
       installFiles.push(relPath);
-      try { installFileContents[relPath] = readFileSync(schemaSrc, 'utf-8'); } catch { installFileContents[relPath] = ''; }
+      const hash = computeFileHash(schemaSrc);
+      if (hash) installFileHashes[relPath] = hash;
     }
 
     // Rule 6: install/plugin.json (goes to plugin/plugin.json AND plugin/.claude-plugin/plugin.json)
@@ -174,25 +223,29 @@ export function buildSnapshot(repoRoot: string): RepoSnapshot {
     if (existsSync(pluginJsonSrc)) {
       const relPath = 'plugin.json';
       installFiles.push(relPath);
-      try { installFileContents[relPath] = readFileSync(pluginJsonSrc, 'utf-8'); } catch { installFileContents[relPath] = ''; }
-      // The dual-write: .claude-plugin/plugin.json must also match
-      const dualPath = '.claude-plugin/plugin.json';
-      installFiles.push(dualPath);
-      installFileContents[dualPath] = installFileContents[relPath];
+      const hash = computeFileHash(pluginJsonSrc);
+      if (hash) {
+        installFileHashes[relPath] = hash;
+        // The dual-write: .claude-plugin/plugin.json must also match
+        const dualPath = '.claude-plugin/plugin.json';
+        installFiles.push(dualPath);
+        installFileHashes[dualPath] = hash;
+      }
     }
 
     // Rule 7: install/templates/** (all files, recursive)
     const templatesSrc = join(installDir, 'templates');
     if (existsSync(templatesSrc)) {
-      collectAllFiles(templatesSrc, 'templates', installFiles, installFileContents);
+      collectAllFiles(templatesSrc, 'templates', installFiles, installFileHashes);
     }
 
-    // Read corresponding plugin/ files
+    // Hash corresponding plugin/ files
     if (existsSync(pluginDir)) {
       for (const relPath of installFiles) {
         const pluginPath = join(pluginDir, relPath);
         if (existsSync(pluginPath)) {
-          try { pluginFileContents[relPath] = readFileSync(pluginPath, 'utf-8'); } catch { /* absent */ }
+          const hash = computeFileHash(pluginPath);
+          if (hash) pluginFileHashes[relPath] = hash;
         }
       }
     }
@@ -226,10 +279,11 @@ export function buildSnapshot(repoRoot: string): RepoSnapshot {
   return {
     manifoldDir,
     features,
+    featureMdReadable,
     verifyHashes,
     installFiles,
-    installFileContents,
-    pluginFileContents,
+    installFileHashes,
+    pluginFileHashes,
     skillFingerprints,
     currentFingerprints,
   };
@@ -246,25 +300,27 @@ function safeReaddir(dir: string): string[] {
 }
 
 /**
- * Collect *.md files recursively from srcDir into installFiles/installFileContents,
+ * Collect *.md files recursively from srcDir into installFiles/installFileHashes,
  * using relPrefix to build install/-relative paths.
+ * Satisfies: T2 (uses computeFileHash from cli/lib/evidence — no duplicate hash logic)
  */
 function collectMdFiles(
   srcDir: string,
   relPrefix: string,
   installFiles: string[],
-  installFileContents: Record<string, string>,
+  installFileHashes: Record<string, string>,
 ): void {
   for (const entry of safeReaddir(srcDir)) {
     const srcPath = join(srcDir, entry);
     try {
       const st = statSync(srcPath);
       if (st.isDirectory()) {
-        collectMdFiles(srcPath, `${relPrefix}/${entry}`, installFiles, installFileContents);
+        collectMdFiles(srcPath, `${relPrefix}/${entry}`, installFiles, installFileHashes);
       } else if (entry.endsWith('.md')) {
         const relPath = `${relPrefix}/${entry}`;
         installFiles.push(relPath);
-        try { installFileContents[relPath] = readFileSync(srcPath, 'utf-8'); } catch { installFileContents[relPath] = ''; }
+        const hash = computeFileHash(srcPath);
+        if (hash) installFileHashes[relPath] = hash;
       }
     } catch {
       // skip unreadable entries
@@ -274,23 +330,25 @@ function collectMdFiles(
 
 /**
  * Collect ALL files recursively (for templates), using relPrefix.
+ * Satisfies: T2 (uses computeFileHash from cli/lib/evidence — no duplicate hash logic)
  */
 function collectAllFiles(
   srcDir: string,
   relPrefix: string,
   installFiles: string[],
-  installFileContents: Record<string, string>,
+  installFileHashes: Record<string, string>,
 ): void {
   for (const entry of safeReaddir(srcDir)) {
     const srcPath = join(srcDir, entry);
     try {
       const st = statSync(srcPath);
       if (st.isDirectory()) {
-        collectAllFiles(srcPath, `${relPrefix}/${entry}`, installFiles, installFileContents);
+        collectAllFiles(srcPath, `${relPrefix}/${entry}`, installFiles, installFileHashes);
       } else {
         const relPath = `${relPrefix}/${entry}`;
         installFiles.push(relPath);
-        try { installFileContents[relPath] = readFileSync(srcPath, 'utf-8'); } catch { installFileContents[relPath] = ''; }
+        const hash = computeFileHash(srcPath);
+        if (hash) installFileHashes[relPath] = hash;
       }
     } catch {
       // skip unreadable entries
@@ -305,11 +363,12 @@ function collectAllFiles(
 
 /**
  * For each feature, attempt to load/parse its manifold.
- * Emits a Problem for any manifold that fails to load/parse.
+ * Also detects missing or unreadable .md companion files (B1 scope).
  *
- * Satisfies: RT-2 (reuses loadFeature from cli/lib/parser)
+ * Satisfies: B1 (detect invalid/unparseable .json AND .md files)
+ * Satisfies: RT-2 (reuses loadFeature from cli/lib/parser; I/O done in buildSnapshot)
  * Satisfies: RT-5 (fix command: manifold validate <feature>)
- * Satisfies: RT-7 (read-only)
+ * Satisfies: RT-7 (read-only — all I/O already done in buildSnapshot)
  */
 export function checkInvalidManifolds(snapshot: RepoSnapshot): Problem[] {
   const problems: Problem[] = [];
@@ -317,11 +376,25 @@ export function checkInvalidManifolds(snapshot: RepoSnapshot): Problem[] {
   if (!snapshot.manifoldDir) return problems;
 
   for (const feature of snapshot.features) {
+    // Check JSON/YAML structure parses correctly
     const data = loadFeature(snapshot.manifoldDir, feature);
     if (!data || !data.manifold) {
       problems.push({
         check: 'invalid-manifolds',
         message: `Manifold for feature "${feature}" failed to load or parse. It may be malformed JSON/YAML.`,
+        fix: `manifold validate ${feature}`,
+      });
+      // JSON itself is broken; skip .md check (already a problem for this feature)
+      continue;
+    }
+
+    // B1 scope: for json-format features, the .md companion must also be readable.
+    // featureMdReadable[feature] === false means the .md is missing or unreadable.
+    // If the key is absent (e.g. yaml-only feature), there is no .md requirement.
+    if (snapshot.featureMdReadable && snapshot.featureMdReadable[feature] === false) {
+      problems.push({
+        check: 'invalid-manifolds',
+        message: `Manifold content file ".manifold/${feature}.md" is missing or unreadable (required alongside "${feature}.json").`,
         fix: `manifold validate ${feature}`,
       });
     }
@@ -342,6 +415,7 @@ export function checkInvalidManifolds(snapshot: RepoSnapshot): Problem[] {
  *
  * Satisfies: RT-4 (mirrors sync-plugin.ts inclusion rules; no false positives on healthy repo)
  * Satisfies: RT-5 (fix command: bun scripts/sync-plugin.ts)
+ * Satisfies: T2 (hash-based comparison reuses computeFileHash from cli/lib/evidence)
  * Satisfies: RT-7 (read-only)
  */
 export function checkPluginSync(snapshot: RepoSnapshot): Problem[] {
@@ -351,16 +425,16 @@ export function checkPluginSync(snapshot: RepoSnapshot): Problem[] {
   if (snapshot.installFiles.length === 0) return problems;
 
   for (const relPath of snapshot.installFiles) {
-    const installContent = snapshot.installFileContents[relPath];
-    const pluginContent = snapshot.pluginFileContents[relPath];
+    const installHash = snapshot.installFileHashes[relPath];
+    const pluginHash = snapshot.pluginFileHashes[relPath];
 
-    if (pluginContent === undefined) {
+    if (pluginHash === undefined) {
       problems.push({
         check: 'plugin-sync',
         message: `plugin/${relPath} is missing (install/${relPath} exists but was not synced).`,
         fix: 'bun scripts/sync-plugin.ts',
       });
-    } else if (pluginContent !== installContent) {
+    } else if (pluginHash !== installHash) {
       problems.push({
         check: 'plugin-sync',
         message: `plugin/${relPath} differs from install/${relPath} — plugin is out of sync.`,

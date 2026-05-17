@@ -131,7 +131,7 @@ describe('runDoctor — aggregates all four checks', () => {
 describe('checkInvalidManifolds', () => {
   // @constraint B1
   test('reports no problems when no .manifold/ directory exists', () => {
-    const problems = checkInvalidManifolds({ manifoldDir: null, features: [], verifyHashes: {}, installFiles: [], pluginFileContents: {}, installFileContents: {}, skillFingerprints: [], currentFingerprints: [] });
+    const problems = checkInvalidManifolds({ manifoldDir: null, features: [], verifyHashes: {}, installFiles: [], pluginFileHashes: {}, installFileHashes: {}, skillFingerprints: [], currentFingerprints: [] });
     expect(problems).toEqual([]);
   });
 
@@ -147,8 +147,8 @@ describe('checkInvalidManifolds', () => {
       features: ['good'],
       verifyHashes: {},
       installFiles: [],
-      pluginFileContents: {},
-      installFileContents: {},
+      pluginFileHashes: {},
+      installFileHashes: {},
       skillFingerprints: [],
       currentFingerprints: [],
     });
@@ -166,8 +166,8 @@ describe('checkInvalidManifolds', () => {
       features: ['broken'],
       verifyHashes: {},
       installFiles: [],
-      pluginFileContents: {},
-      installFileContents: {},
+      pluginFileHashes: {},
+      installFileHashes: {},
       skillFingerprints: [],
       currentFingerprints: [],
     });
@@ -189,13 +189,72 @@ describe('checkInvalidManifolds', () => {
       features: ['bad-feature'],
       verifyHashes: {},
       installFiles: [],
-      pluginFileContents: {},
-      installFileContents: {},
+      pluginFileHashes: {},
+      installFileHashes: {},
       skillFingerprints: [],
       currentFingerprints: [],
+      featureMdReadable: {},
     });
 
     expect(problems[0].fix).toBe('manifold validate bad-feature');
+  });
+
+  // @constraint B1
+  // B1 scope: a feature with a valid .json but missing .md must be reported
+  test('emits a problem when .json is valid but .md is missing (B1 scope)', () => {
+    mkdirSync(join(TMP, '.manifold'), { recursive: true });
+    writeFileSync(
+      join(TMP, '.manifold', 'no-md.json'),
+      JSON.stringify(minimalManifold('no-md'), null, 2),
+    );
+    // Deliberately do NOT write no-md.md
+
+    const manifoldDir = join(TMP, '.manifold');
+    // featureMdReadable records that the .md is NOT readable for 'no-md'
+    const problems = checkInvalidManifolds({
+      manifoldDir,
+      features: ['no-md'],
+      verifyHashes: {},
+      installFiles: [],
+      pluginFileHashes: {},
+      installFileHashes: {},
+      skillFingerprints: [],
+      currentFingerprints: [],
+      featureMdReadable: { 'no-md': false },
+    });
+
+    expect(problems.length).toBeGreaterThanOrEqual(1);
+    const mdProblem = problems.find((p) => p.check === 'invalid-manifolds');
+    expect(mdProblem).toBeDefined();
+    expect(mdProblem!.message).toContain('no-md');
+    expect(mdProblem!.fix).toContain('manifold validate no-md');
+  });
+
+  // @constraint B1
+  // A feature with both valid .json AND readable .md must not produce a problem
+  test('no problem when .json is valid and .md is readable (B1 scope)', () => {
+    mkdirSync(join(TMP, '.manifold'), { recursive: true });
+    writeFileSync(
+      join(TMP, '.manifold', 'both.json'),
+      JSON.stringify(minimalManifold('both'), null, 2),
+    );
+    writeTxt('.manifold/both.md', '# both\n\n## Outcome\nTest\n');
+
+    const manifoldDir = join(TMP, '.manifold');
+    const problems = checkInvalidManifolds({
+      manifoldDir,
+      features: ['both'],
+      verifyHashes: {},
+      installFiles: [],
+      pluginFileHashes: {},
+      installFileHashes: {},
+      skillFingerprints: [],
+      currentFingerprints: [],
+      featureMdReadable: { 'both': true },
+    });
+
+    const mdProblems = problems.filter((p) => p.check === 'invalid-manifolds');
+    expect(mdProblems).toEqual([]);
   });
 });
 
@@ -213,8 +272,8 @@ describe('checkPluginSync', () => {
       features: [],
       verifyHashes: {},
       installFiles: [],
-      pluginFileContents: {},
-      installFileContents: {},
+      pluginFileHashes: {},
+      installFileHashes: {},
       skillFingerprints: [],
       currentFingerprints: [],
     });
@@ -231,10 +290,10 @@ describe('checkPluginSync', () => {
     writeFileSync(join(TMP, 'plugin', 'commands', 'foo.md'), content);
 
     const installFiles = ['commands/foo.md'];
-    const installFileContents: Record<string, string> = {
+    const installFileHashes: Record<string, string> = {
       'commands/foo.md': content,
     };
-    const pluginFileContents: Record<string, string> = {
+    const pluginFileHashes: Record<string, string> = {
       'commands/foo.md': content,
     };
 
@@ -243,8 +302,8 @@ describe('checkPluginSync', () => {
       features: [],
       verifyHashes: {},
       installFiles,
-      pluginFileContents,
-      installFileContents,
+      pluginFileHashes,
+      installFileHashes,
       skillFingerprints: [],
       currentFingerprints: [],
     });
@@ -254,18 +313,18 @@ describe('checkPluginSync', () => {
   // @constraint RT-4
   test('emits a problem when an install/ file is missing from plugin/', () => {
     const installFiles = ['commands/bar.md'];
-    const installFileContents: Record<string, string> = {
+    const installFileHashes: Record<string, string> = {
       'commands/bar.md': '# bar\n',
     };
-    const pluginFileContents: Record<string, string> = {};
+    const pluginFileHashes: Record<string, string> = {};
 
     const problems = checkPluginSync({
       manifoldDir: null,
       features: [],
       verifyHashes: {},
       installFiles,
-      pluginFileContents,
-      installFileContents,
+      pluginFileHashes,
+      installFileHashes,
       skillFingerprints: [],
       currentFingerprints: [],
     });
@@ -278,10 +337,10 @@ describe('checkPluginSync', () => {
   // @constraint RT-4
   test('emits a problem when plugin/ file has different content than install/', () => {
     const installFiles = ['commands/baz.md'];
-    const installFileContents: Record<string, string> = {
+    const installFileHashes: Record<string, string> = {
       'commands/baz.md': '# baz\nOriginal\n',
     };
-    const pluginFileContents: Record<string, string> = {
+    const pluginFileHashes: Record<string, string> = {
       'commands/baz.md': '# baz\nModified!\n',
     };
 
@@ -290,8 +349,8 @@ describe('checkPluginSync', () => {
       features: [],
       verifyHashes: {},
       installFiles,
-      pluginFileContents,
-      installFileContents,
+      pluginFileHashes,
+      installFileHashes,
       skillFingerprints: [],
       currentFingerprints: [],
     });
@@ -315,8 +374,8 @@ describe('checkStaleFingerprints', () => {
       features: [],
       verifyHashes: {},
       installFiles: [],
-      pluginFileContents: {},
-      installFileContents: {},
+      pluginFileHashes: {},
+      installFileHashes: {},
       skillFingerprints: [],   // no baseline
       currentFingerprints: [],
     });
@@ -331,8 +390,8 @@ describe('checkStaleFingerprints', () => {
       features: [],
       verifyHashes: {},
       installFiles: [],
-      pluginFileContents: {},
-      installFileContents: {},
+      pluginFileHashes: {},
+      installFileHashes: {},
       skillFingerprints: fp,
       currentFingerprints: fp,
     });
@@ -349,8 +408,8 @@ describe('checkStaleFingerprints', () => {
       features: [],
       verifyHashes: {},
       installFiles: [],
-      pluginFileContents: {},
-      installFileContents: {},
+      pluginFileHashes: {},
+      installFileHashes: {},
       skillFingerprints: baseline,
       currentFingerprints: current,
     });
@@ -373,8 +432,8 @@ describe('checkStaleFingerprints', () => {
       features: [],
       verifyHashes: {},
       installFiles: [],
-      pluginFileContents: {},
-      installFileContents: {},
+      pluginFileHashes: {},
+      installFileHashes: {},
       skillFingerprints: baseline,
       currentFingerprints: current,
     });
@@ -397,8 +456,8 @@ describe('checkStaleFingerprints', () => {
       features: [],
       verifyHashes: {},
       installFiles: [],
-      pluginFileContents: {},
-      installFileContents: {},
+      pluginFileHashes: {},
+      installFileHashes: {},
       skillFingerprints: baseline,
       currentFingerprints: current,
     });
@@ -418,8 +477,8 @@ describe('checkStaleFingerprints', () => {
       features: [],
       verifyHashes: {},
       installFiles: [],
-      pluginFileContents: {},
-      installFileContents: {},
+      pluginFileHashes: {},
+      installFileHashes: {},
       skillFingerprints: baseline,
       currentFingerprints: current,
     });
@@ -437,8 +496,8 @@ describe('checkStaleFingerprints', () => {
       features: [],
       verifyHashes: {},
       installFiles: [],
-      pluginFileContents: {},
-      installFileContents: {},
+      pluginFileHashes: {},
+      installFileHashes: {},
       skillFingerprints: baseline,
       currentFingerprints: current,
     });
@@ -461,8 +520,8 @@ describe('checkFileDrift', () => {
       features: [],
       verifyHashes: {},
       installFiles: [],
-      pluginFileContents: {},
-      installFileContents: {},
+      pluginFileHashes: {},
+      installFileHashes: {},
       skillFingerprints: [],
       currentFingerprints: [],
     });
@@ -489,8 +548,8 @@ describe('checkFileDrift', () => {
       features: ['test-feature'],
       verifyHashes,
       installFiles: [],
-      pluginFileContents: {},
-      installFileContents: {},
+      pluginFileHashes: {},
+      installFileHashes: {},
       skillFingerprints: [],
       currentFingerprints: [],
     });
@@ -514,8 +573,8 @@ describe('checkFileDrift', () => {
       features: ['my-feature'],
       verifyHashes,
       installFiles: [],
-      pluginFileContents: {},
-      installFileContents: {},
+      pluginFileHashes: {},
+      installFileHashes: {},
       skillFingerprints: [],
       currentFingerprints: [],
     });
@@ -540,8 +599,8 @@ describe('checkFileDrift', () => {
       features: ['alpha'],
       verifyHashes,
       installFiles: [],
-      pluginFileContents: {},
-      installFileContents: {},
+      pluginFileHashes: {},
+      installFileHashes: {},
       skillFingerprints: [],
       currentFingerprints: [],
     });
