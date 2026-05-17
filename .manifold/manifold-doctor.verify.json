@@ -1,0 +1,217 @@
+{
+  "verification": {
+    "timestamp": "2026-05-17T00:00:00Z",
+    "result": "PARTIAL",
+    "strictness": "default",
+    "matrix": [
+      {
+        "constraint": "B1",
+        "type": "INVARIANT",
+        "code": true,
+        "test": true,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED"
+      },
+      {
+        "constraint": "B2",
+        "type": "INVARIANT",
+        "code": true,
+        "test": true,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED"
+      },
+      {
+        "constraint": "T1",
+        "type": "INVARIANT",
+        "code": true,
+        "test": true,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED"
+      },
+      {
+        "constraint": "T2",
+        "type": "INVARIANT",
+        "code": true,
+        "test": true,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED"
+      },
+      {
+        "constraint": "T3",
+        "type": "GOAL",
+        "code": true,
+        "test": false,
+        "docs": false,
+        "ops": false,
+        "status": "PARTIAL",
+        "gap": "No automated performance test; T3 is a statistical goal (p99 < 500ms) currently verified by zero tests",
+        "action": "Add a test in tests/manifold-doctor/doctor.test.ts asserting runDoctor() completes under 500ms"
+      },
+      {
+        "constraint": "T4",
+        "type": "GOAL",
+        "code": true,
+        "test": true,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED"
+      },
+      {
+        "constraint": "U1",
+        "type": "GOAL",
+        "code": true,
+        "test": true,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED"
+      },
+      {
+        "constraint": "U2",
+        "type": "INVARIANT",
+        "code": true,
+        "test": true,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED"
+      },
+      {
+        "constraint": "U3",
+        "type": "BOUNDARY",
+        "code": true,
+        "test": true,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED"
+      },
+      {
+        "constraint": "S1",
+        "type": "INVARIANT",
+        "code": true,
+        "test": true,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED"
+      },
+      {
+        "constraint": "O1",
+        "type": "INVARIANT",
+        "code": true,
+        "test": true,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED"
+      },
+      {
+        "constraint": "O2",
+        "type": "GOAL",
+        "code": true,
+        "test": true,
+        "docs": false,
+        "ops": false,
+        "status": "SATISFIED"
+      }
+    ],
+    "coverage": {
+      "invariants": {
+        "satisfied": 7,
+        "total": 7,
+        "percentage": 100
+      },
+      "goals": {
+        "satisfied": 3,
+        "total": 4,
+        "percentage": 75
+      },
+      "boundaries": {
+        "satisfied": 1,
+        "total": 1,
+        "percentage": 100
+      }
+    },
+    "gaps": [
+      {
+        "id": "G1",
+        "constraint": "T3",
+        "issue": "T3 is a statistical goal (threshold p99 < 500ms) with no automated performance test. Live runs measured ~0.15s, but speed is unverified by the suite.",
+        "action": "Add a test asserting runDoctor() p99 latency < 500ms in tests/manifold-doctor/doctor.test.ts",
+        "blocking": false
+      }
+    ],
+    "evidence_verification": {
+      "method": "Suite-level: `bun test tests/manifold-doctor/doctor.test.ts` ran green (33/33). file_exists evidence checked on disk. test_passes evidence confirmed via the green suite plus @constraint traceability annotations rather than per-exact-test-name matching, because the m3 evidence test_name strings were seed drafts.",
+      "required_truths": [
+        {
+          "id": "RT-1",
+          "status": "SATISFIED",
+          "evidence_verified": [
+            "E1 (file_exists, cli/commands/doctor.ts — VERIFIED)",
+            "E2 (test_passes — VERIFIED)"
+          ]
+        },
+        {
+          "id": "RT-2",
+          "status": "SATISFIED",
+          "evidence_verified": [
+            "E3 (test_passes — VERIFIED)"
+          ]
+        },
+        {
+          "id": "RT-3",
+          "status": "SATISFIED",
+          "evidence_verified": [
+            "E4 (test_passes — VERIFIED)"
+          ]
+        },
+        {
+          "id": "RT-4",
+          "status": "SATISFIED",
+          "evidence_verified": [
+            "E5 (test_passes — VERIFIED)"
+          ]
+        },
+        {
+          "id": "RT-5",
+          "status": "SATISFIED",
+          "evidence_verified": [
+            "E6 (test_passes — VERIFIED)"
+          ]
+        },
+        {
+          "id": "RT-6",
+          "status": "SATISFIED",
+          "evidence_verified": [
+            "E7 (test_passes — VERIFIED)",
+            "E8 (test_passes — VERIFIED)"
+          ]
+        },
+        {
+          "id": "RT-7",
+          "status": "SATISFIED",
+          "evidence_verified": [
+            "E9 (test_passes — VERIFIED)"
+          ]
+        }
+      ]
+    },
+    "enhancement_checks": {
+      "binding_constraint": "RT-2 addressed — cli/lib/doctor.ts buildSnapshot implements the single shared snapshot; evidence VERIFIED",
+      "statistical": "T3 (kind: statistical, p99 500ms) flagged — verified by zero tests; recorded as gap G1",
+      "propagation": "TN1 effects (T3 LOOSENED, T4 TIGHTENED) — no VIOLATED effects; resolutions valid",
+      "genealogy": "B2/T4 source: pre-mortem; T2 challenger: technical-reality. No `assumption`-tagged constraints — no convergence risk",
+      "reversibility": "No reversibility_log entries (all m3 solution options were TWO_WAY) — nothing to verify"
+    },
+    "notes": "Docs and Ops dimensions are not applicable to this feature: manifold-doctor is a read-only diagnostic CLI command — it is self-documenting via `--help`, and O2 (CI-adoptability) is satisfied in code by deterministic exit codes + --json, requiring no separate runbook/dashboard/alert. Default strictness is met: all 7 invariants are SATISFIED in Code+Test, the 1 boundary is SATISFIED in Code, and the single gap (G1) is a non-blocking GOAL."
+  },
+  "file_hashes": {
+    "cli/lib/doctor.ts": "e68a19b1d533333b6dca9029b56cffbdccf6c77a16a5a83d4c5b9b42863a1e2d",
+    "cli/lib/fingerprint.ts": "6565cca0c8824bf465ab1507b38f189ba50740221311b40dfdcfbad657f543b9",
+    "cli/commands/doctor.ts": "f18fcbd1c3bd1dc86363b6c39022e4eb7867de3656f90d00226a2bec8ad18aef",
+    "cli/index.ts": "50aee2612f70aee41a063caf32982340a1e8400c790767cb6c42a1c6277a21fc",
+    "tests/manifold-doctor/doctor.test.ts": "833f5cedd83990d3bd33792b2a4e17943371afac00c64d26336e55d70fe69b5d"
+  },
+  "hashes_updated_at": "2026-05-17T17:20:51.188Z"
+}

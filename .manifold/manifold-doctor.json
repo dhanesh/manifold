@@ -1,0 +1,231 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dhanesh/manifold/main/install/manifold-structure.schema.json",
+  "schema_version": 3,
+  "feature": "manifold-doctor",
+  "phase": "VERIFIED",
+  "domain": "software",
+  "created": "2026-05-17T00:00:00Z",
+  "constraints": {
+    "business": [
+      { "id": "B1", "type": "invariant", "quality": { "specificity": 3, "measurability": 3, "testability": 3 } },
+      { "id": "B2", "type": "invariant", "source": "pre-mortem", "quality": { "specificity": 3, "measurability": 2, "testability": 3 } }
+    ],
+    "technical": [
+      { "id": "T1", "type": "invariant", "quality": { "specificity": 3, "measurability": 3, "testability": 3 } },
+      { "id": "T2", "type": "invariant", "challenger": "technical-reality", "quality": { "specificity": 3, "measurability": 2, "testability": 2 } },
+      { "id": "T3", "type": "goal", "threshold": { "kind": "statistical", "p99": "500ms" }, "quality": { "specificity": 3, "measurability": 3, "testability": 3 } },
+      { "id": "T4", "type": "goal", "source": "pre-mortem", "quality": { "specificity": 2, "measurability": 2, "testability": 2 } }
+    ],
+    "user_experience": [
+      { "id": "U1", "type": "goal", "quality": { "specificity": 3, "measurability": 2, "testability": 3 } },
+      { "id": "U2", "type": "invariant", "quality": { "specificity": 3, "measurability": 3, "testability": 3 } },
+      { "id": "U3", "type": "boundary", "quality": { "specificity": 3, "measurability": 3, "testability": 3 } }
+    ],
+    "security": [
+      { "id": "S1", "type": "invariant", "quality": { "specificity": 3, "measurability": 3, "testability": 3 } }
+    ],
+    "operational": [
+      { "id": "O1", "type": "invariant", "quality": { "specificity": 3, "measurability": 3, "testability": 3 } },
+      { "id": "O2", "type": "goal", "quality": { "specificity": 2, "measurability": 2, "testability": 2 } }
+    ]
+  },
+  "draft_required_truths": [
+    { "id": "DRT-1", "seed_from": ["B1"], "draft_statement": "A discrete check exists for each of the four problem classes, each producing a structured problem record", "confidence": "high" },
+    { "id": "DRT-2", "seed_from": ["T2"], "draft_statement": "doctor imports and calls the existing parser, evidence, and output libraries", "confidence": "high" },
+    { "id": "DRT-3", "seed_from": ["S1"], "draft_statement": "the doctor code path contains no filesystem write, create, or delete calls", "confidence": "high" },
+    { "id": "DRT-4", "seed_from": ["O1"], "draft_statement": "the command returns 0, 1, or 2 deterministically from a single resolved result", "confidence": "high" },
+    { "id": "DRT-5", "seed_from": ["B2"], "draft_statement": "the plugin-sync check mirrors sync-plugin's own file-inclusion rules so plugin-only files do not register as drift", "confidence": "medium" }
+  ],
+  "gap_checklist_compliance": [
+    { "gap": "GAP-03", "status": "COMPLETED" },
+    { "gap": "GAP-09", "status": "SKIPPED", "skip_reason": "No auth or crypto constraints — local read-only CLI" },
+    { "gap": "GAP-10", "status": "SKIPPED", "skip_reason": "No unauthenticated endpoints — CLI command, not a service" },
+    { "gap": "GAP-11", "status": "SKIPPED", "skip_reason": "No external HTTP dependencies — operates on local files only" },
+    { "gap": "GAP-14", "status": "COMPLETED" },
+    { "gap": "GAP-17", "status": "SKIPPED", "skip_reason": "No shared mutable state — single-shot read-only command" }
+  ],
+  "tensions": [
+    {
+      "id": "TN1",
+      "type": "trade_off",
+      "between": ["B1", "T3"],
+      "status": "resolved",
+      "validation_criteria": [
+        "All four checks run against a single shared repo snapshot",
+        "doctor completes under 500ms on the manifold repository itself"
+      ],
+      "propagation_effects": [
+        { "constraint_id": "T3", "effect": "LOOSENED", "note": "A single shared filesystem pass eliminates redundant reads across checks" },
+        { "constraint_id": "T4", "effect": "TIGHTENED", "note": "Modular checks must accept the shared snapshot as input rather than doing their own I/O" }
+      ]
+    },
+    {
+      "id": "TN2",
+      "type": "hidden_dependency",
+      "between": ["T4", "T3"],
+      "status": "resolved",
+      "validation_criteria": [
+        "Each check is a pure function of the shared snapshot",
+        "No individual check performs its own filesystem traversal"
+      ]
+    }
+  ],
+  "anchors": {
+    "required_truths": [
+      {
+        "id": "RT-1",
+        "status": "SATISFIED",
+        "maps_to": ["T1"],
+        "evidence": [
+          { "id": "E1", "type": "file_exists", "path": "cli/commands/doctor.ts", "status": "VERIFIED" },
+          { "id": "E2", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "registers the doctor command on the CLI", "status": "VERIFIED" }
+        ]
+      },
+      {
+        "id": "RT-2",
+        "status": "SATISFIED",
+        "maps_to": ["B2", "T2", "T3"],
+        "evidence": [
+          { "id": "E3", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "builds the shared repo snapshot in a single filesystem pass", "status": "VERIFIED" }
+        ]
+      },
+      {
+        "id": "RT-3",
+        "status": "SATISFIED",
+        "maps_to": ["B1", "T4", "U2"],
+        "evidence": [
+          { "id": "E4", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "runs a dedicated check for each of the four problem classes", "status": "VERIFIED" }
+        ]
+      },
+      {
+        "id": "RT-4",
+        "status": "SATISFIED",
+        "maps_to": ["B2", "T2"],
+        "evidence": [
+          { "id": "E5", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "reports zero problems on a healthy repo (no false positives)", "status": "VERIFIED" }
+        ]
+      },
+      {
+        "id": "RT-5",
+        "status": "SATISFIED",
+        "maps_to": ["U1"],
+        "evidence": [
+          { "id": "E6", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "every reported problem includes a fix command", "status": "VERIFIED" }
+        ]
+      },
+      {
+        "id": "RT-6",
+        "status": "SATISFIED",
+        "maps_to": ["O1", "U2", "U3", "O2"],
+        "evidence": [
+          { "id": "E7", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "returns exit code 0, 1, or 2 deterministically", "status": "VERIFIED" },
+          { "id": "E8", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "--json emits a machine-readable report", "status": "VERIFIED" }
+        ]
+      },
+      {
+        "id": "RT-7",
+        "status": "SATISFIED",
+        "maps_to": ["S1"],
+        "evidence": [
+          { "id": "E9", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "leaves the repository byte-identical after running (read-only)", "status": "VERIFIED" }
+        ]
+      }
+    ],
+    "binding_constraint": {
+      "required_truth_id": "RT-2",
+      "reason": "The shared repo snapshot is the substrate all four checks and the aggregator consume; an incomplete or incorrect snapshot breaks B1, B2, and T3 simultaneously",
+      "dependency_chain": ["RT-3", "RT-4", "RT-6"]
+    },
+    "tension_validation": [
+      { "tension_id": "TN1", "status": "CONFIRMED", "by_option": "B" },
+      { "tension_id": "TN2", "status": "CONFIRMED", "by_option": "B" }
+    ],
+    "recommended_option": "B"
+  },
+  "iterations": [
+    {
+      "number": 1,
+      "phase": "constrain",
+      "timestamp": "2026-05-17T00:00:00Z",
+      "result": "Discovered 12 constraints across 5 categories; pre-mortem added B2 and T4",
+      "constraints_added": 12,
+      "by_category": { "business": 2, "technical": 4, "user_experience": 3, "security": 1, "operational": 2 }
+    },
+    {
+      "number": 2,
+      "phase": "tension",
+      "timestamp": "2026-05-17T00:00:00Z",
+      "result": "Found 2 tensions, resolved 2 — adopted a single shared repo-snapshot architecture",
+      "tensions_found": 2,
+      "tensions_resolved": 2,
+      "by_type": { "trade_offs": 1, "resource_tensions": 0, "hidden_dependencies": 1 }
+    },
+    {
+      "number": 3,
+      "phase": "anchor",
+      "timestamp": "2026-05-17T00:00:00Z",
+      "result": "Derived 7 required truths; binding constraint RT-2 (shared snapshot); recommended Option B",
+      "required_truths": 7,
+      "by_status": { "SATISFIED": 0, "PARTIAL": 0, "NOT_SATISFIED": 0, "SPECIFICATION_READY": 7 },
+      "solution_options": 3,
+      "selected_option": "Option B"
+    },
+    {
+      "number": 4,
+      "phase": "generate",
+      "timestamp": "2026-05-17T00:00:00Z",
+      "result": "Generated manifold-doctor via the subagent coordinator (Option B): 2 tasks, 5 artifacts, all per-task and final reviews passed",
+      "artifacts_generated": 5,
+      "selected_option": "Option B"
+    },
+    {
+      "number": 5,
+      "phase": "verify",
+      "timestamp": "2026-05-17T00:00:00Z",
+      "result": "Verified: 11/12 constraints SATISFIED, 1 non-blocking GOAL gap (T3 has no automated performance test). All 7 invariants and the 1 boundary satisfied in Code+Test; convergence CONVERGED, phase advanced to VERIFIED",
+      "constraints_verified": 12,
+      "gaps": 1
+    },
+    {
+      "number": 6,
+      "phase": "verify",
+      "timestamp": "2026-05-17T00:00:00Z",
+      "result": "Audit remediation: closed the B1 gap (checkInvalidManifolds now detects missing/unreadable .md files — B1 genuinely SATISFIED), restored RT-2/RT-3 purity (moved loadFeature I/O into buildSnapshot; all four checks are now pure functions of the snapshot), hash-based plugin-sync compare per T2, guarded statSync calls",
+      "constraints_verified": 12,
+      "gaps": 1
+    }
+  ],
+  "convergence": {
+    "status": "CONVERGED",
+    "criteria": {
+      "all_invariants_satisfied": true,
+      "all_required_truths_satisfied": true,
+      "no_blocking_gaps": true
+    }
+  },
+  "generation": {
+    "option": "B",
+    "timestamp": "2026-05-17T00:00:00Z",
+    "artifacts": [
+      { "path": "cli/lib/doctor.ts", "type": "code", "satisfies": ["RT-2", "RT-3", "RT-4", "RT-5", "RT-7"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "cli/lib/fingerprint.ts", "type": "code", "satisfies": ["RT-4"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "cli/commands/doctor.ts", "type": "code", "satisfies": ["RT-1", "RT-6", "RT-7"], "status": "generated", "artifact_class": "substantive" },
+      { "path": "cli/index.ts", "type": "code", "satisfies": ["RT-1"], "status": "generated", "artifact_class": "structural" },
+      { "path": "tests/manifold-doctor/doctor.test.ts", "type": "test", "satisfies": ["RT-1", "RT-2", "RT-3", "RT-4", "RT-5", "RT-6", "RT-7"], "status": "generated", "artifact_class": "substantive" }
+    ],
+    "coverage": {
+      "constraints_addressed": 12,
+      "constraints_total": 12,
+      "percentage": 100
+    }
+  },
+  "constraint_graph": {
+    "version": 1,
+    "nodes": {},
+    "edges": {
+      "dependencies": [],
+      "conflicts": [],
+      "satisfies": []
+    }
+  }
+}
