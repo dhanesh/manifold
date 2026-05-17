@@ -5,6 +5,27 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.33.0](https://github.com/dhanesh/manifold/compare/v2.32.1...v2.33.0) (2026-05-17)
+
+### Features
+
+* **cli:** add manifold doctor command with exit codes and json rendering ([7e16a1a](https://github.com/dhanesh/manifold/commit/7e16a1a31b21648844cfd352b3c3c2b24cd78e20))
+* **doctor:** implement doctor library with four repo-health checks ([3f7ec3f](https://github.com/dhanesh/manifold/commit/3f7ec3f03be9b7c70ea695f3efa96ea5f1714896))
+* **m4-generate:** become a subagent coordinator with in-loop review ([c831320](https://github.com/dhanesh/manifold/commit/c831320a6dc1d3b43e2f60752e274674c1b9bb54))
+* **m5-verify:** add satisfied evidence floor and verification discipline ([ff51fc6](https://github.com/dhanesh/manifold/commit/ff51fc6dbe5d5dc632f2d79b18b979b74b1cea8d))
+
+### Bug Fixes
+
+* **doctor:** correct fingerprint guard, move fingerprint lib into cli, tidy helpers ([a4cf260](https://github.com/dhanesh/manifold/commit/a4cf26056b473f48e0bdcc782acf00e0bacac770))
+* **doctor:** detect bad .md files, guard statsync calls, hash-based plugin compare ([41d200b](https://github.com/dhanesh/manifold/commit/41d200b64a41987541b1a2fb6803a8c040be6130))
+* **doctor:** eliminate filesystem i/o from invalid-manifold check ([601b7f8](https://github.com/dhanesh/manifold/commit/601b7f88f36b1474b6385c4bcb827e352b6e446e))
+* **doctor:** reuse shared fingerprint helper instead of reimplementing hash ([fca3760](https://github.com/dhanesh/manifold/commit/fca376071c65f1e5763052cc1ea405b2d57bcad2))
+* **m4-generate:** resolve coordinator-model review findings ([4ddc83d](https://github.com/dhanesh/manifold/commit/4ddc83d1cf594698d911aabc7ceeadcdc780480a))
+* **m5-verify:** clarify manual_review evidence status wording ([376d8a6](https://github.com/dhanesh/manifold/commit/376d8a6caf123b27d3fb21b9f3f64a89d7ac0378))
+* **m5-verify:** clarify satisfied floor axes and cover manual_review ([7ca9558](https://github.com/dhanesh/manifold/commit/7ca9558076afc1713bc99b0e32987063b1785ad1))
+* **sync:** recurse into commands/references when syncing to plugin ([869dd37](https://github.com/dhanesh/manifold/commit/869dd37478a02ab29bb4320e364e9b21223c6699))
+* **verify:** require full-constraint-scope checks in m5 and reviewer prompts ([5abba22](https://github.com/dhanesh/manifold/commit/5abba22702d9247b67d9f5bd3e430b34b005025a))
+
 ## [2.32.1](https://github.com/dhanesh/manifold/compare/v2.32.0...v2.32.1) (2026-05-03)
 
 ### Bug Fixes
