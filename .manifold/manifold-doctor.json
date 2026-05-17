@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/dhanesh/manifold/main/install/manifold-structure.schema.json",
   "schema_version": 3,
   "feature": "manifold-doctor",
-  "phase": "GENERATED",
+  "phase": "VERIFIED",
   "domain": "software",
   "created": "2026-05-17T00:00:00Z",
   "constraints": {
@@ -74,60 +74,60 @@
     "required_truths": [
       {
         "id": "RT-1",
-        "status": "SPECIFICATION_READY",
+        "status": "SATISFIED",
         "maps_to": ["T1"],
         "evidence": [
-          { "id": "E1", "type": "file_exists", "path": "cli/commands/doctor.ts", "status": "PENDING" },
-          { "id": "E2", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "registers the doctor command on the CLI", "status": "PENDING" }
+          { "id": "E1", "type": "file_exists", "path": "cli/commands/doctor.ts", "status": "VERIFIED" },
+          { "id": "E2", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "registers the doctor command on the CLI", "status": "VERIFIED" }
         ]
       },
       {
         "id": "RT-2",
-        "status": "SPECIFICATION_READY",
+        "status": "SATISFIED",
         "maps_to": ["B2", "T2", "T3"],
         "evidence": [
-          { "id": "E3", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "builds the shared repo snapshot in a single filesystem pass", "status": "PENDING" }
+          { "id": "E3", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "builds the shared repo snapshot in a single filesystem pass", "status": "VERIFIED" }
         ]
       },
       {
         "id": "RT-3",
-        "status": "SPECIFICATION_READY",
+        "status": "SATISFIED",
         "maps_to": ["B1", "T4", "U2"],
         "evidence": [
-          { "id": "E4", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "runs a dedicated check for each of the four problem classes", "status": "PENDING" }
+          { "id": "E4", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "runs a dedicated check for each of the four problem classes", "status": "VERIFIED" }
         ]
       },
       {
         "id": "RT-4",
-        "status": "SPECIFICATION_READY",
+        "status": "SATISFIED",
         "maps_to": ["B2", "T2"],
         "evidence": [
-          { "id": "E5", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "reports zero problems on a healthy repo (no false positives)", "status": "PENDING" }
+          { "id": "E5", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "reports zero problems on a healthy repo (no false positives)", "status": "VERIFIED" }
         ]
       },
       {
         "id": "RT-5",
-        "status": "SPECIFICATION_READY",
+        "status": "SATISFIED",
         "maps_to": ["U1"],
         "evidence": [
-          { "id": "E6", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "every reported problem includes a fix command", "status": "PENDING" }
+          { "id": "E6", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "every reported problem includes a fix command", "status": "VERIFIED" }
         ]
       },
       {
         "id": "RT-6",
-        "status": "SPECIFICATION_READY",
+        "status": "SATISFIED",
         "maps_to": ["O1", "U2", "U3", "O2"],
         "evidence": [
-          { "id": "E7", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "returns exit code 0, 1, or 2 deterministically", "status": "PENDING" },
-          { "id": "E8", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "--json emits a machine-readable report", "status": "PENDING" }
+          { "id": "E7", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "returns exit code 0, 1, or 2 deterministically", "status": "VERIFIED" },
+          { "id": "E8", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "--json emits a machine-readable report", "status": "VERIFIED" }
         ]
       },
       {
         "id": "RT-7",
-        "status": "SPECIFICATION_READY",
+        "status": "SATISFIED",
         "maps_to": ["S1"],
         "evidence": [
-          { "id": "E9", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "leaves the repository byte-identical after running (read-only)", "status": "PENDING" }
+          { "id": "E9", "type": "test_passes", "path": "tests/manifold-doctor/doctor.test.ts", "test_name": "leaves the repository byte-identical after running (read-only)", "status": "VERIFIED" }
         ]
       }
     ],
@@ -177,10 +177,23 @@
       "result": "Generated manifold-doctor via the subagent coordinator (Option B): 2 tasks, 5 artifacts, all per-task and final reviews passed",
       "artifacts_generated": 5,
       "selected_option": "Option B"
+    },
+    {
+      "number": 5,
+      "phase": "verify",
+      "timestamp": "2026-05-17T00:00:00Z",
+      "result": "Verified: 11/12 constraints SATISFIED, 1 non-blocking GOAL gap (T3 has no automated performance test). All 7 invariants and the 1 boundary satisfied in Code+Test; convergence CONVERGED, phase advanced to VERIFIED",
+      "constraints_verified": 12,
+      "gaps": 1
     }
   ],
   "convergence": {
-    "status": "IN_PROGRESS"
+    "status": "CONVERGED",
+    "criteria": {
+      "all_invariants_satisfied": true,
+      "all_required_truths_satisfied": true,
+      "no_blocking_gaps": true
+    }
   },
   "generation": {
     "option": "B",
