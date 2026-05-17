@@ -161,7 +161,7 @@ See [Quickstart](docs/quickstart.md) for a complete 15-minute guide, or [When NO
 | `/manifold:m1-constrain` | Discover constraints (interview-driven) | CONSTRAINED |
 | `/manifold:m2-tension` | Surface constraint conflicts | TENSIONED |
 | `/manifold:m3-anchor` | Backward reasoning from outcome | ANCHORED |
-| `/manifold:m4-generate` | Create all artifacts simultaneously | GENERATED |
+| `/manifold:m4-generate` | Coordinate subagents to generate all artifacts, with in-loop review | GENERATED |
 | `/manifold:m4-prd` | Generate a PRD document from the manifold (PM workflow) | - |
 | `/manifold:m4-stories` | Generate user stories with acceptance criteria (PM workflow) | - |
 | `/manifold:m5-verify` | Validate against constraints | VERIFIED |

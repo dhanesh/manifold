@@ -27,7 +27,7 @@ Forward reasoning                    Backward from outcome
 | `/manifold:m1-constrain <feature>` | CONSTRAINED | Interview-driven constraint discovery |
 | `/manifold:m2-tension <feature>` | TENSIONED | Surface conflicts (trade-offs) between constraints |
 | `/manifold:m3-anchor <feature>` | ANCHORED | Backward reasoning from outcome |
-| `/manifold:m4-generate <feature>` | GENERATED | Create ALL artifacts simultaneously |
+| `/manifold:m4-generate <feature>` | GENERATED | Coordinate subagents to generate all artifacts, with in-loop review |
 | `/manifold:m4-prd <feature>` | - | Generate PRD document (PM workflow) |
 | `/manifold:m4-stories <feature>` | - | Generate user stories with acceptance criteria (PM workflow) |
 | `/manifold:m5-verify <feature>` | VERIFIED | Validate against constraints |
@@ -36,6 +36,8 @@ Forward reasoning                    Backward from outcome
 | `/manifold:m-solve` | - | Generate parallel execution plan |
 | `/manifold:m-quick <feature>` | - | **Light mode**: 3-phase workflow for simple changes |
 | `/manifold:parallel` | - | Execute tasks in parallel worktrees |
+
+**m4-generate runs as a subagent coordinator.** Rather than generating artifacts in the main session, it derives per-artifact tasks and dispatches a fresh *generator* subagent for each, followed by two-stage review — a *manifold reviewer* (constraint compliance, full literal scope) then a *code-quality reviewer* — with fix loops, then a final whole-implementation review. The subagent prompt templates live in `install/commands/references/subagent-prompts/`. The shared `install/commands/references/execution-discipline.md` reference — the verification Iron Law, red-flag tables, and the generator status protocol — is linked by every workflow command.
 
 ### Phase Progression
 
