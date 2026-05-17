@@ -172,7 +172,7 @@ jobs:
           path: binaries
 
       - name: Upload binaries to GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.semantic-release.outputs.new_release_git_tag }}
           files: binaries/*
