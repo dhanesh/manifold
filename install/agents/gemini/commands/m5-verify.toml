@@ -102,6 +102,24 @@ evidence type, not just `test_passes`) — so a human-verified `manual_review`
 item can support `✓ SATISFIED` on the matrix axis even while the constraint
 stays at the `DOCUMENTED` satisfaction level.
 
+## Constraint Scope Coverage
+
+`✓ SATISFIED` means the artifacts cover the constraint's **full stated scope** —
+not merely the behavior the implementation happens to have.
+
+- **Read the whole constraint statement.** If it enumerates cases (a list,
+  "and"/"or"/"/", multiple file types or conditions), confirm each case is
+  both implemented AND has test coverage. A constraint whose tests exercise
+  only a subset of its statement is `◐ PARTIAL` — gap: "tests cover
+  implementation behavior, not the constraint's full scope".
+- **Do NOT infer `✓ SATISFIED` from a green test suite.** A green suite proves
+  the tests that exist pass — not that they cover the constraint. Confirm the
+  specific tests exercise what the constraint *states*. Verifying the
+  implementation against itself is not verification.
+- **A `// Satisfies:` comment is a claim, not evidence.** When an artifact
+  asserts `// Satisfies: X`, confirm the code actually satisfies X before
+  counting it. A false traceability comment must be reported as a gap.
+
 ## Satisfaction Levels (v3.1)
 
 Constraints are classified by verification depth when `--levels` is used:
@@ -339,6 +357,8 @@ If your reply contains a question soliciting a user response → use `AskUserQue
 | "The file exists, mark it SATISFIED" | `file_exists` alone caps the status at `◐ PARTIAL`. See the SATISFIED Floor. |
 | "I'll fix the gaps I found" | m5-verify only REPORTS gaps. Fixing them is a separate, user-decided step. |
 | "Tests probably pass, mark TESTED" | `test_passes` with status `PENDING` counts as `IMPLEMENTED`, not `TESTED`. Run the tests. |
+| "The suite is green, mark it SATISFIED" | A green suite proves the tests that exist pass — not that they cover the constraint's full stated scope. Check scope, not just exit code. |
+| "The code says `// Satisfies: X`, so it does" | A traceability comment is a claim to verify, not evidence. Read the code. |
 | "verify.json from the last run is fine" | Always emit a fresh `.verify.json` — stale results are not evidence. |
 
 Run `manifold validate <feature>` after updates. Shared directives (output format, interaction rules, validation) injected by phase-commons hook.

@@ -61,8 +61,8 @@
   },
   {
     "path": "install/commands/m5-verify.md",
-    "sha256": "1047c7ae00e9137d58631ab6f93c16a71705e3025deb076d915aac31d49be8a5",
-    "bytes": 15441
+    "sha256": "9d55954958343c12e4ba30cbaf5b232fe296d6d943f4c0cf8ab4ac2250660281",
+    "bytes": 16793
   },
   {
     "path": "install/commands/m6-integrate.md",

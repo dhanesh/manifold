@@ -25,6 +25,15 @@ need is below.
 - Add a traceability comment to every artifact: `// Satisfies: <constraint-ids>`.
 - Annotate every test function: `// @constraint <id>`.
 - Place files exactly per the Artifact Placement Rules in the task above.
+- Implement to the constraint's FULL stated scope — every case it enumerates.
+  If a constraint names several cases (a list, "and"/"or"/"/", multiple file
+  types or conditions) and a library you reuse covers only some of them,
+  extend it or add the missing logic — never let a dependency's limits
+  silently narrow the constraint. If you cannot cover the full scope, report
+  `DONE_WITH_CONCERNS` and name the uncovered part.
+- A `// Satisfies:` comment must be TRUE — only claim a constraint the code at
+  that location actually satisfies. A comment asserting a property the code
+  lacks is worse than no comment.
 - Do NOT do work outside this task's scope. Do NOT touch unrelated files.
 - Commit your work once the task's tests pass.
 
