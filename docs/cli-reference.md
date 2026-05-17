@@ -127,6 +127,34 @@ See [Evidence System](evidence-system.md) for details on evidence types and veri
 
 ---
 
+### `manifold doctor`
+
+Detect repo-health problems and report each with an actionable fix. Read-only — never modifies files.
+
+```bash
+manifold doctor              # Human-readable health report
+manifold doctor --json       # Machine-readable report (for CI)
+```
+
+Runs four checks against a single shared repo snapshot:
+
+| Check | Detects |
+|-------|---------|
+| `invalid-manifolds` | `.manifold/` files that fail to load or parse (`.json` structure or `.md` content) |
+| `plugin-sync` | `plugin/` out of sync with `install/` |
+| `stale-fingerprints` | recorded skill fingerprints no longer matching `install/commands/` |
+| `file-drift` | files changed since their last verification baseline |
+
+Every reported problem includes a copy-pasteable fix command.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--json` | boolean | false | Output as JSON |
+
+**Exit codes:** `0` healthy, `1` error (not a manifold repo), `2` problems found
+
+---
+
 ### `manifold graph [feature]`
 
 Output the constraint network in multiple visualization formats.

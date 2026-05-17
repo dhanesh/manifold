@@ -53,6 +53,7 @@ manifold validate [feature]    # Validate YAML schema
 manifold init <feature>        # Initialize manifold
 manifold verify [feature]      # Verify artifacts exist
 manifold drift [feature]       # Detect post-verification file changes
+manifold doctor [--json]       # Detect repo-health problems (invalid manifolds, plugin sync, fingerprints, drift)
 manifold serve [--port <n>]    # Local PWA visualiser (long-running; default port 6353)
 ```
 

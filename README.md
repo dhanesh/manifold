@@ -185,6 +185,7 @@ manifold show [feature]            # Combined JSON+MD view
 manifold solve [feature]           # Parallel execution plan
 manifold migrate [feature]         # Convert YAML -> JSON+MD
 manifold drift [feature]          # Detect post-verification file changes
+manifold doctor [--json]          # Detect repo-health problems (exit 2 = problems found)
 manifold serve [--port <n>] [--host <addr>]  # Local PWA visualiser (default port 6353)
 manifold completion [shell]        # Shell completions (bash/zsh/fish)
 manifold hook <name>               # Compiled hook handlers for Claude Code events
