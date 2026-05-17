@@ -131,7 +131,7 @@ describe('runDoctor — aggregates all four checks', () => {
 describe('checkInvalidManifolds', () => {
   // @constraint B1
   test('reports no problems when no .manifold/ directory exists', () => {
-    const problems = checkInvalidManifolds({ manifoldDir: null, features: [], verifyHashes: {}, installFiles: [], pluginFileHashes: {}, installFileHashes: {}, skillFingerprints: [], currentFingerprints: [] });
+    const problems = checkInvalidManifolds({ manifoldDir: null, features: [], verifyHashes: {}, installFiles: [], pluginFileHashes: {}, installFileHashes: {}, skillFingerprints: [], currentFingerprints: [], featureManifoldLoads: {} });
     expect(problems).toEqual([]);
   });
 
@@ -151,6 +151,8 @@ describe('checkInvalidManifolds', () => {
       installFileHashes: {},
       skillFingerprints: [],
       currentFingerprints: [],
+      featureManifoldLoads: { good: true },
+      featureMdReadable: { good: true },
     });
     expect(problems).toEqual([]);
   });
@@ -170,6 +172,7 @@ describe('checkInvalidManifolds', () => {
       installFileHashes: {},
       skillFingerprints: [],
       currentFingerprints: [],
+      featureManifoldLoads: { broken: false },
     });
 
     expect(problems.length).toBeGreaterThanOrEqual(1);
@@ -194,6 +197,7 @@ describe('checkInvalidManifolds', () => {
       skillFingerprints: [],
       currentFingerprints: [],
       featureMdReadable: {},
+      featureManifoldLoads: { 'bad-feature': false },
     });
 
     expect(problems[0].fix).toBe('manifold validate bad-feature');

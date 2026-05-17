@@ -56,6 +56,16 @@ export interface RepoSnapshot {
    */
   featureMdReadable?: Record<string, boolean>;
   /**
+   * For each feature, whether loadFeature() returned a valid manifold object.
+   * true  = loadFeature succeeded (returned a non-null manifold)
+   * false = loadFeature returned null, threw, or the .manifold dir is absent
+   *
+   * I/O is performed once in buildSnapshot; checkInvalidManifolds reads this
+   * precomputed result and performs NO filesystem access.
+   * Satisfies: RT-2 (single snapshot), RT-3 (pure check function)
+   */
+  featureManifoldLoads?: Record<string, boolean>;
+  /**
    * For each feature, file_hashes from .verify.json (if present).
    * Shape: { featureName: { filePath: sha256 } }
    */
@@ -126,6 +136,23 @@ export function buildSnapshot(repoRoot: string): RepoSnapshot {
         }
       }
       // YAML-only features have no .md requirement; leave the key absent.
+    }
+  }
+
+  // ── 1b. Manifold load/parse results ───────────────────────
+  // For every feature, attempt to load and parse its manifold ONCE here.
+  // The result (true = loaded ok, false = failed) is stored in featureManifoldLoads
+  // so that checkInvalidManifolds can be a pure function with no filesystem I/O.
+  // Satisfies: RT-2 (all I/O in buildSnapshot), RT-3 (pure check functions)
+  const featureManifoldLoads: Record<string, boolean> = {};
+  if (manifoldDir) {
+    for (const feature of features) {
+      try {
+        const data = loadFeature(manifoldDir, feature);
+        featureManifoldLoads[feature] = !!(data && data.manifold);
+      } catch {
+        featureManifoldLoads[feature] = false;
+      }
     }
   }
 
@@ -280,6 +307,7 @@ export function buildSnapshot(repoRoot: string): RepoSnapshot {
     manifoldDir,
     features,
     featureMdReadable,
+    featureManifoldLoads,
     verifyHashes,
     installFiles,
     installFileHashes,
@@ -362,23 +390,32 @@ function collectAllFiles(
 // ============================================================
 
 /**
- * For each feature, attempt to load/parse its manifold.
+ * For each feature, report whether its manifold loaded/parsed successfully.
  * Also detects missing or unreadable .md companion files (B1 scope).
  *
+ * This is a PURE function — it reads only from the snapshot.
+ * All filesystem I/O (loadFeature, .md readability) was performed in buildSnapshot
+ * and the precomputed results are stored in snapshot.featureManifoldLoads and
+ * snapshot.featureMdReadable. This function performs NO filesystem access.
+ *
  * Satisfies: B1 (detect invalid/unparseable .json AND .md files)
- * Satisfies: RT-2 (reuses loadFeature from cli/lib/parser; I/O done in buildSnapshot)
+ * Satisfies: RT-2 (I/O for loadFeature happens in buildSnapshot; check reads precomputed result)
+ * Satisfies: RT-3 (pure function: (RepoSnapshot) => Problem[])
  * Satisfies: RT-5 (fix command: manifold validate <feature>)
- * Satisfies: RT-7 (read-only — all I/O already done in buildSnapshot)
+ * Satisfies: RT-7 (read-only — zero filesystem calls in this function)
  */
 export function checkInvalidManifolds(snapshot: RepoSnapshot): Problem[] {
   const problems: Problem[] = [];
 
   if (!snapshot.manifoldDir) return problems;
 
+  const manifoldLoads = snapshot.featureManifoldLoads ?? {};
+
   for (const feature of snapshot.features) {
-    // Check JSON/YAML structure parses correctly
-    const data = loadFeature(snapshot.manifoldDir, feature);
-    if (!data || !data.manifold) {
+    // Check JSON/YAML structure parses correctly.
+    // featureManifoldLoads[feature] was set by buildSnapshot; false means loadFeature
+    // returned null, threw, or the file is malformed. No I/O happens here.
+    if (manifoldLoads[feature] === false) {
       problems.push({
         check: 'invalid-manifolds',
         message: `Manifold for feature "${feature}" failed to load or parse. It may be malformed JSON/YAML.`,
