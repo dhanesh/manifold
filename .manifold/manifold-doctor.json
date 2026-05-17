@@ -185,6 +185,14 @@
       "result": "Verified: 11/12 constraints SATISFIED, 1 non-blocking GOAL gap (T3 has no automated performance test). All 7 invariants and the 1 boundary satisfied in Code+Test; convergence CONVERGED, phase advanced to VERIFIED",
       "constraints_verified": 12,
       "gaps": 1
+    },
+    {
+      "number": 6,
+      "phase": "verify",
+      "timestamp": "2026-05-17T00:00:00Z",
+      "result": "Audit remediation: closed the B1 gap (checkInvalidManifolds now detects missing/unreadable .md files — B1 genuinely SATISFIED), restored RT-2/RT-3 purity (moved loadFeature I/O into buildSnapshot; all four checks are now pure functions of the snapshot), hash-based plugin-sync compare per T2, guarded statSync calls",
+      "constraints_verified": 12,
+      "gaps": 1
     }
   ],
   "convergence": {
