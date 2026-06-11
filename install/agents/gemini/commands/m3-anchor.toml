@@ -47,6 +47,9 @@ Update `.manifold/<feature>.json` with required truth references:
         "id": "RT-1",
         "status": "NOT_SATISFIED",
         "maps_to": ["B1", "T1"],
+        "parent": "OUTCOME",
+        "relevance": 0.95,
+        "confidence": 1.0,
         "evidence": [
           {"id": "E1", "type": "file_exists", "path": "src/retry/error-classifier.ts", "status": "PENDING"}
         ]
@@ -54,7 +57,10 @@ Update `.manifold/<feature>.json` with required truth references:
       {
         "id": "RT-2",
         "status": "SPECIFICATION_READY",
-        "maps_to": ["B2"]
+        "maps_to": ["B2"],
+        "parent": "RT-1",
+        "relevance": 0.8,
+        "confidence": 0.7
       }
     ],
     "recommended_option": "C"
@@ -154,8 +160,61 @@ Forward planning starts with a spec and discovers missing requirements late. Bac
 2. **Check blocking dependencies** - Read `blocking_dependencies` from JSON (written by m2). If present, derive required truths for the BLOCKER constraints FIRST -- these are the strongest candidates for the binding constraint. If `draft_required_truths` (from m1) exist for blocking constraints, validate those as starting seeds.
 3. **Ask "What must be TRUE?"** - Necessary conditions for outcome
 4. **Derive required truths** - Chain backward from each condition
-5. **Identify gaps** - What's missing between current state and requirements?
-6. **Generate solution space** - Options that satisfy all required truths
+5. **Score each edge** - For every RT, record its `parent` ("OUTCOME" or a parent RT) and the edge's `relevance` and `confidence` (see Edge Map below)
+6. **Identify gaps** - What's missing between current state and requirements?
+7. **Generate solution space** - Options that satisfy all required truths
+
+## Edge Map: Relevance & Confidence (the backward-reasoning tree is a *map*, not a list)
+
+A flat list of required truths hides the reasoning. Each RT is a **node with one parent** — either
+`OUTCOME` (top-level necessary condition) or another RT (a sub-truth the parent depends on). Every
+parent→child **edge** carries two scores in `[0,1]`:
+
+| Field | Question it answers | Anchors |
+|-------|---------------------|---------|
+| `relevance` | Does "child TRUE" genuinely make "parent TRUE" more achievable — is it a *real* prerequisite, not decorative? | `1.0` = parent is impossible without it · `0.5` = materially helps · `≤0.3` = tangential ⇒ **drop the RT** |
+| `confidence` | How *necessary* is the child — invariant-grade necessity vs. merely one helpful option? | `1.0` = must hold, no substitute · `0.7` = strong but alternatives exist · `0.4` = merely helpful |
+
+**Derivation rules:**
+- Assign `parent`, `relevance`, `confidence` **as you derive each RT** — not post-hoc. The scores
+  are part of the reasoning, not decoration on top of it.
+- **Calibrate to what an independent reviewer would assign, not to your hopes.** Before writing each
+  edge, ask: *"If a skeptical reviewer who has never seen my reasoning re-scored this edge from the
+  outcome and the constraints alone, what number would they pick?"* Emit **that** number. Your score
+  is correct only when it survives that re-scoring — systematic over- or under-confidence is the
+  primary defect this phase is graded on.
+- **Use the full scale; mid-range is the common case.** Snap each score to the nearest anchor in the
+  tables above (`1.0 / 0.85 / 0.7 / 0.5 / 0.4 / 0.3`) rather than rounding everything to `1.0`.
+  Reserve `confidence = 1.0` for genuinely substitutable-by-nothing, invariant-grade truths; most
+  real prerequisites land at `0.7–0.85` because an alternative path usually exists. A tree whose
+  edges are all `0.9–1.0` is almost always over-confident and will lose calibration points.
+- **Raise the tree's *true* strength by selecting necessary RTs, not by inflating scores.** Two
+  scores are graded together: a *map-strength* score that rewards edges a skeptical reviewer would
+  *also* rate high (rel & conf near `1.0`), and a *calibration* score that rewards matching that
+  reviewer. The way to score well on BOTH is to **keep the tree to RTs that are genuinely
+  load-bearing** — invariant-grade, no-substitute preconditions the outcome literally cannot hold
+  without — and report their high rel/conf honestly. Do **not** pad the tree with merely-helpful RTs
+  carried at `conf 0.4–0.5`: each one drags `mean(confidence)` down and weakens map strength. If an
+  RT is only one helpful option among several, it belongs in **solution space**, not the truth tree —
+  move it there. The ideal tree is *small, fully necessary, and honestly high-scored*, not *large and
+  defensively low-scored*. Inflating a weak edge to `1.0` to chase strength is self-defeating: the
+  reviewer re-scores it low and you lose more on calibration than you gain on strength.
+- **Justify each score in one clause** (in the derivation, e.g. "conf 0.7: alternative via queue
+  exists"). An edge you cannot justify in a clause is a guessed score — re-derive it.
+- **Prune low-relevance edges.** Any edge with `relevance ≤ 0.3` means the RT is not actually
+  required — remove it (it belongs in solution space, not the truth tree).
+- **No orphans.** Every RT must have a `parent` and a path up to `OUTCOME`. An RT with no path to
+  the outcome is either mis-derived or its parent is missing.
+
+**Self-check before writing (quality gate):**
+```
+□ Does every RT have a parent, relevance, and confidence?   (else: incomplete map)
+□ Is the outcome decomposed into ≥2 top-level RTs?           (else: single-RT trap)
+□ Is each RT phrased as a TRUTH that must hold, not a build step?  (else: forward-plan leak)
+□ Are confidences spread (not all 1.0)?                      (else: uncalibrated)
+□ Does every RT have ≥1 evidence item?                       (else: unverifiable)
+```
+A map that passes all five is high-quality; one that fails any is incomplete — fix before continuing.
 
 ## Recursive Backward Chaining
 
@@ -182,16 +241,19 @@ Tag every solution option: `TWO_WAY` (reversible), `REVERSIBLE_WITH_COST` (note 
 
 OUTCOME ANCHORING: payment-retry
 
-RT-1: Can distinguish transient from permanent failures  [gap: no error taxonomy]
-RT-2: Retries are idempotent                              [gap: no idempotency]
-RT-3: Sufficient retry budget                             [gap: policy undefined]
-RT-4: Downstream services recoverable                     [gap: no circuit breaker]
-RT-5: Retry state persists across failures                [gap: in-memory only]
+  (edge = parent → child, [rel=relevance, conf=confidence])
+RT-1: Can distinguish transient from permanent failures  ← OUTCOME [rel=0.95 conf=1.0]  [gap: no error taxonomy]
+RT-2: Retries are idempotent                             ← OUTCOME [rel=1.0  conf=1.0]  [gap: no idempotency]
+RT-3: Retry state persists across failures               ← RT-2    [rel=0.85 conf=0.9]  [gap: in-memory only]
+RT-4: Downstream services recoverable before budget exhausts ← OUTCOME [rel=0.7 conf=0.7]  [gap: no circuit breaker]
+  (note: "client-side exponential backoff" was considered but is one helpful option, not a
+   necessary truth — it lives in solution space below, not as an RT. Pruning it keeps the tree
+   honestly high-scored rather than padding it with a conf-0.4 edge.)
 
 SOLUTION SPACE:
-  Option A: Client-side backoff     — satisfies RT-3      [TWO_WAY]
+  Option A: Client-side backoff     — satisfies RT-4      [TWO_WAY]
   Option B: Server-side workflow    — satisfies all       [ONE_WAY ⚠️]
-  Option C: Hybrid (client+queue)   — satisfies RT-1/3/5  [TWO_WAY]
+  Option C: Hybrid (client+queue)   — satisfies RT-1/2/3  [TWO_WAY]
 
 RECOMMENDATION: Option C  →  Next: /manifold:m4-generate payment-retry --option=C
 ```
@@ -214,7 +276,7 @@ RECOMMENDATION: Option C  →  Next: /manifold:m4-generate payment-retry --optio
 8. Generate 2-4 solution options
 9. Recommend best option with rationale
 10. **Update TWO files:**
-   - `.manifold/<feature>.json` — Add required truths to `anchors.required_truths` with id, status, maps_to
+   - `.manifold/<feature>.json` — Add required truths to `anchors.required_truths` with id, status, maps_to, `parent`, `relevance`, `confidence`
    - `.manifold/<feature>.md` — Add `### RT-1: Title` + statement + gap under `## Required Truths`
 11. Set phase to ANCHORED in JSON
 12. **Run `manifold validate <feature>`** -- fix any errors before showing results. Format lock: if `.json` exists, never create/update `.yaml`.
@@ -230,6 +292,8 @@ After selecting the recommended option, validate it against m2's tensions. For e
 | "I'll forward-plan the steps" | m3 reasons backward: ask what must be TRUE for the outcome. |
 | "One required truth is enough" | Decompose until truths are concrete and verifiable. |
 | "Skip evidence on the truths" | Every required truth needs at least one evidence item. |
+| "A flat list of truths is fine" | The tree is a *map*: every RT needs a `parent` + `relevance` + `confidence` edge. |
+| "Mark everything confidence 1.0" | Calibrate — over-confident edges are a defect; spread the scores honestly. |
 
 Run `manifold validate <feature>` after updates. Shared directives (output format, interaction rules, validation) injected by phase-commons hook.
 """
