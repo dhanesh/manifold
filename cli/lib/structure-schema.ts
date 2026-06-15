@@ -283,6 +283,11 @@ export const RequiredTruthRefSchema: z.ZodType<any> = z.object({
   // Enhancement 7: Recursive backward chaining
   depth: z.number().optional(),
   children: z.lazy(() => z.array(RequiredTruthRefSchema)).optional(),
+  // Enhancement 8: Backward-reasoning edge map (parent→child relevance & confidence).
+  // All optional/additive — existing manifolds without these continue to validate.
+  parent: z.string().optional(),                        // "OUTCOME" or a parent RT id (RT-n)
+  relevance: z.number().min(0).max(1).optional(),       // is the child a genuine prerequisite of parent?
+  confidence: z.number().min(0).max(1).optional(),      // how necessary: invariant-grade (→1) vs merely helpful (→0.4)
 });
 
 export type RequiredTruthRef = z.infer<typeof RequiredTruthRefSchema>;
