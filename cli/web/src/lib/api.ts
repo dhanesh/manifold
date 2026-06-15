@@ -70,7 +70,7 @@ export interface ManifoldJson {
     validation_criteria?: string[];
   }>;
   anchors?: {
-    required_truths?: Array<{ id: string; status?: string; maps_to?: string[]; evidence?: Array<{ id?: string; type?: string; status?: string; path?: string }> }>;
+    required_truths?: Array<{ id: string; status?: string; maps_to?: string[]; parent?: string; relevance?: number; confidence?: number; evidence?: Array<{ id?: string; type?: string; status?: string; path?: string }> }>;
     binding_constraint?: { required_truth_id?: string; reason?: string; dependency_chain?: string[] };
     recommended_option?: string;
     solution_options?: Array<{ id: string; name: string; reversibility?: string; satisfies?: string[]; gaps?: string[]; note?: string }>;

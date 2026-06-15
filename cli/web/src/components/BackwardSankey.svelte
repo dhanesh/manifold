@@ -1,7 +1,13 @@
 <!--
   Backward-reasoning Sankey — Constraints flow into Required Truths flow into
   Outcome. Reads left-to-right as "these constraints support these required
-  truths, which support the outcome." Width = number of dependency links.
+  truths, which support the outcome."
+
+  Edge map (m3 Enhancement 8): when a required truth carries `parent` /
+  `relevance` / `confidence`, the RT→parent link is drawn to its real parent
+  (another RT or the outcome), its WIDTH encodes `relevance` and its OPACITY
+  encodes `confidence`. Older manifolds without these fields fall back to a
+  uniform RT→outcome link of width 1 — they render exactly as before.
 
   Status colouring:
    - SATISFIED   → green
@@ -37,7 +43,7 @@
     status?: string;
     binding?: boolean;
   };
-  type FlowLink = { source: number; target: number; value: number };
+  type FlowLink = { source: number; target: number; value: number; confidence?: number };
 
   const STATUS_COLOR: Record<string, string> = {
     SATISFIED: 'var(--color-success)',
@@ -97,7 +103,25 @@
     for (const rt of rts) {
       const rtIdx = idx.get(rt.id);
       if (rtIdx === undefined) continue;
-      links.push({ source: rtIdx, target: idx.get('__outcome')!, value: 1 });
+
+      // RT → parent edge (the backward-reasoning link).
+      // Edge map present → point at the real parent (another RT or the outcome),
+      // width = relevance, opacity = confidence. Edge map ABSENT (older manifolds)
+      // → uniform RT → outcome link of width 1, identical to the pre-edge-map render.
+      const hasEdgeMap =
+        rt.parent !== undefined || rt.relevance !== undefined || rt.confidence !== undefined;
+      const parentId =
+        rt.parent && rt.parent !== 'OUTCOME' && idx.has(rt.parent) ? rt.parent : '__outcome';
+      const parentIdx = idx.get(parentId)!;
+      if (parentIdx !== rtIdx) {
+        links.push({
+          source: rtIdx,
+          target: parentIdx,
+          value: hasEdgeMap && typeof rt.relevance === 'number' ? Math.max(0.05, rt.relevance) : 1,
+          confidence: hasEdgeMap && typeof rt.confidence === 'number' ? rt.confidence : undefined,
+        });
+      }
+
       for (const cid of rt.maps_to ?? []) {
         const cIdx = idx.get(cid);
         if (cIdx !== undefined) links.push({ source: cIdx, target: rtIdx, value: 1 });
@@ -142,7 +166,7 @@
 
   let layout = $state<{
     nodes: (FlowNode & { x0: number; x1: number; y0: number; y1: number })[];
-    links: { source: any; target: any; width: number; path: string }[];
+    links: { source: any; target: any; width: number; path: string; confidence?: number }[];
   } | null>(null);
 
   async function relayout() {
@@ -184,6 +208,7 @@
         target: l.target,
         width: Math.max(1, l.width),
         path: linkGen(l) ?? '',
+        confidence: l.confidence,
       })),
     };
   }
@@ -242,6 +267,7 @@
               d={link.path}
               class:lit
               stroke-width={link.width}
+              style:stroke-opacity={link.confidence != null ? 0.2 + 0.6 * link.confidence : null}
             />
           {/each}
         </g>

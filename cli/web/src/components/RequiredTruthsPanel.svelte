@@ -96,6 +96,13 @@
                     {/each}
                   </span>
                 {/if}
+                {#if rt.parent || rt.relevance != null || rt.confidence != null}
+                  <span class="edge-map" title="backward-reasoning edge toward parent (relevance × confidence)">
+                    {#if rt.parent}<span class="edge-parent">→ {rt.parent}</span>{/if}
+                    {#if rt.relevance != null}<span class="edge-metric">rel {rt.relevance.toFixed(2)}</span>{/if}
+                    {#if rt.confidence != null}<span class="edge-metric">conf {rt.confidence.toFixed(2)}</span>{/if}
+                  </span>
+                {/if}
               </span>
             {/snippet}
             <MarkdownInline source={extractMdBlock(markdown, rt.id)} />
@@ -195,4 +202,19 @@
     transition: background var(--duration-fast) var(--ease-standard);
   }
   .chip-link:hover { background: var(--color-accent-muted); }
+  .edge-map {
+    font-size: 0.72rem;
+    color: var(--color-fg-tertiary);
+    font-family: var(--font-mono);
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+  }
+  .edge-parent { color: var(--color-purple); font-weight: 500; }
+  .edge-metric {
+    background: var(--color-surface-hover);
+    padding: 0.1em 0.4em;
+    border-radius: var(--radius-xs);
+  }
 </style>
