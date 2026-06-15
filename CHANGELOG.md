@@ -5,6 +5,13 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.34.0](https://github.com/dhanesh/manifold/compare/v2.33.0...v2.34.0) (2026-06-15)
+
+### Features
+
+* **m3-anchor:** add backward-reasoning edge map with relevance/confidence ([2715bd1](https://github.com/dhanesh/manifold/commit/2715bd190c6cb2548a699940365c9ca372a10a4a))
+* **serve:** make the backward-reasoning sankey edge-map aware ([e0e4a2f](https://github.com/dhanesh/manifold/commit/e0e4a2f9af5765dd7c3b7cb39907adaecb3b3911))
+
 ## [2.33.0](https://github.com/dhanesh/manifold/compare/v2.32.1...v2.33.0) (2026-05-17)
 
 ### Features
