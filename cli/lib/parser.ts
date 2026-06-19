@@ -85,6 +85,8 @@ export interface Wave {
   phase: ManifoldPhase;            // Conceptual phase for human comprehension
   parallel_tasks: ParallelTask[];
   blocking_dependencies: string[];
+  cycle_broken?: boolean;          // True if this wave force-scheduled a node to break a dependency cycle
+  cycle_broken_node?: string;      // The node forced ready to break the cycle (ordering is heuristic past here)
 }
 
 export interface ParallelTask {
@@ -675,15 +677,17 @@ function loadJsonMdAsManifold(jsonPath: string, mdPath: string): Manifold | null
         manifold.constraints[category] = refs.map((ref: any) => {
           const mdConstraint = mdSections.constraints.get(ref.id);
           return {
-            id: ref.id,
-            type: ref.type,
+            // Preserve-by-default: spread ALL structural fields from the JSON
+            // (id, type, depends_on, source, challenger, threshold, verified_by,
+            // and any field added later) so nothing silently vanishes on the
+            // round-trip — depends_on in particular carries the constraint
+            // dependency graph the solver (waves, critical path, cycle
+            // detection) relies on…
+            ...ref,
+            // …then overlay the human-readable content reconstructed from
+            // Markdown (the authoritative source for statement + rationale).
             statement: mdConstraint?.statement || `[${ref.id}]`,
             rationale: mdConstraint?.rationale,
-            // Preserve enhancement fields from JSON structure
-            ...(ref.source && { source: ref.source }),
-            ...(ref.challenger && { challenger: ref.challenger }),
-            ...(ref.threshold && { threshold: ref.threshold }),
-            ...(ref.verified_by && { verified_by: ref.verified_by }),
           } as Constraint;
         });
       }
@@ -694,16 +698,13 @@ function loadJsonMdAsManifold(jsonPath: string, mdPath: string): Manifold | null
       manifold.tensions = structure.tensions.map((ref: any) => {
         const mdTension = mdSections.tensions.get(ref.id);
         return {
-          id: ref.id,
-          type: ref.type,
-          between: ref.between,
-          status: ref.status,
+          // Preserve-by-default: keep all structural fields (id, type, between,
+          // status, triz_principles, propagation_effects, validation_criteria,
+          // and any field added later)…
+          ...ref,
+          // …then overlay the human-readable content from Markdown.
           description: mdTension?.description || `[${ref.id}]`,
           resolution: mdTension?.resolution,
-          // Preserve enhancement fields from JSON structure
-          ...(ref.triz_principles && { triz_principles: ref.triz_principles }),
-          ...(ref.propagation_effects && { propagation_effects: ref.propagation_effects }),
-          ...(ref.validation_criteria && { validation_criteria: ref.validation_criteria }),
         } as Tension;
       });
     }
@@ -714,15 +715,15 @@ function loadJsonMdAsManifold(jsonPath: string, mdPath: string): Manifold | null
         required_truths: (structure.anchors.required_truths || []).map(
           (ref: any) => {
             const mdRT = mdSections.requiredTruths.get(ref.id);
+            // Structure uses `maps_to`; the manifold field is `maps_to_constraints`.
+            // Pull it out so the spread preserves every other structural field
+            // (status, evidence, depth, children, priority, and any later field)
+            // without leaving a stale `maps_to` key on the result.
+            const { maps_to, ...rest } = ref;
             return {
-              id: ref.id,
-              status: ref.status,
+              ...rest,
+              maps_to_constraints: maps_to,
               statement: mdRT?.statement || `[${ref.id}]`,
-              maps_to_constraints: ref.maps_to,
-              evidence: ref.evidence,
-              // Preserve enhancement fields from JSON structure
-              ...(ref.depth !== undefined && { depth: ref.depth }),
-              ...(ref.children && { children: ref.children }),
             } as RequiredTruth;
           }
         ),

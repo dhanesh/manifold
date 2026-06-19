@@ -1183,4 +1183,89 @@ describe('Combined Workflow Tests', () => {
       expect(result.success).toBe(true);
     }
   });
+
+  describe('loadFeature preserves structural fields (json-md round-trip)', () => {
+    test('constraint depends_on survives the structure↔markdown merge', () => {
+      const json = {
+        schema_version: 3,
+        feature: 'deps',
+        phase: 'CONSTRAINED',
+        constraints: {
+          business: [
+            { id: 'B1', type: 'invariant' },
+            { id: 'B2', type: 'goal', depends_on: ['B1'] },
+          ],
+          technical: [],
+          user_experience: [],
+          security: [],
+          operational: [],
+        },
+        tensions: [],
+        anchors: { required_truths: [] },
+        convergence: { status: 'NOT_STARTED' },
+      };
+      writeFileSync(join(manifoldDir, 'deps.json'), JSON.stringify(json));
+      writeFileSync(
+        join(manifoldDir, 'deps.md'),
+        '# deps\n\n## Outcome\nOK\n\n## Constraints\n### Business\n#### B1: One\nFirst.\n\n#### B2: Two\nSecond.\n',
+      );
+
+      const data = loadFeature(manifoldDir, 'deps');
+      const business = data?.manifold?.constraints?.business ?? [];
+      const b2 = business.find((c) => c.id === 'B2');
+
+      // Regression: the json-md merge previously dropped depends_on, leaving the
+      // solver blind to constraint ordering in the canonical format.
+      expect(b2?.depends_on).toEqual(['B1']);
+    });
+
+    test('tension and required-truth structural fields survive (preserve-by-default)', () => {
+      const json = {
+        schema_version: 3,
+        feature: 'fields',
+        phase: 'ANCHORED',
+        constraints: {
+          business: [{ id: 'B1', type: 'invariant' }],
+          technical: [{ id: 'T1', type: 'boundary' }],
+          user_experience: [],
+          security: [],
+          operational: [],
+        },
+        tensions: [
+          {
+            id: 'TN1',
+            type: 'trade_off',
+            between: ['B1', 'T1'],
+            status: 'resolved',
+            triz_principles: ['segmentation'],
+          },
+        ],
+        anchors: {
+          required_truths: [
+            // `priority` was NOT in the old allowlist — it must now survive too.
+            { id: 'RT-1', status: 'SATISFIED', maps_to: ['B1'], priority: 1 },
+          ],
+        },
+        convergence: { status: 'IN_PROGRESS' },
+      };
+      writeFileSync(join(manifoldDir, 'fields.json'), JSON.stringify(json));
+      writeFileSync(
+        join(manifoldDir, 'fields.md'),
+        '# fields\n\n## Outcome\nOK\n\n## Constraints\n### Business\n#### B1: One\nC.\n\n### Technical\n#### T1: Two\nC.\n',
+      );
+
+      const m = loadFeature(manifoldDir, 'fields')?.manifold;
+
+      const tn1 = m?.tensions?.find((t) => t.id === 'TN1');
+      expect(tn1?.triz_principles).toEqual(['segmentation']);
+
+      const rt1 = m?.anchors?.required_truths?.find((r) => r.id === 'RT-1');
+      // Renamed structural field round-trips…
+      expect(rt1?.maps_to_constraints).toEqual(['B1']);
+      // …a non-allowlisted field now survives (was dropped pre-restructure)…
+      expect((rt1 as Record<string, unknown>).priority).toBe(1);
+      // …and the structure's original `maps_to` key is not left dangling.
+      expect((rt1 as Record<string, unknown>).maps_to).toBeUndefined();
+    });
+  });
 });

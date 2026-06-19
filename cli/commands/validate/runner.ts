@@ -16,6 +16,7 @@ import {
   type Evidence,
 } from '../../lib/parser.js';
 import { validateManifold, type ValidationResult } from '../../lib/schema.js';
+import { detectConstraintCycle } from '../../lib/solver.js';
 import {
   detectManifoldFormat,
   loadManifoldByFeature,
@@ -27,10 +28,77 @@ import type {
 } from './types.js';
 
 /**
- * Validate a single feature
- * Supports both YAML and JSON+Markdown formats
+ * Validate a single feature.
+ *
+ * Runs format-specific schema/linking validation, then an always-on constraint
+ * dependency-cycle check (a cycle is an unconditional structural defect — no
+ * satisfaction order exists — so it is reported regardless of --strict and flips
+ * the exit code to 2). Supports YAML, JSON, and JSON+Markdown formats.
  */
 export async function validateFeature(
+  manifoldDir: string,
+  feature: string,
+  options: ValidateOptions
+): Promise<FeatureValidationResult> {
+  const result = await validateFeatureByFormat(manifoldDir, feature, options);
+  return augmentWithCycleCheck(manifoldDir, feature, result);
+}
+
+/**
+ * Fold a constraint dependency cycle into a validation result as an error,
+ * flipping `valid` to false (and thus the command's exit code to 2). Reuses the
+ * shared {@link detectConstraintCycle} so `validate` and `doctor` agree.
+ */
+function augmentWithCycleCheck(
+  manifoldDir: string,
+  feature: string,
+  result: FeatureValidationResult
+): FeatureValidationResult {
+  // A parse failure already fails validation and leaves no graph to analyse.
+  if (result.parseError || !result.result) return result;
+
+  const featureData = loadFeature(manifoldDir, feature);
+  if (!featureData?.manifold) return result;
+
+  const { hasCycle, cycleNodes } = detectConstraintCycle(featureData.manifold);
+  if (!hasCycle) return result;
+
+  const cycleError = {
+    field: 'dependencies',
+    message:
+      `Constraint dependency cycle detected (${cycleNodes.join(' → ')}). ` +
+      `No satisfaction order exists — remove a depends_on / maps_to_constraints ` +
+      `edge to break the cycle.`,
+    value: undefined,
+  };
+
+  const mergedResult: ValidationResult = {
+    ...result.result,
+    valid: false,
+    errors: [...result.result.errors, cycleError],
+  };
+
+  const existingJsonErrors = Array.isArray(result.json.errors)
+    ? (result.json.errors as unknown[])
+    : [];
+
+  return {
+    ...result,
+    valid: false,
+    result: mergedResult,
+    json: {
+      ...result.json,
+      valid: false,
+      errors: [...existingJsonErrors, cycleError],
+    },
+  };
+}
+
+/**
+ * Format-specific validation (schema + linking), without the cycle check.
+ * Supports both YAML and JSON+Markdown formats.
+ */
+async function validateFeatureByFormat(
   manifoldDir: string,
   feature: string,
   options: ValidateOptions

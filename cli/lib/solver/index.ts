@@ -18,6 +18,7 @@ export {
 
 export {
   ConstraintSolver,
+  detectConstraintCycle,
 } from './graph';
 
 export type {
@@ -26,6 +27,7 @@ export type {
   ExecutionPlan,
   Wave,
   ParallelTask,
+  ConstraintCycleResult,
 } from './graph';
 
 export {

@@ -18,6 +18,7 @@ import {
 } from './parser.js';
 import { computeFileHash, detectDrift } from './evidence.js';
 import { fingerprintSkills, type SkillFingerprint } from './fingerprint.js';
+import { detectConstraintCycle } from './solver.js';
 
 // ============================================================
 // Public Types
@@ -65,6 +66,14 @@ export interface RepoSnapshot {
    * Satisfies: RT-2 (single snapshot), RT-3 (pure check function)
    */
   featureManifoldLoads?: Record<string, boolean>;
+  /**
+   * For each feature whose constraint dependency graph contains a directed
+   * cycle, the nodes on that cycle. Absent key = acyclic. Computed once in
+   * buildSnapshot from the already-loaded manifold so checkConstraintCycles
+   * stays a pure, I/O-free function.
+   * Satisfies: RT-2 (single snapshot), RT-3 (pure check function)
+   */
+  featureConstraintCycles?: Record<string, string[]>;
   /**
    * For each feature, file_hashes from .verify.json (if present).
    * Shape: { featureName: { filePath: sha256 } }
@@ -145,11 +154,23 @@ export function buildSnapshot(repoRoot: string): RepoSnapshot {
   // so that checkInvalidManifolds can be a pure function with no filesystem I/O.
   // Satisfies: RT-2 (all I/O in buildSnapshot), RT-3 (pure check functions)
   const featureManifoldLoads: Record<string, boolean> = {};
+  const featureConstraintCycles: Record<string, string[]> = {};
   if (manifoldDir) {
     for (const feature of features) {
       try {
         const data = loadFeature(manifoldDir, feature);
-        featureManifoldLoads[feature] = !!(data && data.manifold);
+        const manifold = data?.manifold ?? null;
+        featureManifoldLoads[feature] = !!manifold;
+        // Detect dependency cycles from the manifold we just loaded — no extra
+        // filesystem I/O, keeping checkConstraintCycles pure.
+        if (manifold) {
+          try {
+            const { hasCycle, cycleNodes } = detectConstraintCycle(manifold);
+            if (hasCycle) featureConstraintCycles[feature] = cycleNodes;
+          } catch {
+            // A graph-build failure is already surfaced by invalid-manifolds.
+          }
+        }
       } catch {
         featureManifoldLoads[feature] = false;
       }
@@ -308,6 +329,7 @@ export function buildSnapshot(repoRoot: string): RepoSnapshot {
     features,
     featureMdReadable,
     featureManifoldLoads,
+    featureConstraintCycles,
     verifyHashes,
     installFiles,
     installFileHashes,
@@ -584,28 +606,60 @@ export function checkFileDrift(snapshot: RepoSnapshot): Problem[] {
 }
 
 // ============================================================
+// Check 5: constraint-cycles
+// Satisfies: B1, RT-3 (pure check function)
+// ============================================================
+
+/**
+ * Report features whose constraint dependency graph contains a directed cycle.
+ * A cycle among depends_on / maps_to_constraints / artifact-satisfies edges
+ * means no satisfaction or execution order exists, so the backward-reasoning and
+ * wave planner cannot produce a valid plan (and, before this guard, the critical-
+ * path walk could hang). Mirrors the always-on cycle error in `manifold validate`.
+ *
+ * Pure function — reads only the precomputed snapshot.featureConstraintCycles.
+ * Satisfies: RT-3 (pure check), RT-5 (concrete fix command), RT-7 (read-only)
+ */
+export function checkConstraintCycles(snapshot: RepoSnapshot): Problem[] {
+  const problems: Problem[] = [];
+  const cycles = snapshot.featureConstraintCycles ?? {};
+
+  for (const [feature, nodes] of Object.entries(cycles)) {
+    if (nodes.length === 0) continue;
+    problems.push({
+      check: 'constraint-cycles',
+      message: `Feature "${feature}" has a constraint dependency cycle (${nodes.join(' → ')}); no satisfaction order exists.`,
+      fix: `manifold validate ${feature}`,
+    });
+  }
+
+  return problems;
+}
+
+// ============================================================
 // runDoctor — Main entry point
 // Satisfies: RT-2 (one snapshot), RT-3 (all checks run), RT-7 (read-only)
 // ============================================================
 
 /**
- * Build the repo snapshot once, run all four checks against it,
+ * Build the repo snapshot once, run all five checks against it,
  * and return the aggregated report.
  *
  * Performs NO filesystem writes — strictly read-only.
  *
  * Satisfies: RT-2 (single snapshot built once)
- * Satisfies: RT-3 (all four checks always run)
+ * Satisfies: RT-3 (all five checks always run)
  * Satisfies: RT-7, S1 (no writes)
  */
 export function runDoctor(repoRoot: string): DoctorReport {
   // Build shared snapshot — ALL filesystem reads happen here
   const snapshot = buildSnapshot(repoRoot);
 
-  // Run all four checks against the snapshot — each is a pure function
-  // Satisfies: RT-3 (never abort at first failure — all four always run)
+  // Run all five checks against the snapshot — each is a pure function
+  // Satisfies: RT-3 (never abort at first failure — all five always run)
   const problems: Problem[] = [
     ...checkInvalidManifolds(snapshot),
+    ...checkConstraintCycles(snapshot),
     ...checkPluginSync(snapshot),
     ...checkStaleFingerprints(snapshot),
     ...checkFileDrift(snapshot),

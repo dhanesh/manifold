@@ -12,12 +12,15 @@ import { tmpdir } from 'os';
 import { spawnSync } from 'child_process';
 import {
   runDoctor,
+  buildSnapshot,
   checkInvalidManifolds,
+  checkConstraintCycles,
   checkPluginSync,
   checkStaleFingerprints,
   checkFileDrift,
   type Problem,
   type DoctorReport,
+  type RepoSnapshot,
 } from '../../cli/lib/doctor.js';
 
 // ─────────────────────────────────────────────
@@ -844,5 +847,80 @@ describe('manifold doctor — read-only guarantee (RT-7)', () => {
     } finally {
       rmSync(tmpDir, { recursive: true, force: true });
     }
+  });
+});
+
+// ─────────────────────────────────────────────
+// Check 5: constraint-cycles
+// ─────────────────────────────────────────────
+
+describe('checkConstraintCycles', () => {
+  const base: RepoSnapshot = {
+    manifoldDir: join('/tmp', 'x'),
+    features: [],
+    verifyHashes: {},
+    installFiles: [],
+    installFileHashes: {},
+    pluginFileHashes: {},
+    skillFingerprints: [],
+    currentFingerprints: [],
+  };
+
+  test('no problems when no cycles were recorded', () => {
+    expect(checkConstraintCycles({ ...base, featureConstraintCycles: {} })).toEqual([]);
+    expect(checkConstraintCycles(base)).toEqual([]); // field absent entirely
+  });
+
+  test('emits one constraint-cycles problem per cyclic feature, each with a fix', () => {
+    const problems = checkConstraintCycles({
+      ...base,
+      featureConstraintCycles: { foo: ['B1', 'B2'], bar: ['RT-1', 'RT-2'] },
+    });
+    expect(problems).toHaveLength(2);
+    expect(problems.every((p) => p.check === 'constraint-cycles')).toBe(true);
+    expect(problems.every((p) => p.fix.startsWith('manifold validate'))).toBe(true);
+    expect(problems[0].message).toContain('→');
+  });
+
+  test('ignores features with an empty cycle-node list', () => {
+    expect(checkConstraintCycles({ ...base, featureConstraintCycles: { foo: [] } })).toEqual([]);
+  });
+});
+
+describe('runDoctor — constraint cycle detection (end-to-end)', () => {
+  test('flags a feature whose constraints form a depends_on cycle', () => {
+    // Canonical JSON+MD format: depends_on must round-trip through loadFeature
+    // for the solver/cycle check to see the constraint dependency graph.
+    mkdirSync(join(TMP, '.manifold'), { recursive: true });
+    writeJson('.manifold/cyclic.json', {
+      schema_version: 3,
+      feature: 'cyclic',
+      phase: 'CONSTRAINED',
+      constraints: {
+        business: [
+          { id: 'B1', type: 'invariant', depends_on: ['B2'] },
+          { id: 'B2', type: 'invariant', depends_on: ['B1'] },
+        ],
+        technical: [],
+        user_experience: [],
+        security: [],
+        operational: [],
+      },
+      tensions: [],
+      anchors: { required_truths: [] },
+      convergence: { status: 'NOT_STARTED' },
+    });
+    writeTxt(
+      '.manifold/cyclic.md',
+      '# cyclic\n\n## Outcome\nDemonstrate a cycle\n\n## Constraints\n### Business\n#### B1: One\nFirst.\n\n#### B2: Two\nSecond.\n',
+    );
+
+    // The snapshot must record the cycle, and runDoctor must surface it.
+    const snapshot = buildSnapshot(TMP);
+    expect(snapshot.featureConstraintCycles?.cyclic?.sort()).toEqual(['B1', 'B2']);
+
+    const report = runDoctor(TMP);
+    expect(report.healthy).toBe(false);
+    expect(report.problems.some((p) => p.check === 'constraint-cycles')).toBe(true);
   });
 });

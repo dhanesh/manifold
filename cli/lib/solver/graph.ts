@@ -7,7 +7,7 @@
 import { Manifold, ConstraintGraph, ConstraintNode, ConstraintNodeStatus,
   ExecutionPlan, Wave, ParallelTask, ManifoldPhase, AnchorDocument } from '../parser';
 import { getCachedGraph, cacheGraph, graphCache } from './cache';
-import { generateWaves, findCriticalPathInGraph } from './planning';
+import { generateWaves, findCriticalPathInGraph, topologicalSort } from './planning';
 import { findPrerequisites, findBlockedNodes, getNodeConflicts,
   markNodeSatisfied, getGraphProgress, findReadyNodes, findBlockedByDependencies } from './queries';
 
@@ -434,6 +434,36 @@ export class ConstraintSolver {
 
     return { ready, blocked, byType, estimatedWaves };
   }
+}
+
+// ============================================================
+// Constraint Cycle Detection (shared by `validate` and `doctor`)
+// ============================================================
+
+export interface ConstraintCycleResult {
+  /** True when the constraint dependency graph contains a directed cycle. */
+  hasCycle: boolean;
+  /** Distinct nodes participating in a detected cycle (empty when acyclic). */
+  cycleNodes: string[];
+}
+
+/**
+ * Detect a dependency cycle in a manifold's constraint graph.
+ *
+ * A cycle among `depends_on` / `maps_to_constraints` / artifact-`satisfies`
+ * edges means no satisfaction (or execution) order exists — a structural defect
+ * the backward-reasoning and wave planner cannot resolve. Single source of truth
+ * for the cycle check surfaced by `manifold validate` and `manifold doctor`.
+ *
+ * Read-only: builds a throwaway graph (cache-bypassed) and never mutates state.
+ */
+export function detectConstraintCycle(
+  manifold: Manifold,
+  anchor?: AnchorDocument,
+): ConstraintCycleResult {
+  const graph = ConstraintSolver.createWithoutCache(manifold, anchor).getGraph();
+  const { hasCycle, cycleNodes } = topologicalSort(graph);
+  return { hasCycle, cycleNodes };
 }
 
 // ============================================================
