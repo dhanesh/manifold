@@ -41,8 +41,8 @@
   },
   {
     "path": "install/commands/m3-anchor.md",
-    "sha256": "579b9b77755929299dd52bb9e4cc5aedcc6048c520536e0b900f8fd9db927ab8",
-    "bytes": 10230
+    "sha256": "600f18c6ed48522f1234367d860d18799021b9de4621bfec7e52dd654f5cc4d1",
+    "bytes": 15380
   },
   {
     "path": "install/commands/m4-generate.md",
