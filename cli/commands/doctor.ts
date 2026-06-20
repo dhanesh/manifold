@@ -29,7 +29,7 @@ interface DoctorOptions {
 export function registerDoctorCommand(program: Command): void {
   program
     .command('doctor')
-    .description('Check repo health: detect invalid manifolds, plugin-sync drift, stale fingerprints, and file-drift')
+    .description('Check repo health: detect invalid manifolds, constraint dependency cycles, plugin-sync drift, stale fingerprints, and file-drift')
     .option('--json', 'Output as JSON')
     .action(async function(options: DoctorOptions) {
       // Use optsWithGlobals() to capture --json even when defined at parent level

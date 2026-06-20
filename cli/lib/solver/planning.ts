@@ -39,11 +39,19 @@ export function generateWaves(graph: ConstraintGraph): Wave[] {
       if (depsResolved) ready.push(id);
     }
 
+    let cycleBrokenNode: string | undefined;
     if (ready.length === 0 && remaining.size > 0) {
-      // Circular dependency detected - break the cycle
-      printWarning(`Circular dependency detected. Remaining: ${[...remaining].join(', ')}`);
-      // Take the first remaining item to break the cycle
-      ready.push([...remaining][0]);
+      // Circular dependency: no node has its dependencies satisfied, so a valid
+      // topological step is impossible. Break the cycle deterministically by
+      // forcing the remaining node with the FEWEST unresolved dependencies
+      // (closest to ready) rather than an arbitrary first element, and flag the
+      // wave so downstream consumers know the ordering is heuristic past here.
+      cycleBrokenNode = pickCycleBreakNode(graph, remaining);
+      printWarning(
+        `Circular dependency detected. Forcing ${cycleBrokenNode} to break the cycle. ` +
+          `Remaining: ${[...remaining].join(', ')}`
+      );
+      ready.push(cycleBrokenNode);
     }
 
     // Group by phase for human comprehension
@@ -54,6 +62,9 @@ export function generateWaves(graph: ConstraintGraph): Wave[] {
       phase,
       parallel_tasks: createParallelTasks(graph, ready),
       blocking_dependencies: [...satisfied],
+      ...(cycleBrokenNode
+        ? { cycle_broken: true, cycle_broken_node: cycleBrokenNode }
+        : {}),
     });
 
     for (const id of ready) {
@@ -78,8 +89,16 @@ export function findCriticalPathInGraph(graph: ConstraintGraph): string[] {
     predecessors.set(id, null);
   }
 
-  // Topological sort + longest path
-  const sorted = topologicalSortGraph(graph);
+  // Topological sort + longest path. Longest-path-via-topo-order is only valid
+  // on a DAG; if the graph has a cycle we still degrade to a best-effort path
+  // (so the visualiser keeps working) but warn that the result is approximate.
+  const { order: sorted, hasCycle, cycleNodes } = topologicalSort(graph);
+  if (hasCycle) {
+    printWarning(
+      `Critical path computed on a graph containing a dependency cycle ` +
+        `(${cycleNodes.join(' → ')}); result is approximate until the cycle is resolved.`
+    );
+  }
 
   for (const id of sorted) {
     const node = graph.nodes[id];
@@ -104,10 +123,14 @@ export function findCriticalPathInGraph(graph: ConstraintGraph): string[] {
     }
   }
 
-  // Reconstruct path
+  // Reconstruct path. Guard against revisiting a node: if the graph contains a
+  // cycle the predecessor chain can loop (A → B → A …), so stop the moment we
+  // re-encounter a node rather than spinning forever.
   const path: string[] = [];
+  const seen = new Set<string>();
   let current: string | null = endNode;
-  while (current) {
+  while (current && !seen.has(current)) {
+    seen.add(current);
     path.unshift(current);
     current = predecessors.get(current) || null;
   }
@@ -115,31 +138,91 @@ export function findCriticalPathInGraph(graph: ConstraintGraph): string[] {
   return path;
 }
 
+export interface TopoSortResult {
+  /** Best-effort topological order (dependencies before dependents). */
+  order: string[];
+  /** True when at least one directed cycle (back edge) was found. */
+  hasCycle: boolean;
+  /** Distinct nodes participating in a detected cycle (empty when acyclic). */
+  cycleNodes: string[];
+}
+
 /**
- * Topological sort of a constraint graph
+ * Topological sort of a constraint graph WITH cycle detection.
+ *
+ * Standard three-colour DFS: WHITE = unvisited, GREY = on the current recursion
+ * stack, BLACK = fully explored. Re-entering a GREY node is a back edge — i.e.
+ * a directed cycle — which is recorded in `cycleNodes` instead of being silently
+ * ignored (the previous single-`visited`-set version could not tell a back edge
+ * from a harmless cross/forward edge). A topological ordering is only defined for
+ * a DAG, so callers MUST check `hasCycle` before trusting `order`.
  */
-export function topologicalSortGraph(graph: ConstraintGraph): string[] {
-  const visited = new Set<string>();
-  const result: string[] = [];
+export function topologicalSort(graph: ConstraintGraph): TopoSortResult {
+  const WHITE = 0,
+    GREY = 1,
+    BLACK = 2;
+  const color = new Map<string, number>();
+  const order: string[] = [];
+  const cycleNodes = new Set<string>();
+  const stack: string[] = [];
+
+  for (const id of Object.keys(graph.nodes)) color.set(id, WHITE);
 
   const visit = (id: string) => {
-    if (visited.has(id)) return;
-    visited.add(id);
+    color.set(id, GREY);
+    stack.push(id);
 
     const node = graph.nodes[id];
     for (const dep of node.depends_on) {
-      if (graph.nodes[dep]) {
+      if (!graph.nodes[dep]) continue; // dangling dependency — not in this graph
+      const c = color.get(dep);
+      if (c === GREY) {
+        // Back edge: the cycle is the stack slice from `dep` to the current node.
+        const from = stack.indexOf(dep);
+        for (const n of stack.slice(from)) cycleNodes.add(n);
+      } else if (c === WHITE) {
         visit(dep);
       }
     }
-    result.push(id);
+
+    stack.pop();
+    color.set(id, BLACK);
+    order.push(id);
   };
 
   for (const id of Object.keys(graph.nodes)) {
-    visit(id);
+    if (color.get(id) === WHITE) visit(id);
   }
 
-  return result;
+  return { order, hasCycle: cycleNodes.size > 0, cycleNodes: [...cycleNodes] };
+}
+
+/**
+ * Back-compatible wrapper returning only the best-effort order.
+ * @deprecated Prefer {@link topologicalSort} so cycles can be detected.
+ */
+export function topologicalSortGraph(graph: ConstraintGraph): string[] {
+  return topologicalSort(graph).order;
+}
+
+/**
+ * Choose which node to force-schedule when a dependency cycle blocks all
+ * progress. Deterministic: the remaining node with the fewest UNRESOLVED
+ * dependencies (ties broken by id) so the break is reproducible and stays as
+ * close to a valid order as possible.
+ */
+function pickCycleBreakNode(graph: ConstraintGraph, remaining: Set<string>): string {
+  let best: string | null = null;
+  let bestUnresolved = Infinity;
+  for (const id of [...remaining].sort()) {
+    const node = graph.nodes[id];
+    const unresolved = node.depends_on.filter((d) => remaining.has(d)).length;
+    if (unresolved < bestUnresolved) {
+      bestUnresolved = unresolved;
+      best = id;
+    }
+  }
+  return best ?? [...remaining][0];
 }
 
 /**
