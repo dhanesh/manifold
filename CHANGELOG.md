@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.35.0](https://github.com/dhanesh/manifold/compare/v2.34.0...v2.35.0) (2026-06-20)
+
+### Features
+
+* **solver:** detect constraint dependency cycles in validate and doctor ([#13](https://github.com/dhanesh/manifold/issues/13)) ([0b7f462](https://github.com/dhanesh/manifold/commit/0b7f4627dd1000c4d5c7ae37df99a85330d88b56))
+
 ## [2.34.0](https://github.com/dhanesh/manifold/compare/v2.33.0...v2.34.0) (2026-06-15)
 
 ### Features
