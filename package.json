@@ -14,8 +14,8 @@
     "format:check": "biome format .",
     "lint": "biome lint .",
     "typecheck": "cd cli && bun run typecheck",
-    "check:advisory": "echo '--- advisory (non-blocking): typecheck + lint have pre-existing debt; promote to verify once clean ---' && (bun run typecheck || true) && (bun run lint || true)",
-    "verify": "bun run format:check && bun test && bun run build:all"
+    "check:advisory": "echo '--- advisory (non-blocking): lint has pre-existing debt; promote to verify once clean ---' && (bun run lint || true)",
+    "verify": "bun run format:check && bun run typecheck && bun test && bun run build:all"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.2",

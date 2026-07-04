@@ -11,10 +11,10 @@ bun run format                  # Auto-fix formatting (Biome)
 ```
 
 `bun run verify` is the single entrypoint an agent or contributor runs before a PR: it
-checks formatting (Biome), runs the full test suite, and rebuilds all artifacts (catching
-plugin-sync drift). `bun run check:advisory` additionally runs typecheck + lint, which are
-**advisory** today due to pre-existing debt — they report but don't block. Promote them into
-`verify` once clean.
+checks formatting (Biome), typechecks (`tsc --noEmit`), runs the full test suite, and
+rebuilds all artifacts (catching plugin-sync drift). `bun run check:advisory` runs lint,
+which is **advisory** today due to pre-existing debt — it reports but doesn't block. Promote
+it into `verify` once clean.
 
 ## Commit Convention
 

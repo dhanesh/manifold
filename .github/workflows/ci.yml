@@ -21,11 +21,10 @@ jobs:
     with:
       fail-on-gaps: false  # Set to true to fail on non-blocking gaps
 
-  # Enforce code formatting (Biome). Formatting is the load-bearing, deterministic
-  # half of house style — it gates. Linting + typecheck are advisory for now
-  # (pre-existing debt); promote them to blocking once clean.
-  format:
-    name: Format Check
+  # Static quality gate: formatting (Biome) + typecheck both block. Linting is
+  # advisory for now (pre-existing debt); promote it to blocking once clean.
+  quality:
+    name: Format & Typecheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -43,7 +42,10 @@ jobs:
       - name: Check formatting
         run: bun run format:check
 
-      - name: Advisory checks (non-blocking)
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Lint (advisory, non-blocking)
         continue-on-error: true
         run: bun run check:advisory
 
