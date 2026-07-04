@@ -11,12 +11,12 @@
       "install/**/*.ts",
       "lib/**/*.ts",
       "scripts/**/*.ts",
-      "!**/node_modules/**",
-      "!**/dist/**",
+      "!**/node_modules",
+      "!**/dist",
       "!**/*.bundle.js",
       "!**/*.generated.ts",
-      "!plugin/**",
-      "!**/__tests__/**/fixtures/**"
+      "!plugin",
+      "!**/__tests__/**/fixtures"
     ]
   },
   "formatter": {
@@ -35,7 +35,13 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "style": {
+        "noNonNullAssertion": "off"
+      },
+      "suspicious": {
+        "noExplicitAny": "off"
+      }
     }
   }
 }

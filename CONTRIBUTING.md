@@ -6,15 +6,14 @@
 
 ```bash
 bun install                     # Install dependencies (includes commit hooks)
-bun run verify                  # One command: format check + tests + build (the pre-PR gate)
+bun run verify                  # One command: format + lint + typecheck + tests + build
 bun run format                  # Auto-fix formatting (Biome)
 ```
 
 `bun run verify` is the single entrypoint an agent or contributor runs before a PR: it
-checks formatting (Biome), typechecks (`tsc --noEmit`), runs the full test suite, and
-rebuilds all artifacts (catching plugin-sync drift). `bun run check:advisory` runs lint,
-which is **advisory** today due to pre-existing debt — it reports but doesn't block. Promote
-it into `verify` once clean.
+checks formatting and lint (Biome), typechecks (`tsc --noEmit`), runs the full test suite,
+and rebuilds all artifacts (catching plugin-sync drift). All five gate — CI runs the same
+checks. `bun run format` auto-fixes formatting; `bun run lint` reports lint issues.
 
 ## Commit Convention
 
