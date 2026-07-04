@@ -5,32 +5,16 @@
  */
 
 import type { Command } from 'commander';
-import {
-  findManifoldDir,
-  loadFeature,
-  listFeatures
-} from '../lib/parser.js';
-import {
-  println,
-  printError,
-  formatHeader,
-  formatKeyValue,
-  style,
-  toJSON
-} from '../lib/output.js';
-import {
-  ConstraintSolver,
-  type ExecutionPlan,
-  exportGraphDot
-} from '../lib/solver.js';
+import { findManifoldDir, loadFeature, listFeatures } from '../lib/parser.js';
+import { println, printError, formatHeader, style, toJSON } from '../lib/output.js';
+import { ConstraintSolver, type ExecutionPlan, exportGraphDot } from '../lib/solver.js';
 import {
   graphToMermaid,
   executionPlanToMermaid,
   backwardReasoningToMermaid,
-  renderMermaidToTerminal,
   renderGraphToTerminal,
   renderPlanToTerminal,
-  renderBackwardToTerminal
+  renderBackwardToTerminal,
 } from '../lib/mermaid.js';
 
 interface SolveOptions {
@@ -97,8 +81,11 @@ async function solveCommand(feature: string | undefined, options: SolveOptions):
   // Load the feature
   const data = loadFeature(manifoldDir, feature);
 
-  if (!data || !data.manifold) {
-    printError(`Feature "${feature}" not found`, `Available features: ${listFeatures(manifoldDir).join(', ') || 'none'}`);
+  if (!data?.manifold) {
+    printError(
+      `Feature "${feature}" not found`,
+      `Available features: ${listFeatures(manifoldDir).join(', ') || 'none'}`
+    );
     return 1;
   }
 
@@ -156,7 +143,7 @@ function handleBackwardReasoning(
 
   if (!targetId) {
     // Find outcome node or first required truth
-    const rts = Object.values(graph.nodes).filter(n => n.type === 'required_truth');
+    const rts = Object.values(graph.nodes).filter((n) => n.type === 'required_truth');
     if (rts.length > 0) {
       targetId = rts[0].id;
     } else {
@@ -169,13 +156,15 @@ function handleBackwardReasoning(
   const requirements = solver.whatMustBeTrue(targetId);
 
   if (options.json) {
-    println(toJSON({
-      feature,
-      target: targetId,
-      reasoning: 'backward',
-      requirements,
-      dependency_chain: buildDependencyChain(solver, targetId)
-    }));
+    println(
+      toJSON({
+        feature,
+        target: targetId,
+        reasoning: 'backward',
+        requirements,
+        dependency_chain: buildDependencyChain(solver, targetId),
+      })
+    );
   } else if (options.mermaid) {
     // Satisfies: B3 (raw Mermaid export for backward reasoning)
     println(backwardReasoningToMermaid(graph, targetId, requirements));
@@ -269,7 +258,7 @@ function printBackwardAnalysis(
   // Show critical path
   const criticalPath = solver.findCriticalPath();
   println(style.bold('CRITICAL PATH:'));
-  println(criticalPath.map(id => style.error(id)).join(' → '));
+  println(criticalPath.map((id) => style.error(id)).join(' → '));
 
   println();
 
@@ -291,11 +280,16 @@ function printBackwardAnalysis(
  */
 function getTypeIcon(type: string): string {
   switch (type) {
-    case 'constraint': return '▣';
-    case 'tension': return '◇';
-    case 'required_truth': return '◎';
-    case 'artifact': return '□';
-    default: return '○';
+    case 'constraint':
+      return '▣';
+    case 'tension':
+      return '◇';
+    case 'required_truth':
+      return '◎';
+    case 'artifact':
+      return '□';
+    default:
+      return '○';
   }
 }
 
@@ -310,15 +304,15 @@ function formatPlanForJson(plan: ExecutionPlan, feature: string): object {
     statistics: {
       total_waves: plan.waves.length,
       total_tasks: plan.waves.reduce((sum, w) => sum + w.parallel_tasks.length, 0),
-      parallelization_factor: plan.parallelization_factor.toFixed(2)
+      parallelization_factor: plan.parallelization_factor.toFixed(2),
     },
     critical_path: plan.critical_path,
-    waves: plan.waves.map(w => ({
+    waves: plan.waves.map((w) => ({
       number: w.number,
       phase: w.phase,
       task_count: w.parallel_tasks.length,
       blocking_dependencies: w.blocking_dependencies,
-      tasks: w.parallel_tasks
-    }))
+      tasks: w.parallel_tasks,
+    })),
   };
 }

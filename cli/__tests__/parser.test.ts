@@ -4,11 +4,7 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import {
-  parseYamlSafe,
-  detectSchemaVersion,
-  type Manifold
-} from '../lib/parser.js';
+import { parseYamlSafe, detectSchemaVersion, type Manifold } from '../lib/parser.js';
 
 describe('parseYamlSafe', () => {
   test('parses valid YAML', () => {
@@ -55,7 +51,7 @@ describe('detectSchemaVersion', () => {
     const manifold: Manifold = {
       schema_version: 2,
       feature: 'test',
-      phase: 'INITIALIZED'
+      phase: 'INITIALIZED',
     };
     expect(detectSchemaVersion(manifold)).toBe(2);
   });
@@ -64,7 +60,7 @@ describe('detectSchemaVersion', () => {
     const manifold: Manifold = {
       schema_version: 1,
       feature: 'test',
-      phase: 'INITIALIZED'
+      phase: 'INITIALIZED',
     };
     expect(detectSchemaVersion(manifold)).toBe(1);
   });
@@ -73,7 +69,7 @@ describe('detectSchemaVersion', () => {
     const manifold: Manifold = {
       feature: 'test',
       phase: 'INITIALIZED',
-      iterations: [{ number: 1, phase: 'init', timestamp: '', result: 'ok' }]
+      iterations: [{ number: 1, phase: 'init', timestamp: '', result: 'ok' }],
     };
     expect(detectSchemaVersion(manifold)).toBe(2);
   });
@@ -82,7 +78,7 @@ describe('detectSchemaVersion', () => {
     const manifold: Manifold = {
       feature: 'test',
       phase: 'INITIALIZED',
-      convergence: { status: 'IN_PROGRESS' }
+      convergence: { status: 'IN_PROGRESS' },
     };
     expect(detectSchemaVersion(manifold)).toBe(2);
   });
@@ -91,7 +87,7 @@ describe('detectSchemaVersion', () => {
     const manifold: Manifold = {
       feature: 'test',
       phase: 'CONSTRAINED',
-      constraints: { business: [] }
+      constraints: { business: [] },
     };
     expect(detectSchemaVersion(manifold)).toBe(1);
   });
@@ -100,7 +96,7 @@ describe('detectSchemaVersion', () => {
     const manifold: Manifold = {
       schema_version: 3,
       feature: 'test',
-      phase: 'INITIALIZED'
+      phase: 'INITIALIZED',
     };
     expect(detectSchemaVersion(manifold)).toBe(3);
   });
@@ -114,8 +110,8 @@ describe('detectSchemaVersion', () => {
         generated_at: '2026-01-01T00:00:00Z',
         feature: 'test',
         nodes: {},
-        edges: { dependencies: [], conflicts: [], satisfies: [] }
-      }
+        edges: { dependencies: [], conflicts: [], satisfies: [] },
+      },
     };
     expect(detectSchemaVersion(manifold)).toBe(3);
   });
@@ -124,7 +120,7 @@ describe('detectSchemaVersion', () => {
     const manifold: Manifold = {
       feature: 'test',
       phase: 'INITIALIZED',
-      evidence: [{ type: 'file_exists', path: 'test.ts', status: 'VERIFIED' }]
+      evidence: [{ type: 'file_exists', path: 'test.ts', status: 'VERIFIED' }],
     };
     expect(detectSchemaVersion(manifold)).toBe(3);
   });

@@ -4,9 +4,8 @@
  * Required Truths: RT-5 (Resource limits are monitored and respected)
  */
 
-import { execSync } from 'child_process';
-import { statSync } from 'fs';
-import * as os from 'os';
+import { execSync } from 'node:child_process';
+import * as os from 'node:os';
 
 export interface ResourceStatus {
   disk: DiskStatus;
@@ -16,23 +15,23 @@ export interface ResourceStatus {
 }
 
 export interface DiskStatus {
-  available: number;      // bytes
-  total: number;          // bytes
-  usedPercent: number;    // 0-100
+  available: number; // bytes
+  total: number; // bytes
+  usedPercent: number; // 0-100
   sufficient: boolean;
 }
 
 export interface MemoryStatus {
-  available: number;      // bytes
-  total: number;          // bytes
-  usedPercent: number;    // 0-100
+  available: number; // bytes
+  total: number; // bytes
+  usedPercent: number; // 0-100
   sufficient: boolean;
 }
 
 export interface CpuStatus {
-  loadAverage: number[];  // 1, 5, 15 minute averages
+  loadAverage: number[]; // 1, 5, 15 minute averages
   cores: number;
-  loadPercent: number;    // relative to cores
+  loadPercent: number; // relative to cores
   sufficient: boolean;
 }
 
@@ -52,12 +51,12 @@ export interface ResourceThresholds {
 }
 
 const DEFAULT_THRESHOLDS: ResourceThresholds = {
-  minDiskGB: 2,                    // Minimum 2GB free disk
-  maxDiskUsagePercent: 90,         // Max 90% disk usage
-  minMemoryGB: 1,                  // Minimum 1GB free memory
-  maxMemoryUsagePercent: 85,       // Max 85% memory usage
-  maxCpuLoadPercent: 80,           // Max 80% CPU load
-  worktreeSizeEstimateMB: 500,     // Estimate 500MB per worktree
+  minDiskGB: 2, // Minimum 2GB free disk
+  maxDiskUsagePercent: 90, // Max 90% disk usage
+  minMemoryGB: 1, // Minimum 1GB free memory
+  maxMemoryUsagePercent: 85, // Max 85% memory usage
+  maxCpuLoadPercent: 80, // Max 80% CPU load
+  worktreeSizeEstimateMB: 500, // Estimate 500MB per worktree
 };
 
 /**
@@ -111,8 +110,7 @@ export class ResourceMonitor {
 
       const minRequired = this.thresholds.minDiskGB * 1024 * 1024 * 1024;
       const sufficient =
-        available >= minRequired &&
-        usedPercent <= this.thresholds.maxDiskUsagePercent;
+        available >= minRequired && usedPercent <= this.thresholds.maxDiskUsagePercent;
 
       return { available, total, usedPercent, sufficient };
     } catch (error) {
@@ -138,8 +136,7 @@ export class ResourceMonitor {
 
     const minRequired = this.thresholds.minMemoryGB * 1024 * 1024 * 1024;
     const sufficient =
-      available >= minRequired &&
-      usedPercent <= this.thresholds.maxMemoryUsagePercent;
+      available >= minRequired && usedPercent <= this.thresholds.maxMemoryUsagePercent;
 
     return { available, total, usedPercent, sufficient };
   }
@@ -200,9 +197,13 @@ export class ResourceMonitor {
     // If recommended is 1 or less, provide a reason
     if (recommended <= 1) {
       const bottleneck =
-        diskBasedConcurrency <= 1 ? 'disk space' :
-        memoryBasedConcurrency <= 1 ? 'memory' :
-        cpuBasedConcurrency <= 1 ? 'CPU capacity' : 'resource limits';
+        diskBasedConcurrency <= 1
+          ? 'disk space'
+          : memoryBasedConcurrency <= 1
+            ? 'memory'
+            : cpuBasedConcurrency <= 1
+              ? 'CPU capacity'
+              : 'resource limits';
 
       return {
         canParallelize: false,
@@ -227,7 +228,7 @@ export class ResourceMonitor {
     if (!status.overall.canParallelize) {
       return {
         allowed: false,
-        reason: status.overall.reason || 'Resources insufficient for parallelization'
+        reason: status.overall.reason || 'Resources insufficient for parallelization',
       };
     }
 
@@ -271,10 +272,7 @@ export class ResourceMonitor {
    * Watch resources and emit warnings
    * Returns cleanup function
    */
-  startWatching(
-    onWarning: (message: string) => void,
-    intervalMs: number = 30000
-  ): () => void {
+  startWatching(onWarning: (message: string) => void, intervalMs: number = 30000): () => void {
     let lastStatus: ResourceStatus | null = null;
 
     const check = async () => {

@@ -21,8 +21,7 @@ export interface Theme {
 
 const FONT_SANS =
   '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", system-ui, sans-serif';
-const FONT_MONO =
-  '"SF Mono", ui-monospace, "Menlo", "Cascadia Code", Consolas, monospace';
+const FONT_MONO = '"SF Mono", ui-monospace, "Menlo", "Cascadia Code", Consolas, monospace';
 
 const SHARED_TOKENS: ThemeVars = {
   '--font-sans': FONT_SANS,
@@ -243,7 +242,7 @@ export const NORD_DARK: Theme = {
 };
 
 const registry = new Map<string, Theme>();
-[APPLE_LIGHT, APPLE_DARK, NORD_DARK].forEach((t) => registry.set(t.name, t));
+for (const t of [APPLE_LIGHT, APPLE_DARK, NORD_DARK]) registry.set(t.name, t);
 
 export function registerTheme(theme: Theme): void {
   if (!theme?.name || !theme.vars) {

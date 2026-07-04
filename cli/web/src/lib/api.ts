@@ -59,7 +59,17 @@ export interface ManifoldJson {
   schema_version: number;
   domain: 'software' | 'non-software';
   outcome?: string;
-  constraints?: Record<string, Array<{ id: string; type?: string; threshold?: unknown; quality?: unknown; source?: string; challenger?: string }>>;
+  constraints?: Record<
+    string,
+    Array<{
+      id: string;
+      type?: string;
+      threshold?: unknown;
+      quality?: unknown;
+      source?: string;
+      challenger?: string;
+    }>
+  >;
   tensions?: Array<{
     id: string;
     type?: string;
@@ -70,10 +80,29 @@ export interface ManifoldJson {
     validation_criteria?: string[];
   }>;
   anchors?: {
-    required_truths?: Array<{ id: string; status?: string; maps_to?: string[]; parent?: string; relevance?: number; confidence?: number; evidence?: Array<{ id?: string; type?: string; status?: string; path?: string }> }>;
-    binding_constraint?: { required_truth_id?: string; reason?: string; dependency_chain?: string[] };
+    required_truths?: Array<{
+      id: string;
+      status?: string;
+      maps_to?: string[];
+      parent?: string;
+      relevance?: number;
+      confidence?: number;
+      evidence?: Array<{ id?: string; type?: string; status?: string; path?: string }>;
+    }>;
+    binding_constraint?: {
+      required_truth_id?: string;
+      reason?: string;
+      dependency_chain?: string[];
+    };
     recommended_option?: string;
-    solution_options?: Array<{ id: string; name: string; reversibility?: string; satisfies?: string[]; gaps?: string[]; note?: string }>;
+    solution_options?: Array<{
+      id: string;
+      name: string;
+      reversibility?: string;
+      satisfies?: string[];
+      gaps?: string[];
+      note?: string;
+    }>;
   };
   convergence?: { status?: string; summary?: string; blockers?: string[] };
   iterations?: Array<{ number: number; phase: string; result: string; timestamp?: string }>;
@@ -94,9 +123,7 @@ export async function fetchManifoldList(): Promise<ManifoldSummary[]> {
   return body.manifolds;
 }
 
-export async function fetchManifoldDetail(
-  feature: string,
-): Promise<ManifoldDetail> {
+export async function fetchManifoldDetail(feature: string): Promise<ManifoldDetail> {
   const res = await fetch(`./api/manifolds/${encodeURIComponent(feature)}`);
   if (!res.ok) throw new Error(`Failed to load manifold "${feature}" (${res.status})`);
   return (await res.json()) as ManifoldDetail;

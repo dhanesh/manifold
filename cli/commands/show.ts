@@ -6,7 +6,6 @@
  */
 
 import type { Command } from 'commander';
-import { join } from 'path';
 import { findManifoldDir, listFeatures, loadFeature } from '../lib/parser.js';
 import {
   loadManifoldByFeature,
@@ -15,19 +14,9 @@ import {
 } from '../lib/manifold-linker.js';
 import type { ManifoldStructure } from '../lib/structure-schema.js';
 import type { ManifoldContent } from '../lib/markdown-parser.js';
-import {
-  println,
-  printError,
-  style,
-  toJSON,
-  formatHeader,
-} from '../lib/output.js';
+import { println, printError, style, toJSON, formatHeader } from '../lib/output.js';
 import { ConstraintSolver } from '../lib/solver.js';
-import {
-  miniGraphToMermaid,
-  renderMermaidToTerminal,
-  renderGraphToTerminal
-} from '../lib/mermaid.js';
+import { miniGraphToMermaid, renderGraphToTerminal } from '../lib/mermaid.js';
 
 interface ShowOptions {
   json?: boolean;
@@ -120,11 +109,13 @@ async function showCommand(feature: string | undefined, options: ShowOptions): P
 
   if (format === 'yaml') {
     if (options.json) {
-      println(toJSON({
-        feature,
-        format: 'yaml',
-        message: 'Use manifold migrate to convert to JSON+Markdown format',
-      }));
+      println(
+        toJSON({
+          feature,
+          format: 'yaml',
+          message: 'Use manifold migrate to convert to JSON+Markdown format',
+        })
+      );
     } else {
       println(`  ${style.warning('Manifold is in legacy YAML format')}`);
       println(`  ${style.dim('Run:')} manifold migrate ${feature} ${style.dim('to convert')}`);
@@ -220,23 +211,17 @@ function printStructure(structure: ManifoldStructure): void {
 
   println();
 
-  // Constraints summary
+  // Constraints summary — domain-agnostic: iterate whatever category keys
+  // exist (software or non-software), rather than hardcoding software ones.
   if (structure.constraints) {
-    const counts = {
-      business: structure.constraints.business?.length || 0,
-      technical: structure.constraints.technical?.length || 0,
-      user_experience: structure.constraints.user_experience?.length || 0,
-      security: structure.constraints.security?.length || 0,
-      operational: structure.constraints.operational?.length || 0,
-    };
-    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    const entries = Object.entries(structure.constraints) as Array<[string, Array<{ id: string }>]>;
+    const total = entries.reduce((sum, [, arr]) => sum + (arr?.length || 0), 0);
 
     println(`  ${style.dim('Constraints:')} ${total} total`);
-    for (const [category, count] of Object.entries(counts)) {
+    for (const [category, arr] of entries) {
+      const count = arr?.length || 0;
       if (count > 0) {
-        const ids = structure.constraints[category as keyof typeof structure.constraints]
-          ?.map((c) => c.id)
-          .join(', ');
+        const ids = arr.map((c) => c.id).join(', ');
         println(`    ${category}: ${count} (${ids})`);
       }
     }
@@ -286,7 +271,11 @@ function printStructure(structure: ManifoldStructure): void {
  * Uses parser path to build graph from manifold data
  * Satisfies: B1, B3, RT-4
  */
-function printConstraintMap(manifoldDir: string, feature: string, mode: 'ascii' | 'mermaid'): number {
+function printConstraintMap(
+  manifoldDir: string,
+  feature: string,
+  mode: 'ascii' | 'mermaid'
+): number {
   const data = loadFeature(manifoldDir, feature);
 
   if (!data?.manifold) {
@@ -338,7 +327,7 @@ function printContent(content: ManifoldContent): void {
     for (const [id, c] of content.constraints) {
       println(`    ${style.feature(id)}: ${c.title}`);
       if (c.statement) {
-        const preview = c.statement.length > 80 ? c.statement.slice(0, 77) + '...' : c.statement;
+        const preview = c.statement.length > 80 ? `${c.statement.slice(0, 77)}...` : c.statement;
         println(`      ${style.dim(preview)}`);
       }
     }
@@ -351,7 +340,8 @@ function printContent(content: ManifoldContent): void {
     for (const [id, t] of content.tensions) {
       println(`    ${style.feature(id)}: ${t.title}`);
       if (t.description) {
-        const preview = t.description.length > 80 ? t.description.slice(0, 77) + '...' : t.description;
+        const preview =
+          t.description.length > 80 ? `${t.description.slice(0, 77)}...` : t.description;
         println(`      ${style.dim(preview)}`);
       }
     }
@@ -364,7 +354,7 @@ function printContent(content: ManifoldContent): void {
     for (const [id, rt] of content.requiredTruths) {
       println(`    ${style.feature(id)}: ${rt.title}`);
       if (rt.statement) {
-        const preview = rt.statement.length > 80 ? rt.statement.slice(0, 77) + '...' : rt.statement;
+        const preview = rt.statement.length > 80 ? `${rt.statement.slice(0, 77)}...` : rt.statement;
         println(`      ${style.dim(preview)}`);
       }
     }

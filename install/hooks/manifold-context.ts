@@ -2,8 +2,8 @@
 // Manifold PreCompact Hook
 // Injects .manifold/ context before compaction to preserve state across sessions
 
-import { existsSync, readdirSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 interface ManifoldData {
   feature: string;
@@ -12,8 +12,8 @@ interface ManifoldData {
   constraints?: {
     business?: any[];
     technical?: any[];
-    user_experience?: any[];  // Canonical schema
-    ux?: any[];               // Deprecated - for backward compatibility
+    user_experience?: any[]; // Canonical schema
+    ux?: any[]; // Deprecated - for backward compatibility
     security?: any[];
     operational?: any[];
   };
@@ -60,7 +60,8 @@ function summarizeConstraints(constraints: ManifoldData['constraints']): string 
   }
 
   if (constraints.security?.length) counts.push(`Security: ${constraints.security.length}`);
-  if (constraints.operational?.length) counts.push(`Operational: ${constraints.operational.length}`);
+  if (constraints.operational?.length)
+    counts.push(`Operational: ${constraints.operational.length}`);
 
   return counts.length > 0 ? counts.join(', ') : 'None discovered yet';
 }
@@ -98,13 +99,16 @@ function loadManifoldContext(): string | null {
     return null; // No manifold in this project
   }
 
-  const files = readdirSync(manifoldDir).filter(f => f.endsWith('.yaml') || f.endsWith('.json'));
+  const files = readdirSync(manifoldDir).filter((f) => f.endsWith('.yaml') || f.endsWith('.json'));
   if (files.length === 0) {
     return null;
   }
 
   // Group files by feature
-  const features = new Map<string, { manifold?: ManifoldData; anchor?: AnchorData; verify?: any }>();
+  const features = new Map<
+    string,
+    { manifold?: ManifoldData; anchor?: AnchorData; verify?: any }
+  >();
 
   for (const file of files) {
     const content = readFileSync(join(manifoldDir, file), 'utf-8');
@@ -208,7 +212,6 @@ Use /manifold:m-status for detailed state. Continue from the "Next" action for e
 </system-reminder>`;
 
     console.log(output);
-
   } catch (error) {
     // Never crash hooks
     console.error('[Manifold] Context loading error:', error);

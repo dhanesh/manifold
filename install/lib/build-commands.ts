@@ -12,8 +12,8 @@
  * Usage: bun run install/lib/build-commands.ts [--verify]
  */
 
-import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
-import { join, basename, parse as parsePath } from 'path';
+import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { join, basename, parse as parsePath } from 'node:path';
 
 // ============================================================
 // Types
@@ -48,8 +48,10 @@ function parseFrontmatter(content: string): { meta: Record<string, string>; body
       const key = line.slice(0, colonIdx).trim();
       let value = line.slice(colonIdx + 1).trim();
       // Strip surrounding quotes
-      if ((value.startsWith('"') && value.endsWith('"')) ||
-          (value.startsWith("'") && value.endsWith("'"))) {
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
         value = value.slice(1, -1);
         // Unescape YAML double-quoted string escapes
         value = value.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
@@ -172,7 +174,7 @@ function verifyOutputs(geminiDir: string, codexDir: string, expectedCount: numbe
     console.error(`✗ Gemini output directory missing: ${geminiDir}`);
     ok = false;
   } else {
-    const tomlFiles = readdirSync(geminiDir).filter(f => f.endsWith('.toml'));
+    const tomlFiles = readdirSync(geminiDir).filter((f) => f.endsWith('.toml'));
     if (tomlFiles.length !== expectedCount) {
       console.error(`✗ Expected ${expectedCount} Gemini .toml files, found ${tomlFiles.length}`);
       ok = false;
@@ -187,17 +189,21 @@ function verifyOutputs(geminiDir: string, codexDir: string, expectedCount: numbe
     ok = false;
   } else {
     // Count only command-derived skills (exclude manually-created manifold-context, manifold-suggest)
-    const skillDirs = readdirSync(codexDir).filter(d =>
+    const skillDirs = readdirSync(codexDir).filter((d) =>
       existsSync(join(codexDir, d, 'SKILL.md'))
     );
-    const commandSkillDirs = skillDirs.filter(d =>
-      d.startsWith('manifold-m') || d === 'manifold-parallel'
+    const commandSkillDirs = skillDirs.filter(
+      (d) => d.startsWith('manifold-m') || d === 'manifold-parallel'
     );
     if (commandSkillDirs.length !== expectedCount) {
-      console.error(`✗ Expected ${expectedCount} Codex command skill dirs, found ${commandSkillDirs.length}`);
+      console.error(
+        `✗ Expected ${expectedCount} Codex command skill dirs, found ${commandSkillDirs.length}`
+      );
       ok = false;
     } else {
-      console.log(`✓ ${commandSkillDirs.length} Codex command skill directories (${skillDirs.length} total with hook skills)`);
+      console.log(
+        `✓ ${commandSkillDirs.length} Codex command skill directories (${skillDirs.length} total with hook skills)`
+      );
     }
   }
 
@@ -211,12 +217,12 @@ function verifyOutputs(geminiDir: string, codexDir: string, expectedCount: numbe
 export function buildCommands(
   sourceDir: string,
   geminiOutDir: string,
-  codexOutDir: string,
+  codexOutDir: string
 ): { geminiCount: number; codexCount: number } {
   // Read all canonical .md commands
   const mdFiles = readdirSync(sourceDir)
-    .filter(f => f.endsWith('.md'))
-    .map(f => join(sourceDir, f));
+    .filter((f) => f.endsWith('.md'))
+    .map((f) => join(sourceDir, f));
 
   const commands = mdFiles.map(parseCanonicalCommand);
 
@@ -241,12 +247,11 @@ if (import.meta.main) {
   if (isVerify) {
     // Count expected command files (m* + parallel, excluding SCHEMA_*)
     const expectedCount = readdirSync(sourceDir)
-      .filter(f => f.endsWith('.md'))
-      .filter(f => {
+      .filter((f) => f.endsWith('.md'))
+      .filter((f) => {
         const name = parsePath(f).name;
         return name.startsWith('m') || name === 'parallel';
-      })
-      .length;
+      }).length;
 
     const ok = verifyOutputs(geminiOutDir, codexOutDir, expectedCount);
     process.exit(ok ? 0 : 1);

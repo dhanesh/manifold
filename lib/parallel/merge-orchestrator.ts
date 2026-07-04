@@ -4,9 +4,9 @@
  * Required Truths: RT-4 (Results from parallel agents can be merged automatically)
  */
 
-import { execSync, exec } from 'child_process';
-import { promisify } from 'util';
-import { WorktreeInfo, WorktreeManager } from './worktree-manager';
+import { execSync, exec } from 'node:child_process';
+import { promisify } from 'node:util';
+import type { WorktreeInfo, WorktreeManager } from './worktree-manager';
 
 const execAsync = promisify(exec);
 
@@ -61,8 +61,8 @@ export class MergeOrchestrator {
     const allFilesChanged = new Set<string>();
 
     // Filter to only completed worktrees
-    const completedWorktrees = worktrees.filter(w => w.status === 'completed');
-    const failedWorktrees = worktrees.filter(w => w.status === 'failed');
+    const completedWorktrees = worktrees.filter((w) => w.status === 'completed');
+    const failedWorktrees = worktrees.filter((w) => w.status === 'failed');
 
     // Skip failed worktrees
     for (const worktree of failedWorktrees) {
@@ -89,7 +89,7 @@ export class MergeOrchestrator {
         if (result.success) {
           merged.push(result);
           totalCommits += result.commits;
-          result.filesChanged.forEach(f => allFilesChanged.add(f));
+          for (const f of result.filesChanged) allFilesChanged.add(f);
         } else {
           failed.push(result);
         }
@@ -118,10 +118,7 @@ export class MergeOrchestrator {
   /**
    * Merge a single branch from worktree
    */
-  async mergeBranch(
-    worktree: WorktreeInfo,
-    strategy: MergeStrategy
-  ): Promise<MergeResult> {
+  async mergeBranch(worktree: WorktreeInfo, strategy: MergeStrategy): Promise<MergeResult> {
     const { branch, taskId } = worktree;
 
     try {
@@ -147,8 +144,6 @@ export class MergeOrchestrator {
         case 'rebase':
           await this.rebaseMerge(branch);
           break;
-
-        case 'sequential':
         default:
           await this.sequentialMerge(branch);
           break;
@@ -183,10 +178,7 @@ export class MergeOrchestrator {
   async canMergeSafely(worktree: WorktreeInfo): Promise<{ safe: boolean; reason?: string }> {
     try {
       // Try a dry-run merge
-      await execAsync(
-        `git merge --no-commit --no-ff "${worktree.branch}"`,
-        { cwd: this.baseDir }
-      );
+      await execAsync(`git merge --no-commit --no-ff "${worktree.branch}"`, { cwd: this.baseDir });
 
       // Abort the test merge
       await execAsync('git merge --abort', { cwd: this.baseDir });
@@ -200,7 +192,8 @@ export class MergeOrchestrator {
       if (errorMsg.includes('CONFLICT')) {
         return {
           safe: false,
-          reason: 'Merge would result in conflicts. File overlap detection may have missed some files.',
+          reason:
+            'Merge would result in conflicts. File overlap detection may have missed some files.',
         };
       }
 
@@ -215,10 +208,9 @@ export class MergeOrchestrator {
    * Sequential merge (preserve commit history)
    */
   private async sequentialMerge(branch: string): Promise<void> {
-    await execAsync(
-      `git merge --no-ff "${branch}" -m "Merge parallel task: ${branch}"`,
-      { cwd: this.baseDir }
-    );
+    await execAsync(`git merge --no-ff "${branch}" -m "Merge parallel task: ${branch}"`, {
+      cwd: this.baseDir,
+    });
   }
 
   /**
@@ -290,10 +282,7 @@ export class MergeOrchestrator {
    * Satisfies: O4 (Failed parallel task must not corrupt main worktree)
    */
   async rollback(commits: number = 1): Promise<void> {
-    await execAsync(
-      `git reset --hard HEAD~${commits}`,
-      { cwd: this.baseDir }
-    );
+    await execAsync(`git reset --hard HEAD~${commits}`, { cwd: this.baseDir });
   }
 
   /**
@@ -349,13 +338,10 @@ export class MergeOrchestrator {
   /**
    * Cleanup branches after successful merge
    */
-  async cleanupBranches(
-    worktreeManager: WorktreeManager,
-    results: MergeResult[]
-  ): Promise<void> {
+  async cleanupBranches(worktreeManager: WorktreeManager, results: MergeResult[]): Promise<void> {
     for (const result of results) {
       if (result.success) {
-        await worktreeManager.remove(result.taskId).catch(error => {
+        await worktreeManager.remove(result.taskId).catch((error) => {
           console.error(`Failed to cleanup worktree for ${result.taskId}:`, error);
         });
       }

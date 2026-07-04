@@ -3,10 +3,7 @@
  * Satisfies: T1, T3 (< 500 lines), T6, RT-2, RT-3
  */
 
-import {
-  VALID_NODE_TYPES,
-  VALID_NODE_STATUSES,
-} from '../structure-schema.js';
+import { VALID_NODE_TYPES, VALID_NODE_STATUSES } from '../structure-schema.js';
 import type { ValidationError, ValidationWarning } from './types.js';
 
 // ============================================================
@@ -28,7 +25,7 @@ export function validateConstraintGraph(
     warnings.push({
       field: 'constraint_graph.version',
       message: 'Constraint graph should have a "version"',
-      suggestion: 'Add version: 1'
+      suggestion: 'Add version: 1',
     });
   }
 
@@ -36,7 +33,7 @@ export function validateConstraintGraph(
   if (!graph.feature) {
     warnings.push({
       field: 'constraint_graph.feature',
-      message: 'Constraint graph should specify "feature"'
+      message: 'Constraint graph should specify "feature"',
     });
   }
 
@@ -50,9 +47,27 @@ export function validateConstraintGraph(
     const edges = graph.edges as Record<string, unknown>;
     const nodeIds = graph.nodes ? Object.keys(graph.nodes as object) : [];
 
-    validateEdgeArray(edges.dependencies, 'constraint_graph.edges.dependencies', nodeIds, errors, warnings);
-    validateEdgeArray(edges.conflicts, 'constraint_graph.edges.conflicts', nodeIds, errors, warnings);
-    validateEdgeArray(edges.satisfies, 'constraint_graph.edges.satisfies', nodeIds, errors, warnings);
+    validateEdgeArray(
+      edges.dependencies,
+      'constraint_graph.edges.dependencies',
+      nodeIds,
+      errors,
+      warnings
+    );
+    validateEdgeArray(
+      edges.conflicts,
+      'constraint_graph.edges.conflicts',
+      nodeIds,
+      errors,
+      warnings
+    );
+    validateEdgeArray(
+      edges.satisfies,
+      'constraint_graph.edges.satisfies',
+      nodeIds,
+      errors,
+      warnings
+    );
   }
 }
 
@@ -73,7 +88,7 @@ function validateConstraintNodes(
       warnings.push({
         field: `${fieldPrefix}.id`,
         message: `Node ID "${node.id}" doesn't match key "${nodeId}"`,
-        suggestion: 'Ensure node ID matches its key in the nodes object'
+        suggestion: 'Ensure node ID matches its key in the nodes object',
       });
     }
 
@@ -82,7 +97,7 @@ function validateConstraintNodes(
       errors.push({
         field: `${fieldPrefix}.type`,
         message: `Invalid node type "${node.type}". Must be: ${VALID_NODE_TYPES.join(', ')}`,
-        value: node.type
+        value: node.type,
       });
     }
 
@@ -91,7 +106,7 @@ function validateConstraintNodes(
       errors.push({
         field: `${fieldPrefix}.status`,
         message: `Invalid node status "${node.status}". Must be: ${VALID_NODE_STATUSES.join(', ')}`,
-        value: node.status
+        value: node.status,
       });
     }
 
@@ -103,7 +118,10 @@ function validateConstraintNodes(
       errors.push({ field: `${fieldPrefix}.blocks`, message: 'blocks must be an array' });
     }
     if (node.conflicts_with && !Array.isArray(node.conflicts_with)) {
-      errors.push({ field: `${fieldPrefix}.conflicts_with`, message: 'conflicts_with must be an array' });
+      errors.push({
+        field: `${fieldPrefix}.conflicts_with`,
+        message: 'conflicts_with must be an array',
+      });
     }
   }
 }
@@ -128,7 +146,10 @@ function validateEdgeArray(
   for (let i = 0; i < edges.length; i++) {
     const edge = edges[i];
     if (!Array.isArray(edge) || edge.length < 2) {
-      errors.push({ field: `${fieldPath}[${i}]`, message: 'Each edge must be an array of at least 2 node IDs' });
+      errors.push({
+        field: `${fieldPath}[${i}]`,
+        message: 'Each edge must be an array of at least 2 node IDs',
+      });
       continue;
     }
 
@@ -139,7 +160,7 @@ function validateEdgeArray(
           warnings.push({
             field: `${fieldPath}[${i}]`,
             message: `Edge references unknown node "${nodeId}"`,
-            suggestion: `Ensure "${nodeId}" exists in constraint_graph.nodes`
+            suggestion: `Ensure "${nodeId}" exists in constraint_graph.nodes`,
           });
         }
       }
@@ -162,7 +183,14 @@ export function collectConstraintIds(m: Record<string, unknown>): Set<string> {
   // Collect from constraints
   const constraints = m.constraints as Record<string, unknown[]> | undefined;
   if (constraints) {
-    for (const category of ['business', 'technical', 'user_experience', 'ux', 'security', 'operational']) {
+    for (const category of [
+      'business',
+      'technical',
+      'user_experience',
+      'ux',
+      'security',
+      'operational',
+    ]) {
       const list = constraints[category];
       if (Array.isArray(list)) {
         for (const c of list) {
@@ -219,7 +247,7 @@ export function validateReferences(
             errors.push({
               field: `tensions[${i}].between`,
               message: `References unknown constraint "${ref}"`,
-              value: ref
+              value: ref,
             });
           }
         }
@@ -241,7 +269,7 @@ export function validateReferences(
               warnings.push({
                 field: `anchors.required_truths[${i}].maps_to_constraints`,
                 message: `References unknown constraint "${ref}"`,
-                suggestion: `Ensure constraint "${ref}" exists in the constraints section`
+                suggestion: `Ensure constraint "${ref}" exists in the constraints section`,
               });
             }
           }
@@ -261,7 +289,12 @@ export function validateReferences(
     const allValidIds = new Set([...validIds, ...graphNodeIds]);
 
     // Check dependency edges
-    checkEdgeReferences(edges.dependencies, 'constraint_graph.edges.dependencies', allValidIds, warnings);
+    checkEdgeReferences(
+      edges.dependencies,
+      'constraint_graph.edges.dependencies',
+      allValidIds,
+      warnings
+    );
     checkEdgeReferences(edges.conflicts, 'constraint_graph.edges.conflicts', allValidIds, warnings);
     checkEdgeReferences(edges.satisfies, 'constraint_graph.edges.satisfies', allValidIds, warnings);
   }
@@ -287,7 +320,7 @@ function checkEdgeReferences(
         warnings.push({
           field: `${fieldPath}[${i}]`,
           message: `References unknown node "${nodeId}"`,
-          suggestion: `Ensure "${nodeId}" exists in constraints or constraint_graph.nodes`
+          suggestion: `Ensure "${nodeId}" exists in constraints or constraint_graph.nodes`,
         });
       }
     }

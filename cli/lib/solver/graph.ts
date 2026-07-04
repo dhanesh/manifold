@@ -4,12 +4,27 @@
  * planning to planning.ts, queries to queries.ts, viz to visualization.ts.
  */
 
-import { Manifold, ConstraintGraph, ConstraintNode, ConstraintNodeStatus,
-  ExecutionPlan, Wave, ParallelTask, ManifoldPhase, AnchorDocument } from '../parser';
+import type {
+  Manifold,
+  ConstraintGraph,
+  ConstraintNode,
+  ConstraintNodeStatus,
+  ExecutionPlan,
+  Wave,
+  ParallelTask,
+  AnchorDocument,
+} from '../parser';
 import { getCachedGraph, cacheGraph, graphCache } from './cache';
 import { generateWaves, findCriticalPathInGraph, topologicalSort } from './planning';
-import { findPrerequisites, findBlockedNodes, getNodeConflicts,
-  markNodeSatisfied, getGraphProgress, findReadyNodes, findBlockedByDependencies } from './queries';
+import {
+  findPrerequisites,
+  findBlockedNodes,
+  getNodeConflicts,
+  markNodeSatisfied,
+  getGraphProgress,
+  findReadyNodes,
+  findBlockedByDependencies,
+} from './queries';
 
 // Re-export types for command modules
 export type { ConstraintGraph, ConstraintNode, ExecutionPlan, Wave, ParallelTask };
@@ -99,7 +114,13 @@ export class ConstraintSolver {
    * Add constraint nodes from all categories
    */
   private addConstraintNodes(nodes: Map<string, ConstraintNode>): void {
-    const categories = ['business', 'technical', 'user_experience', 'security', 'operational'] as const;
+    const categories = [
+      'business',
+      'technical',
+      'user_experience',
+      'security',
+      'operational',
+    ] as const;
 
     for (const category of categories) {
       const constraints = this.manifold.constraints?.[category] ?? [];
@@ -121,10 +142,7 @@ export class ConstraintSolver {
   /**
    * Add tension nodes and conflict edges
    */
-  private addTensionNodes(
-    nodes: Map<string, ConstraintNode>,
-    conflicts: [string, string][]
-  ): void {
+  private addTensionNodes(nodes: Map<string, ConstraintNode>, conflicts: [string, string][]): void {
     for (const t of this.manifold.tensions ?? []) {
       // Add tension as a node
       nodes.set(t.id, {
@@ -160,7 +178,7 @@ export class ConstraintSolver {
    */
   private addRequiredTruthNodes(
     nodes: Map<string, ConstraintNode>,
-    dependencies: [string, string][]
+    _dependencies: [string, string][]
   ): void {
     const requiredTruths = this.manifold.anchors?.required_truths ?? [];
 
@@ -278,7 +296,7 @@ export class ConstraintSolver {
   }
 
   /** Infer constraint status from verification data */
-  private inferConstraintStatus(constraintId: string): ConstraintNodeStatus {
+  private inferConstraintStatus(_constraintId: string): ConstraintNodeStatus {
     if (this.manifold.verification?.result === 'PASS') return 'SATISFIED';
     return 'REQUIRED';
   }
@@ -371,13 +389,13 @@ export class ConstraintSolver {
 
     for (const nodeId of nodeIds) {
       const result = this.markSatisfied(nodeId);
-      result.unblocked.forEach(id => allUnblocked.add(id));
+      for (const id of result.unblocked) allUnblocked.add(id);
     }
 
     return {
       unblocked: [...allUnblocked],
       newlyReady: findReadyNodes(this.graph),
-      progress: this.getProgress()
+      progress: this.getProgress(),
     };
   }
 
@@ -412,7 +430,7 @@ export class ConstraintSolver {
       constraint: 0,
       tension: 0,
       required_truth: 0,
-      artifact: 0
+      artifact: 0,
     };
 
     for (const id of [...ready, ...blocked]) {
@@ -424,8 +442,8 @@ export class ConstraintSolver {
 
     // Estimate waves remaining
     const remainingPlan = this.generateExecutionPlan();
-    const estimatedWaves = remainingPlan.waves.filter(w =>
-      w.parallel_tasks.some(t => {
+    const estimatedWaves = remainingPlan.waves.filter((w) =>
+      w.parallel_tasks.some((t) => {
         const nodeId = t.node_ids[0];
         const node = this.graph.nodes[nodeId];
         return node?.status !== 'SATISFIED';
@@ -459,7 +477,7 @@ export interface ConstraintCycleResult {
  */
 export function detectConstraintCycle(
   manifold: Manifold,
-  anchor?: AnchorDocument,
+  anchor?: AnchorDocument
 ): ConstraintCycleResult {
   const graph = ConstraintSolver.createWithoutCache(manifold, anchor).getGraph();
   const { hasCycle, cycleNodes } = topologicalSort(graph);
@@ -513,5 +531,5 @@ export function exportGraphDot(graph: ConstraintGraph): string {
 
 function truncate(str: string, maxLen: number): string {
   if (str.length <= maxLen) return str;
-  return str.substring(0, maxLen - 3) + '...';
+  return `${str.substring(0, maxLen - 3)}...`;
 }

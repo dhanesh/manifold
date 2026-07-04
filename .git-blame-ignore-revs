@@ -1,0 +1,8 @@
+# Revisions to ignore in `git blame` (bulk, mechanical, no behavior change).
+# GitHub honors this file automatically. Locally, enable it once with:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# The full 40-char SHA of each bulk mechanical reformat commit, one per line:
+
+# chore(style): adopt Biome formatter (bulk reformat, no behavior change)
+aa5ebac920b06e7d2b39e5522c6c0a5b7e6fcb02

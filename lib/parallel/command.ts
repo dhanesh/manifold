@@ -6,17 +6,17 @@
  * NOTE: This is the implementation. The Claude Code skill is in install/commands/parallel.md
  */
 
-import { TaskAnalyzer, Task } from './task-analyzer';
+import { TaskAnalyzer } from './task-analyzer';
 import { FilePredictor } from './file-predictor';
 import { OverlapDetector } from './overlap-detector';
-import { ParallelExecutor, ExecutionResult } from './parallel-executor';
-import { MergeOrchestrator, MergeOrchestratorResult } from './merge-orchestrator';
+import { ParallelExecutor, type ExecutionResult } from './parallel-executor';
+import { MergeOrchestrator, type MergeOrchestratorResult } from './merge-orchestrator';
 import { ProgressReporter } from './progress-reporter';
 import { ResourceMonitor } from './resource-monitor';
-import { ParallelConfigManager, parseParallelFlags, CliFlags } from './parallel-config';
+import { ParallelConfigManager, parseParallelFlags } from './parallel-config';
 
 // Import AutoSuggester from hooks (external to lib/parallel)
-import { AutoSuggester, ParallelSuggestion } from '../../hooks/auto-suggester';
+import { AutoSuggester, type ParallelSuggestion } from '../../hooks/auto-suggester';
 
 export interface ParallelCommandOptions {
   tasks: string[];
@@ -47,9 +47,6 @@ export interface ParallelCommandResult {
 export class ParallelCommand {
   private baseDir: string;
   private configManager: ParallelConfigManager;
-  private taskAnalyzer: TaskAnalyzer;
-  private filePredictor: FilePredictor;
-  private overlapDetector: OverlapDetector;
   private autoSuggester: AutoSuggester;
 
   constructor(baseDir: string) {
@@ -142,18 +139,13 @@ export class ParallelCommand {
 
       const executor = new ParallelExecutor({
         baseDir: this.baseDir,
-        maxConcurrent: Math.min(
-          config.maxParallel,
-          resourceStatus.overall.recommendedConcurrency
-        ),
+        maxConcurrent: Math.min(config.maxParallel, resourceStatus.overall.recommendedConcurrency),
         timeout: config.timeout,
         onProgress: (event) => progressReporter.handleProgressEvent(event),
       });
 
       // Find the group(s) that can actually be parallelized
-      const parallelizableGroups = suggestion.parallelGroups.filter(
-        g => g.taskIds.length > 1
-      );
+      const parallelizableGroups = suggestion.parallelGroups.filter((g) => g.taskIds.length > 1);
 
       if (parallelizableGroups.length === 0) {
         log('No parallelizable groups found.');
@@ -185,10 +177,9 @@ export class ParallelCommand {
       );
 
       const completedWorktrees = executor.getCompletedWorktrees();
-      const mergeResult = await mergeOrchestrator.mergeAll(
-        completedWorktrees,
-        { type: config.mergeStrategy }
-      );
+      const mergeResult = await mergeOrchestrator.mergeAll(completedWorktrees, {
+        type: config.mergeStrategy,
+      });
 
       progressReporter.reportMergeComplete(mergeResult);
 
@@ -199,7 +190,7 @@ export class ParallelCommand {
       }
 
       // Complete
-      const success = mergeResult.success && executionResults.every(r => r.success);
+      const success = mergeResult.success && executionResults.every((r) => r.success);
       progressReporter.complete(success);
 
       return {
@@ -210,7 +201,6 @@ export class ParallelCommand {
         duration: Date.now() - startTime,
         output: outputLines.join('\n'),
       };
-
     } catch (error) {
       log(`\n❌ Error: ${error}`);
       return {

@@ -6,9 +6,15 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
-import { existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
-import { join } from 'path';
-import { loadConfig, getTierPatterns, inferTestTier, type ManifoldConfig, type TestTierPatterns } from '../lib/config.js';
+import { existsSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
+import {
+  loadConfig,
+  getTierPatterns,
+  inferTestTier,
+  type ManifoldConfig,
+  type TestTierPatterns,
+} from '../lib/config.js';
 
 // ============================================================
 // Test Setup
@@ -77,10 +83,7 @@ describe('loadConfig', () => {
   });
 
   test('loads partial config correctly', () => {
-    writeFileSync(
-      join(MANIFOLD_DIR, 'config.json'),
-      JSON.stringify({ test_runner: 'pytest' })
-    );
+    writeFileSync(join(MANIFOLD_DIR, 'config.json'), JSON.stringify({ test_runner: 'pytest' }));
     const config = loadConfig(TEST_DIR);
     expect(config.test_runner).toBe('pytest');
     expect(config.test_args).toBeUndefined();

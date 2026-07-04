@@ -6905,10 +6905,10 @@ var require_public_api = __commonJS((exports) => {
 });
 
 // install/lib/parallel/worktree-manager.ts
-import { exec } from "child_process";
-import { existsSync, rmSync, mkdirSync } from "fs";
-import { join } from "path";
-import { promisify } from "util";
+import { exec } from "node:child_process";
+import { existsSync, rmSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
+import { promisify } from "node:util";
 var execAsync = promisify(exec);
 
 class WorktreeManager {
@@ -6981,7 +6981,9 @@ class WorktreeManager {
     const base = baseBranch ?? await this.getCurrentBranch();
     const commit = await this.getCurrentCommit();
     try {
-      await execAsync(`git worktree add -b "${branchName}" "${worktreePath}" "${base}"`, { cwd: this.config.baseDir });
+      await execAsync(`git worktree add -b "${branchName}" "${worktreePath}" "${base}"`, {
+        cwd: this.config.baseDir
+      });
       const info = {
         path: worktreePath,
         branch: branchName,
@@ -7011,7 +7013,7 @@ class WorktreeManager {
         cwd: this.config.baseDir
       }).catch(() => {});
       this.activeWorktrees.delete(taskId);
-    } catch (error) {
+    } catch (_error) {
       await this.forceRemove(taskId);
     }
   }
@@ -7118,8 +7120,8 @@ class WorktreeManager {
   }
 }
 // install/lib/parallel/resource-monitor.ts
-import { execSync as execSync2 } from "child_process";
-import * as os from "os";
+import { execSync } from "node:child_process";
+import * as os from "node:os";
 var DEFAULT_THRESHOLDS = {
   minDiskGB: 2,
   maxDiskUsagePercent: 90,
@@ -7145,7 +7147,7 @@ class ResourceMonitor2 {
   }
   async getDiskStatus() {
     try {
-      const output = execSync2(`df -k "${this.baseDir}"`, { encoding: "utf-8" });
+      const output = execSync(`df -k "${this.baseDir}"`, { encoding: "utf-8" });
       const lines = output.trim().split(`
 `);
       if (lines.length < 2) {
@@ -7325,7 +7327,8 @@ class TaskAnalyzer2 {
       if (level.length > 1) {
         groups.push(level);
       }
-      level.forEach((id) => processed.add(id));
+      for (const id of level)
+        processed.add(id);
     }
     return groups;
   }
@@ -7464,9 +7467,9 @@ class TaskAnalyzer2 {
   }
 }
 // install/lib/parallel/file-predictor.ts
-import { execSync as execSync3 } from "child_process";
-import { existsSync as existsSync2 } from "fs";
-import { join as join2, dirname as dirname2, basename, extname } from "path";
+import { execSync as execSync2 } from "node:child_process";
+import { existsSync as existsSync2 } from "node:fs";
+import { join as join2, dirname, basename, extname } from "node:path";
 var DEFAULT_CONFIG = {
   useGitHistory: true,
   historyDepth: 50,
@@ -7476,7 +7479,6 @@ var DEFAULT_CONFIG = {
 
 class FilePredictor2 {
   config;
-  fileCache = new Map;
   gitPatterns = new Map;
   constructor(config) {
     this.config = {
@@ -7645,7 +7647,8 @@ class FilePredictor2 {
     const best = predictions[0];
     const allFiles = new Set;
     for (const pred of predictions) {
-      pred.files.forEach((f) => allFiles.add(f));
+      for (const f of pred.files)
+        allFiles.add(f);
     }
     return {
       files: Array.from(allFiles),
@@ -7655,7 +7658,7 @@ class FilePredictor2 {
   }
   loadGitPatterns() {
     try {
-      const output = execSync3(`git log --name-only --pretty=format:"COMMIT:%s" -${this.config.historyDepth}`, { cwd: this.config.baseDir, encoding: "utf-8" });
+      const output = execSync2(`git log --name-only --pretty=format:"COMMIT:%s" -${this.config.historyDepth}`, { cwd: this.config.baseDir, encoding: "utf-8" });
       let currentMessage = "";
       const commitFiles = new Map;
       for (const line of output.split(`
@@ -7676,11 +7679,11 @@ class FilePredictor2 {
           this.gitPatterns.set(keyword, [...new Set([...existing, ...files])]);
         }
       }
-    } catch (error) {}
+    } catch (_error) {}
   }
   findFilesByPattern(pattern) {
     try {
-      const output = execSync3(`find . -type f -path "${pattern.replace("**", "*")}" 2>/dev/null | head -20`, { cwd: this.config.baseDir, encoding: "utf-8" });
+      const output = execSync2(`find . -type f -path "${pattern.replace("**", "*")}" 2>/dev/null | head -20`, { cwd: this.config.baseDir, encoding: "utf-8" });
       return output.split(`
 `).filter(Boolean).map((f) => f.replace(/^\.\//, ""));
     } catch {
@@ -7696,7 +7699,7 @@ class FilePredictor2 {
     for (const file of files) {
       const ext = extname(file);
       const base = basename(file, ext);
-      const dir = dirname2(file);
+      const dir = dirname(file);
       if (this.config.includeTests) {
         related.push(...this.findFilesByPattern(`${dir}/${base}.test${ext}`));
         related.push(...this.findFilesByPattern(`${dir}/__tests__/${base}${ext}`));
@@ -7970,8 +7973,8 @@ class OverlapDetector2 {
   }
 }
 // install/lib/parallel/parallel-executor.ts
-import { spawn } from "child_process";
-import { EventEmitter } from "events";
+import { spawn } from "node:child_process";
+import { EventEmitter } from "node:events";
 var DEFAULT_CONFIG2 = {
   maxConcurrent: 4,
   timeout: 300000,
@@ -8222,8 +8225,8 @@ class ParallelExecutor2 extends EventEmitter {
   }
 }
 // install/lib/parallel/merge-orchestrator.ts
-import { execSync as execSync4, exec as exec2 } from "child_process";
-import { promisify as promisify2 } from "util";
+import { execSync as execSync3, exec as exec2 } from "node:child_process";
+import { promisify as promisify2 } from "node:util";
 var execAsync2 = promisify2(exec2);
 
 class MergeOrchestrator2 {
@@ -8262,7 +8265,8 @@ class MergeOrchestrator2 {
         if (result.success) {
           merged.push(result);
           totalCommits += result.commits;
-          result.filesChanged.forEach((f) => allFilesChanged.add(f));
+          for (const f of result.filesChanged)
+            allFilesChanged.add(f);
         } else {
           failed.push(result);
         }
@@ -8306,7 +8310,6 @@ class MergeOrchestrator2 {
         case "rebase":
           await this.rebaseMerge(branch);
           break;
-        case "sequential":
         default:
           await this.sequentialMerge(branch);
           break;
@@ -8351,7 +8354,9 @@ class MergeOrchestrator2 {
     }
   }
   async sequentialMerge(branch) {
-    await execAsync2(`git merge --no-ff "${branch}" -m "Merge parallel task: ${branch}"`, { cwd: this.baseDir });
+    await execAsync2(`git merge --no-ff "${branch}" -m "Merge parallel task: ${branch}"`, {
+      cwd: this.baseDir
+    });
   }
   async squashMerge(branch, message) {
     await execAsync2(`git merge --squash "${branch}"`, { cwd: this.baseDir });
@@ -8377,7 +8382,7 @@ class MergeOrchestrator2 {
   }
   getCurrentBranch() {
     try {
-      return execSync4("git branch --show-current", {
+      return execSync3("git branch --show-current", {
         cwd: this.baseDir,
         encoding: "utf-8"
       }).trim();
@@ -8441,7 +8446,7 @@ class MergeOrchestrator2 {
   }
 }
 // install/lib/parallel/progress-reporter.ts
-import { EventEmitter as EventEmitter2 } from "events";
+import { EventEmitter as EventEmitter2 } from "node:events";
 var DEFAULT_CONFIG3 = {
   verbose: false,
   showProgress: true,
@@ -8571,11 +8576,8 @@ Cleaning up worktrees...`);
     return [...this.state.updates];
   }
   explainParallelization(groups, sequentialTasks) {
-    const lines = [
-      `
-## Parallelization Analysis`,
-      ""
-    ];
+    const lines = [`
+## Parallelization Analysis`, ""];
     const totalParallel = groups.reduce((sum, g) => sum + g.taskIds.length, 0);
     lines.push(`Tasks parallelizable: ${totalParallel}`);
     lines.push(`Tasks sequential: ${sequentialTasks.length}`);
@@ -8693,8 +8695,8 @@ Cleaning up worktrees...`);
   }
 }
 // install/lib/parallel/parallel-config.ts
-import { existsSync as existsSync3, readFileSync, writeFileSync } from "fs";
-import { join as join3 } from "path";
+import { existsSync as existsSync3, readFileSync, writeFileSync } from "node:fs";
+import { join as join3 } from "node:path";
 
 // node_modules/.bun/yaml@2.8.2/node_modules/yaml/dist/index.js
 var composer = require_composer();
@@ -8768,7 +8770,6 @@ var CONFIG_FILENAME = ".parallel.yaml";
 class ParallelConfigManager {
   config;
   configPath;
-  baseDir;
   constructor(baseDir) {
     this.baseDir = baseDir;
     this.configPath = join3(baseDir, CONFIG_FILENAME);
@@ -8888,12 +8889,13 @@ function parseParallelFlags(args) {
       case "--no-parallel":
         flags.autoParallel = false;
         break;
-      case "--max-parallel":
+      case "--max-parallel": {
         const maxVal = parseInt(args[++i], 10);
-        if (!isNaN(maxVal)) {
+        if (!Number.isNaN(maxVal)) {
           flags.maxParallel = maxVal;
         }
         break;
+      }
       case "-v":
       case "--verbose":
         flags.verbose = true;
@@ -8901,18 +8903,20 @@ function parseParallelFlags(args) {
       case "--deep":
         flags.deep = true;
         break;
-      case "--timeout":
+      case "--timeout": {
         const timeoutVal = parseInt(args[++i], 10);
-        if (!isNaN(timeoutVal)) {
+        if (!Number.isNaN(timeoutVal)) {
           flags.timeout = timeoutVal * 1000;
         }
         break;
-      case "--strategy":
+      }
+      case "--strategy": {
         const strategy = args[++i];
         if (["sequential", "squash", "rebase"].includes(strategy)) {
           flags.strategy = strategy;
         }
         break;
+      }
       case "--no-cleanup":
         flags.noCleanup = true;
         break;
@@ -8925,7 +8929,7 @@ function parseParallelFlags(args) {
 async function runParallel(baseDir, taskDescriptions, options = {}) {
   const analyzer = new TaskAnalyzer;
   const tasks = analyzer.parseTaskDescriptions(taskDescriptions);
-  const analysisResult = analyzer.analyze(tasks);
+  const _analysisResult = analyzer.analyze(tasks);
   const predictor = new FilePredictor({ baseDir });
   const predictions = predictor.predictAll(tasks.map((t) => ({ id: t.id, description: t.description })));
   const detector = new OverlapDetector;

@@ -22,8 +22,8 @@ export interface TaskNode {
 
 export interface TaskGraph {
   nodes: Map<string, TaskNode>;
-  parallelizable: string[][];  // Groups that can run in parallel
-  sequential: string[];        // Must run sequentially
+  parallelizable: string[][]; // Groups that can run in parallel
+  sequential: string[]; // Must run sequentially
 }
 
 export interface AnalysisResult {
@@ -43,7 +43,7 @@ export interface ParallelGroup {
   id: string;
   tasks: Task[];
   predictedFiles: string[];
-  canRunWith: string[];  // Other group IDs that can run concurrently
+  canRunWith: string[]; // Other group IDs that can run concurrently
 }
 
 /**
@@ -60,15 +60,9 @@ export class TaskAnalyzer {
     const parallelGroups = this.findParallelGroups(graph);
     const sequentialTasks = this.findSequentialTasks(graph);
 
-    const parallelizableTasks = parallelGroups.reduce(
-      (sum, group) => sum + group.tasks.length,
-      0
-    );
+    const parallelizableTasks = parallelGroups.reduce((sum, group) => sum + group.tasks.length, 0);
 
-    const maxParallelism = Math.max(
-      1,
-      ...parallelGroups.map(g => g.tasks.length)
-    );
+    const maxParallelism = Math.max(1, ...parallelGroups.map((g) => g.tasks.length));
 
     // Estimate speedup: parallel time / sequential time
     const sequentialTime = tasks.length;
@@ -139,7 +133,7 @@ export class TaskAnalyzer {
         // (subject to file overlap checking later)
         groups.push(level);
       }
-      level.forEach(id => processed.add(id));
+      for (const id of level) processed.add(id);
     }
 
     return groups;
@@ -221,11 +215,12 @@ export class TaskAnalyzer {
     for (let i = 0; i < graph.parallelizable.length; i++) {
       const taskIds = graph.parallelizable[i];
       const tasks = taskIds
-        .map(id => graph.nodes.get(id)?.task)
+        .map((id) => graph.nodes.get(id)?.task)
         .filter((t): t is Task => t !== undefined);
 
-      const predictedFiles = taskIds
-        .flatMap(id => Array.from(graph.nodes.get(id)?.predictedFiles || []));
+      const predictedFiles = taskIds.flatMap((id) =>
+        Array.from(graph.nodes.get(id)?.predictedFiles || [])
+      );
 
       groups.push({
         id: `group-${i}`,
@@ -243,7 +238,7 @@ export class TaskAnalyzer {
    */
   findSequentialTasks(graph: TaskGraph): Task[] {
     return graph.sequential
-      .map(id => graph.nodes.get(id)?.task)
+      .map((id) => graph.nodes.get(id)?.task)
       .filter((t): t is Task => t !== undefined);
   }
 
@@ -261,7 +256,9 @@ export class TaskAnalyzer {
 
       // Try to extract file mentions
       // Note: tsx/jsx must come before ts/js in alternation to match correctly
-      const fileMatches = desc.match(/[\w\-./]+\.(tsx|jsx|ts|js|css|scss|less|json|yaml|yml|md|html)/gi);
+      const fileMatches = desc.match(
+        /[\w\-./]+\.(tsx|jsx|ts|js|css|scss|less|json|yaml|yml|md|html)/gi
+      );
       if (fileMatches) {
         task.estimatedFiles = fileMatches;
       }
@@ -282,13 +279,21 @@ export class TaskAnalyzer {
   private inferTaskType(description: string): 'file' | 'module' | 'feature' {
     const lowerDesc = description.toLowerCase();
 
-    if (lowerDesc.includes('module') || lowerDesc.includes('component') ||
-        lowerDesc.includes('service') || lowerDesc.includes('class')) {
+    if (
+      lowerDesc.includes('module') ||
+      lowerDesc.includes('component') ||
+      lowerDesc.includes('service') ||
+      lowerDesc.includes('class')
+    ) {
       return 'module';
     }
 
-    if (lowerDesc.includes('feature') || lowerDesc.includes('implement') ||
-        lowerDesc.includes('add') || lowerDesc.includes('create')) {
+    if (
+      lowerDesc.includes('feature') ||
+      lowerDesc.includes('implement') ||
+      lowerDesc.includes('add') ||
+      lowerDesc.includes('create')
+    ) {
       return 'feature';
     }
 
@@ -331,7 +336,7 @@ export class TaskAnalyzer {
       '## Task Analysis Summary',
       '',
       `Total tasks: ${analysis.totalTasks}`,
-      `Parallelizable: ${analysis.parallelizableTasks} (${Math.round(analysis.parallelizableTasks / analysis.totalTasks * 100)}%)`,
+      `Parallelizable: ${analysis.parallelizableTasks} (${Math.round((analysis.parallelizableTasks / analysis.totalTasks) * 100)}%)`,
       `Sequential: ${analysis.sequentialTasks}`,
       `Maximum parallelism: ${analysis.maxParallelism}`,
       `Estimated speedup: ${analysis.estimatedSpeedup}x`,
@@ -340,9 +345,11 @@ export class TaskAnalyzer {
     ];
 
     for (const group of parallelGroups) {
-      lines.push(`- ${group.id}: ${group.tasks.map(t => t.id).join(', ')}`);
+      lines.push(`- ${group.id}: ${group.tasks.map((t) => t.id).join(', ')}`);
       if (group.predictedFiles.length > 0) {
-        lines.push(`  Files: ${group.predictedFiles.slice(0, 5).join(', ')}${group.predictedFiles.length > 5 ? '...' : ''}`);
+        lines.push(
+          `  Files: ${group.predictedFiles.slice(0, 5).join(', ')}${group.predictedFiles.length > 5 ? '...' : ''}`
+        );
       }
     }
 

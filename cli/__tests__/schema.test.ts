@@ -8,7 +8,7 @@ import {
   validateManifold,
   countConstraints,
   countConstraintsByType,
-  sanitizePath
+  sanitizePath,
 } from '../lib/schema.js';
 import type { Manifold } from '../lib/parser.js';
 
@@ -16,7 +16,7 @@ describe('validateManifold', () => {
   test('validates minimal valid manifold', () => {
     const manifold = {
       feature: 'test',
-      phase: 'INITIALIZED'
+      phase: 'INITIALIZED',
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(true);
@@ -27,21 +27,21 @@ describe('validateManifold', () => {
     const manifold = { phase: 'INITIALIZED' };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.field === 'feature')).toBe(true);
+    expect(result.errors.some((e) => e.field === 'feature')).toBe(true);
   });
 
   test('fails on missing phase', () => {
     const manifold = { feature: 'test' };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.field === 'phase')).toBe(true);
+    expect(result.errors.some((e) => e.field === 'phase')).toBe(true);
   });
 
   test('fails on invalid phase', () => {
     const manifold = { feature: 'test', phase: 'INVALID' };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.field === 'phase')).toBe(true);
+    expect(result.errors.some((e) => e.field === 'phase')).toBe(true);
   });
 
   test('validates all valid phases', () => {
@@ -58,10 +58,8 @@ describe('validateManifold', () => {
       feature: 'test',
       phase: 'CONSTRAINED',
       constraints: {
-        business: [
-          { id: 'B1', type: 'goal', statement: 'Test goal' }
-        ]
-      }
+        business: [{ id: 'B1', type: 'goal', statement: 'Test goal' }],
+      },
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(true);
@@ -72,14 +70,12 @@ describe('validateManifold', () => {
       feature: 'test',
       phase: 'CONSTRAINED',
       constraints: {
-        business: [
-          { id: 'B1', type: 'invalid', statement: 'Test' }
-        ]
-      }
+        business: [{ id: 'B1', type: 'invalid', statement: 'Test' }],
+      },
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.field.includes('type'))).toBe(true);
+    expect(result.errors.some((e) => e.field.includes('type'))).toBe(true);
   });
 
   test('validates tensions structure', () => {
@@ -93,9 +89,9 @@ describe('validateManifold', () => {
           between: ['A', 'B'],
           description: 'Test tension',
           status: 'resolved',
-          resolution: 'Resolved by X'
-        }
-      ]
+          resolution: 'Resolved by X',
+        },
+      ],
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(true);
@@ -111,13 +107,13 @@ describe('validateManifold', () => {
           type: 'trade_off',
           between: ['A', 'B'],
           // Missing 'description' field - this is the critical validation
-          status: 'unresolved'
-        }
-      ]
+          status: 'unresolved',
+        },
+      ],
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.field.includes('description'))).toBe(true);
+    expect(result.errors.some((e) => e.field.includes('description'))).toBe(true);
   });
 
   test('fails on wrong field name for tension (statement instead of description)', () => {
@@ -130,22 +126,20 @@ describe('validateManifold', () => {
           type: 'trade_off',
           between: ['A', 'B'],
           statement: 'This is wrong - tensions use description, not statement',
-          status: 'unresolved'
-        }
-      ]
+          status: 'unresolved',
+        },
+      ],
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.field.includes('description'))).toBe(true);
+    expect(result.errors.some((e) => e.field.includes('description'))).toBe(true);
   });
 
   test('detects schema v2 from iterations', () => {
     const manifold = {
       feature: 'test',
       phase: 'INITIALIZED',
-      iterations: [
-        { number: 1, phase: 'init', timestamp: '2024-01-01', result: 'ok' }
-      ]
+      iterations: [{ number: 1, phase: 'init', timestamp: '2024-01-01', result: 'ok' }],
     };
     const result = validateManifold(manifold);
     expect(result.schemaVersion).toBe(2);
@@ -156,11 +150,11 @@ describe('validateManifold', () => {
       feature: 'test',
       phase: 'CONSTRAINED',
       constraints: {
-        ux: [{ id: 'U1', type: 'goal', statement: 'Test' }]
-      }
+        ux: [{ id: 'U1', type: 'goal', statement: 'Test' }],
+      },
     };
     const result = validateManifold(manifold);
-    expect(result.warnings.some(w => w.field === 'constraints.ux')).toBe(true);
+    expect(result.warnings.some((w) => w.field === 'constraints.ux')).toBe(true);
   });
 });
 
@@ -171,11 +165,14 @@ describe('countConstraints', () => {
       phase: 'CONSTRAINED',
       constraints: {
         business: [{ id: 'B1', type: 'goal', statement: '' }],
-        technical: [{ id: 'T1', type: 'invariant', statement: '' }, { id: 'T2', type: 'boundary', statement: '' }],
+        technical: [
+          { id: 'T1', type: 'invariant', statement: '' },
+          { id: 'T2', type: 'boundary', statement: '' },
+        ],
         user_experience: [{ id: 'U1', type: 'goal', statement: '' }],
         security: [],
-        operational: [{ id: 'O1', type: 'goal', statement: '' }]
-      }
+        operational: [{ id: 'O1', type: 'goal', statement: '' }],
+      },
     };
     const counts = countConstraints(manifold);
     expect(counts.business).toBe(1);
@@ -192,8 +189,8 @@ describe('countConstraints', () => {
       phase: 'CONSTRAINED',
       constraints: {
         ux: [{ id: 'U1', type: 'goal', statement: '' }],
-        user_experience: [{ id: 'U2', type: 'goal', statement: '' }]
-      }
+        user_experience: [{ id: 'U2', type: 'goal', statement: '' }],
+      },
     };
     const counts = countConstraints(manifold);
     expect(counts.user_experience).toBe(2);
@@ -209,9 +206,9 @@ describe('countConstraintsByType', () => {
         business: [{ id: 'B1', type: 'goal', statement: '' }],
         technical: [
           { id: 'T1', type: 'invariant', statement: '' },
-          { id: 'T2', type: 'boundary', statement: '' }
-        ]
-      }
+          { id: 'T2', type: 'boundary', statement: '' },
+        ],
+      },
     };
     const counts = countConstraintsByType(manifold);
     expect(counts.goal).toBe(1);
@@ -231,9 +228,7 @@ describe('v3: evidence validation', () => {
       schema_version: 3,
       feature: 'test',
       phase: 'INITIALIZED',
-      evidence: [
-        { type: 'file_exists', path: 'src/test.ts', status: 'VERIFIED' }
-      ]
+      evidence: [{ type: 'file_exists', path: 'src/test.ts', status: 'VERIFIED' }],
     };
     const result = validateManifold(manifold);
     expect(result.schemaVersion).toBe(3);
@@ -247,10 +242,15 @@ describe('v3: evidence validation', () => {
       evidence: [
         { type: 'file_exists', path: 'src/test.ts', status: 'VERIFIED' },
         { type: 'content_match', path: 'src/test.ts', pattern: 'export class', status: 'VERIFIED' },
-        { type: 'test_passes', path: 'tests/test.test.ts', test_name: 'should work', status: 'PENDING' },
+        {
+          type: 'test_passes',
+          path: 'tests/test.test.ts',
+          test_name: 'should work',
+          status: 'PENDING',
+        },
         { type: 'metric_value', metric_name: 'latency', threshold: 200, status: 'VERIFIED' },
-        { type: 'manual_review', verified_by: 'John Doe', status: 'VERIFIED' }
-      ]
+        { type: 'manual_review', verified_by: 'John Doe', status: 'VERIFIED' },
+      ],
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(true);
@@ -262,13 +262,11 @@ describe('v3: evidence validation', () => {
       schema_version: 3,
       feature: 'test',
       phase: 'VERIFIED',
-      evidence: [
-        { type: 'invalid_type', path: 'src/test.ts' }
-      ]
+      evidence: [{ type: 'invalid_type', path: 'src/test.ts' }],
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.field.includes('type'))).toBe(true);
+    expect(result.errors.some((e) => e.field.includes('type'))).toBe(true);
   });
 
   test('fails on invalid evidence status', () => {
@@ -276,13 +274,11 @@ describe('v3: evidence validation', () => {
       schema_version: 3,
       feature: 'test',
       phase: 'VERIFIED',
-      evidence: [
-        { type: 'file_exists', path: 'src/test.ts', status: 'INVALID_STATUS' }
-      ]
+      evidence: [{ type: 'file_exists', path: 'src/test.ts', status: 'INVALID_STATUS' }],
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.field.includes('status'))).toBe(true);
+    expect(result.errors.some((e) => e.field.includes('status'))).toBe(true);
   });
 
   test('fails on missing required path for file_exists', () => {
@@ -290,13 +286,11 @@ describe('v3: evidence validation', () => {
       schema_version: 3,
       feature: 'test',
       phase: 'VERIFIED',
-      evidence: [
-        { type: 'file_exists', status: 'VERIFIED' }
-      ]
+      evidence: [{ type: 'file_exists', status: 'VERIFIED' }],
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.field.includes('path'))).toBe(true);
+    expect(result.errors.some((e) => e.field.includes('path'))).toBe(true);
   });
 
   test('fails on missing pattern for content_match', () => {
@@ -304,13 +298,11 @@ describe('v3: evidence validation', () => {
       schema_version: 3,
       feature: 'test',
       phase: 'VERIFIED',
-      evidence: [
-        { type: 'content_match', path: 'src/test.ts', status: 'VERIFIED' }
-      ]
+      evidence: [{ type: 'content_match', path: 'src/test.ts', status: 'VERIFIED' }],
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.field.includes('pattern'))).toBe(true);
+    expect(result.errors.some((e) => e.field.includes('pattern'))).toBe(true);
   });
 
   test('fails on missing metric_name for metric_value', () => {
@@ -318,13 +310,11 @@ describe('v3: evidence validation', () => {
       schema_version: 3,
       feature: 'test',
       phase: 'VERIFIED',
-      evidence: [
-        { type: 'metric_value', threshold: 200, status: 'VERIFIED' }
-      ]
+      evidence: [{ type: 'metric_value', threshold: 200, status: 'VERIFIED' }],
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.field.includes('metric_name'))).toBe(true);
+    expect(result.errors.some((e) => e.field.includes('metric_name'))).toBe(true);
   });
 });
 
@@ -378,13 +368,11 @@ describe('v3: path sanitization', () => {
       schema_version: 3,
       feature: 'test',
       phase: 'VERIFIED',
-      evidence: [
-        { type: 'file_exists', path: '../../../etc/passwd', status: 'VERIFIED' }
-      ]
+      evidence: [{ type: 'file_exists', path: '../../../etc/passwd', status: 'VERIFIED' }],
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.message.includes('traversal'))).toBe(true);
+    expect(result.errors.some((e) => e.message.includes('traversal'))).toBe(true);
   });
 });
 
@@ -402,8 +390,8 @@ describe('v3: constraint_graph validation', () => {
         version: 1,
         feature: 'test',
         nodes: {},
-        edges: { dependencies: [], conflicts: [], satisfies: [] }
-      }
+        edges: { dependencies: [], conflicts: [], satisfies: [] },
+      },
     };
     const result = validateManifold(manifold);
     expect(result.schemaVersion).toBe(3);
@@ -418,12 +406,36 @@ describe('v3: constraint_graph validation', () => {
         version: 1,
         feature: 'test',
         nodes: {
-          B1: { id: 'B1', type: 'constraint', label: 'Test', depends_on: [], blocks: [], conflicts_with: [], status: 'REQUIRED' },
-          TN1: { id: 'TN1', type: 'tension', label: 'Test', depends_on: [], blocks: [], conflicts_with: [], status: 'CONFLICTED' },
-          'RT-1': { id: 'RT-1', type: 'required_truth', label: 'Test', depends_on: [], blocks: [], conflicts_with: [], status: 'SATISFIED' }
+          B1: {
+            id: 'B1',
+            type: 'constraint',
+            label: 'Test',
+            depends_on: [],
+            blocks: [],
+            conflicts_with: [],
+            status: 'REQUIRED',
+          },
+          TN1: {
+            id: 'TN1',
+            type: 'tension',
+            label: 'Test',
+            depends_on: [],
+            blocks: [],
+            conflicts_with: [],
+            status: 'CONFLICTED',
+          },
+          'RT-1': {
+            id: 'RT-1',
+            type: 'required_truth',
+            label: 'Test',
+            depends_on: [],
+            blocks: [],
+            conflicts_with: [],
+            status: 'SATISFIED',
+          },
         },
-        edges: { dependencies: [], conflicts: [], satisfies: [] }
-      }
+        edges: { dependencies: [], conflicts: [], satisfies: [] },
+      },
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(true);
@@ -438,14 +450,14 @@ describe('v3: constraint_graph validation', () => {
         version: 1,
         feature: 'test',
         nodes: {
-          B1: { id: 'B1', type: 'invalid_type', label: 'Test' }
+          B1: { id: 'B1', type: 'invalid_type', label: 'Test' },
         },
-        edges: { dependencies: [], conflicts: [], satisfies: [] }
-      }
+        edges: { dependencies: [], conflicts: [], satisfies: [] },
+      },
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.field.includes('type'))).toBe(true);
+    expect(result.errors.some((e) => e.field.includes('type'))).toBe(true);
   });
 
   test('fails on invalid node status', () => {
@@ -457,14 +469,14 @@ describe('v3: constraint_graph validation', () => {
         version: 1,
         feature: 'test',
         nodes: {
-          B1: { id: 'B1', type: 'constraint', label: 'Test', status: 'INVALID_STATUS' }
+          B1: { id: 'B1', type: 'constraint', label: 'Test', status: 'INVALID_STATUS' },
         },
-        edges: { dependencies: [], conflicts: [], satisfies: [] }
-      }
+        edges: { dependencies: [], conflicts: [], satisfies: [] },
+      },
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.field.includes('status'))).toBe(true);
+    expect(result.errors.some((e) => e.field.includes('status'))).toBe(true);
   });
 
   test('validates edge array structure', () => {
@@ -477,14 +489,14 @@ describe('v3: constraint_graph validation', () => {
         feature: 'test',
         nodes: {
           B1: { id: 'B1', type: 'constraint' },
-          B2: { id: 'B2', type: 'constraint' }
+          B2: { id: 'B2', type: 'constraint' },
         },
         edges: {
-          dependencies: [['B2', 'B1']],  // B2 depends on B1
+          dependencies: [['B2', 'B1']], // B2 depends on B1
           conflicts: [],
-          satisfies: []
-        }
-      }
+          satisfies: [],
+        },
+      },
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(true);
@@ -500,15 +512,15 @@ describe('v3: constraint_graph validation', () => {
         feature: 'test',
         nodes: {},
         edges: {
-          dependencies: [['single_element']],  // Edge needs at least 2 elements
+          dependencies: [['single_element']], // Edge needs at least 2 elements
           conflicts: [],
-          satisfies: []
-        }
-      }
+          satisfies: [],
+        },
+      },
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.field.includes('dependencies'))).toBe(true);
+    expect(result.errors.some((e) => e.field.includes('dependencies'))).toBe(true);
   });
 });
 
@@ -523,15 +535,21 @@ describe('v3: reference validation', () => {
       feature: 'test',
       phase: 'TENSIONED',
       constraints: {
-        business: [{ id: 'B1', type: 'invariant', statement: 'Test' }]
+        business: [{ id: 'B1', type: 'invariant', statement: 'Test' }],
       },
       tensions: [
-        { id: 'TN1', type: 'trade_off', between: ['B1', 'B99'], description: 'Test', status: 'resolved' }
-      ]
+        {
+          id: 'TN1',
+          type: 'trade_off',
+          between: ['B1', 'B99'],
+          description: 'Test',
+          status: 'resolved',
+        },
+      ],
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.message.includes('B99'))).toBe(true);
+    expect(result.errors.some((e) => e.message.includes('B99'))).toBe(true);
   });
 
   test('warns on dangling maps_to_constraints reference', () => {
@@ -540,17 +558,22 @@ describe('v3: reference validation', () => {
       feature: 'test',
       phase: 'ANCHORED',
       constraints: {
-        business: [{ id: 'B1', type: 'invariant', statement: 'Test' }]
+        business: [{ id: 'B1', type: 'invariant', statement: 'Test' }],
       },
       anchors: {
         required_truths: [
-          { id: 'RT-1', statement: 'Test', status: 'NOT_SATISFIED', maps_to_constraints: ['B1', 'B99'] }
-        ]
-      }
+          {
+            id: 'RT-1',
+            statement: 'Test',
+            status: 'NOT_SATISFIED',
+            maps_to_constraints: ['B1', 'B99'],
+          },
+        ],
+      },
     };
     const result = validateManifold(manifold);
     // This is a warning, not an error
-    expect(result.warnings.some(w => w.message.includes('B99'))).toBe(true);
+    expect(result.warnings.some((w) => w.message.includes('B99'))).toBe(true);
   });
 
   test('passes when all references are valid', () => {
@@ -560,16 +583,27 @@ describe('v3: reference validation', () => {
       phase: 'ANCHORED',
       constraints: {
         business: [{ id: 'B1', type: 'invariant', statement: 'Test' }],
-        technical: [{ id: 'T1', type: 'boundary', statement: 'Test' }]
+        technical: [{ id: 'T1', type: 'boundary', statement: 'Test' }],
       },
       tensions: [
-        { id: 'TN1', type: 'trade_off', between: ['B1', 'T1'], description: 'Test', status: 'resolved' }
+        {
+          id: 'TN1',
+          type: 'trade_off',
+          between: ['B1', 'T1'],
+          description: 'Test',
+          status: 'resolved',
+        },
       ],
       anchors: {
         required_truths: [
-          { id: 'RT-1', statement: 'Test', status: 'NOT_SATISFIED', maps_to_constraints: ['B1', 'T1'] }
-        ]
-      }
+          {
+            id: 'RT-1',
+            statement: 'Test',
+            status: 'NOT_SATISFIED',
+            maps_to_constraints: ['B1', 'T1'],
+          },
+        ],
+      },
     };
     const result = validateManifold(manifold);
     expect(result.valid).toBe(true);

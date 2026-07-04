@@ -26,7 +26,6 @@ export function setColorMode(mode: 'auto' | 'always' | 'never'): void {
     case 'never':
       colorEnabled = false;
       break;
-    case 'auto':
     default:
       colorEnabled = isTTY && !noColorEnv;
       break;
@@ -110,7 +109,7 @@ export function formatPhase(phase: ManifoldPhase): string {
     'TENSIONED',
     'ANCHORED',
     'GENERATED',
-    'VERIFIED'
+    'VERIFIED',
   ];
 
   const idx = phases.indexOf(phase);
@@ -184,7 +183,11 @@ export function formatTensionSummary(resolved: number, total: number): string {
 /**
  * Format validation result
  */
-export function formatValidationResult(valid: boolean, errorCount: number, warningCount: number): string {
+export function formatValidationResult(
+  valid: boolean,
+  errorCount: number,
+  warningCount: number
+): string {
   if (valid && warningCount === 0) {
     return `${style.check()} ${style.success('Valid')}`;
   } else if (valid) {
@@ -208,41 +211,42 @@ export function formatTable(columns: TableColumn[], rows: Record<string, string>
   if (rows.length === 0) return '';
 
   // Calculate column widths
-  const widths = columns.map(col => {
+  const widths = columns.map((col) => {
     if (col.width) return col.width;
 
     const headerLen = stripAnsi(col.header).length;
-    const maxDataLen = Math.max(...rows.map(row => stripAnsi(row[col.key] || '').length));
+    const maxDataLen = Math.max(...rows.map((row) => stripAnsi(row[col.key] || '').length));
     return Math.max(headerLen, maxDataLen);
   });
 
   // Build header
   const headerRow = columns.map((col, i) => padString(col.header, widths[i], col.align)).join('  ');
-  const separator = widths.map(w => '─'.repeat(w)).join('──');
+  const separator = widths.map((w) => '─'.repeat(w)).join('──');
 
   // Build data rows
-  const dataRows = rows.map(row =>
+  const dataRows = rows.map((row) =>
     columns.map((col, i) => padString(row[col.key] || '', widths[i], col.align)).join('  ')
   );
 
-  return [
-    style.bold(headerRow),
-    style.dim(separator),
-    ...dataRows
-  ].join('\n');
+  return [style.bold(headerRow), style.dim(separator), ...dataRows].join('\n');
 }
 
 /**
  * Strip ANSI codes for length calculation
  */
 export function stripAnsi(str: string): string {
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: matching ESC (\x1b) is the entire point of an ANSI stripper
   return str.replace(/\x1b\[[0-9;]*m/g, '');
 }
 
 /**
  * Pad string to width
  */
-function padString(str: string, width: number, align: 'left' | 'right' | 'center' = 'left'): string {
+function padString(
+  str: string,
+  width: number,
+  align: 'left' | 'right' | 'center' = 'left'
+): string {
   const len = stripAnsi(str).length;
   const pad = width - len;
 
@@ -251,11 +255,11 @@ function padString(str: string, width: number, align: 'left' | 'right' | 'center
   switch (align) {
     case 'right':
       return ' '.repeat(pad) + str;
-    case 'center':
+    case 'center': {
       const left = Math.floor(pad / 2);
       const right = pad - left;
       return ' '.repeat(left) + str + ' '.repeat(right);
-    case 'left':
+    }
     default:
       return str + ' '.repeat(pad);
   }
@@ -273,7 +277,7 @@ export function formatHeader(title: string): string {
  */
 export function formatKeyValue(key: string, value: string, indent: number = 0): string {
   const prefix = ' '.repeat(indent);
-  return `${prefix}${style.dim(key + ':')} ${value}`;
+  return `${prefix}${style.dim(`${key}:`)} ${value}`;
 }
 
 /**

@@ -9,9 +9,15 @@
     "build:commands": "bun install/lib/build-commands.ts",
     "build:parallel-bundle": "bun build install/lib/parallel/bundle-entry.ts --outfile install/lib/parallel/parallel.bundle.js --target node",
     "sync:plugin": "bun scripts/sync-plugin.ts",
-    "build:all": "bun run build:commands && bun run build:parallel-bundle && bun run sync:plugin"
+    "build:all": "bun run build:commands && bun run build:parallel-bundle && bun run sync:plugin",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "biome lint .",
+    "typecheck": "cd cli && bun run typecheck",
+    "verify": "bun run format:check && bun run lint && bun run typecheck && bun test && bun run build:all"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.2",
     "@commitlint/cli": "^19.0.0",
     "@commitlint/config-conventional": "^19.0.0",
     "@playwright/test": "^1.48.0",

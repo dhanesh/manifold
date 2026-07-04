@@ -20,8 +20,7 @@ function applyVars(theme: Theme): void {
 
 function detectSystemTheme(): Theme {
   const prefersDark =
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-color-scheme: dark)').matches;
+    typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
   const t = getTheme(prefersDark ? 'apple-dark' : 'apple-light');
   if (!t) throw new Error('Built-in Apple themes missing from registry');
   return t;

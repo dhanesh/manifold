@@ -6,7 +6,7 @@
  * node statuses. Used by ConstraintSolver class methods.
  */
 
-import type { ConstraintGraph, ConstraintNode } from '../parser';
+import type { ConstraintGraph } from '../parser';
 
 /**
  * Find all prerequisites for a target node (backward reasoning)
@@ -65,7 +65,10 @@ export function getNodeConflicts(graph: ConstraintGraph, targetId: string): stri
 /**
  * Mark a node as satisfied and find newly unblocked nodes
  */
-export function markNodeSatisfied(graph: ConstraintGraph, nodeId: string): {
+export function markNodeSatisfied(
+  graph: ConstraintGraph,
+  nodeId: string
+): {
   success: boolean;
   unblocked: string[];
   newlyReady: string[];
@@ -79,12 +82,12 @@ export function markNodeSatisfied(graph: ConstraintGraph, nodeId: string): {
   node.status = 'SATISFIED';
 
   // Find newly unblocked nodes (nodes that were waiting on this one)
-  const unblocked = node.blocks.filter(blockedId => {
+  const unblocked = node.blocks.filter((blockedId) => {
     const blocked = graph.nodes[blockedId];
     if (!blocked || blocked.status === 'SATISFIED') return false;
 
     // Check if all dependencies are now satisfied
-    return blocked.depends_on.every(depId => {
+    return blocked.depends_on.every((depId) => {
       const dep = graph.nodes[depId];
       return dep?.status === 'SATISFIED';
     });
@@ -114,7 +117,7 @@ export function getGraphProgress(graph: ConstraintGraph): {
 } {
   const nodes = Object.values(graph.nodes);
   const total = nodes.length;
-  const satisfied = nodes.filter(n => n.status === 'SATISFIED').length;
+  const satisfied = nodes.filter((n) => n.status === 'SATISFIED').length;
   const percentage = total > 0 ? Math.round((satisfied / total) * 100) : 0;
 
   return { satisfied, total, percentage };
@@ -124,11 +127,11 @@ export function getGraphProgress(graph: ConstraintGraph): {
  * Get nodes that are ready to work on (all dependencies satisfied)
  */
 export function findReadyNodes(graph: ConstraintGraph): string[] {
-  return Object.keys(graph.nodes).filter(id => {
+  return Object.keys(graph.nodes).filter((id) => {
     const node = graph.nodes[id];
     if (!node || node.status === 'SATISFIED') return false;
 
-    return node.depends_on.every(depId => {
+    return node.depends_on.every((depId) => {
       const dep = graph.nodes[depId];
       return dep?.status === 'SATISFIED';
     });
@@ -139,11 +142,11 @@ export function findReadyNodes(graph: ConstraintGraph): string[] {
  * Get nodes that are blocked (waiting on unsatisfied dependencies)
  */
 export function findBlockedByDependencies(graph: ConstraintGraph): string[] {
-  return Object.keys(graph.nodes).filter(id => {
+  return Object.keys(graph.nodes).filter((id) => {
     const node = graph.nodes[id];
     if (!node || node.status === 'SATISFIED') return false;
 
-    return node.depends_on.some(depId => {
+    return node.depends_on.some((depId) => {
       const dep = graph.nodes[depId];
       return dep?.status !== 'SATISFIED';
     });

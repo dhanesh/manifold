@@ -9,10 +9,10 @@
  * hook response JSON to stdout. Exit code 0 always.
  */
 
-import { Command } from 'commander';
-import { existsSync, readdirSync, readFileSync } from 'fs';
-import { join, basename, dirname } from 'path';
-import { spawnSync } from 'child_process';
+import type { Command } from 'commander';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join, basename, dirname } from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 // ─── Shared utilities ───────────────────────────────────────────
 
@@ -53,7 +53,8 @@ async function schemaGuard(): Promise<void> {
 
   if (toolName === 'MultiEdit' && Array.isArray(toolInput?.edits)) {
     filePath = toolInput.edits.find(
-      (e: any) => e.file_path && dirname(e.file_path).endsWith('.manifold') && e.file_path.endsWith('.json')
+      (e: any) =>
+        e.file_path && dirname(e.file_path).endsWith('.manifold') && e.file_path.endsWith('.json')
     )?.file_path;
   } else {
     filePath = toolInput?.file_path || toolInput?.path;
@@ -108,16 +109,18 @@ async function schemaGuard(): Promise<void> {
       .filter((line: string) => line.includes('✗') || line.includes('Invalid'))
       .join('\n');
 
-    emitContext([
-      `⚠️ MANIFOLD SCHEMA VALIDATION FAILED for "${feature}":`,
-      errorLines || errors,
-      '',
-      `File: ${filePath}`,
-      'Fix these errors IN THE FILE ABOVE before proceeding. Common issues:',
-      '- Every evidence object MUST have an `id` field (e.g. "E1", "E2")',
-      '- Every iteration MUST have a `result` field (string summary of what happened)',
-      `- Run \`manifold validate ${feature}\` from ${cwd} for full details`,
-    ].join('\n'));
+    emitContext(
+      [
+        `⚠️ MANIFOLD SCHEMA VALIDATION FAILED for "${feature}":`,
+        errorLines || errors,
+        '',
+        `File: ${filePath}`,
+        'Fix these errors IN THE FILE ABOVE before proceeding. Common issues:',
+        '- Every evidence object MUST have an `id` field (e.g. "E1", "E2")',
+        '- Every iteration MUST have a `result` field (string summary of what happened)',
+        `- Run \`manifold validate ${feature}\` from ${cwd} for full details`,
+      ].join('\n')
+    );
   } else if (result.status === 0) {
     emitContext(`✅ Manifold schema validation passed for "${feature}".`);
   }
@@ -148,7 +151,8 @@ function summarizeConstraints(constraints: ManifoldData['constraints']): string 
   const uxCount = constraints.user_experience?.length || constraints.ux?.length;
   if (uxCount) counts.push(`UX: ${uxCount}`);
   if (constraints.security?.length) counts.push(`Security: ${constraints.security.length}`);
-  if (constraints.operational?.length) counts.push(`Operational: ${constraints.operational.length}`);
+  if (constraints.operational?.length)
+    counts.push(`Operational: ${constraints.operational.length}`);
   return counts.length > 0 ? counts.join(', ') : 'None discovered yet';
 }
 
@@ -161,13 +165,20 @@ function getPhaseProgress(phase: string): string {
 
 function getNextAction(phase: string, feature: string): string {
   switch (phase?.toUpperCase()) {
-    case 'INITIALIZED': return `/manifold:m1-constrain ${feature}`;
-    case 'CONSTRAINED': return `/manifold:m2-tension ${feature}`;
-    case 'TENSIONED': return `/manifold:m3-anchor ${feature}`;
-    case 'ANCHORED': return `/manifold:m4-generate ${feature}`;
-    case 'GENERATED': return `/manifold:m5-verify ${feature}`;
-    case 'VERIFIED': return 'Complete!';
-    default: return `/manifold:m-status ${feature}`;
+    case 'INITIALIZED':
+      return `/manifold:m1-constrain ${feature}`;
+    case 'CONSTRAINED':
+      return `/manifold:m2-tension ${feature}`;
+    case 'TENSIONED':
+      return `/manifold:m3-anchor ${feature}`;
+    case 'ANCHORED':
+      return `/manifold:m4-generate ${feature}`;
+    case 'GENERATED':
+      return `/manifold:m5-verify ${feature}`;
+    case 'VERIFIED':
+      return 'Complete!';
+    default:
+      return `/manifold:m-status ${feature}`;
   }
 }
 
@@ -176,7 +187,7 @@ async function context(): Promise<void> {
 
   if (!existsSync(manifoldDir)) return;
 
-  const files = readdirSync(manifoldDir).filter(f => f.endsWith('.yaml') || f.endsWith('.json'));
+  const files = readdirSync(manifoldDir).filter((f) => f.endsWith('.yaml') || f.endsWith('.json'));
   if (files.length === 0) return;
 
   const features = new Map<string, { manifold?: ManifoldData; anchor?: any; verify?: any }>();
@@ -186,13 +197,19 @@ async function context(): Promise<void> {
     let data: any;
 
     if (file.endsWith('.json')) {
-      try { data = JSON.parse(content); } catch { continue; }
+      try {
+        data = JSON.parse(content);
+      } catch {
+        continue;
+      }
     } else {
       // YAML files: try dynamic require, skip if unavailable
       try {
         const yaml = require('yaml');
         data = yaml.parse(content);
-      } catch { continue; }
+      } catch {
+        continue;
+      }
     }
     if (!data) continue;
 
@@ -261,12 +278,14 @@ async function promptEnforcer(): Promise<void> {
 
   if (!existsSync(manifoldDir)) return;
 
-  emitContext([
-    'MANIFOLD INTERACTION RULES (advisory):',
-    '1. Use AskUserQuestion (or agent-equivalent structured input) when you need user decisions, preferences, or clarification. Avoid plain-text questions.',
-    '2. After completing any Manifold phase, ALWAYS include the concrete next command: /manifold:mN-xxx <feature>',
-    '3. When presenting options or trade-offs, use AskUserQuestion with labeled choices.',
-  ].join('\n'));
+  emitContext(
+    [
+      'MANIFOLD INTERACTION RULES (advisory):',
+      '1. Use AskUserQuestion (or agent-equivalent structured input) when you need user decisions, preferences, or clarification. Avoid plain-text questions.',
+      '2. After completing any Manifold phase, ALWAYS include the concrete next command: /manifold:mN-xxx <feature>',
+      '3. When presenting options or trade-offs, use AskUserQuestion with labeled choices.',
+    ].join('\n')
+  );
 }
 
 // ─── phase-commons (UserPromptSubmit) ───────────────────────────
@@ -299,12 +318,16 @@ function buildCompactSummary(data: any, phase: string): string {
   // Constraint counts (always useful)
   const cc = data.constraints || {};
   const catMap: Record<string, string> = {
-    business: 'B', technical: 'T', user_experience: 'U', security: 'S', operational: 'O',
+    business: 'B',
+    technical: 'T',
+    user_experience: 'U',
+    security: 'S',
+    operational: 'O',
   };
   const counts = Object.entries(cc)
     .map(([cat, items]) => `${catMap[cat] || cat[0]}:${(items as any[]).length}`)
-    .filter(s => !s.endsWith(':0'));
-  const total = Object.values(cc).reduce((sum, items) => sum + (items as any[]).length, 0);
+    .filter((s) => !s.endsWith(':0'));
+  const total = Object.values(cc).reduce((sum: number, items) => sum + (items as any[]).length, 0);
   if (total > 0) {
     lines.push(`Constraints: ${counts.join(' ')} (${total} total)`);
   }
@@ -314,7 +337,9 @@ function buildCompactSummary(data: any, phase: string): string {
     const tensions = data.tensions || [];
     if (tensions.length) {
       const resolved = tensions.filter((t: any) => t.status === 'resolved').length;
-      const ids = tensions.map((t: any) => `${t.id}(${t.status === 'resolved' ? '✓' : '○'})`).join(' ');
+      const ids = tensions
+        .map((t: any) => `${t.id}(${t.status === 'resolved' ? '✓' : '○'})`)
+        .join(' ');
       lines.push(`Tensions: ${ids} — ${resolved}/${tensions.length} resolved`);
     }
   }
@@ -343,12 +368,16 @@ function buildCompactSummary(data: any, phase: string): string {
       for (const rt of rts) {
         byStatus[rt.status] = (byStatus[rt.status] || 0) + 1;
       }
-      const statusStr = Object.entries(byStatus).map(([s, n]) => `${n} ${s}`).join(', ');
+      const statusStr = Object.entries(byStatus)
+        .map(([s, n]) => `${n} ${s}`)
+        .join(', ');
       lines.push(`Required Truths: ${rts.length} (${statusStr})`);
     }
     const binding = data.anchors?.binding_constraint;
     if (binding) {
-      lines.push(`Binding: ${binding.required_truth_id} → deps: ${(binding.dependency_chain || []).join(', ')}`);
+      lines.push(
+        `Binding: ${binding.required_truth_id} → deps: ${(binding.dependency_chain || []).join(', ')}`
+      );
     }
     if (data.anchors?.recommended_option) {
       lines.push(`Option: ${data.anchors.recommended_option}`);
@@ -373,21 +402,23 @@ function buildCompactSummary(data: any, phase: string): string {
 function getMdReadDirective(phase: string, feature: string): string {
   const mdPath = `.manifold/${feature}.md`;
   const sectionMap: Record<string, string[]> = {
-    'm0': [],
-    'm1': ['Outcome'],
-    'm2': ['Constraints'],
-    'm3': ['Constraints', 'Tensions'],
-    'm4': ['Tensions', 'Required Truths', 'Solution Space'],
+    m0: [],
+    m1: ['Outcome'],
+    m2: ['Constraints'],
+    m3: ['Constraints', 'Tensions'],
+    m4: ['Tensions', 'Required Truths', 'Solution Space'],
   };
   const sections = sectionMap[phase];
   if (!sections) return `Read \`${mdPath}\` (full content)`;
   if (sections.length === 0) return '';
-  return `Read \`${mdPath}\` sections: ${sections.map(s => `## ${s}`).join(', ')}`;
+  return `Read \`${mdPath}\` sections: ${sections.map((s) => `## ${s}`).join(', ')}`;
 }
 
 /** Summarize all features for m-status without feature arg */
 function summarizeAllFeatures(manifoldDir: string): string {
-  const files = readdirSync(manifoldDir).filter(f => f.endsWith('.json') && !f.endsWith('.verify.json'));
+  const files = readdirSync(manifoldDir).filter(
+    (f) => f.endsWith('.json') && !f.endsWith('.verify.json')
+  );
   if (files.length === 0) return 'No manifold features found.';
 
   const lines: string[] = [`Active manifolds: ${files.length}`];
@@ -397,7 +428,9 @@ function summarizeAllFeatures(manifoldDir: string): string {
       const feature = file.replace('.json', '');
       const phase = data.phase || 'UNKNOWN';
       lines.push(`  ${feature}: ${phase} → ${getNextAction(phase, feature)}`);
-    } catch { /* skip invalid */ }
+    } catch {
+      /* skip invalid */
+    }
   }
   return lines.join('\n');
 }
@@ -430,7 +463,9 @@ async function phaseCommons(): Promise<void> {
   let data: any;
   try {
     data = JSON.parse(readFileSync(jsonPath, 'utf-8'));
-  } catch { return; }
+  } catch {
+    return;
+  }
 
   const mdExists = existsSync(join(manifoldDir, `${feature}.md`));
 
@@ -457,7 +492,7 @@ async function phaseCommons(): Promise<void> {
     '• Run `manifold validate <feature>` after updating manifold files',
     '• Output: ≤50 lines, visual tables/trees, status→next footer in ≤3 lines',
     '• JSON=structure only, MD=all text. .json exists → use JSON+MD format',
-    '• Manifold files on disk are truth — don\'t trust stale conversation context',
+    "• Manifold files on disk are truth — don't trust stale conversation context"
   );
 
   emitContext(parts.join('\n'));
@@ -469,7 +504,9 @@ export function registerHookCommand(program: Command): void {
   const hook = program
     .command('hook')
     .description('Cross-platform Claude Code hook handlers (reads stdin, writes JSON to stdout)')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Subcommands:
   schema-guard     PostToolUse: validate .manifold/*.json after edits
   context          PreCompact: inject manifold state before compaction
@@ -481,13 +518,18 @@ Usage in hooks.json:
   "command": "manifold hook context"
   "command": "manifold hook prompt-enforcer"
   "command": "manifold hook phase-commons"
-`);
+`
+    );
 
   hook
     .command('schema-guard')
     .description('PostToolUse hook: validate manifold JSON after Write/Edit/MultiEdit')
     .action(async () => {
-      try { await schemaGuard(); } catch { /* never crash hooks */ }
+      try {
+        await schemaGuard();
+      } catch {
+        /* never crash hooks */
+      }
       process.exit(0);
     });
 
@@ -495,7 +537,11 @@ Usage in hooks.json:
     .command('context')
     .description('PreCompact hook: inject manifold state before context compaction')
     .action(async () => {
-      try { await context(); } catch { /* never crash hooks */ }
+      try {
+        await context();
+      } catch {
+        /* never crash hooks */
+      }
       process.exit(0);
     });
 
@@ -503,15 +549,25 @@ Usage in hooks.json:
     .command('prompt-enforcer')
     .description('UserPromptSubmit hook: advisory interaction rules for manifold projects')
     .action(async () => {
-      try { await promptEnforcer(); } catch { /* never crash hooks */ }
+      try {
+        await promptEnforcer();
+      } catch {
+        /* never crash hooks */
+      }
       process.exit(0);
     });
 
   hook
     .command('phase-commons')
-    .description('UserPromptSubmit hook: inject manifold state + shared directives before phase commands')
+    .description(
+      'UserPromptSubmit hook: inject manifold state + shared directives before phase commands'
+    )
     .action(async () => {
-      try { await phaseCommons(); } catch { /* never crash hooks */ }
+      try {
+        await phaseCommons();
+      } catch {
+        /* never crash hooks */
+      }
       process.exit(0);
     });
 }

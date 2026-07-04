@@ -4,12 +4,12 @@
  * Required Truths: RT-3 (isolated execution environments), RT-4 (results can be merged)
  */
 
-import { spawn, ChildProcess } from 'child_process';
-import { EventEmitter } from 'events';
-import { WorktreeManager, WorktreeInfo } from './worktree-manager';
+import { spawn, type ChildProcess } from 'node:child_process';
+import { EventEmitter } from 'node:events';
+import { WorktreeManager, type WorktreeInfo } from './worktree-manager';
 import { ResourceMonitor } from './resource-monitor';
-import { Task } from './task-analyzer';
-import { SafeGroup } from './overlap-detector';
+import type { Task } from './task-analyzer';
+import type { SafeGroup } from './overlap-detector';
 
 export interface ExecutionTask {
   task: Task;
@@ -92,9 +92,7 @@ export class ParallelExecutor extends EventEmitter {
     // Check resources before starting
     const resourceStatus = await this.resourceMonitor.getStatus();
     if (!resourceStatus.overall.canParallelize) {
-      throw new Error(
-        `Cannot parallelize: ${resourceStatus.overall.reason}`
-      );
+      throw new Error(`Cannot parallelize: ${resourceStatus.overall.reason}`);
     }
 
     const maxConcurrent = Math.min(
@@ -130,9 +128,7 @@ export class ParallelExecutor extends EventEmitter {
 
       // Wait for at least one task to complete
       if (running.length > 0) {
-        const completedIndex = await Promise.race(
-          running.map((p, i) => p.then(() => i))
-        );
+        const completedIndex = await Promise.race(running.map((p, i) => p.then(() => i)));
         const result = await running[completedIndex];
         results.push(result);
         running.splice(completedIndex, 1);
@@ -211,9 +207,7 @@ export class ParallelExecutor extends EventEmitter {
         output: '',
         error: String(error),
         exitCode: 1,
-        duration: execTask.startTime
-          ? Date.now() - execTask.startTime.getTime()
-          : 0,
+        duration: execTask.startTime ? Date.now() - execTask.startTime.getTime() : 0,
         worktreePath: worktree?.path ?? '',
       };
     }

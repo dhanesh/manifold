@@ -7,26 +7,11 @@
  */
 
 import type { Command } from 'commander';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { join, dirname } from 'path';
-import {
-  findManifoldDir,
-  loadFeature,
-  listFeatures,
-} from '../lib/parser.js';
-import {
-  detectDrift,
-  computeFileHash,
-  type DriftReport,
-} from '../lib/evidence.js';
-import {
-  println,
-  printError,
-  formatHeader,
-  formatKeyValue,
-  style,
-  toJSON,
-} from '../lib/output.js';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { findManifoldDir, loadFeature, listFeatures } from '../lib/parser.js';
+import { detectDrift, computeFileHash, type DriftReport } from '../lib/evidence.js';
+import { println, printError, formatHeader, formatKeyValue, style, toJSON } from '../lib/output.js';
 
 interface DriftOptions {
   json?: boolean;
@@ -150,7 +135,7 @@ async function checkFeatureDrift(
       const verifyData = JSON.parse(readFileSync(verifyPath, 'utf-8'));
       if (verifyData.file_hashes) {
         for (const [path, hash] of Object.entries(verifyData.file_hashes)) {
-          const existing = artifacts.find(a => a.path === path);
+          const existing = artifacts.find((a) => a.path === path);
           if (existing) {
             // Merge hash into existing artifact (generation artifacts may lack file_hash)
             existing.file_hash = hash as string;
@@ -165,7 +150,7 @@ async function checkFeatureDrift(
   }
 
   // Filter to only artifacts with hashes
-  const hashableArtifacts = artifacts.filter(a => a.file_hash);
+  const hashableArtifacts = artifacts.filter((a) => a.file_hash);
 
   if (hashableArtifacts.length === 0) {
     // If --update, capture initial hashes even when none exist yet
@@ -181,7 +166,9 @@ async function checkFeatureDrift(
 
     if (!options.json) {
       println(formatHeader(`Drift: ${style.feature(feature)}`));
-      println(formatKeyValue('Status', style.dim('No file hashes recorded — run drift --update first')));
+      println(
+        formatKeyValue('Status', style.dim('No file hashes recorded — run drift --update first'))
+      );
     }
     return { drifted: [], clean: 0, timestamp: new Date().toISOString() };
   }
@@ -218,9 +205,8 @@ function printDriftOutput(feature: string, report: DriftReport): void {
     println();
     println(`  ${style.warning('Changed files:')}`);
     for (const entry of report.drifted) {
-      const constraints = entry.constraint_ids.length > 0
-        ? ` (affects: ${entry.constraint_ids.join(', ')})`
-        : '';
+      const constraints =
+        entry.constraint_ids.length > 0 ? ` (affects: ${entry.constraint_ids.join(', ')})` : '';
       println(`    ${style.cross()} ${entry.path}${constraints}`);
     }
     println();
@@ -260,6 +246,5 @@ async function updateHashes(
   verifyData.file_hashes = fileHashes;
   verifyData.hashes_updated_at = new Date().toISOString();
 
-
-  writeFileSync(verifyPath, JSON.stringify(verifyData, null, 2) + '\n');
+  writeFileSync(verifyPath, `${JSON.stringify(verifyData, null, 2)}\n`);
 }

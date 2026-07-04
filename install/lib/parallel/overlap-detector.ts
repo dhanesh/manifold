@@ -4,7 +4,7 @@
  * Required Truths: RT-2 (Independent tasks can be identified - no file overlap)
  */
 
-import { FilePrediction } from './file-predictor';
+import type { FilePrediction } from './file-predictor';
 
 export interface OverlapResult {
   hasOverlap: boolean;
@@ -67,8 +67,9 @@ export class OverlapDetector {
         for (let i = 0; i < tasks.length; i++) {
           for (let j = i + 1; j < tasks.length; j++) {
             const existingPair = overlapPairs.find(
-              p => (p.task1 === tasks[i] && p.task2 === tasks[j]) ||
-                   (p.task1 === tasks[j] && p.task2 === tasks[i])
+              (p) =>
+                (p.task1 === tasks[i] && p.task2 === tasks[j]) ||
+                (p.task1 === tasks[j] && p.task2 === tasks[i])
             );
 
             if (existingPair) {
@@ -101,15 +102,15 @@ export class OverlapDetector {
    * Check if two specific tasks can run in parallel
    * Satisfies: RT-2 (Independent tasks can be identified - no file overlap)
    */
-  canRunInParallel(prediction1: FilePrediction, prediction2: FilePrediction): {
+  canRunInParallel(
+    prediction1: FilePrediction,
+    prediction2: FilePrediction
+  ): {
     canParallelize: boolean;
     reason?: string;
     overlappingFiles?: string[];
   } {
-    const overlapping = this.findOverlap(
-      prediction1.predictedFiles,
-      prediction2.predictedFiles
-    );
+    const overlapping = this.findOverlap(prediction1.predictedFiles, prediction2.predictedFiles);
 
     if (overlapping.length === 0) {
       return { canParallelize: true };
@@ -181,10 +182,8 @@ export class OverlapDetector {
 
     // Suggest optimal grouping
     if (result.safeGroups.length > 0) {
-      const maxGroupSize = Math.max(...result.safeGroups.map(g => g.taskIds.length));
-      recommendations.push(
-        `Maximum parallel group size: ${maxGroupSize} tasks`
-      );
+      const maxGroupSize = Math.max(...result.safeGroups.map((g) => g.taskIds.length));
+      recommendations.push(`Maximum parallel group size: ${maxGroupSize} tasks`);
     }
 
     return {
@@ -235,8 +234,8 @@ export class OverlapDetector {
         if (assigned.has(other.taskId)) continue;
 
         // Check if other conflicts with any task in current group
-        const hasConflict = group.taskIds.some(
-          taskId => conflicts.get(taskId)?.has(other.taskId)
+        const hasConflict = group.taskIds.some((taskId) =>
+          conflicts.get(taskId)?.has(other.taskId)
         );
 
         if (!hasConflict) {
@@ -258,7 +257,7 @@ export class OverlapDetector {
    */
   private findOverlap(files1: string[], files2: string[]): string[] {
     const set1 = new Set(files1);
-    return files2.filter(f => set1.has(f));
+    return files2.filter((f) => set1.has(f));
   }
 
   /**
@@ -300,8 +299,8 @@ export class OverlapDetector {
       lines.push('');
 
       for (const pair of result.taskPairs) {
-        const icon = pair.severity === 'critical' ? '🔴' :
-                     pair.severity === 'warning' ? '🟡' : '🟢';
+        const icon =
+          pair.severity === 'critical' ? '🔴' : pair.severity === 'warning' ? '🟡' : '🟢';
         lines.push(`${icon} ${pair.task1} ↔ ${pair.task2}`);
         lines.push(`   Files: ${pair.overlappingFiles.join(', ')}`);
       }
@@ -333,7 +332,7 @@ export class OverlapDetector {
    */
   isConflictFree(predictions: FilePrediction[]): boolean {
     const result = this.detect(predictions);
-    return !result.hasOverlap || result.taskPairs.every(p => p.severity !== 'critical');
+    return !result.hasOverlap || result.taskPairs.every((p) => p.severity !== 'critical');
   }
 
   /**
@@ -341,7 +340,7 @@ export class OverlapDetector {
    */
   getMaxParallelization(predictions: FilePrediction[]): number {
     const result = this.detect(predictions);
-    return Math.max(...result.safeGroups.map(g => g.taskIds.length), 1);
+    return Math.max(...result.safeGroups.map((g) => g.taskIds.length), 1);
   }
 }
 

@@ -7,16 +7,14 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
-import { existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
-import { join } from 'path';
+import { existsSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   computeFileHash,
   detectDrift,
   parseTestAnnotations,
   buildTraceabilityMatrix,
   aggregateSatisfactionLevel,
-  type DriftReport,
-  type TraceabilityMatrix,
 } from '../lib/evidence.js';
 import type { Evidence } from '../lib/parser.js';
 
@@ -135,10 +133,7 @@ describe('detectDrift', () => {
   });
 
   test('skips artifacts without file_hash', () => {
-    const report = detectDrift(
-      [{ path: 'no-hash.ts', satisfies: ['B1'] }],
-      TEST_DIR
-    );
+    const report = detectDrift([{ path: 'no-hash.ts', satisfies: ['B1'] }], TEST_DIR);
 
     expect(report.drifted).toHaveLength(0);
     expect(report.clean).toBe(0);
@@ -181,12 +176,15 @@ describe('detectDrift', () => {
 describe('parseTestAnnotations', () => {
   test('parses @constraint annotations', () => {
     const filePath = join(TEST_DIR, 'annotated.test.ts');
-    writeFileSync(filePath, `
+    writeFileSync(
+      filePath,
+      `
 // @constraint B1
 test('prevents duplicates', () => {
   expect(true).toBe(true);
 });
-`);
+`
+    );
 
     const annotations = parseTestAnnotations(filePath);
     expect(annotations.get('prevents duplicates')).toEqual(['B1']);
@@ -194,12 +192,15 @@ test('prevents duplicates', () => {
 
   test('parses // Satisfies: annotations', () => {
     const filePath = join(TEST_DIR, 'satisfies.test.ts');
-    writeFileSync(filePath, `
+    writeFileSync(
+      filePath,
+      `
 // Satisfies: B1, T2
 it('validates input', () => {
   expect(true).toBe(true);
 });
-`);
+`
+    );
 
     const annotations = parseTestAnnotations(filePath);
     expect(annotations.get('validates input')).toContain('B1');
@@ -208,14 +209,17 @@ it('validates input', () => {
 
   test('parses * Satisfies: annotations (JSDoc style)', () => {
     const filePath = join(TEST_DIR, 'jsdoc.test.ts');
-    writeFileSync(filePath, `
+    writeFileSync(
+      filePath,
+      `
 /**
  * Satisfies: RT-1, RT-2
  */
 describe('error classification', () => {
   test('classifies transient errors', () => {});
 });
-`);
+`
+    );
 
     const annotations = parseTestAnnotations(filePath);
     expect(annotations.get('error classification')).toContain('RT-1');
@@ -224,13 +228,16 @@ describe('error classification', () => {
 
   test('handles multiple tests with different constraints', () => {
     const filePath = join(TEST_DIR, 'multi.test.ts');
-    writeFileSync(filePath, `
+    writeFileSync(
+      filePath,
+      `
 // @constraint B1
 test('no duplicates', () => {});
 
 // @constraint T1, T2
 test('response time', () => {});
-`);
+`
+    );
 
     const annotations = parseTestAnnotations(filePath);
     expect(annotations.get('no duplicates')).toEqual(['B1']);
@@ -245,11 +252,14 @@ test('response time', () => {});
 
   test('returns empty map for file with no annotations', () => {
     const filePath = join(TEST_DIR, 'plain.test.ts');
-    writeFileSync(filePath, `
+    writeFileSync(
+      filePath,
+      `
 test('no annotations here', () => {
   expect(1 + 1).toBe(2);
 });
-`);
+`
+    );
 
     const annotations = parseTestAnnotations(filePath);
     expect(annotations.size).toBe(0);
@@ -257,10 +267,13 @@ test('no annotations here', () => {
 
   test('filters out invalid constraint IDs', () => {
     const filePath = join(TEST_DIR, 'mixed.test.ts');
-    writeFileSync(filePath, `
+    writeFileSync(
+      filePath,
+      `
 // @constraint B1, invalid, T2, also-bad
 test('mixed ids', () => {});
-`);
+`
+    );
 
     const annotations = parseTestAnnotations(filePath);
     const ids = annotations.get('mixed ids');
@@ -272,10 +285,13 @@ test('mixed ids', () => {});
 
   test('handles TN-prefixed constraint IDs', () => {
     const filePath = join(TEST_DIR, 'tension.test.ts');
-    writeFileSync(filePath, `
+    writeFileSync(
+      filePath,
+      `
 // Satisfies: TN1, TN2
 test('tension resolution test', () => {});
-`);
+`
+    );
 
     const annotations = parseTestAnnotations(filePath);
     expect(annotations.get('tension resolution test')).toContain('TN1');
@@ -290,43 +306,55 @@ test('tension resolution test', () => {});
 describe('buildTraceabilityMatrix', () => {
   test('builds matrix from annotated test files', () => {
     const testFile = join(TEST_DIR, 'traced.test.ts');
-    writeFileSync(testFile, `
+    writeFileSync(
+      testFile,
+      `
 // @constraint B1
 test('no duplicates', () => {});
 
 // @constraint B1, T1
 test('idempotent retry', () => {});
-`);
+`
+    );
 
     const matrix = buildTraceabilityMatrix(['traced.test.ts'], TEST_DIR);
 
-    expect(matrix['B1']).toHaveLength(2);
-    expect(matrix['B1'][0].test_function).toBe('no duplicates');
-    expect(matrix['B1'][1].test_function).toBe('idempotent retry');
-    expect(matrix['T1']).toHaveLength(1);
-    expect(matrix['T1'][0].test_function).toBe('idempotent retry');
+    expect(matrix.B1).toHaveLength(2);
+    expect(matrix.B1[0].test_function).toBe('no duplicates');
+    expect(matrix.B1[1].test_function).toBe('idempotent retry');
+    expect(matrix.T1).toHaveLength(1);
+    expect(matrix.T1[0].test_function).toBe('idempotent retry');
   });
 
   test('handles multiple test files', () => {
-    writeFileSync(join(TEST_DIR, 'a.test.ts'), `
+    writeFileSync(
+      join(TEST_DIR, 'a.test.ts'),
+      `
 // @constraint B1
 test('test A', () => {});
-`);
-    writeFileSync(join(TEST_DIR, 'b.test.ts'), `
+`
+    );
+    writeFileSync(
+      join(TEST_DIR, 'b.test.ts'),
+      `
 // @constraint B1
 test('test B', () => {});
-`);
+`
+    );
 
     const matrix = buildTraceabilityMatrix(['a.test.ts', 'b.test.ts'], TEST_DIR);
-    expect(matrix['B1']).toHaveLength(2);
-    expect(matrix['B1'].map(e => e.test_file)).toContain('a.test.ts');
-    expect(matrix['B1'].map(e => e.test_file)).toContain('b.test.ts');
+    expect(matrix.B1).toHaveLength(2);
+    expect(matrix.B1.map((e) => e.test_file)).toContain('a.test.ts');
+    expect(matrix.B1.map((e) => e.test_file)).toContain('b.test.ts');
   });
 
   test('returns empty matrix for files with no annotations', () => {
-    writeFileSync(join(TEST_DIR, 'plain.test.ts'), `
+    writeFileSync(
+      join(TEST_DIR, 'plain.test.ts'),
+      `
 test('no constraints here', () => {});
-`);
+`
+    );
 
     const matrix = buildTraceabilityMatrix(['plain.test.ts'], TEST_DIR);
     expect(Object.keys(matrix)).toHaveLength(0);
@@ -348,30 +376,22 @@ describe('aggregateSatisfactionLevel', () => {
   });
 
   test('returns VERIFIED for test_passes with VERIFIED status', () => {
-    const evidence: Evidence[] = [
-      { type: 'test_passes', path: 'test.ts', status: 'VERIFIED' },
-    ];
+    const evidence: Evidence[] = [{ type: 'test_passes', path: 'test.ts', status: 'VERIFIED' }];
     expect(aggregateSatisfactionLevel(evidence)).toBe('VERIFIED');
   });
 
   test('returns IMPLEMENTED for test_passes with PENDING status', () => {
-    const evidence: Evidence[] = [
-      { type: 'test_passes', path: 'test.ts', status: 'PENDING' },
-    ];
+    const evidence: Evidence[] = [{ type: 'test_passes', path: 'test.ts', status: 'PENDING' }];
     expect(aggregateSatisfactionLevel(evidence)).toBe('IMPLEMENTED');
   });
 
   test('returns TESTED for test_passes with STALE status', () => {
-    const evidence: Evidence[] = [
-      { type: 'test_passes', path: 'test.ts', status: 'STALE' },
-    ];
+    const evidence: Evidence[] = [{ type: 'test_passes', path: 'test.ts', status: 'STALE' }];
     expect(aggregateSatisfactionLevel(evidence)).toBe('TESTED');
   });
 
   test('returns IMPLEMENTED for file_exists evidence', () => {
-    const evidence: Evidence[] = [
-      { type: 'file_exists', path: 'impl.ts', status: 'VERIFIED' },
-    ];
+    const evidence: Evidence[] = [{ type: 'file_exists', path: 'impl.ts', status: 'VERIFIED' }];
     expect(aggregateSatisfactionLevel(evidence)).toBe('IMPLEMENTED');
   });
 
@@ -383,9 +403,7 @@ describe('aggregateSatisfactionLevel', () => {
   });
 
   test('returns DOCUMENTED for manual_review only', () => {
-    const evidence: Evidence[] = [
-      { type: 'manual_review', path: 'review.md', status: 'PENDING' },
-    ];
+    const evidence: Evidence[] = [{ type: 'manual_review', path: 'review.md', status: 'PENDING' }];
     expect(aggregateSatisfactionLevel(evidence)).toBe('DOCUMENTED');
   });
 

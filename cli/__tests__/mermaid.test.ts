@@ -16,15 +16,11 @@ import {
   renderBackwardToTerminal,
 } from '../lib/mermaid.js';
 import { stripAnsi } from '../lib/output.js';
-import type {
-  ConstraintGraph,
-  ConstraintNode,
-  ExecutionPlan,
-} from '../lib/parser.js';
+import type { ConstraintGraph, ConstraintNode, ExecutionPlan } from '../lib/parser.js';
 
 /** Get max line width of rendered output (stripping ANSI codes) */
 function maxLineWidth(output: string): number {
-  return Math.max(...output.split('\n').map(line => stripAnsi(line).length));
+  return Math.max(...output.split('\n').map((line) => stripAnsi(line).length));
 }
 
 // ============================================================
@@ -82,13 +78,22 @@ function makeScaleGraph(nodeCount: number): ConstraintGraph {
     else if (i <= Math.ceil(nodeCount * 0.85)) type = 'required_truth';
     else type = 'artifact';
 
-    const prefix = type === 'constraint' ? 'C' : type === 'tension' ? 'TN' : type === 'required_truth' ? 'RT' : 'A';
+    const prefix =
+      type === 'constraint'
+        ? 'C'
+        : type === 'tension'
+          ? 'TN'
+          : type === 'required_truth'
+            ? 'RT'
+            : 'A';
     const id = `${prefix}${i}`;
-    nodes.push(makeNode(id, type, {
-      label: `${type} number ${i} with a longer description`,
-      status: i % 3 === 0 ? 'REQUIRED' : 'SATISFIED',
-      critical_path: i <= 3,
-    }));
+    nodes.push(
+      makeNode(id, type, {
+        label: `${type} number ${i} with a longer description`,
+        status: i % 3 === 0 ? 'REQUIRED' : 'SATISFIED',
+        critical_path: i <= 3,
+      })
+    );
   }
 
   // Create edges between sequential nodes
@@ -197,28 +202,21 @@ describe('graphToMermaid', () => {
   });
 
   test('renders dependency edges as solid arrows', () => {
-    const graph = makeGraph(
-      [makeNode('B1'), makeNode('B2')],
-      { dependencies: [['B1', 'B2']] }
-    );
+    const graph = makeGraph([makeNode('B1'), makeNode('B2')], { dependencies: [['B1', 'B2']] });
     const result = graphToMermaid(graph);
     expect(result).toContain('B1 --> B2');
   });
 
   test('renders conflict edges as dotted arrows', () => {
-    const graph = makeGraph(
-      [makeNode('B1'), makeNode('B2')],
-      { conflicts: [['B1', 'B2']] }
-    );
+    const graph = makeGraph([makeNode('B1'), makeNode('B2')], { conflicts: [['B1', 'B2']] });
     const result = graphToMermaid(graph);
     expect(result).toContain('B1 -.-> B2');
   });
 
   test('renders satisfies edges as thick arrows', () => {
-    const graph = makeGraph(
-      [makeNode('A1', 'artifact'), makeNode('B1')],
-      { satisfies: [['A1', 'B1']] }
-    );
+    const graph = makeGraph([makeNode('A1', 'artifact'), makeNode('B1')], {
+      satisfies: [['A1', 'B1']],
+    });
     const result = graphToMermaid(graph);
     expect(result).toContain('A1 ==> B1');
   });
@@ -307,9 +305,9 @@ describe('graphToMermaid — scale (U1)', () => {
 
     expect(result).toStartWith('graph TD');
     // Should have all edge types
-    expect(result).toContain('-->');    // dependencies
-    expect(result).toContain('-.->');   // conflicts
-    expect(result).toContain('==>');    // satisfies
+    expect(result).toContain('-->'); // dependencies
+    expect(result).toContain('-.->'); // conflicts
+    expect(result).toContain('==>'); // satisfies
   });
 
   test('handles critical path styling at scale', () => {
@@ -369,7 +367,7 @@ describe('executionPlanToMermaid', () => {
     expect(result).toStartWith('graph LR');
     expect(result).toContain('subgraph Wave_1');
     // No inter-wave arrows
-    const lines = result.split('\n').filter(l => l.includes('-->') && !l.includes('subgraph'));
+    const lines = result.split('\n').filter((l) => l.includes('-->') && !l.includes('subgraph'));
     expect(lines.length).toBe(0);
   });
 });
@@ -380,10 +378,7 @@ describe('executionPlanToMermaid', () => {
 
 describe('backwardReasoningToMermaid', () => {
   test('produces valid TD flowchart', () => {
-    const graph = makeGraph([
-      makeNode('B1', 'constraint', { depends_on: ['B2'] }),
-      makeNode('B2'),
-    ]);
+    const graph = makeGraph([makeNode('B1', 'constraint', { depends_on: ['B2'] }), makeNode('B2')]);
     const result = backwardReasoningToMermaid(graph, 'B1', ['B2']);
     expect(result).toStartWith('graph TD');
   });
@@ -435,7 +430,9 @@ describe('backwardReasoningToMermaid', () => {
     const graph = makeGraph([makeNode('B1'), makeNode('B2')]);
     const result = backwardReasoningToMermaid(graph, 'B1', ['B2', 'B2', 'B2']);
     // B2 should appear only once as a node definition
-    const b2Lines = result.split('\n').filter(l => l.includes('B2["') || l.includes('B2("') || l.includes('B2{'));
+    const b2Lines = result
+      .split('\n')
+      .filter((l) => l.includes('B2["') || l.includes('B2("') || l.includes('B2{'));
     expect(b2Lines.length).toBe(1);
   });
 });
@@ -454,14 +451,11 @@ describe('miniGraphToMermaid', () => {
   });
 
   test('includes all edge types', () => {
-    const graph = makeGraph(
-      [makeNode('B1'), makeNode('B2'), makeNode('A1', 'artifact')],
-      {
-        dependencies: [['B1', 'B2']],
-        conflicts: [['B1', 'B2']],
-        satisfies: [['A1', 'B1']],
-      }
-    );
+    const graph = makeGraph([makeNode('B1'), makeNode('B2'), makeNode('A1', 'artifact')], {
+      dependencies: [['B1', 'B2']],
+      conflicts: [['B1', 'B2']],
+      satisfies: [['A1', 'B1']],
+    });
     const result = miniGraphToMermaid(graph);
     expect(result).toContain('-->');
     expect(result).toContain('-.->');
@@ -475,9 +469,9 @@ describe('miniGraphToMermaid', () => {
       makeNode('RT1', 'required_truth'),
     ]);
     const result = miniGraphToMermaid(graph);
-    expect(result).toContain('B1["');     // rectangle
-    expect(result).toContain('TN1{"');    // diamond
-    expect(result).toContain('RT1("');    // rounded
+    expect(result).toContain('B1["'); // rectangle
+    expect(result).toContain('TN1{"'); // diamond
+    expect(result).toContain('RT1("'); // rounded
   });
 
   test('handles empty graph', () => {
@@ -520,10 +514,10 @@ describe('renderMermaidToTerminal', () => {
   });
 
   test('renders graphToMermaid output without throwing', () => {
-    const graph = makeGraph(
-      [makeNode('B1'), makeNode('B2'), makeNode('TN1', 'tension')],
-      { dependencies: [['B1', 'B2']], conflicts: [['B1', 'TN1']] }
-    );
+    const graph = makeGraph([makeNode('B1'), makeNode('B2'), makeNode('TN1', 'tension')], {
+      dependencies: [['B1', 'B2']],
+      conflicts: [['B1', 'TN1']],
+    });
     const mermaid = graphToMermaid(graph);
     expect(() => renderMermaidToTerminal(mermaid)).not.toThrow();
     const result = renderMermaidToTerminal(mermaid);
@@ -531,10 +525,7 @@ describe('renderMermaidToTerminal', () => {
   });
 
   test('renders miniGraphToMermaid output without throwing', () => {
-    const graph = makeGraph(
-      [makeNode('B1'), makeNode('B2')],
-      { dependencies: [['B1', 'B2']] }
-    );
+    const graph = makeGraph([makeNode('B1'), makeNode('B2')], { dependencies: [['B1', 'B2']] });
     const mermaid = miniGraphToMermaid(graph);
     expect(() => renderMermaidToTerminal(mermaid)).not.toThrow();
   });
@@ -599,7 +590,11 @@ describe('end-to-end pipeline', () => {
   test('graphToMermaid → renderMermaidToTerminal with mixed types', () => {
     const graph = makeGraph(
       [
-        makeNode('B1', 'constraint', { label: 'No duplicates', status: 'SATISFIED', critical_path: true }),
+        makeNode('B1', 'constraint', {
+          label: 'No duplicates',
+          status: 'SATISFIED',
+          critical_path: true,
+        }),
         makeNode('T1', 'constraint', { label: 'Bun compatible', depends_on: ['B1'] }),
         makeNode('TN1', 'tension', { label: 'Speed vs Safety', conflicts_with: ['B1'] }),
         makeNode('RT1', 'required_truth', { label: 'Tests pass' }),
@@ -655,10 +650,13 @@ describe('end-to-end pipeline', () => {
 
 describe('renderGraphToTerminal', () => {
   test('full mode renders LR graph + legend table', () => {
-    const graph = makeGraph([
-      makeNode('B1', 'constraint', { label: 'No duplicates', status: 'SATISFIED' }),
-      makeNode('B2', 'constraint', { label: 'Retry within 72 hours', status: 'REQUIRED' }),
-    ], { dependencies: [['B2', 'B1']] });
+    const graph = makeGraph(
+      [
+        makeNode('B1', 'constraint', { label: 'No duplicates', status: 'SATISFIED' }),
+        makeNode('B2', 'constraint', { label: 'Retry within 72 hours', status: 'REQUIRED' }),
+      ],
+      { dependencies: [['B2', 'B1']] }
+    );
 
     const result = renderGraphToTerminal(graph, 'full');
     expect(result.length).toBeGreaterThan(0);
@@ -672,9 +670,7 @@ describe('renderGraphToTerminal', () => {
   });
 
   test('mini mode renders graph without legend', () => {
-    const graph = makeGraph([
-      makeNode('B1', 'constraint', { label: 'No duplicates' }),
-    ]);
+    const graph = makeGraph([makeNode('B1', 'constraint', { label: 'No duplicates' })]);
     const result = renderGraphToTerminal(graph, 'mini');
     expect(result.length).toBeGreaterThan(0);
     // Mini mode should NOT contain the full description from the legend
@@ -799,10 +795,7 @@ describe('renderBackwardToTerminal', () => {
   });
 
   test('handles graph with no dependencies gracefully', () => {
-    const graph = makeGraph([
-      makeNode('B1', 'constraint'),
-      makeNode('B2', 'constraint'),
-    ]);
+    const graph = makeGraph([makeNode('B1', 'constraint'), makeNode('B2', 'constraint')]);
     expect(() => renderBackwardToTerminal(graph, 'B1', ['B2'])).not.toThrow();
   });
 });

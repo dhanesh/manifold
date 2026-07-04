@@ -9,9 +9,9 @@
  * Advisory-only: surfaces errors as additionalContext, never blocks.
  */
 
-import { existsSync } from 'fs';
-import { join, basename, dirname } from 'path';
-import { spawnSync } from 'child_process';
+import { existsSync } from 'node:fs';
+import { join, basename, dirname } from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 // Read hook input from stdin
 const input = await Bun.stdin.text();
@@ -36,7 +36,8 @@ let filePath: string | undefined;
 if (toolName === 'MultiEdit' && Array.isArray(toolInput?.edits)) {
   // MultiEdit contains an array of edits — check if any target .manifold/*.json
   filePath = toolInput.edits.find(
-    (e: any) => e.file_path && dirname(e.file_path).endsWith('.manifold') && e.file_path.endsWith('.json')
+    (e: any) =>
+      e.file_path && dirname(e.file_path).endsWith('.manifold') && e.file_path.endsWith('.json')
   )?.file_path;
 } else {
   filePath = toolInput?.file_path || toolInput?.path;

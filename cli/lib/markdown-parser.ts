@@ -19,7 +19,17 @@
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
-import type { Root, Heading, Paragraph, Blockquote, Text, Strong, InlineCode, Content, PhrasingContent } from 'mdast';
+import type {
+  Root,
+  Heading,
+  Paragraph,
+  Blockquote,
+  Text,
+  Strong,
+  InlineCode,
+  Content,
+  PhrasingContent,
+} from 'mdast';
 
 // ============================================================
 // Content Types
@@ -80,12 +90,12 @@ const REQUIRED_TRUTH_PATTERN = /^(RT-\d+):\s*(.+)$/;
 /**
  * Match blockquote label pattern: > **Rationale:** ...
  */
-const BLOCKQUOTE_LABEL_PATTERN = /^\*\*(Rationale|Resolution):\*\*\s*/;
+const _BLOCKQUOTE_LABEL_PATTERN = /^\*\*(Rationale|Resolution):\*\*\s*/;
 
 /**
  * Match inline metadata: **Implemented by:** `path`
  */
-const METADATA_PATTERN = /^\*\*(Implemented by|Verified by):\*\*\s*/;
+const _METADATA_PATTERN = /^\*\*(Implemented by|Verified by):\*\*\s*/;
 
 // ============================================================
 // AST Helpers
@@ -225,10 +235,19 @@ export function parseManifoldMarkdown(markdown: string): ManifoldContent {
   };
 
   // State machine for tracking current context
-  let currentSection: 'outcome' | 'constraints' | 'tensions' | 'required_truths' | 'other' = 'other';
-  let currentCategory:
-    | 'business' | 'technical' | 'user_experience' | 'security' | 'operational'
-    | 'obligations' | 'desires' | 'resources' | 'risks' | 'dependencies'
+  let currentSection: 'outcome' | 'constraints' | 'tensions' | 'required_truths' | 'other' =
+    'other';
+  let _currentCategory:
+    | 'business'
+    | 'technical'
+    | 'user_experience'
+    | 'security'
+    | 'operational'
+    | 'obligations'
+    | 'desires'
+    | 'resources'
+    | 'risks'
+    | 'dependencies'
     | null = null;
   let currentConstraint: ConstraintContent | null = null;
   let currentTension: TensionContent | null = null;
@@ -334,16 +353,17 @@ export function parseManifoldMarkdown(markdown: string): ManifoldContent {
 
         // Otherwise it's a category (software or non-software)
         const lowerText = text.toLowerCase();
-        if (lowerText === 'business') currentCategory = 'business';
-        else if (lowerText === 'technical') currentCategory = 'technical';
-        else if (lowerText === 'user experience' || lowerText === 'ux') currentCategory = 'user_experience';
-        else if (lowerText === 'security') currentCategory = 'security';
-        else if (lowerText === 'operational') currentCategory = 'operational';
-        else if (lowerText === 'obligations') currentCategory = 'obligations';
-        else if (lowerText === 'desires') currentCategory = 'desires';
-        else if (lowerText === 'resources') currentCategory = 'resources';
-        else if (lowerText === 'risks') currentCategory = 'risks';
-        else if (lowerText === 'dependencies') currentCategory = 'dependencies';
+        if (lowerText === 'business') _currentCategory = 'business';
+        else if (lowerText === 'technical') _currentCategory = 'technical';
+        else if (lowerText === 'user experience' || lowerText === 'ux')
+          _currentCategory = 'user_experience';
+        else if (lowerText === 'security') _currentCategory = 'security';
+        else if (lowerText === 'operational') _currentCategory = 'operational';
+        else if (lowerText === 'obligations') _currentCategory = 'obligations';
+        else if (lowerText === 'desires') _currentCategory = 'desires';
+        else if (lowerText === 'resources') _currentCategory = 'resources';
+        else if (lowerText === 'risks') _currentCategory = 'risks';
+        else if (lowerText === 'dependencies') _currentCategory = 'dependencies';
         continue;
       }
 

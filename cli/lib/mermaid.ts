@@ -7,11 +7,7 @@
  */
 
 import { renderMermaidAscii } from 'beautiful-mermaid';
-import type {
-  ConstraintGraph,
-  ConstraintNode,
-  ExecutionPlan,
-} from './parser';
+import type { ConstraintGraph, ConstraintNode, ExecutionPlan } from './parser';
 import { formatTable, style, type TableColumn } from './output';
 
 // ============================================================
@@ -35,7 +31,7 @@ function escapeLabel(label: string): string {
  */
 function truncateLabel(label: string, maxLen: number): string {
   if (label.length <= maxLen) return label;
-  return label.substring(0, maxLen - 3) + '...';
+  return `${label.substring(0, maxLen - 3)}...`;
 }
 
 /**
@@ -129,7 +125,7 @@ export function graphToMermaid(graph: ConstraintGraph): string {
   }
 
   // Style critical path nodes
-  const criticalNodes = Object.values(graph.nodes).filter(n => n.critical_path);
+  const criticalNodes = Object.values(graph.nodes).filter((n) => n.critical_path);
   if (criticalNodes.length > 0) {
     lines.push(`    classDef critical stroke-width:3px`);
     for (const node of criticalNodes) {
@@ -255,11 +251,11 @@ export function backwardReasoningToMermaid(
   }
 
   // Style satisfied vs unsatisfied
-  const satisfiedNodes = requirements.filter(id => {
+  const satisfiedNodes = requirements.filter((id) => {
     const node = graph.nodes[id];
     return node && node.status === 'SATISFIED';
   });
-  const unsatisfiedNodes = requirements.filter(id => {
+  const unsatisfiedNodes = requirements.filter((id) => {
     const node = graph.nodes[id];
     return node && node.status !== 'SATISFIED';
   });
@@ -324,7 +320,7 @@ export function miniGraphToMermaid(graph: ConstraintGraph): string {
 export function renderMermaidToTerminal(mermaidSyntax: string): string {
   try {
     return renderMermaidAscii(mermaidSyntax, {
-      useAscii: false,  // Use Unicode box-drawing for richer output
+      useAscii: false, // Use Unicode box-drawing for richer output
       paddingX: 5,
       paddingY: 3,
       boxBorderPadding: 1,
@@ -382,7 +378,7 @@ function terminalGraphToMermaid(graph: ConstraintGraph): string {
   }
 
   // Critical path styling
-  const criticalNodes = Object.values(graph.nodes).filter(n => n.critical_path);
+  const criticalNodes = Object.values(graph.nodes).filter((n) => n.critical_path);
   if (criticalNodes.length > 0) {
     lines.push(`    classDef critical stroke-width:3px`);
     for (const node of criticalNodes) {
@@ -441,17 +437,22 @@ function buildLegend(graph: ConstraintGraph): string {
     { header: 'Status', key: 'status', width: 14 },
   ];
 
-  const rows = Object.values(graph.nodes).map(node => {
-    const statusText = node.status === 'SATISFIED'
-      ? style.success(`✓ ${node.status}`)
-      : node.status === 'BLOCKED'
-        ? style.error(`✗ ${node.status}`)
-        : style.warning(`○ ${node.status}`);
+  const rows = Object.values(graph.nodes).map((node) => {
+    const statusText =
+      node.status === 'SATISFIED'
+        ? style.success(`✓ ${node.status}`)
+        : node.status === 'BLOCKED'
+          ? style.error(`✗ ${node.status}`)
+          : style.warning(`○ ${node.status}`);
 
-    const typePrefix = node.type === 'tension' ? '◇ '
-      : node.type === 'required_truth' ? '◎ '
-      : node.type === 'artifact' ? '□ '
-      : '';
+    const typePrefix =
+      node.type === 'tension'
+        ? '◇ '
+        : node.type === 'required_truth'
+          ? '◎ '
+          : node.type === 'artifact'
+            ? '□ '
+            : '';
 
     return {
       id: style.bold(node.id),
@@ -470,7 +471,10 @@ function buildLegend(graph: ConstraintGraph): string {
  * @param graph - The constraint graph to render
  * @param mode - 'full' includes legend table, 'mini' is graph only
  */
-export function renderGraphToTerminal(graph: ConstraintGraph, mode: 'full' | 'mini' = 'full'): string {
+export function renderGraphToTerminal(
+  graph: ConstraintGraph,
+  mode: 'full' | 'mini' = 'full'
+): string {
   const mermaidSyntax = terminalGraphToMermaid(graph);
 
   let rendered: string;

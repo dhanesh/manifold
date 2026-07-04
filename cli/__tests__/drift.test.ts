@@ -6,8 +6,8 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
-import { existsSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { existsSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { computeFileHash, detectDrift } from '../lib/evidence.js';
 
 // ============================================================
@@ -178,10 +178,7 @@ describe('drift edge cases', () => {
     const hash = computeFileHash(file)!;
     writeFileSync(file, 'v2');
 
-    const report = detectDrift(
-      [{ path: 'no-satisfies.ts', file_hash: hash }],
-      TEST_DIR
-    );
+    const report = detectDrift([{ path: 'no-satisfies.ts', file_hash: hash }], TEST_DIR);
 
     expect(report.drifted).toHaveLength(1);
     expect(report.drifted[0].constraint_ids).toEqual([]);

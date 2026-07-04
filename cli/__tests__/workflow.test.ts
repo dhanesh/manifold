@@ -28,16 +28,16 @@ const m0InitOutput: Manifold = {
     technical: [],
     user_experience: [],
     security: [],
-    operational: []
+    operational: [],
   },
   tensions: [],
   anchors: {
-    required_truths: []
+    required_truths: [],
   },
   iterations: [],
   convergence: {
-    status: 'NOT_STARTED'
-  }
+    status: 'NOT_STARTED',
+  },
 };
 
 /**
@@ -50,37 +50,34 @@ const m1ConstrainOutput: Manifold = {
   phase: 'CONSTRAINED',
   constraints: {
     business: [
-      { id: 'B1', type: 'invariant', statement: 'Test business invariant', rationale: 'Test rationale' },
-      { id: 'B2', type: 'goal', statement: 'Test business goal' }
+      {
+        id: 'B1',
+        type: 'invariant',
+        statement: 'Test business invariant',
+        rationale: 'Test rationale',
+      },
+      { id: 'B2', type: 'goal', statement: 'Test business goal' },
     ],
-    technical: [
-      { id: 'T1', type: 'boundary', statement: 'Response time < 200ms' }
-    ],
-    user_experience: [
-      { id: 'U1', type: 'boundary', statement: 'WCAG 2.1 AA compliance' }
-    ],
-    security: [
-      { id: 'S1', type: 'invariant', statement: 'User can only access own data' }
-    ],
-    operational: [
-      { id: 'O1', type: 'goal', statement: 'Health check endpoint available' }
-    ]
+    technical: [{ id: 'T1', type: 'boundary', statement: 'Response time < 200ms' }],
+    user_experience: [{ id: 'U1', type: 'boundary', statement: 'WCAG 2.1 AA compliance' }],
+    security: [{ id: 'S1', type: 'invariant', statement: 'User can only access own data' }],
+    operational: [{ id: 'O1', type: 'goal', statement: 'Health check endpoint available' }],
   },
   tensions: [],
   anchors: {
-    required_truths: []
+    required_truths: [],
   },
   iterations: [
     {
       number: 1,
       phase: 'constrain',
       timestamp: '2026-01-21T10:00:00Z',
-      result: 'Constraints discovered'
-    }
+      result: 'Constraints discovered',
+    },
   ],
   convergence: {
-    status: 'NOT_STARTED'
-  }
+    status: 'NOT_STARTED',
+  },
 };
 
 /**
@@ -92,15 +89,11 @@ const m2TensionOutput: Manifold = {
   outcome: 'Test outcome',
   phase: 'TENSIONED',
   constraints: {
-    business: [
-      { id: 'B1', type: 'invariant', statement: 'No duplicate processing' }
-    ],
-    technical: [
-      { id: 'T1', type: 'boundary', statement: 'Response time < 200ms' }
-    ],
+    business: [{ id: 'B1', type: 'invariant', statement: 'No duplicate processing' }],
+    technical: [{ id: 'T1', type: 'boundary', statement: 'Response time < 200ms' }],
     user_experience: [],
     security: [],
-    operational: []
+    operational: [],
   },
   tensions: [
     {
@@ -110,29 +103,29 @@ const m2TensionOutput: Manifold = {
       description: 'Idempotency check vs response time',
       status: 'resolved',
       resolution: 'Cache recent IDs for O(1) lookup',
-      priority: 1
-    }
+      priority: 1,
+    },
   ],
   anchors: {
-    required_truths: []
+    required_truths: [],
   },
   iterations: [
     {
       number: 1,
       phase: 'constrain',
       timestamp: '2026-01-21T10:00:00Z',
-      result: 'Constraints discovered'
+      result: 'Constraints discovered',
     },
     {
       number: 2,
       phase: 'tension',
       timestamp: '2026-01-21T11:00:00Z',
-      result: '1 tension found and resolved'
-    }
+      result: '1 tension found and resolved',
+    },
   ],
   convergence: {
-    status: 'NOT_STARTED'
-  }
+    status: 'NOT_STARTED',
+  },
 };
 
 /**
@@ -148,7 +141,7 @@ const m3AnchorOutput: Manifold = {
     technical: [{ id: 'T1', type: 'boundary', statement: 'Test' }],
     user_experience: [],
     security: [],
-    operational: []
+    operational: [],
   },
   tensions: [],
   anchors: {
@@ -158,20 +151,20 @@ const m3AnchorOutput: Manifold = {
         statement: 'Data can be persisted reliably',
         status: 'NOT_SATISFIED',
         priority: 1,
-        maps_to_constraints: ['B1', 'T1']
+        maps_to_constraints: ['B1', 'T1'],
       },
       {
         id: 'RT-2',
         statement: 'User identity can be verified',
         status: 'NOT_SATISFIED',
-        priority: 1
-      }
-    ]
+        priority: 1,
+      },
+    ],
   },
   iterations: [],
   convergence: {
-    status: 'IN_PROGRESS'
-  }
+    status: 'IN_PROGRESS',
+  },
 };
 
 /**
@@ -187,7 +180,7 @@ const m5VerifyOutputComplete: Manifold = {
     technical: [],
     user_experience: [],
     security: [],
-    operational: []
+    operational: [],
   },
   tensions: [],
   anchors: {
@@ -197,11 +190,9 @@ const m5VerifyOutputComplete: Manifold = {
         statement: 'Test requirement',
         status: 'SATISFIED',
         priority: 1,
-        evidence: [
-          { type: 'file_exists', path: 'src/test.ts', status: 'VERIFIED' }
-        ]
-      }
-    ]
+        evidence: [{ type: 'file_exists', path: 'src/test.ts', status: 'VERIFIED' }],
+      },
+    ],
   },
   iterations: [],
   convergence: {
@@ -209,9 +200,9 @@ const m5VerifyOutputComplete: Manifold = {
     criteria: {
       all_invariants_satisfied: true,
       all_required_truths_satisfied: true,
-      no_blocking_gaps: true
-    }
-  }
+      no_blocking_gaps: true,
+    },
+  },
 };
 
 // =============================================================================
@@ -263,23 +254,23 @@ describe('/manifold:m1-constrain output validation', () => {
 
   test('constraint IDs follow category prefix pattern', () => {
     // Business constraints start with B
-    m1ConstrainOutput.constraints?.business?.forEach(c => {
+    m1ConstrainOutput.constraints?.business?.forEach((c) => {
       expect(c.id).toMatch(/^B\d+$/);
     });
     // Technical constraints start with T
-    m1ConstrainOutput.constraints?.technical?.forEach(c => {
+    m1ConstrainOutput.constraints?.technical?.forEach((c) => {
       expect(c.id).toMatch(/^T\d+$/);
     });
     // UX constraints start with U
-    m1ConstrainOutput.constraints?.user_experience?.forEach(c => {
+    m1ConstrainOutput.constraints?.user_experience?.forEach((c) => {
       expect(c.id).toMatch(/^U\d+$/);
     });
     // Security constraints start with S
-    m1ConstrainOutput.constraints?.security?.forEach(c => {
+    m1ConstrainOutput.constraints?.security?.forEach((c) => {
       expect(c.id).toMatch(/^S\d+$/);
     });
     // Operational constraints start with O
-    m1ConstrainOutput.constraints?.operational?.forEach(c => {
+    m1ConstrainOutput.constraints?.operational?.forEach((c) => {
       expect(c.id).toMatch(/^O\d+$/);
     });
   });
@@ -291,16 +282,16 @@ describe('/manifold:m1-constrain output validation', () => {
       ...(m1ConstrainOutput.constraints?.technical || []),
       ...(m1ConstrainOutput.constraints?.user_experience || []),
       ...(m1ConstrainOutput.constraints?.security || []),
-      ...(m1ConstrainOutput.constraints?.operational || [])
+      ...(m1ConstrainOutput.constraints?.operational || []),
     ];
 
-    allConstraints.forEach(c => {
+    allConstraints.forEach((c) => {
       expect(validTypes).toContain(c.type);
     });
   });
 
   test('records iteration for constrain phase', () => {
-    const constrainIteration = m1ConstrainOutput.iterations?.find(i => i.phase === 'constrain');
+    const constrainIteration = m1ConstrainOutput.iterations?.find((i) => i.phase === 'constrain');
     expect(constrainIteration).toBeDefined();
     expect(constrainIteration?.number).toBeGreaterThan(0);
   });
@@ -322,27 +313,27 @@ describe('/manifold:m2-tension output validation', () => {
   });
 
   test('tension IDs follow TN prefix pattern', () => {
-    m2TensionOutput.tensions?.forEach(t => {
+    m2TensionOutput.tensions?.forEach((t) => {
       expect(t.id).toMatch(/^TN\d+$/);
     });
   });
 
   test('tensions have valid types', () => {
     const validTypes = ['trade_off', 'resource_tension', 'hidden_dependency'];
-    m2TensionOutput.tensions?.forEach(t => {
+    m2TensionOutput.tensions?.forEach((t) => {
       expect(validTypes).toContain(t.type);
     });
   });
 
   test('tensions have valid statuses', () => {
     const validStatuses = ['resolved', 'unresolved'];
-    m2TensionOutput.tensions?.forEach(t => {
+    m2TensionOutput.tensions?.forEach((t) => {
       expect(validStatuses).toContain(t.status);
     });
   });
 
   test('resolved tensions have resolution field', () => {
-    m2TensionOutput.tensions?.forEach(t => {
+    m2TensionOutput.tensions?.forEach((t) => {
       if (t.status === 'resolved') {
         expect(t.resolution).toBeDefined();
         expect(t.resolution?.length).toBeGreaterThan(0);
@@ -352,15 +343,15 @@ describe('/manifold:m2-tension output validation', () => {
 
   test('tensions reference existing constraints', () => {
     const allConstraintIds = [
-      ...(m2TensionOutput.constraints?.business?.map(c => c.id) || []),
-      ...(m2TensionOutput.constraints?.technical?.map(c => c.id) || []),
-      ...(m2TensionOutput.constraints?.user_experience?.map(c => c.id) || []),
-      ...(m2TensionOutput.constraints?.security?.map(c => c.id) || []),
-      ...(m2TensionOutput.constraints?.operational?.map(c => c.id) || [])
+      ...(m2TensionOutput.constraints?.business?.map((c) => c.id) || []),
+      ...(m2TensionOutput.constraints?.technical?.map((c) => c.id) || []),
+      ...(m2TensionOutput.constraints?.user_experience?.map((c) => c.id) || []),
+      ...(m2TensionOutput.constraints?.security?.map((c) => c.id) || []),
+      ...(m2TensionOutput.constraints?.operational?.map((c) => c.id) || []),
     ];
 
-    m2TensionOutput.tensions?.forEach(t => {
-      t.between?.forEach(refId => {
+    m2TensionOutput.tensions?.forEach((t) => {
+      t.between?.forEach((refId) => {
         expect(allConstraintIds).toContain(refId);
       });
     });
@@ -383,20 +374,20 @@ describe('/manifold:m3-anchor output validation', () => {
   });
 
   test('required truth IDs follow RT- prefix pattern', () => {
-    m3AnchorOutput.anchors?.required_truths?.forEach(rt => {
+    m3AnchorOutput.anchors?.required_truths?.forEach((rt) => {
       expect(rt.id).toMatch(/^RT-\d+$/);
     });
   });
 
   test('required truths have valid statuses', () => {
     const validStatuses = ['SATISFIED', 'PARTIAL', 'NOT_SATISFIED', 'SPECIFICATION_READY'];
-    m3AnchorOutput.anchors?.required_truths?.forEach(rt => {
+    m3AnchorOutput.anchors?.required_truths?.forEach((rt) => {
       expect(validStatuses).toContain(rt.status);
     });
   });
 
   test('required truths have priority', () => {
-    m3AnchorOutput.anchors?.required_truths?.forEach(rt => {
+    m3AnchorOutput.anchors?.required_truths?.forEach((rt) => {
       expect(rt.priority).toBeDefined();
       expect(rt.priority).toBeGreaterThan(0);
     });
@@ -434,7 +425,7 @@ describe('/manifold:m5-verify output validation', () => {
   });
 
   test('satisfied required truths have evidence', () => {
-    m5VerifyOutputComplete.anchors?.required_truths?.forEach(rt => {
+    m5VerifyOutputComplete.anchors?.required_truths?.forEach((rt) => {
       if (rt.status === 'SATISFIED') {
         expect(rt.evidence).toBeDefined();
         expect(rt.evidence?.length).toBeGreaterThan(0);
@@ -443,8 +434,14 @@ describe('/manifold:m5-verify output validation', () => {
   });
 
   test('evidence has valid types', () => {
-    const validTypes = ['file_exists', 'content_match', 'test_passes', 'metric_value', 'manual_review'];
-    m5VerifyOutputComplete.anchors?.required_truths?.forEach(rt => {
+    const validTypes = [
+      'file_exists',
+      'content_match',
+      'test_passes',
+      'metric_value',
+      'manual_review',
+    ];
+    m5VerifyOutputComplete.anchors?.required_truths?.forEach((rt) => {
       if (Array.isArray(rt.evidence)) {
         rt.evidence.forEach((e: { type: string }) => {
           expect(validTypes).toContain(e.type);
@@ -455,7 +452,7 @@ describe('/manifold:m5-verify output validation', () => {
 
   test('evidence has valid statuses', () => {
     const validStatuses = ['VERIFIED', 'PENDING', 'FAILED', 'STALE'];
-    m5VerifyOutputComplete.anchors?.required_truths?.forEach(rt => {
+    m5VerifyOutputComplete.anchors?.required_truths?.forEach((rt) => {
       if (Array.isArray(rt.evidence)) {
         rt.evidence.forEach((e: { status: string }) => {
           expect(validStatuses).toContain(e.status);
@@ -471,36 +468,36 @@ describe('/manifold:m5-verify output validation', () => {
 
 describe('phase transition rules', () => {
   const validTransitions: Record<string, string[]> = {
-    'INITIALIZED': ['CONSTRAINED'],
-    'CONSTRAINED': ['TENSIONED'],
-    'TENSIONED': ['ANCHORED'],
-    'ANCHORED': ['GENERATED'],
-    'GENERATED': ['VERIFIED'],
-    'VERIFIED': ['INITIALIZED'] // Can restart for iteration
+    INITIALIZED: ['CONSTRAINED'],
+    CONSTRAINED: ['TENSIONED'],
+    TENSIONED: ['ANCHORED'],
+    ANCHORED: ['GENERATED'],
+    GENERATED: ['VERIFIED'],
+    VERIFIED: ['INITIALIZED'], // Can restart for iteration
   };
 
   test('INITIALIZED can only transition to CONSTRAINED', () => {
-    expect(validTransitions['INITIALIZED']).toEqual(['CONSTRAINED']);
+    expect(validTransitions.INITIALIZED).toEqual(['CONSTRAINED']);
   });
 
   test('CONSTRAINED can only transition to TENSIONED', () => {
-    expect(validTransitions['CONSTRAINED']).toEqual(['TENSIONED']);
+    expect(validTransitions.CONSTRAINED).toEqual(['TENSIONED']);
   });
 
   test('TENSIONED can only transition to ANCHORED', () => {
-    expect(validTransitions['TENSIONED']).toEqual(['ANCHORED']);
+    expect(validTransitions.TENSIONED).toEqual(['ANCHORED']);
   });
 
   test('ANCHORED can only transition to GENERATED', () => {
-    expect(validTransitions['ANCHORED']).toEqual(['GENERATED']);
+    expect(validTransitions.ANCHORED).toEqual(['GENERATED']);
   });
 
   test('GENERATED can only transition to VERIFIED', () => {
-    expect(validTransitions['GENERATED']).toEqual(['VERIFIED']);
+    expect(validTransitions.GENERATED).toEqual(['VERIFIED']);
   });
 
   test('VERIFIED can transition back to INITIALIZED for iteration', () => {
-    expect(validTransitions['VERIFIED']).toContain('INITIALIZED');
+    expect(validTransitions.VERIFIED).toContain('INITIALIZED');
   });
 });
 
@@ -518,23 +515,23 @@ describe('/manifold:m-quick (light mode) output validation', () => {
     constraints: {
       technical: [
         { id: 'T1', type: 'boundary', statement: 'Fix must not break existing tests' },
-        { id: 'T2', type: 'goal', statement: 'Fix should complete in single commit' }
+        { id: 'T2', type: 'goal', statement: 'Fix should complete in single commit' },
       ],
       business: [],
       user_experience: [],
       security: [],
-      operational: []
+      operational: [],
     },
     tensions: [],
     anchors: {
-      required_truths: []
+      required_truths: [],
     },
     quick_summary: {
       started: '2026-01-21T10:00:00Z',
       completed: '2026-01-21T10:15:00Z',
       files_changed: 2,
-      tests_added: 1
-    }
+      tests_added: 1,
+    },
   };
 
   test('produces valid manifold structure', () => {
@@ -552,7 +549,7 @@ describe('/manifold:m-quick (light mode) output validation', () => {
       ...(lightModeOutput.constraints?.technical || []),
       ...(lightModeOutput.constraints?.user_experience || []),
       ...(lightModeOutput.constraints?.security || []),
-      ...(lightModeOutput.constraints?.operational || [])
+      ...(lightModeOutput.constraints?.operational || []),
     ].length;
 
     expect(totalConstraints).toBeGreaterThanOrEqual(1);
@@ -583,20 +580,14 @@ describe('template-based manifold validation', () => {
     template: 'auth',
     template_version: 1,
     constraints: {
-      business: [
-        { id: 'B1', type: 'invariant', statement: 'Users can opt out of marketing' }
-      ],
-      technical: [
-        { id: 'T1', type: 'invariant', statement: 'Passwords hashed with bcrypt' }
-      ],
+      business: [{ id: 'B1', type: 'invariant', statement: 'Users can opt out of marketing' }],
+      technical: [{ id: 'T1', type: 'invariant', statement: 'Passwords hashed with bcrypt' }],
       user_experience: [],
-      security: [
-        { id: 'S1', type: 'invariant', statement: 'Rate limit login attempts' }
-      ],
-      operational: []
+      security: [{ id: 'S1', type: 'invariant', statement: 'Rate limit login attempts' }],
+      operational: [],
     },
     tensions: [],
-    anchors: { required_truths: [] }
+    anchors: { required_truths: [] },
   };
 
   test('produces valid manifold with template reference', () => {

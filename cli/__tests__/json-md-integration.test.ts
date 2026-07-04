@@ -7,18 +7,11 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
-import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
-import { join } from 'path';
+import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 
 // Parser functions (status, graph, verify, solve)
-import {
-  loadFeature,
-  getFeatureFiles,
-  findManifoldDir,
-  listFeatures,
-  type FeatureData,
-  type FeatureFiles,
-} from '../lib/parser.js';
+import { loadFeature, getFeatureFiles, findManifoldDir, listFeatures } from '../lib/parser.js';
 
 // Linker functions (validate, show)
 import {
@@ -44,19 +37,13 @@ const PAYMENT_RETRY_JSON = {
   phase: 'ANCHORED',
   created: '2026-01-15T10:00:00Z',
   constraints: {
-    business: [
-      { id: 'B1', type: 'invariant' },
-    ],
+    business: [{ id: 'B1', type: 'invariant' }],
     technical: [
       { id: 'T1', type: 'boundary' },
       { id: 'T2', type: 'goal' },
     ],
-    user_experience: [
-      { id: 'U1', type: 'goal' },
-    ],
-    security: [
-      { id: 'S1', type: 'invariant' },
-    ],
+    user_experience: [{ id: 'U1', type: 'goal' }],
+    security: [{ id: 'S1', type: 'invariant' }],
     operational: [],
   },
   tensions: [
@@ -187,9 +174,7 @@ const MISMATCHED_JSON = {
       { id: 'B2', type: 'goal' },
     ],
   },
-  tensions: [
-    { id: 'TN1', type: 'trade_off', between: ['B1', 'B99'], status: 'unresolved' },
-  ],
+  tensions: [{ id: 'TN1', type: 'trade_off', between: ['B1', 'B99'], status: 'unresolved' }],
 };
 
 /** Markdown with only B1 (missing B2 and TN1) */
@@ -215,7 +200,7 @@ This constraint exists in both JSON and Markdown.
 function createTestDir(): string {
   const dir = join(
     '/tmp',
-    'manifold-jsonmd-test-' + Date.now() + '-' + Math.random().toString(36).slice(2)
+    `manifold-jsonmd-test-${Date.now()}-${Math.random().toString(36).slice(2)}`
   );
   mkdirSync(dir, { recursive: true });
   return dir;
@@ -429,7 +414,7 @@ describe('Feature Loading via Parser (loadFeature)', () => {
     writeFileSync(join(manifoldDir, 'payment-retry.md'), PAYMENT_RETRY_MD);
 
     const data = loadFeature(manifoldDir, 'payment-retry');
-    const tn2 = data!.manifold!.tensions!.find(t => t.id === 'TN2');
+    const tn2 = data!.manifold!.tensions!.find((t) => t.id === 'TN2');
     expect(tn2).toBeDefined();
     expect(tn2!.status).toBe('unresolved');
     // TN2 has no resolution blockquote in MD
@@ -444,11 +429,11 @@ describe('Feature Loading via Parser (loadFeature)', () => {
     const rts = data!.manifold!.anchors!.required_truths!;
     expect(rts).toHaveLength(3);
 
-    const rt1 = rts.find(r => r.id === 'RT-1');
+    const rt1 = rts.find((r) => r.id === 'RT-1');
     expect(rt1!.status).toBe('SATISFIED');
     expect(rt1!.statement).toContain('idempotency service');
 
-    const rt3 = rts.find(r => r.id === 'RT-3');
+    const rt3 = rts.find((r) => r.id === 'RT-3');
     expect(rt3!.status).toBe('NOT_SATISFIED');
     expect(rt3!.statement).toContain('audit trail');
   });
@@ -560,9 +545,9 @@ describe('Linker Validation', () => {
       expect(result.linking).toBeDefined();
       expect(result.linking!.valid).toBe(false);
       // B2 is in JSON but not in MD
-      expect(result.linking!.errors.some(e => e.message.includes('B2'))).toBe(true);
+      expect(result.linking!.errors.some((e) => e.message.includes('B2'))).toBe(true);
       // TN1 is in JSON but not in MD
-      expect(result.linking!.errors.some(e => e.message.includes('TN1'))).toBe(true);
+      expect(result.linking!.errors.some((e) => e.message.includes('TN1'))).toBe(true);
     });
 
     test('invalid tension references produce linking errors', () => {
@@ -571,9 +556,11 @@ describe('Linker Validation', () => {
 
       const result = loadManifoldByFeature(manifoldDir, 'mismatched');
       // TN1 references B99 which does not exist
-      expect(result.linking!.errors.some(e =>
-        e.type === 'invalid_reference' && e.message.includes('B99')
-      )).toBe(true);
+      expect(
+        result.linking!.errors.some(
+          (e) => e.type === 'invalid_reference' && e.message.includes('B99')
+        )
+      ).toBe(true);
     });
   });
 
@@ -582,10 +569,13 @@ describe('Linker Validation', () => {
       const jsonPath = join(manifoldDir, 'bad-schema.json');
       const mdPath = join(manifoldDir, 'bad-schema.md');
 
-      writeFileSync(jsonPath, JSON.stringify({
-        feature: 'bad',
-        phase: 'INVALID_PHASE',
-      }));
+      writeFileSync(
+        jsonPath,
+        JSON.stringify({
+          feature: 'bad',
+          phase: 'INVALID_PHASE',
+        })
+      );
       writeFileSync(mdPath, '# bad\n');
 
       const result = loadAndValidateManifold(jsonPath, mdPath);
@@ -655,7 +645,9 @@ describe('Schema Validation for Real-World Data', () => {
     if (result.success) {
       expect(result.data.feature).toBe('payment-retry');
       expect(result.data.phase).toBe('ANCHORED');
-      expect(result.data.constraints!.business).toHaveLength(1);
+      expect(
+        (result.data.constraints as Record<string, Array<{ id: string }>>).business
+      ).toHaveLength(1);
       expect(result.data.tensions).toHaveLength(2);
       expect(result.data.anchors!.required_truths).toHaveLength(3);
       expect(result.data.convergence!.status).toBe('IN_PROGRESS');
@@ -766,9 +758,7 @@ describe('Schema Validation for Real-World Data', () => {
   test('rejects JSON with invalid tension ID format', () => {
     const invalid = {
       ...MINIMAL_JSON,
-      tensions: [
-        { id: 'TENSION1', type: 'trade_off', between: ['B1', 'T1'], status: 'resolved' },
-      ],
+      tensions: [{ id: 'TENSION1', type: 'trade_off', between: ['B1', 'T1'], status: 'resolved' }],
     };
     const result = ManifoldStructureSchema.safeParse(invalid);
     expect(result.success).toBe(false);
@@ -786,9 +776,7 @@ describe('Schema Validation for Real-World Data', () => {
   test('rejects tension with fewer than 2 between references', () => {
     const invalid = {
       ...MINIMAL_JSON,
-      tensions: [
-        { id: 'TN1', type: 'trade_off', between: ['B1'], status: 'resolved' },
-      ],
+      tensions: [{ id: 'TN1', type: 'trade_off', between: ['B1'], status: 'resolved' }],
     };
     const result = ManifoldStructureSchema.safeParse(invalid);
     expect(result.success).toBe(false);
@@ -843,7 +831,7 @@ describe('Feature Listing', () => {
   });
 
   test('returns empty array for nonexistent directory', () => {
-    const features = listFeatures('/tmp/manifold-does-not-exist-' + Date.now());
+    const features = listFeatures(`/tmp/manifold-does-not-exist-${Date.now()}`);
     expect(features).toEqual([]);
   });
 
@@ -858,8 +846,14 @@ describe('Feature Listing', () => {
   });
 
   test('returns features sorted alphabetically', () => {
-    writeFileSync(join(manifoldDir, 'zebra.json'), JSON.stringify({ ...MINIMAL_JSON, feature: 'zebra' }));
-    writeFileSync(join(manifoldDir, 'alpha.json'), JSON.stringify({ ...MINIMAL_JSON, feature: 'alpha' }));
+    writeFileSync(
+      join(manifoldDir, 'zebra.json'),
+      JSON.stringify({ ...MINIMAL_JSON, feature: 'zebra' })
+    );
+    writeFileSync(
+      join(manifoldDir, 'alpha.json'),
+      JSON.stringify({ ...MINIMAL_JSON, feature: 'alpha' })
+    );
     writeFileSync(join(manifoldDir, 'middle.yaml'), 'feature: middle\nphase: INITIALIZED\n');
 
     const features = listFeatures(manifoldDir);
@@ -1010,7 +1004,13 @@ describe('Combined Workflow Tests', () => {
 
     // All tension between references are valid constraint IDs
     const allConstraintIds = new Set<string>();
-    for (const category of ['business', 'technical', 'user_experience', 'security', 'operational'] as const) {
+    for (const category of [
+      'business',
+      'technical',
+      'user_experience',
+      'security',
+      'operational',
+    ] as const) {
       for (const c of manifold.constraints![category] || []) {
         allConstraintIds.add(c.id);
       }
@@ -1044,7 +1044,9 @@ describe('Combined Workflow Tests', () => {
     expect(result.content!.requiredTruths.size).toBe(3);
 
     // Linking status for validation display
-    expect(result.linking!.summary.linkedConstraints).toBe(result.linking!.summary.totalConstraints);
+    expect(result.linking!.summary.linkedConstraints).toBe(
+      result.linking!.summary.totalConstraints
+    );
     expect(result.linking!.summary.linkedTensions).toBe(result.linking!.summary.totalTensions);
   });
 
@@ -1109,15 +1111,30 @@ describe('Combined Workflow Tests', () => {
 
     // Both should see the same constraint IDs
     const parserConstraintIds = new Set<string>();
-    for (const category of ['business', 'technical', 'user_experience', 'security', 'operational'] as const) {
+    for (const category of [
+      'business',
+      'technical',
+      'user_experience',
+      'security',
+      'operational',
+    ] as const) {
       for (const c of parserData!.manifold!.constraints![category] || []) {
         parserConstraintIds.add(c.id);
       }
     }
 
     const linkerConstraintIds = new Set<string>();
-    for (const category of ['business', 'technical', 'user_experience', 'security', 'operational'] as const) {
-      for (const c of linkerResult.structure!.constraints![category] || []) {
+    const linkerCats = linkerResult.structure!.constraints as
+      | Record<string, Array<{ id: string }>>
+      | undefined;
+    for (const category of [
+      'business',
+      'technical',
+      'user_experience',
+      'security',
+      'operational',
+    ] as const) {
+      for (const c of linkerCats?.[category] || []) {
         linkerConstraintIds.add(c.id);
       }
     }
@@ -1125,8 +1142,8 @@ describe('Combined Workflow Tests', () => {
     expect(parserConstraintIds).toEqual(linkerConstraintIds);
 
     // Both should see the same tension IDs
-    const parserTensionIds = new Set(parserData!.manifold!.tensions!.map(t => t.id));
-    const linkerTensionIds = new Set((linkerResult.structure!.tensions || []).map(t => t.id));
+    const parserTensionIds = new Set(parserData!.manifold!.tensions!.map((t) => t.id));
+    const linkerTensionIds = new Set((linkerResult.structure!.tensions || []).map((t) => t.id));
     expect(parserTensionIds).toEqual(linkerTensionIds);
   });
 
@@ -1137,7 +1154,7 @@ describe('Combined Workflow Tests', () => {
     // Parser still loads (uses placeholders for missing MD content)
     const parserData = loadFeature(manifoldDir, 'mismatched');
     expect(parserData).not.toBeNull();
-    const b2 = parserData!.manifold!.constraints!.business!.find(c => c.id === 'B2');
+    const b2 = parserData!.manifold!.constraints!.business!.find((c) => c.id === 'B2');
     expect(b2).toBeDefined();
     // B2 has no MD content, so it gets a placeholder
     expect(b2!.statement).toBe('[B2]');
@@ -1207,7 +1224,7 @@ describe('Combined Workflow Tests', () => {
       writeFileSync(join(manifoldDir, 'deps.json'), JSON.stringify(json));
       writeFileSync(
         join(manifoldDir, 'deps.md'),
-        '# deps\n\n## Outcome\nOK\n\n## Constraints\n### Business\n#### B1: One\nFirst.\n\n#### B2: Two\nSecond.\n',
+        '# deps\n\n## Outcome\nOK\n\n## Constraints\n### Business\n#### B1: One\nFirst.\n\n#### B2: Two\nSecond.\n'
       );
 
       const data = loadFeature(manifoldDir, 'deps');
@@ -1251,7 +1268,7 @@ describe('Combined Workflow Tests', () => {
       writeFileSync(join(manifoldDir, 'fields.json'), JSON.stringify(json));
       writeFileSync(
         join(manifoldDir, 'fields.md'),
-        '# fields\n\n## Outcome\nOK\n\n## Constraints\n### Business\n#### B1: One\nC.\n\n### Technical\n#### T1: Two\nC.\n',
+        '# fields\n\n## Outcome\nOK\n\n## Constraints\n### Business\n#### B1: One\nC.\n\n### Technical\n#### T1: Two\nC.\n'
       );
 
       const m = loadFeature(manifoldDir, 'fields')?.manifold;
@@ -1263,9 +1280,9 @@ describe('Combined Workflow Tests', () => {
       // Renamed structural field round-trips…
       expect(rt1?.maps_to_constraints).toEqual(['B1']);
       // …a non-allowlisted field now survives (was dropped pre-restructure)…
-      expect((rt1 as Record<string, unknown>).priority).toBe(1);
+      expect((rt1 as unknown as Record<string, unknown>).priority).toBe(1);
       // …and the structure's original `maps_to` key is not left dangling.
-      expect((rt1 as Record<string, unknown>).maps_to).toBeUndefined();
+      expect((rt1 as unknown as Record<string, unknown>).maps_to).toBeUndefined();
     });
   });
 });

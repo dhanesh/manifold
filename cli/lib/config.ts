@@ -6,8 +6,8 @@
  * Returns empty defaults when config file is missing (backward compatible).
  */
 
-import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { z } from 'zod';
 
 // ============================================================
@@ -15,17 +15,17 @@ import { z } from 'zod';
 // ============================================================
 
 export interface TestTierPatterns {
-  unit?: string[];          // e.g., ["*.test.ts", "*.spec.ts"]
-  integration?: string[];   // e.g., ["*.integration.ts"]
-  e2e?: string[];           // e.g., ["*.e2e.ts"]
+  unit?: string[]; // e.g., ["*.test.ts", "*.spec.ts"]
+  integration?: string[]; // e.g., ["*.integration.ts"]
+  e2e?: string[]; // e.g., ["*.e2e.ts"]
 }
 
 export interface ManifoldConfig {
-  test_runner?: string;           // e.g., "bun test", "pytest", "jest"
-  test_args?: string[];           // additional args passed to runner
+  test_runner?: string; // e.g., "bun test", "pytest", "jest"
+  test_args?: string[]; // additional args passed to runner
   test_tier_patterns?: TestTierPatterns;
   drift_hooks?: {
-    on_drift?: string;            // command to run when drift detected
+    on_drift?: string; // command to run when drift detected
   };
 }
 
@@ -38,18 +38,24 @@ export interface ManifoldConfig {
 // Satisfies: Commandment 8 (Respect Data Consistency — validate external data)
 // ============================================================
 
-const ManifoldConfigSchema = z.object({
-  test_runner: z.string().optional(),
-  test_args: z.array(z.string()).optional(),
-  test_tier_patterns: z.object({
-    unit: z.array(z.string()).optional(),
-    integration: z.array(z.string()).optional(),
-    e2e: z.array(z.string()).optional(),
-  }).optional(),
-  drift_hooks: z.object({
-    on_drift: z.string().optional(),
-  }).optional(),
-}).passthrough();
+const ManifoldConfigSchema = z
+  .object({
+    test_runner: z.string().optional(),
+    test_args: z.array(z.string()).optional(),
+    test_tier_patterns: z
+      .object({
+        unit: z.array(z.string()).optional(),
+        integration: z.array(z.string()).optional(),
+        e2e: z.array(z.string()).optional(),
+      })
+      .optional(),
+    drift_hooks: z
+      .object({
+        on_drift: z.string().optional(),
+      })
+      .optional(),
+  })
+  .passthrough();
 
 const DEFAULT_CONFIG: ManifoldConfig = {};
 
@@ -113,9 +119,7 @@ export function inferTestTier(
     const tierPatterns = patterns[tier] || [];
     for (const pattern of tierPatterns) {
       // Convert glob pattern to regex
-      const regex = new RegExp(
-        '^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$'
-      );
+      const regex = new RegExp(`^${pattern.replace(/\./g, '\\.').replace(/\*/g, '.*')}$`);
       if (regex.test(fileName)) {
         return tier;
       }

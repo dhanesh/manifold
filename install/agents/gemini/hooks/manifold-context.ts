@@ -10,8 +10,8 @@
  * Configure: Added automatically by config-merger.ts to settings.json
  */
 
-import { existsSync, readdirSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 interface ManifoldJson {
   feature: string;
@@ -35,13 +35,20 @@ function getPhaseProgress(phase: string): string {
 
 function getNextAction(phase: string, feature: string): string {
   switch (phase?.toUpperCase()) {
-    case 'INITIALIZED': return `/manifold:m1-constrain ${feature}`;
-    case 'CONSTRAINED': return `/manifold:m2-tension ${feature}`;
-    case 'TENSIONED': return `/manifold:m3-anchor ${feature}`;
-    case 'ANCHORED': return `/manifold:m4-generate ${feature}`;
-    case 'GENERATED': return `/manifold:m5-verify ${feature}`;
-    case 'VERIFIED': return 'Complete!';
-    default: return `/manifold:m-status ${feature}`;
+    case 'INITIALIZED':
+      return `/manifold:m1-constrain ${feature}`;
+    case 'CONSTRAINED':
+      return `/manifold:m2-tension ${feature}`;
+    case 'TENSIONED':
+      return `/manifold:m3-anchor ${feature}`;
+    case 'ANCHORED':
+      return `/manifold:m4-generate ${feature}`;
+    case 'GENERATED':
+      return `/manifold:m5-verify ${feature}`;
+    case 'VERIFIED':
+      return 'Complete!';
+    default:
+      return `/manifold:m-status ${feature}`;
   }
 }
 
@@ -52,8 +59,8 @@ function loadManifoldContext(): string | null {
     return null;
   }
 
-  const jsonFiles = readdirSync(manifoldDir).filter(f =>
-    f.endsWith('.json') && !f.endsWith('.verify.json')
+  const jsonFiles = readdirSync(manifoldDir).filter(
+    (f) => f.endsWith('.json') && !f.endsWith('.verify.json')
   );
 
   if (jsonFiles.length === 0) {
@@ -79,12 +86,11 @@ function loadManifoldContext(): string | null {
       }
 
       const tensionCount = data.tensions?.length || 0;
-      const resolvedTensions = data.tensions?.filter(t => t.status === 'resolved').length || 0;
+      const resolvedTensions = data.tensions?.filter((t) => t.status === 'resolved').length || 0;
 
       const rtCount = data.anchors?.required_truths?.length || 0;
-      const satisfiedRTs = data.anchors?.required_truths?.filter(
-        t => t.status === 'SATISFIED'
-      ).length || 0;
+      const satisfiedRTs =
+        data.anchors?.required_truths?.filter((t) => t.status === 'SATISFIED').length || 0;
 
       // Read MD file for outcome
       const mdFile = join(manifoldDir, `${data.feature}.md`);
@@ -116,9 +122,7 @@ function loadManifoldContext(): string | null {
       lines.push(`- Next: ${getNextAction(data.phase, data.feature)}`);
 
       summaries.push(lines.join('\n'));
-    } catch {
-      continue;
-    }
+    } catch {}
   }
 
   if (summaries.length === 0) {

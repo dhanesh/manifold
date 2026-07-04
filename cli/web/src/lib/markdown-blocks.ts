@@ -18,10 +18,7 @@ function escapeRe(s: string): string {
  */
 export function extractMdBlock(md: string, id: string): string {
   if (!md || !id) return '';
-  const headingRe = new RegExp(
-    `^(#{1,6})\\s+${escapeRe(id)}:[^\\n]*$`,
-    'm',
-  );
+  const headingRe = new RegExp(`^(#{1,6})\\s+${escapeRe(id)}:[^\\n]*$`, 'm');
   const m = headingRe.exec(md);
   if (!m) return '';
   const level = m[1].length;

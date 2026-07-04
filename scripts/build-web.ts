@@ -13,10 +13,10 @@
  *            keyed on CLI binary version, set in vite.config.ts).
  */
 
-import { readdirSync, readFileSync, statSync, writeFileSync, existsSync } from 'fs';
-import { dirname, join, posix, sep, extname, resolve } from 'path';
-import { fileURLToPath } from 'url';
-import { spawnSync } from 'child_process';
+import { readdirSync, readFileSync, statSync, writeFileSync, existsSync } from 'node:fs';
+import { dirname, join, posix, sep, extname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 
 // Resolve repo paths relative to this file so the script works from any cwd.
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -65,9 +65,7 @@ function walk(dir: string, base: string = dir): string[] {
 
 function ensureBuilt(): void {
   if (!existsSync(DIST)) {
-    console.error(
-      `cli/web/dist not found. Building the web project first…`,
-    );
+    console.error(`cli/web/dist not found. Building the web project first…`);
     const install = spawnSync('bun', ['install'], { cwd: CLI_WEB, stdio: 'inherit' });
     if (install.status !== 0) process.exit(install.status ?? 1);
     const build = spawnSync('bun', ['run', 'build'], { cwd: CLI_WEB, stdio: 'inherit' });
@@ -96,7 +94,7 @@ function emitModule(assets: Asset[]): void {
     ' * Satisfies: RT-1 (embedded asset bundle in CLI binary).',
     ' */',
     '',
-    'import type { EmbeddedAssetMap } from \'./embedded-assets.js\';',
+    "import type { EmbeddedAssetMap } from './embedded-assets.js';",
     '',
     'function decode(b64: string): Uint8Array {',
     '  const bin = atob(b64);',
@@ -112,7 +110,7 @@ function emitModule(assets: Asset[]): void {
     const data = readFileSync(asset.filePath);
     const b64 = data.toString('base64');
     lines.push(
-      `  [${JSON.stringify(asset.urlPath)}, { contentType: ${JSON.stringify(asset.contentType)}, body: decode(${JSON.stringify(b64)}), immutable: ${asset.immutable} }],`,
+      `  [${JSON.stringify(asset.urlPath)}, { contentType: ${JSON.stringify(asset.contentType)}, body: decode(${JSON.stringify(b64)}), immutable: ${asset.immutable} }],`
     );
   }
 
@@ -126,9 +124,7 @@ function main(): void {
   const assets = files.map(toAsset);
   emitModule(assets);
   const total = assets.reduce((acc, a) => acc + statSync(a.filePath).size, 0);
-  console.log(
-    `Embedded ${assets.length} files (${(total / 1024).toFixed(1)} KB) into ${OUT}`,
-  );
+  console.log(`Embedded ${assets.length} files (${(total / 1024).toFixed(1)} KB) into ${OUT}`);
 }
 
 main();

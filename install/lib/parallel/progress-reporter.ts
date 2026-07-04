@@ -4,10 +4,10 @@
  * Required Truths: RT-6 (User has visibility and control over parallelization)
  */
 
-import { EventEmitter } from 'events';
-import { ExecutionTask, ProgressEvent } from './parallel-executor';
-import { SafeGroup } from './overlap-detector';
-import { MergeOrchestratorResult } from './merge-orchestrator';
+import { EventEmitter } from 'node:events';
+import type { ProgressEvent } from './parallel-executor';
+import type { SafeGroup } from './overlap-detector';
+import type { MergeOrchestratorResult } from './merge-orchestrator';
 
 export interface ProgressUpdate {
   timestamp: Date;
@@ -231,14 +231,8 @@ export class ProgressReporter extends EventEmitter {
    * Generate analysis explanation
    * Satisfies: U4 (Easy to understand why tasks were/weren't parallelized)
    */
-  explainParallelization(
-    groups: SafeGroup[],
-    sequentialTasks: string[]
-  ): string {
-    const lines = [
-      '\n## Parallelization Analysis',
-      '',
-    ];
+  explainParallelization(groups: SafeGroup[], sequentialTasks: string[]): string {
+    const lines = ['\n## Parallelization Analysis', ''];
 
     const totalParallel = groups.reduce((sum, g) => sum + g.taskIds.length, 0);
     lines.push(`Tasks parallelizable: ${totalParallel}`);
@@ -255,7 +249,9 @@ export class ProgressReporter extends EventEmitter {
           lines.push(`  - ${taskId}`);
         }
         if (group.predictedFiles.length > 0) {
-          lines.push(`  Files: ${group.predictedFiles.slice(0, 3).join(', ')}${group.predictedFiles.length > 3 ? '...' : ''}`);
+          lines.push(
+            `  Files: ${group.predictedFiles.slice(0, 3).join(', ')}${group.predictedFiles.length > 3 ? '...' : ''}`
+          );
         }
         lines.push('');
       }
@@ -278,10 +274,7 @@ export class ProgressReporter extends EventEmitter {
    */
   private formatHeader(): string {
     const groupCount = this.state.currentGroups.length;
-    const maxParallel = Math.max(
-      1,
-      ...this.state.currentGroups.map(g => g.taskIds.length)
-    );
+    const maxParallel = Math.max(1, ...this.state.currentGroups.map((g) => g.taskIds.length));
 
     return [
       '\n╔════════════════════════════════════════════════╗',
@@ -314,7 +307,9 @@ export class ProgressReporter extends EventEmitter {
       `   Duration: ${duration}`,
       `   Completed: ${this.state.completedTasks}/${this.state.totalTasks}`,
       this.state.failedTasks > 0 ? `   Failed: ${this.state.failedTasks}` : '',
-    ].filter(Boolean).join('\n');
+    ]
+      .filter(Boolean)
+      .join('\n');
   }
 
   /**

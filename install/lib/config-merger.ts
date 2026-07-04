@@ -12,8 +12,8 @@
  *   bun run install/lib/config-merger.ts codex <config.toml-path>
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { dirname } from 'path';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 
 // ============================================================
 // Types
@@ -49,7 +49,7 @@ export function deepMerge(target: JsonObject, source: JsonObject): JsonObject {
       result[key] = deepMerge(targetVal as JsonObject, sourceVal as JsonObject);
     } else if (Array.isArray(sourceVal) && Array.isArray(targetVal)) {
       // Merge arrays: append items not already present (by JSON equality)
-      const existing = new Set(targetVal.map(v => JSON.stringify(v)));
+      const existing = new Set(targetVal.map((v) => JSON.stringify(v)));
       const merged = [...targetVal];
       for (const item of sourceVal) {
         if (!existing.has(JSON.stringify(item))) {
@@ -74,10 +74,10 @@ function getGeminiManifoldConfig(): JsonObject {
   return {
     customCommands: {
       manifoldContext: {
-        description: "Preserve Manifold constraint state across context compaction",
-        command: "bun run ~/.gemini/hooks/manifold-context.ts"
-      }
-    }
+        description: 'Preserve Manifold constraint state across context compaction',
+        command: 'bun run ~/.gemini/hooks/manifold-context.ts',
+      },
+    },
   };
 }
 
@@ -106,7 +106,7 @@ export function mergeGeminiSettings(settingsPath: string): { created: boolean; u
   }
 
   const merged = deepMerge(existing, manifoldConfig);
-  const mergedStr = JSON.stringify(merged, null, 2) + '\n';
+  const mergedStr = `${JSON.stringify(merged, null, 2)}\n`;
   const existingStr = existsSync(settingsPath) ? readFileSync(settingsPath, 'utf-8') : '';
 
   if (mergedStr === existingStr) {

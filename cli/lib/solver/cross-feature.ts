@@ -6,7 +6,7 @@
  * logical contradictions, resource tensions, and scope conflicts.
  */
 
-import type { Manifold, Constraint } from '../parser';
+import type { Manifold } from '../parser';
 
 /**
  * Constraint with metadata for cross-feature analysis
@@ -74,12 +74,19 @@ export interface CrossFeatureConflictResult {
  */
 function extractAllCrossFeatureConstraints(manifolds: Manifold[]): CrossFeatureConstraint[] {
   const result: CrossFeatureConstraint[] = [];
-  const categories = ['business', 'technical', 'user_experience', 'security', 'operational'] as const;
+  const categories = [
+    'business',
+    'technical',
+    'user_experience',
+    'security',
+    'operational',
+  ] as const;
 
   for (const manifold of manifolds) {
     for (const cat of categories) {
-      const constraints = manifold.constraints?.[cat] ||
-                         (cat === 'user_experience' ? (manifold.constraints as any)?.ux : undefined);
+      const constraints =
+        manifold.constraints?.[cat] ||
+        (cat === 'user_experience' ? (manifold.constraints as any)?.ux : undefined);
       if (!constraints) continue;
 
       for (const c of constraints) {
@@ -88,7 +95,7 @@ function extractAllCrossFeatureConstraints(manifolds: Manifold[]): CrossFeatureC
           id: c.id,
           category: cat,
           type: c.type as 'invariant' | 'goal' | 'boundary',
-          statement: c.statement
+          statement: c.statement,
         });
       }
     }
@@ -106,23 +113,123 @@ function extractDomainKeywords(statement: string): string[] {
 
   // Remove common stop words and short words
   const stopWords = new Set([
-    'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'it', 'for',
-    'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at', 'this', 'but', 'his',
-    'by', 'from', 'they', 'we', 'say', 'her', 'she', 'or', 'an', 'will', 'my',
-    'one', 'all', 'would', 'there', 'their', 'what', 'so', 'up', 'out', 'if',
-    'about', 'who', 'get', 'which', 'go', 'me', 'must', 'should', 'shall',
-    'may', 'can', 'could', 'would', 'might', 'need', 'want', 'only', 'just',
-    'also', 'any', 'each', 'every', 'both', 'few', 'more', 'most', 'other',
-    'some', 'such', 'than', 'too', 'very', 'same', 'different', 'able', 'back',
-    'being', 'been', 'case', 'come', 'does', 'done', 'else', 'even', 'going',
-    'good', 'keep', 'know', 'last', 'long', 'made', 'make', 'much', 'never',
-    'over', 'part', 'take', 'them', 'then', 'these', 'time', 'upon', 'used',
-    'well', 'were', 'when', 'where', 'while', 'work', 'year', 'your'
+    'the',
+    'be',
+    'to',
+    'of',
+    'and',
+    'a',
+    'in',
+    'that',
+    'have',
+    'it',
+    'for',
+    'not',
+    'on',
+    'with',
+    'he',
+    'as',
+    'you',
+    'do',
+    'at',
+    'this',
+    'but',
+    'his',
+    'by',
+    'from',
+    'they',
+    'we',
+    'say',
+    'her',
+    'she',
+    'or',
+    'an',
+    'will',
+    'my',
+    'one',
+    'all',
+    'would',
+    'there',
+    'their',
+    'what',
+    'so',
+    'up',
+    'out',
+    'if',
+    'about',
+    'who',
+    'get',
+    'which',
+    'go',
+    'me',
+    'must',
+    'should',
+    'shall',
+    'may',
+    'can',
+    'could',
+    'would',
+    'might',
+    'need',
+    'want',
+    'only',
+    'just',
+    'also',
+    'any',
+    'each',
+    'every',
+    'both',
+    'few',
+    'more',
+    'most',
+    'other',
+    'some',
+    'such',
+    'than',
+    'too',
+    'very',
+    'same',
+    'different',
+    'able',
+    'back',
+    'being',
+    'been',
+    'case',
+    'come',
+    'does',
+    'done',
+    'else',
+    'even',
+    'going',
+    'good',
+    'keep',
+    'know',
+    'last',
+    'long',
+    'made',
+    'make',
+    'much',
+    'never',
+    'over',
+    'part',
+    'take',
+    'them',
+    'then',
+    'these',
+    'time',
+    'upon',
+    'used',
+    'well',
+    'were',
+    'when',
+    'where',
+    'while',
+    'work',
+    'year',
+    'your',
   ]);
 
-  const words = s.split(/\W+/).filter(w =>
-    w.length > 3 && !stopWords.has(w) && !/^\d+$/.test(w)
-  );
+  const words = s.split(/\W+/).filter((w) => w.length > 3 && !stopWords.has(w) && !/^\d+$/.test(w));
 
   return [...new Set(words)];
 }
@@ -155,7 +262,7 @@ function detectCrossFeatureContradiction(
   const domain2 = extractDomainKeywords(s2);
 
   // Check domain overlap - need at least 2 shared keywords to be about the same topic
-  const sharedDomain = domain1.filter(d => domain2.includes(d));
+  const sharedDomain = domain1.filter((d) => domain2.includes(d));
   if (sharedDomain.length < 2) return null;
 
   // 1. Check for explicit negation patterns (highest confidence)
@@ -163,17 +270,17 @@ function detectCrossFeatureContradiction(
   const mustPattern = /must\s+(\w+)/g;
   const mustNotPattern = /must\s+(?:not|never)\s+(\w+)/g;
 
-  const mustMatches1 = [...s1.matchAll(mustPattern)].map(m => m[1]);
-  const mustNotMatches1 = [...s1.matchAll(mustNotPattern)].map(m => m[1]);
-  const mustMatches2 = [...s2.matchAll(mustPattern)].map(m => m[1]);
-  const mustNotMatches2 = [...s2.matchAll(mustNotPattern)].map(m => m[1]);
+  const mustMatches1 = [...s1.matchAll(mustPattern)].map((m) => m[1]);
+  const mustNotMatches1 = [...s1.matchAll(mustNotPattern)].map((m) => m[1]);
+  const mustMatches2 = [...s2.matchAll(mustPattern)].map((m) => m[1]);
+  const mustNotMatches2 = [...s2.matchAll(mustNotPattern)].map((m) => m[1]);
 
   // Check if s1 says "must X" and s2 says "must not X" (or vice versa)
   for (const verb of mustMatches1) {
     if (mustNotMatches2.includes(verb)) {
       return {
         sharedDomain,
-        conflictReason: `One requires "${verb}" while the other prohibits it`
+        conflictReason: `One requires "${verb}" while the other prohibits it`,
       };
     }
   }
@@ -181,7 +288,7 @@ function detectCrossFeatureContradiction(
     if (mustNotMatches1.includes(verb)) {
       return {
         sharedDomain,
-        conflictReason: `One requires "${verb}" while the other prohibits it`
+        conflictReason: `One requires "${verb}" while the other prohibits it`,
       };
     }
   }
@@ -200,7 +307,7 @@ function detectCrossFeatureContradiction(
     if (format1 && format2 && format1[1] !== format2[1]) {
       return {
         sharedDomain: [...sharedDomain, 'format'],
-        conflictReason: `Incompatible format requirements: "${format1[1]}" vs "${format2[1]}"`
+        conflictReason: `Incompatible format requirements: "${format1[1]}" vs "${format2[1]}"`,
       };
     }
   }
@@ -209,8 +316,16 @@ function detectCrossFeatureContradiction(
   const booleanOpposites = [
     { positive: /\bsynchronous\b/, negative: /\basynchronous\b/, desc: 'sync vs async' },
     { positive: /\benabled?\b/, negative: /\bdisabled?\b/, desc: 'enabled vs disabled' },
-    { positive: /\ballowed?\b/, negative: /\b(?:disallowed?|forbidden|prohibited)\b/, desc: 'allowed vs forbidden' },
-    { positive: /\brequired\b/, negative: /\b(?:prohibited|forbidden)\b/, desc: 'required vs prohibited' },
+    {
+      positive: /\ballowed?\b/,
+      negative: /\b(?:disallowed?|forbidden|prohibited)\b/,
+      desc: 'allowed vs forbidden',
+    },
+    {
+      positive: /\brequired\b/,
+      negative: /\b(?:prohibited|forbidden)\b/,
+      desc: 'required vs prohibited',
+    },
     { positive: /\bpublic\b/, negative: /\bprivate\b/, desc: 'public vs private' },
     { positive: /\bencrypted\b/, negative: /\bunencrypted\b/, desc: 'encrypted vs unencrypted' },
     { positive: /\bmutable\b/, negative: /\bimmutable\b/, desc: 'mutable vs immutable' },
@@ -226,7 +341,7 @@ function detectCrossFeatureContradiction(
     if ((s1Positive && s2Negative) || (s1Negative && s2Positive)) {
       return {
         sharedDomain,
-        conflictReason: `Mutually exclusive requirements: ${desc}`
+        conflictReason: `Mutually exclusive requirements: ${desc}`,
       };
     }
   }
@@ -238,7 +353,7 @@ function detectCrossFeatureContradiction(
   if (alwaysMatch && neverMatch && alwaysMatch[1] === neverMatch[1]) {
     return {
       sharedDomain,
-      conflictReason: `One says "always ${alwaysMatch[1]}" while the other says "never ${neverMatch[1]}"`
+      conflictReason: `One says "always ${alwaysMatch[1]}" while the other says "never ${neverMatch[1]}"`,
     };
   }
 
@@ -248,7 +363,7 @@ function detectCrossFeatureContradiction(
 /**
  * Normalize time values to milliseconds for comparison
  */
-function normalizeTimeToMs(value: number, unit: string): number {
+function _normalizeTimeToMs(value: number, unit: string): number {
   const u = unit.toLowerCase();
   if (u.startsWith('ms')) return value;
   if (u.startsWith('s')) return value * 1000;
@@ -265,8 +380,12 @@ function detectCrossFeatureResourceTension(
   c2: CrossFeatureConstraint
 ): { sharedDomain: string[]; conflictReason: string } | null {
   // One must be boundary, one must be goal
-  if (!((c1.type === 'boundary' && c2.type === 'goal') ||
-        (c1.type === 'goal' && c2.type === 'boundary'))) {
+  if (
+    !(
+      (c1.type === 'boundary' && c2.type === 'goal') ||
+      (c1.type === 'goal' && c2.type === 'boundary')
+    )
+  ) {
     return null;
   }
 
@@ -279,36 +398,83 @@ function detectCrossFeatureResourceTension(
   // Extract domain keywords
   const domain1 = extractDomainKeywords(s1);
   const domain2 = extractDomainKeywords(s2);
-  const sharedDomain = domain1.filter(d => domain2.includes(d));
+  const sharedDomain = domain1.filter((d) => domain2.includes(d));
 
   // Need some overlap to be related
   if (sharedDomain.length < 1) return null;
 
   // Resource keywords that indicate potential tension
   const resourceKeywords = [
-    'memory', 'cpu', 'disk', 'bandwidth', 'storage',
-    'time', 'latency', 'timeout', 'duration', 'performance',
-    'budget', 'cost', 'price', 'token', 'tokens',
-    'connections', 'threads', 'workers', 'instances',
-    'limit', 'quota', 'capacity', 'throughput', 'rate',
-    'size', 'length', 'count', 'complexity'
+    'memory',
+    'cpu',
+    'disk',
+    'bandwidth',
+    'storage',
+    'time',
+    'latency',
+    'timeout',
+    'duration',
+    'performance',
+    'budget',
+    'cost',
+    'price',
+    'token',
+    'tokens',
+    'connections',
+    'threads',
+    'workers',
+    'instances',
+    'limit',
+    'quota',
+    'capacity',
+    'throughput',
+    'rate',
+    'size',
+    'length',
+    'count',
+    'complexity',
   ];
 
-  const s1HasResource = resourceKeywords.some(kw => s1.includes(kw));
-  const s2HasResource = resourceKeywords.some(kw => s2.includes(kw));
+  const s1HasResource = resourceKeywords.some((kw) => s1.includes(kw));
+  const s2HasResource = resourceKeywords.some((kw) => s2.includes(kw));
 
   // Tension keywords that indicate competing requirements
-  const boundaryIndicators = ['must', 'limit', 'maximum', 'minimum', 'within', 'under', 'below', 'above', '<', '>', '≤', '≥'];
-  const goalIndicators = ['unlimited', 'flexible', 'support', 'enable', 'allow', 'maximize', 'optimize'];
+  const boundaryIndicators = [
+    'must',
+    'limit',
+    'maximum',
+    'minimum',
+    'within',
+    'under',
+    'below',
+    'above',
+    '<',
+    '>',
+    '≤',
+    '≥',
+  ];
+  const goalIndicators = [
+    'unlimited',
+    'flexible',
+    'support',
+    'enable',
+    'allow',
+    'maximize',
+    'optimize',
+  ];
 
-  const boundaryHasLimit = boundaryIndicators.some(kw => s1.includes(kw));
-  const goalHasFlexibility = goalIndicators.some(kw => s2.includes(kw));
+  const boundaryHasLimit = boundaryIndicators.some((kw) => s1.includes(kw));
+  const goalHasFlexibility = goalIndicators.some((kw) => s2.includes(kw));
 
   if (s1HasResource && s2HasResource && boundaryHasLimit && goalHasFlexibility) {
-    const resourceMentioned = resourceKeywords.find(kw => s1.includes(kw) || s2.includes(kw)) || 'resources';
+    const resourceMentioned =
+      resourceKeywords.find((kw) => s1.includes(kw) || s2.includes(kw)) || 'resources';
     return {
-      sharedDomain: [resourceMentioned, ...sharedDomain.filter(d => d !== resourceMentioned)].slice(0, 4),
-      conflictReason: `Boundary "${boundary.id}" limits ${resourceMentioned} which may constrain goal "${goal.id}"`
+      sharedDomain: [
+        resourceMentioned,
+        ...sharedDomain.filter((d) => d !== resourceMentioned),
+      ].slice(0, 4),
+      conflictReason: `Boundary "${boundary.id}" limits ${resourceMentioned} which may constrain goal "${goal.id}"`,
     };
   }
 
@@ -328,19 +494,28 @@ function detectCrossFeatureScopeConflict(
   // Extract domain keywords
   const domain1 = extractDomainKeywords(s1);
   const domain2 = extractDomainKeywords(s2);
-  const sharedDomain = domain1.filter(d => domain2.includes(d));
+  const sharedDomain = domain1.filter((d) => domain2.includes(d));
 
   // Need significant overlap
   if (sharedDomain.length < 2) return null;
 
   // Scope indicators
   const globalScope = ['all', 'every', 'any', 'global', 'system-wide', 'always', 'everywhere'];
-  const localScope = ['specific', 'only', 'certain', 'some', 'limited', 'conditional', 'except', 'unless'];
+  const localScope = [
+    'specific',
+    'only',
+    'certain',
+    'some',
+    'limited',
+    'conditional',
+    'except',
+    'unless',
+  ];
 
-  const s1Global = globalScope.some(kw => s1.includes(kw));
-  const s2Global = globalScope.some(kw => s2.includes(kw));
-  const s1Local = localScope.some(kw => s1.includes(kw));
-  const s2Local = localScope.some(kw => s2.includes(kw));
+  const s1Global = globalScope.some((kw) => s1.includes(kw));
+  const s2Global = globalScope.some((kw) => s2.includes(kw));
+  const s1Local = localScope.some((kw) => s1.includes(kw));
+  const s2Local = localScope.some((kw) => s2.includes(kw));
 
   // Check for global vs local scope mismatch
   if ((s1Global && s2Local) || (s1Local && s2Global)) {
@@ -348,7 +523,7 @@ function detectCrossFeatureScopeConflict(
     const localConstraint = s1Local ? c1 : c2;
     return {
       sharedDomain,
-      conflictReason: `"${globalConstraint.id}" has global scope while "${localConstraint.id}" has local scope for overlapping domain: ${sharedDomain.slice(0, 3).join(', ')}`
+      conflictReason: `"${globalConstraint.id}" has global scope while "${localConstraint.id}" has local scope for overlapping domain: ${sharedDomain.slice(0, 3).join(', ')}`,
     };
   }
 
@@ -401,17 +576,19 @@ export function detectCrossFeatureConflicts(manifolds: Manifold[]): CrossFeature
                 `Scope ${c1.feature}/${c1.id} to exclude ${c2.feature}'s domain`,
                 `Scope ${c2.feature}/${c2.id} to exclude ${c1.feature}'s domain`,
                 `Relax one constraint from invariant to goal`,
-                `Remove one constraint entirely`
+                `Remove one constraint entirely`,
               ],
-              requiresUserAcceptance: true
-            }
+              requiresUserAcceptance: true,
+            },
           });
         }
       }
 
       // 2. Check for resource tension (boundary vs goal)
-      if ((c1.type === 'boundary' && c2.type === 'goal') ||
-          (c1.type === 'goal' && c2.type === 'boundary')) {
+      if (
+        (c1.type === 'boundary' && c2.type === 'goal') ||
+        (c1.type === 'goal' && c2.type === 'boundary')
+      ) {
         const tension = detectCrossFeatureResourceTension(c1, c2);
         if (tension) {
           const boundary = c1.type === 'boundary' ? c1 : c2;
@@ -428,10 +605,10 @@ export function detectCrossFeatureConflicts(manifolds: Manifold[]): CrossFeature
               options: [
                 `Accept this tension and document in both features' tensions section`,
                 `Relax the boundary constraint ${boundary.id}`,
-                `Constrain the goal ${goal.id} to work within the boundary`
+                `Constrain the goal ${goal.id} to work within the boundary`,
               ],
-              requiresUserAcceptance: true
-            }
+              requiresUserAcceptance: true,
+            },
           });
         }
       }
@@ -451,10 +628,10 @@ export function detectCrossFeatureConflicts(manifolds: Manifold[]): CrossFeature
             options: [
               `Clarify if the local constraint is an exception to the global one`,
               `Add explicit scoping rules to both constraints`,
-              `Document as an accepted tension if intentional`
+              `Document as an accepted tension if intentional`,
             ],
-            requiresUserAcceptance: false
-          }
+            requiresUserAcceptance: false,
+          },
         });
       }
     }
@@ -466,21 +643,20 @@ export function detectCrossFeatureConflicts(manifolds: Manifold[]): CrossFeature
     featuresAnalyzed: manifolds.length,
     constraintsAnalyzed: allConstraints.length,
     bySeverity: {
-      blocking: conflicts.filter(c => c.severity === 'blocking').length,
-      requires_acceptance: conflicts.filter(c => c.severity === 'requires_acceptance').length,
-      review_needed: conflicts.filter(c => c.severity === 'review_needed').length,
+      blocking: conflicts.filter((c) => c.severity === 'blocking').length,
+      requires_acceptance: conflicts.filter((c) => c.severity === 'requires_acceptance').length,
+      review_needed: conflicts.filter((c) => c.severity === 'review_needed').length,
     },
     byType: {
-      logical_contradiction: conflicts.filter(c => c.type === 'logical_contradiction').length,
-      resource_tension: conflicts.filter(c => c.type === 'resource_tension').length,
-      scope_conflict: conflicts.filter(c => c.type === 'scope_conflict').length,
-    }
+      logical_contradiction: conflicts.filter((c) => c.type === 'logical_contradiction').length,
+      resource_tension: conflicts.filter((c) => c.type === 'resource_tension').length,
+      scope_conflict: conflicts.filter((c) => c.type === 'scope_conflict').length,
+    },
   };
 
   return {
     hasConflicts: conflicts.length > 0,
     conflicts,
-    summary
+    summary,
   };
 }
-

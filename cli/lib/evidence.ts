@@ -6,9 +6,9 @@
  * Uses grep-based pattern matching (fast) rather than AST analysis.
  */
 
-import { existsSync, readFileSync, statSync } from 'fs';
-import { join } from 'path';
-import { Evidence, EvidenceStatus, EvidenceType } from './parser';
+import { existsSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import type { Evidence, EvidenceType } from './parser';
 import type { ManifoldConfig } from './config';
 import type { SatisfactionLevel, TestTier } from './structure-schema';
 
@@ -93,9 +93,7 @@ class FileExistsVerifier implements EvidenceVerifier {
     return {
       evidence: e,
       passed: exists,
-      message: exists
-        ? `File exists: ${e.path}`
-        : `File not found: ${e.path}`,
+      message: exists ? `File exists: ${e.path}` : `File not found: ${e.path}`,
       duration_ms: Date.now() - start,
     };
   }
@@ -253,15 +251,16 @@ class TestPassesVerifier implements EvidenceVerifier {
       });
 
       const exitCode = await proc.exited;
-      const stdout = await new Response(proc.stdout).text();
+      const _stdout = await new Response(proc.stdout).text();
       const stderr = await new Response(proc.stderr).text();
 
       return {
         evidence: e,
         passed: exitCode === 0,
-        message: exitCode === 0
-          ? `Test passed: "${testName}" via ${runner}`
-          : `Test failed (exit ${exitCode}): "${testName}" — ${stderr.slice(0, 200)}`,
+        message:
+          exitCode === 0
+            ? `Test passed: "${testName}" via ${runner}`
+            : `Test failed (exit ${exitCode}): "${testName}" — ${stderr.slice(0, 200)}`,
         duration_ms: Date.now() - start,
       };
     } catch (error) {
@@ -283,9 +282,10 @@ class ManualReviewVerifier implements EvidenceVerifier {
     return {
       evidence: e,
       passed: e.status === 'VERIFIED',
-      message: e.status === 'VERIFIED'
-        ? `Manually verified by ${e.verified_by || 'unknown'} at ${e.verified_at || 'unknown time'}`
-        : 'Requires manual review',
+      message:
+        e.status === 'VERIFIED'
+          ? `Manually verified by ${e.verified_by || 'unknown'} at ${e.verified_at || 'unknown time'}`
+          : 'Requires manual review',
       duration_ms: 0,
     };
   }
@@ -347,7 +347,7 @@ export async function verifyAllEvidence(
   evidenceList: Evidence[],
   options: VerificationOptions = {}
 ): Promise<VerificationReport> {
-  const start = Date.now();
+  const _start = Date.now();
   const projectRoot = options.projectRoot || process.cwd();
   const maxConcurrency = options.maxConcurrency || 10;
 
@@ -369,12 +369,17 @@ export async function verifyAllEvidence(
   const verified = results.filter((r) => r.passed).length;
   const stale = results.filter((r) => !r.passed && r.evidence.status === 'STALE').length;
   const pending = results.filter(
-    (r) => !r.passed && r.evidence.status !== 'STALE' &&
+    (r) =>
+      !r.passed &&
+      r.evidence.status !== 'STALE' &&
       (r.evidence.type === 'test_passes' || r.evidence.type === 'manual_review')
   ).length;
   const failed = results.filter(
-    (r) => !r.passed && r.evidence.status !== 'STALE' &&
-      r.evidence.type !== 'test_passes' && r.evidence.type !== 'manual_review'
+    (r) =>
+      !r.passed &&
+      r.evidence.status !== 'STALE' &&
+      r.evidence.type !== 'test_passes' &&
+      r.evidence.type !== 'manual_review'
   ).length;
 
   const report: VerificationReport = {
@@ -523,14 +528,14 @@ export function parseTestAnnotations(filePath: string): Map<string, string[]> {
 
     for (const line of lines) {
       // Detect constraint annotations — always buffer
-      const constraintMatch = line.match(/@constraint\s+([\w\s,-]+)/i)
-        || line.match(/Satisfies:\s*([\w\s,()-]+)/i);
+      const constraintMatch =
+        line.match(/@constraint\s+([\w\s,-]+)/i) || line.match(/Satisfies:\s*([\w\s,()-]+)/i);
 
       if (constraintMatch) {
         const ids = constraintMatch[1]
           .split(/[,\s]+/)
-          .map(id => id.replace(/[()]/g, '').trim())
-          .filter(id => /^[BTUSO]\d+$|^RT-\d+$|^TN\d+$/.test(id));
+          .map((id) => id.replace(/[()]/g, '').trim())
+          .filter((id) => /^[BTUSO]\d+$|^RT-\d+$|^TN\d+$/.test(id));
         pendingIds.push(...ids);
       }
 
@@ -558,10 +563,7 @@ export function parseTestAnnotations(filePath: string): Map<string, string[]> {
 /**
  * Build a traceability matrix mapping constraint IDs to test functions
  */
-export function buildTraceabilityMatrix(
-  testFiles: string[],
-  basePath: string
-): TraceabilityMatrix {
+export function buildTraceabilityMatrix(testFiles: string[], basePath: string): TraceabilityMatrix {
   const matrix: TraceabilityMatrix = {};
 
   for (const testFile of testFiles) {
@@ -598,29 +600,27 @@ export function buildTraceabilityMatrix(
  *   IMPLEMENTED — has file_exists evidence that passed
  *   DOCUMENTED  — has manual_review evidence or just exists in manifold
  */
-export function aggregateSatisfactionLevel(
-  evidenceItems: Evidence[]
-): SatisfactionLevel {
+export function aggregateSatisfactionLevel(evidenceItems: Evidence[]): SatisfactionLevel {
   if (evidenceItems.length === 0) return 'DOCUMENTED';
 
   const hasVerifiedTest = evidenceItems.some(
-    e => e.type === 'test_passes' && e.status === 'VERIFIED'
+    (e) => e.type === 'test_passes' && e.status === 'VERIFIED'
   );
   if (hasVerifiedTest) return 'VERIFIED';
 
   const hasPassingTest = evidenceItems.some(
-    e => e.type === 'test_passes' && (e.status === 'VERIFIED' || e.status === 'STALE')
+    (e) => e.type === 'test_passes' && (e.status === 'VERIFIED' || e.status === 'STALE')
   );
   if (hasPassingTest) return 'TESTED';
 
   // PENDING test_passes = test exists but hasn't run → IMPLEMENTED, not TESTED
   const hasPendingTest = evidenceItems.some(
-    e => e.type === 'test_passes' && e.status === 'PENDING'
+    (e) => e.type === 'test_passes' && e.status === 'PENDING'
   );
   if (hasPendingTest) return 'IMPLEMENTED';
 
   const hasFileEvidence = evidenceItems.some(
-    e => e.type === 'file_exists' || e.type === 'content_match'
+    (e) => e.type === 'file_exists' || e.type === 'content_match'
   );
   if (hasFileEvidence) return 'IMPLEMENTED';
 
