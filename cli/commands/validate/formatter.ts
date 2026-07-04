@@ -76,7 +76,7 @@ export function updateMetrics(metrics: ValidationMetrics, result: FeatureValidat
  * Extract category from field path (e.g., "constraints.business[0].id" -> "constraints")
  */
 function extractCategory(field: string): string {
-  const parts = field.split(/[.\[]/);
+  const parts = field.split(/[.[]/);
   return parts[0] || 'root';
 }
 

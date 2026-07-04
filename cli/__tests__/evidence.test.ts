@@ -7,16 +7,14 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
-import { existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
-import { join } from 'path';
+import { existsSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   computeFileHash,
   detectDrift,
   parseTestAnnotations,
   buildTraceabilityMatrix,
   aggregateSatisfactionLevel,
-  type DriftReport,
-  type TraceabilityMatrix,
 } from '../lib/evidence.js';
 import type { Evidence } from '../lib/parser.js';
 
@@ -321,11 +319,11 @@ test('idempotent retry', () => {});
 
     const matrix = buildTraceabilityMatrix(['traced.test.ts'], TEST_DIR);
 
-    expect(matrix['B1']).toHaveLength(2);
-    expect(matrix['B1'][0].test_function).toBe('no duplicates');
-    expect(matrix['B1'][1].test_function).toBe('idempotent retry');
-    expect(matrix['T1']).toHaveLength(1);
-    expect(matrix['T1'][0].test_function).toBe('idempotent retry');
+    expect(matrix.B1).toHaveLength(2);
+    expect(matrix.B1[0].test_function).toBe('no duplicates');
+    expect(matrix.B1[1].test_function).toBe('idempotent retry');
+    expect(matrix.T1).toHaveLength(1);
+    expect(matrix.T1[0].test_function).toBe('idempotent retry');
   });
 
   test('handles multiple test files', () => {
@@ -345,9 +343,9 @@ test('test B', () => {});
     );
 
     const matrix = buildTraceabilityMatrix(['a.test.ts', 'b.test.ts'], TEST_DIR);
-    expect(matrix['B1']).toHaveLength(2);
-    expect(matrix['B1'].map((e) => e.test_file)).toContain('a.test.ts');
-    expect(matrix['B1'].map((e) => e.test_file)).toContain('b.test.ts');
+    expect(matrix.B1).toHaveLength(2);
+    expect(matrix.B1.map((e) => e.test_file)).toContain('a.test.ts');
+    expect(matrix.B1.map((e) => e.test_file)).toContain('b.test.ts');
   });
 
   test('returns empty matrix for files with no annotations', () => {

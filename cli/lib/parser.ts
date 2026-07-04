@@ -4,8 +4,8 @@
  * Satisfies: RT-1 (Fast/safe parsing), T2 (Schema v1/v2/v3 detection), S1 (Safe parsing)
  */
 
-import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
-import { join, basename } from 'path';
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import * as yaml from 'yaml';
 
 // Schema version detection

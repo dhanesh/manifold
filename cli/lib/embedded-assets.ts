@@ -34,6 +34,6 @@ export async function getEmbeddedAssets(): Promise<EmbeddedAssetMap> {
 
 export function lookupAsset(assets: EmbeddedAssetMap, pathname: string): EmbeddedAsset | undefined {
   if (assets.has(pathname)) return assets.get(pathname);
-  if (pathname.endsWith('/')) return assets.get(pathname + 'index.html');
+  if (pathname.endsWith('/')) return assets.get(`${pathname}index.html`);
   return undefined;
 }

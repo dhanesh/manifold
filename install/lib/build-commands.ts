@@ -12,8 +12,8 @@
  * Usage: bun run install/lib/build-commands.ts [--verify]
  */
 
-import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
-import { join, basename, parse as parsePath } from 'path';
+import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { join, basename, parse as parsePath } from 'node:path';
 
 // ============================================================
 // Types

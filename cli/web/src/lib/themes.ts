@@ -242,7 +242,7 @@ export const NORD_DARK: Theme = {
 };
 
 const registry = new Map<string, Theme>();
-[APPLE_LIGHT, APPLE_DARK, NORD_DARK].forEach((t) => registry.set(t.name, t));
+for (const t of [APPLE_LIGHT, APPLE_DARK, NORD_DARK]) registry.set(t.name, t);
 
 export function registerTheme(theme: Theme): void {
   if (!theme?.name || !theme.vars) {

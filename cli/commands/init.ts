@@ -6,8 +6,8 @@
  */
 
 import type { Command } from 'commander';
-import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync, statSync } from 'fs';
-import { join, dirname } from 'path';
+import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { join, dirname } from 'node:path';
 import { findManifoldDir } from '../lib/parser.js';
 import { IOError } from '../lib/errors.js';
 import { println, printError, style, toJSON } from '../lib/output.js';
@@ -115,7 +115,7 @@ async function initCommand(feature: string, options: InitOptions): Promise<numbe
     ? loadTemplate(feature, options.template, options.outcome)
     : null;
 
-  if (templateResult && templateResult.error) {
+  if (templateResult?.error) {
     if (options.json) {
       println(toJSON({ error: templateResult.error }));
     } else {

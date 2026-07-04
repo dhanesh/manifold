@@ -6,13 +6,12 @@
 
 import type { Command } from 'commander';
 import { findManifoldDir, loadFeature, listFeatures } from '../lib/parser.js';
-import { println, printError, formatHeader, formatKeyValue, style, toJSON } from '../lib/output.js';
+import { println, printError, formatHeader, style, toJSON } from '../lib/output.js';
 import { ConstraintSolver, type ExecutionPlan, exportGraphDot } from '../lib/solver.js';
 import {
   graphToMermaid,
   executionPlanToMermaid,
   backwardReasoningToMermaid,
-  renderMermaidToTerminal,
   renderGraphToTerminal,
   renderPlanToTerminal,
   renderBackwardToTerminal,
@@ -82,7 +81,7 @@ async function solveCommand(feature: string | undefined, options: SolveOptions):
   // Load the feature
   const data = loadFeature(manifoldDir, feature);
 
-  if (!data || !data.manifold) {
+  if (!data?.manifold) {
     printError(
       `Feature "${feature}" not found`,
       `Available features: ${listFeatures(manifoldDir).join(', ') || 'none'}`

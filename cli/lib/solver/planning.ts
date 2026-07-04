@@ -6,14 +6,7 @@
  * paths, and topological sorting of constraint graphs.
  */
 
-import type {
-  ConstraintGraph,
-  ConstraintNode,
-  ExecutionPlan,
-  Wave,
-  ParallelTask,
-  ManifoldPhase,
-} from '../parser';
+import type { ConstraintGraph, ConstraintNode, Wave, ParallelTask, ManifoldPhase } from '../parser';
 import { printWarning } from '../output';
 
 /**

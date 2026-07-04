@@ -7,18 +7,11 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
-import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
-import { join } from 'path';
+import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 
 // Parser functions (status, graph, verify, solve)
-import {
-  loadFeature,
-  getFeatureFiles,
-  findManifoldDir,
-  listFeatures,
-  type FeatureData,
-  type FeatureFiles,
-} from '../lib/parser.js';
+import { loadFeature, getFeatureFiles, findManifoldDir, listFeatures } from '../lib/parser.js';
 
 // Linker functions (validate, show)
 import {
@@ -207,7 +200,7 @@ This constraint exists in both JSON and Markdown.
 function createTestDir(): string {
   const dir = join(
     '/tmp',
-    'manifold-jsonmd-test-' + Date.now() + '-' + Math.random().toString(36).slice(2)
+    `manifold-jsonmd-test-${Date.now()}-${Math.random().toString(36).slice(2)}`
   );
   mkdirSync(dir, { recursive: true });
   return dir;
@@ -838,7 +831,7 @@ describe('Feature Listing', () => {
   });
 
   test('returns empty array for nonexistent directory', () => {
-    const features = listFeatures('/tmp/manifold-does-not-exist-' + Date.now());
+    const features = listFeatures(`/tmp/manifold-does-not-exist-${Date.now()}`);
     expect(features).toEqual([]);
   });
 

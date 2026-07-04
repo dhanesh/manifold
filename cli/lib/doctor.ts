@@ -9,8 +9,8 @@
  * Satisfies: RT-7, S1 (strictly read-only — no filesystem writes)
  */
 
-import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
-import { dirname, join } from 'path';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { findManifoldDir, listFeatures, loadFeature } from './parser.js';
 import { computeFileHash, detectDrift } from './evidence.js';
 import { fingerprintSkills, type SkillFingerprint } from './fingerprint.js';

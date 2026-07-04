@@ -12,7 +12,7 @@
  */
 
 import type { Command } from 'commander';
-import { createServer as createNetServer } from 'net';
+import { createServer as createNetServer } from 'node:net';
 import { println, printError } from '../lib/output.js';
 import { resolveManifoldDir } from '../lib/manifold-collection.js';
 import { startManifoldServer, type ServeContext } from '../web/server.js';

@@ -133,7 +133,7 @@ export class TaskAnalyzer {
         // (subject to file overlap checking later)
         groups.push(level);
       }
-      level.forEach((id) => processed.add(id));
+      for (const id of level) processed.add(id);
     }
 
     return groups;

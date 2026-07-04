@@ -4,9 +4,9 @@
  * Required Truths: RT-2 (Independent tasks can be identified - no file overlap)
  */
 
-import { execSync } from 'child_process';
-import { existsSync, readdirSync, statSync } from 'fs';
-import { join, dirname, basename, extname } from 'path';
+import { execSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { join, dirname, basename, extname } from 'node:path';
 
 export interface FilePrediction {
   taskId: string;
@@ -45,7 +45,6 @@ const DEFAULT_CONFIG: Omit<PredictorConfig, 'baseDir'> = {
  */
 export class FilePredictor {
   private config: Required<PredictorConfig>;
-  private fileCache: Map<string, string[]> = new Map();
   private gitPatterns: Map<string, string[]> = new Map();
 
   constructor(config: PredictorConfig) {
@@ -318,7 +317,7 @@ export class FilePredictor {
     // Merge all unique files, weighted by confidence
     const allFiles = new Set<string>();
     for (const pred of predictions) {
-      pred.files.forEach((f) => allFiles.add(f));
+      for (const f of pred.files) allFiles.add(f);
     }
 
     return {
@@ -360,7 +359,7 @@ export class FilePredictor {
           this.gitPatterns.set(keyword, [...new Set([...existing, ...files])]);
         }
       }
-    } catch (error) {
+    } catch (_error) {
       // Git history not available, skip
     }
   }

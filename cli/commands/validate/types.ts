@@ -4,7 +4,7 @@
  */
 
 import type { ValidationResult } from '../../lib/schema.js';
-import type { Manifold, Evidence } from '../../lib/parser.js';
+import type { Manifold } from '../../lib/parser.js';
 import type { LinkingResult } from '../../lib/manifold-linker.js';
 
 export interface ValidateOptions {

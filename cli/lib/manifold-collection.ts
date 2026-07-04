@@ -7,8 +7,8 @@
  *            S3 (no path traversal — file reads bounded to .manifold/).
  */
 
-import { existsSync, readFileSync, statSync } from 'fs';
-import { join } from 'path';
+import { existsSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { findManifoldDir, listFeatures, getFeatureFiles } from './parser.js';
 import { synthesiseGraph, type GraphData } from './graph-synthesis.js';
 

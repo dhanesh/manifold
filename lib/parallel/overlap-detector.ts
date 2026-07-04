@@ -4,7 +4,7 @@
  * Required Truths: RT-2 (Independent tasks can be identified - no file overlap)
  */
 
-import { FilePrediction } from './file-predictor';
+import type { FilePrediction } from './file-predictor';
 
 export interface OverlapResult {
   hasOverlap: boolean;

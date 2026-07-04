@@ -6,8 +6,8 @@
  */
 
 import type { Command } from 'commander';
-import { existsSync, readFileSync, writeFileSync, renameSync } from 'fs';
-import { join } from 'path';
+import { existsSync, readFileSync, writeFileSync, renameSync } from 'node:fs';
+import { join } from 'node:path';
 import * as yaml from 'yaml';
 import { ParseError, IOError } from '../lib/errors.js';
 import {
@@ -25,7 +25,7 @@ import type {
   TensionRef,
   RequiredTruthRef,
 } from '../lib/structure-schema.js';
-import { println, printError, printWarning, style, toJSON } from '../lib/output.js';
+import { println, printError, style, toJSON } from '../lib/output.js';
 
 interface MigrateOptions {
   json?: boolean;
@@ -265,7 +265,7 @@ async function migrateFeature(
     backupPath = `${yamlPath}.backup`;
     try {
       renameSync(yamlPath, backupPath);
-    } catch (err) {
+    } catch (_err) {
       // Non-fatal - migration still succeeded
       backupPath = undefined;
     }

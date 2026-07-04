@@ -13,8 +13,8 @@
  * Platforms: macOS, Linux, Windows (Bun runtime)
  */
 
-import { existsSync } from 'fs';
-import { join } from 'path';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 
 // RT-6: Only inject in Manifold projects
 const manifoldDir = join(process.cwd(), '.manifold');

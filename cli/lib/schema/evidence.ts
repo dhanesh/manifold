@@ -3,9 +3,9 @@
  * Satisfies: T1, T3 (< 500 lines), T6, T7, RT-2, RT-8, S2
  */
 
-import { existsSync, readFileSync } from 'fs';
-import { join, isAbsolute } from 'path';
-import { execSync } from 'child_process';
+import { existsSync, readFileSync } from 'node:fs';
+import { join, isAbsolute } from 'node:path';
+import { execSync } from 'node:child_process';
 import { VALID_EVIDENCE_TYPES, VALID_EVIDENCE_STATUSES } from '../structure-schema.js';
 import type {
   ValidationError,
@@ -359,7 +359,7 @@ export function formatEvidenceVerification(summary: EvidenceVerificationSummary)
 
   for (const result of summary.results) {
     const icon = result.verified ? '✓' : result.error?.includes('skipped') ? '⏭' : '✗';
-    const status = result.verified
+    const _status = result.verified
       ? 'verified'
       : result.error?.includes('skipped')
         ? 'skipped'

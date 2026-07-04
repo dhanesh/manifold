@@ -4,8 +4,8 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
-import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
-import { join } from 'path';
+import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   validateManifoldLink,
   loadAndValidateManifold,
@@ -261,7 +261,7 @@ Description.
 });
 
 describe('detectManifoldFormat', () => {
-  const testDir = '/tmp/manifold-test-' + Date.now();
+  const testDir = `/tmp/manifold-test-${Date.now()}`;
 
   beforeEach(() => {
     mkdirSync(testDir, { recursive: true });
@@ -303,7 +303,7 @@ describe('detectManifoldFormat', () => {
 });
 
 describe('loadAndValidateManifold', () => {
-  const testDir = '/tmp/manifold-load-test-' + Date.now();
+  const testDir = `/tmp/manifold-load-test-${Date.now()}`;
 
   beforeEach(() => {
     mkdirSync(testDir, { recursive: true });
@@ -400,7 +400,7 @@ This is the statement.
 });
 
 describe('loadManifoldByFeature', () => {
-  const testDir = '/tmp/manifold-feature-test-' + Date.now();
+  const testDir = `/tmp/manifold-feature-test-${Date.now()}`;
 
   beforeEach(() => {
     mkdirSync(testDir, { recursive: true });

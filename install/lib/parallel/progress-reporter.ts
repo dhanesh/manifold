@@ -4,10 +4,10 @@
  * Required Truths: RT-6 (User has visibility and control over parallelization)
  */
 
-import { EventEmitter } from 'events';
-import { ExecutionTask, ProgressEvent } from './parallel-executor';
-import { SafeGroup } from './overlap-detector';
-import { MergeOrchestratorResult } from './merge-orchestrator';
+import { EventEmitter } from 'node:events';
+import type { ProgressEvent } from './parallel-executor';
+import type { SafeGroup } from './overlap-detector';
+import type { MergeOrchestratorResult } from './merge-orchestrator';
 
 export interface ProgressUpdate {
   timestamp: Date;

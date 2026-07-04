@@ -190,5 +190,5 @@ export function formatCrossFeatureResults(result: CrossFeatureConflictResult): s
 // Helper function
 function truncate(str: string, maxLen: number): string {
   if (str.length <= maxLen) return str;
-  return str.substring(0, maxLen - 3) + '...';
+  return `${str.substring(0, maxLen - 3)}...`;
 }

@@ -10,9 +10,9 @@
  * copy — verified separately by the diff-guard CI workflow.
  */
 
-import { readdirSync, readFileSync } from 'fs';
-import { createHash } from 'crypto';
-import { join, resolve } from 'path';
+import { readdirSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { join, resolve } from 'node:path';
 
 export interface SkillFingerprint {
   path: string; // relative to repo root

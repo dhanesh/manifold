@@ -6,8 +6,8 @@
  * This version is installed to ~/.claude/hooks/ and imports from ~/.claude/lib/parallel/
  */
 
-import { join } from 'path';
-import { homedir } from 'os';
+import { join } from 'node:path';
+import { homedir } from 'node:os';
 
 // Dynamic import path for installed library
 const PARALLEL_LIB = join(homedir(), '.claude', 'lib', 'parallel');
@@ -111,7 +111,6 @@ export class AutoSuggester {
   private filePredictor: InstanceType<typeof FilePredictor>;
   private overlapDetector: InstanceType<typeof OverlapDetector>;
   private configManager: InstanceType<typeof ParallelConfigManager>;
-  private baseDir: string;
 
   constructor(baseDir: string) {
     this.baseDir = baseDir;

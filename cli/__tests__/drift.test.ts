@@ -6,8 +6,8 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
-import { existsSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { existsSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { computeFileHash, detectDrift } from '../lib/evidence.js';
 
 // ============================================================

@@ -105,7 +105,7 @@ export async function handleRequest(
   }
 
   const url = new URL(request.url);
-  let pathname = url.pathname;
+  const pathname = url.pathname;
 
   // S3: collapse traversal attempts — normalise to a single absolute path
   // and reject anything containing `..` segments.

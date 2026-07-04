@@ -4,8 +4,8 @@
  */
 
 import { manifoldStructureJsonSchema } from '../lib/structure-schema.ts';
-import { writeFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { writeFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
 
 // Mirror the runtime z.preprocess that defaults a missing `domain` to "software".
 // Without this, IDEs validating legacy manifolds (no `domain` field) report a false

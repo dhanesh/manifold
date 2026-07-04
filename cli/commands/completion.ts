@@ -5,7 +5,7 @@
  * Satisfies: U4 (Shell completion support for feature names)
  */
 
-import { Command } from 'commander';
+import type { Command } from 'commander';
 import { findManifoldDir, listFeatures } from '../lib/parser.js';
 
 // Bash completion script template
@@ -329,7 +329,7 @@ export function registerCompletionCommand(program: Command): void {
       const manifoldDir = findManifoldDir();
       if (manifoldDir) {
         const features = listFeatures(manifoldDir);
-        features.forEach((f) => console.log(f));
+        for (const f of features) console.log(f);
       }
     });
 }

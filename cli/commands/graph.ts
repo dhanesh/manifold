@@ -8,7 +8,7 @@ import type { Command } from 'commander';
 import { findManifoldDir, loadFeature, listFeatures } from '../lib/parser.js';
 import { println, printError, toJSON } from '../lib/output.js';
 import { ConstraintSolver, type ConstraintGraph, exportGraphDot } from '../lib/solver.js';
-import { graphToMermaid, renderMermaidToTerminal, renderGraphToTerminal } from '../lib/mermaid.js';
+import { graphToMermaid, renderGraphToTerminal } from '../lib/mermaid.js';
 
 interface GraphOptions {
   json?: boolean;
@@ -70,7 +70,7 @@ async function graphCommand(feature: string | undefined, options: GraphOptions):
   // Load the feature
   const data = loadFeature(manifoldDir, feature);
 
-  if (!data || !data.manifold) {
+  if (!data?.manifold) {
     printError(
       `Feature "${feature}" not found`,
       `Available features: ${listFeatures(manifoldDir).join(', ') || 'none'}`

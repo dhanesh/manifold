@@ -14,8 +14,6 @@ import {
   PhaseSchema,
   ConstraintTypeSchema,
   TensionTypeSchema,
-  TensionStatusSchema,
-  RequiredTruthStatusSchema,
 } from '../lib/structure-schema.js';
 
 describe('PhaseSchema', () => {

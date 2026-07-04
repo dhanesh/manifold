@@ -12,8 +12,8 @@
  *   bun run install/lib/config-merger.ts codex <config.toml-path>
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { dirname } from 'path';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 
 // ============================================================
 // Types
@@ -106,7 +106,7 @@ export function mergeGeminiSettings(settingsPath: string): { created: boolean; u
   }
 
   const merged = deepMerge(existing, manifoldConfig);
-  const mergedStr = JSON.stringify(merged, null, 2) + '\n';
+  const mergedStr = `${JSON.stringify(merged, null, 2)}\n`;
   const existingStr = existsSync(settingsPath) ? readFileSync(settingsPath, 'utf-8') : '';
 
   if (mergedStr === existingStr) {

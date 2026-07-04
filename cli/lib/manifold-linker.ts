@@ -9,8 +9,8 @@
  * 4. Content quality is sufficient (no empty statements/descriptions)
  */
 
-import { existsSync, readFileSync, readdirSync } from 'fs';
-import { join } from 'path';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import type { ZodIssue } from 'zod';
 import {
   ManifoldStructureSchema,
@@ -22,12 +22,7 @@ import {
   SOFTWARE_CATEGORY_KEYS,
   NON_SOFTWARE_CATEGORY_KEYS,
 } from './structure-schema.js';
-import {
-  parseManifoldMarkdown,
-  validateMarkdownCompleteness,
-  validateContentQuality,
-  type ManifoldContent,
-} from './markdown-parser.js';
+import { parseManifoldMarkdown, type ManifoldContent } from './markdown-parser.js';
 
 // ============================================================
 // Linking Result Types
@@ -84,7 +79,7 @@ export function validateManifoldLink(
   const structureIds = collectStructureIds(structure);
 
   // Collect all IDs from content
-  const contentIds = new Set<string>([
+  const _contentIds = new Set<string>([
     ...content.constraints.keys(),
     ...content.tensions.keys(),
     ...content.requiredTruths.keys(),
@@ -269,8 +264,8 @@ export function validateManifoldLink(
   // ============================================================
 
   let totalConstraints = 0;
-  let totalTensions = structure.tensions?.length || 0;
-  let totalRequiredTruths = structure.anchors?.required_truths?.length || 0;
+  const totalTensions = structure.tensions?.length || 0;
+  const totalRequiredTruths = structure.anchors?.required_truths?.length || 0;
 
   if (structure.constraints) {
     const constraintsByCategory = structure.constraints as Record<

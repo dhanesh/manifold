@@ -10,8 +10,8 @@
  * Configure: Added automatically by config-merger.ts to settings.json
  */
 
-import { existsSync, readdirSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 interface ManifoldJson {
   feature: string;
@@ -122,9 +122,7 @@ function loadManifoldContext(): string | null {
       lines.push(`- Next: ${getNextAction(data.phase, data.feature)}`);
 
       summaries.push(lines.join('\n'));
-    } catch {
-      continue;
-    }
+    } catch {}
   }
 
   if (summaries.length === 0) {

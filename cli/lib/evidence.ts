@@ -6,9 +6,9 @@
  * Uses grep-based pattern matching (fast) rather than AST analysis.
  */
 
-import { existsSync, readFileSync, statSync } from 'fs';
-import { join } from 'path';
-import { Evidence, EvidenceStatus, EvidenceType } from './parser';
+import { existsSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import type { Evidence, EvidenceType } from './parser';
 import type { ManifoldConfig } from './config';
 import type { SatisfactionLevel, TestTier } from './structure-schema';
 
@@ -251,7 +251,7 @@ class TestPassesVerifier implements EvidenceVerifier {
       });
 
       const exitCode = await proc.exited;
-      const stdout = await new Response(proc.stdout).text();
+      const _stdout = await new Response(proc.stdout).text();
       const stderr = await new Response(proc.stderr).text();
 
       return {
@@ -347,7 +347,7 @@ export async function verifyAllEvidence(
   evidenceList: Evidence[],
   options: VerificationOptions = {}
 ): Promise<VerificationReport> {
-  const start = Date.now();
+  const _start = Date.now();
   const projectRoot = options.projectRoot || process.cwd();
   const maxConcurrency = options.maxConcurrency || 10;
 

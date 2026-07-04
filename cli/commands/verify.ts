@@ -4,27 +4,22 @@
  */
 
 import type { Command } from 'commander';
-import { existsSync, statSync } from 'fs';
-import { join, dirname } from 'path';
+import { existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
 import {
   findManifoldDir,
   loadFeature,
   listFeatures,
-  type FeatureData,
   type Manifold,
-  type Constraint,
   type Evidence,
 } from '../lib/parser.js';
-import { countConstraints, countConstraintsByType } from '../lib/schema.js';
+import { countConstraints } from '../lib/schema.js';
 import { println, printError, formatHeader, formatKeyValue, style, toJSON } from '../lib/output.js';
 import {
   verifyAllEvidence,
   normalizeEvidence,
-  formatVerificationReport,
   aggregateSatisfactionLevel,
-  computeFileHash,
   type VerificationReport,
-  type ExtendedVerificationReport,
 } from '../lib/evidence.js';
 import { loadConfig } from '../lib/config.js';
 import type { SatisfactionLevel } from '../lib/structure-schema.js';
@@ -184,7 +179,7 @@ async function verifyFeature(
 ): Promise<VerificationResult> {
   const data = loadFeature(manifoldDir, feature);
 
-  if (!data || !data.manifold) {
+  if (!data?.manifold) {
     return {
       feature,
       result: 'FAIL',
@@ -492,7 +487,7 @@ function printVerificationOutput(
   if (options.levels && result.coverage) {
     const resolvedDir = manifoldDir ?? findManifoldDir();
     if (resolvedDir) {
-      const projectRoot = dirname(resolvedDir);
+      const _projectRoot = dirname(resolvedDir);
       const data = loadFeature(resolvedDir, result.feature);
       if (data?.manifold) {
         const levels = computeSatisfactionLevels(data.manifold);

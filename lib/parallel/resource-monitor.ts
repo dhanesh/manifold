@@ -4,9 +4,8 @@
  * Required Truths: RT-5 (Resource limits are monitored and respected)
  */
 
-import { execSync } from 'child_process';
-import { statSync } from 'fs';
-import * as os from 'os';
+import { execSync } from 'node:child_process';
+import * as os from 'node:os';
 
 export interface ResourceStatus {
   disk: DiskStatus;

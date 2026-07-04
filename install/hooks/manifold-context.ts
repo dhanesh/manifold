@@ -2,8 +2,8 @@
 // Manifold PreCompact Hook
 // Injects .manifold/ context before compaction to preserve state across sessions
 
-import { existsSync, readdirSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 interface ManifoldData {
   feature: string;

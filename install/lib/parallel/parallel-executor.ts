@@ -4,12 +4,12 @@
  * Required Truths: RT-3 (isolated execution environments), RT-4 (results can be merged)
  */
 
-import { spawn, ChildProcess } from 'child_process';
-import { EventEmitter } from 'events';
-import { WorktreeManager, WorktreeInfo } from './worktree-manager';
+import { spawn, type ChildProcess } from 'node:child_process';
+import { EventEmitter } from 'node:events';
+import { WorktreeManager, type WorktreeInfo } from './worktree-manager';
 import { ResourceMonitor } from './resource-monitor';
-import { Task } from './task-analyzer';
-import { SafeGroup } from './overlap-detector';
+import type { Task } from './task-analyzer';
+import type { SafeGroup } from './overlap-detector';
 
 export interface ExecutionTask {
   task: Task;

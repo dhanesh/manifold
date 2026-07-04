@@ -4,8 +4,8 @@
  * Required Truths: RT-6 (User has visibility and control over parallelization)
  */
 
-import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import * as yaml from 'yaml';
 
 export interface ParallelConfig {
@@ -81,7 +81,6 @@ const CONFIG_FILENAME = '.parallel.yaml';
 export class ParallelConfigManager {
   private config: ParallelConfig;
   private configPath: string;
-  private baseDir: string;
 
   constructor(baseDir: string) {
     this.baseDir = baseDir;
@@ -282,12 +281,13 @@ export function parseParallelFlags(args: string[]): CliFlags {
         flags.autoParallel = false;
         break;
 
-      case '--max-parallel':
+      case '--max-parallel': {
         const maxVal = parseInt(args[++i], 10);
-        if (!isNaN(maxVal)) {
+        if (!Number.isNaN(maxVal)) {
           flags.maxParallel = maxVal;
         }
         break;
+      }
 
       case '-v':
       case '--verbose':
@@ -298,19 +298,21 @@ export function parseParallelFlags(args: string[]): CliFlags {
         flags.deep = true;
         break;
 
-      case '--timeout':
+      case '--timeout': {
         const timeoutVal = parseInt(args[++i], 10);
-        if (!isNaN(timeoutVal)) {
+        if (!Number.isNaN(timeoutVal)) {
           flags.timeout = timeoutVal * 1000; // Convert to ms
         }
         break;
+      }
 
-      case '--strategy':
+      case '--strategy': {
         const strategy = args[++i];
         if (['sequential', 'squash', 'rebase'].includes(strategy)) {
           flags.strategy = strategy as 'sequential' | 'squash' | 'rebase';
         }
         break;
+      }
 
       case '--no-cleanup':
         flags.noCleanup = true;

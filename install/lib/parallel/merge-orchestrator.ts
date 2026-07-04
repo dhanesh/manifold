@@ -4,9 +4,9 @@
  * Required Truths: RT-4 (Results from parallel agents can be merged automatically)
  */
 
-import { execSync, exec } from 'child_process';
-import { promisify } from 'util';
-import { WorktreeInfo, WorktreeManager } from './worktree-manager';
+import { execSync, exec } from 'node:child_process';
+import { promisify } from 'node:util';
+import type { WorktreeInfo, WorktreeManager } from './worktree-manager';
 
 const execAsync = promisify(exec);
 
@@ -89,7 +89,7 @@ export class MergeOrchestrator {
         if (result.success) {
           merged.push(result);
           totalCommits += result.commits;
-          result.filesChanged.forEach((f) => allFilesChanged.add(f));
+          for (const f of result.filesChanged) allFilesChanged.add(f);
         } else {
           failed.push(result);
         }
@@ -144,8 +144,6 @@ export class MergeOrchestrator {
         case 'rebase':
           await this.rebaseMerge(branch);
           break;
-
-        case 'sequential':
         default:
           await this.sequentialMerge(branch);
           break;

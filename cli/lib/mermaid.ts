@@ -31,7 +31,7 @@ function escapeLabel(label: string): string {
  */
 function truncateLabel(label: string, maxLen: number): string {
   if (label.length <= maxLen) return label;
-  return label.substring(0, maxLen - 3) + '...';
+  return `${label.substring(0, maxLen - 3)}...`;
 }
 
 /**

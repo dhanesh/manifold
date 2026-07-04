@@ -6,8 +6,8 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
-import { existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
-import { join } from 'path';
+import { existsSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   aggregateSatisfactionLevel,
   verifyAllEvidence,
@@ -90,10 +90,10 @@ describe('--levels flag: satisfaction level computation', () => {
       levels[id] = aggregateSatisfactionLevel(evidence);
     }
 
-    expect(levels['B1']).toBe('VERIFIED');
-    expect(levels['B2']).toBe('IMPLEMENTED');
-    expect(levels['T1']).toBe('DOCUMENTED');
-    expect(levels['S1']).toBe('DOCUMENTED');
+    expect(levels.B1).toBe('VERIFIED');
+    expect(levels.B2).toBe('IMPLEMENTED');
+    expect(levels.T1).toBe('DOCUMENTED');
+    expect(levels.S1).toBe('DOCUMENTED');
   });
 
   test('level counts for bar chart display', () => {
@@ -115,10 +115,10 @@ describe('--levels flag: satisfaction level computation', () => {
       counts[level] = (counts[level] || 0) + 1;
     }
 
-    expect(counts['DOCUMENTED']).toBe(1);
-    expect(counts['IMPLEMENTED']).toBe(1);
-    expect(counts['TESTED']).toBe(2);
-    expect(counts['VERIFIED']).toBe(1);
+    expect(counts.DOCUMENTED).toBe(1);
+    expect(counts.IMPLEMENTED).toBe(1);
+    expect(counts.TESTED).toBe(2);
+    expect(counts.VERIFIED).toBe(1);
   });
 });
 

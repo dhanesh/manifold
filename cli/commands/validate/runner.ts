@@ -6,8 +6,8 @@
  * validateEvidenceIntegrity
  */
 
-import { readFileSync, existsSync } from 'fs';
-import { join, resolve } from 'path';
+import { readFileSync, existsSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { ParseError } from '../../lib/errors.js';
 import { loadFeature, parseYamlSafe, type Manifold, type Evidence } from '../../lib/parser.js';
 import { validateManifold, type ValidationResult } from '../../lib/schema.js';

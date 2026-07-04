@@ -4,7 +4,7 @@
  * planning to planning.ts, queries to queries.ts, viz to visualization.ts.
  */
 
-import {
+import type {
   Manifold,
   ConstraintGraph,
   ConstraintNode,
@@ -12,7 +12,6 @@ import {
   ExecutionPlan,
   Wave,
   ParallelTask,
-  ManifoldPhase,
   AnchorDocument,
 } from '../parser';
 import { getCachedGraph, cacheGraph, graphCache } from './cache';
@@ -179,7 +178,7 @@ export class ConstraintSolver {
    */
   private addRequiredTruthNodes(
     nodes: Map<string, ConstraintNode>,
-    dependencies: [string, string][]
+    _dependencies: [string, string][]
   ): void {
     const requiredTruths = this.manifold.anchors?.required_truths ?? [];
 
@@ -297,7 +296,7 @@ export class ConstraintSolver {
   }
 
   /** Infer constraint status from verification data */
-  private inferConstraintStatus(constraintId: string): ConstraintNodeStatus {
+  private inferConstraintStatus(_constraintId: string): ConstraintNodeStatus {
     if (this.manifold.verification?.result === 'PASS') return 'SATISFIED';
     return 'REQUIRED';
   }
@@ -390,7 +389,7 @@ export class ConstraintSolver {
 
     for (const nodeId of nodeIds) {
       const result = this.markSatisfied(nodeId);
-      result.unblocked.forEach((id) => allUnblocked.add(id));
+      for (const id of result.unblocked) allUnblocked.add(id);
     }
 
     return {
@@ -532,5 +531,5 @@ export function exportGraphDot(graph: ConstraintGraph): string {
 
 function truncate(str: string, maxLen: number): string {
   if (str.length <= maxLen) return str;
-  return str.substring(0, maxLen - 3) + '...';
+  return `${str.substring(0, maxLen - 3)}...`;
 }

@@ -26,7 +26,6 @@ export function setColorMode(mode: 'auto' | 'always' | 'never'): void {
     case 'never':
       colorEnabled = false;
       break;
-    case 'auto':
     default:
       colorEnabled = isTTY && !noColorEnv;
       break;
@@ -236,6 +235,7 @@ export function formatTable(columns: TableColumn[], rows: Record<string, string>
  * Strip ANSI codes for length calculation
  */
 export function stripAnsi(str: string): string {
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: matching ESC (\x1b) is the entire point of an ANSI stripper
   return str.replace(/\x1b\[[0-9;]*m/g, '');
 }
 
@@ -255,11 +255,11 @@ function padString(
   switch (align) {
     case 'right':
       return ' '.repeat(pad) + str;
-    case 'center':
+    case 'center': {
       const left = Math.floor(pad / 2);
       const right = pad - left;
       return ' '.repeat(left) + str + ' '.repeat(right);
-    case 'left':
+    }
     default:
       return str + ' '.repeat(pad);
   }
@@ -277,7 +277,7 @@ export function formatHeader(title: string): string {
  */
 export function formatKeyValue(key: string, value: string, indent: number = 0): string {
   const prefix = ' '.repeat(indent);
-  return `${prefix}${style.dim(key + ':')} ${value}`;
+  return `${prefix}${style.dim(`${key}:`)} ${value}`;
 }
 
 /**

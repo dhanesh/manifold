@@ -477,27 +477,27 @@ describe('phase transition rules', () => {
   };
 
   test('INITIALIZED can only transition to CONSTRAINED', () => {
-    expect(validTransitions['INITIALIZED']).toEqual(['CONSTRAINED']);
+    expect(validTransitions.INITIALIZED).toEqual(['CONSTRAINED']);
   });
 
   test('CONSTRAINED can only transition to TENSIONED', () => {
-    expect(validTransitions['CONSTRAINED']).toEqual(['TENSIONED']);
+    expect(validTransitions.CONSTRAINED).toEqual(['TENSIONED']);
   });
 
   test('TENSIONED can only transition to ANCHORED', () => {
-    expect(validTransitions['TENSIONED']).toEqual(['ANCHORED']);
+    expect(validTransitions.TENSIONED).toEqual(['ANCHORED']);
   });
 
   test('ANCHORED can only transition to GENERATED', () => {
-    expect(validTransitions['ANCHORED']).toEqual(['GENERATED']);
+    expect(validTransitions.ANCHORED).toEqual(['GENERATED']);
   });
 
   test('GENERATED can only transition to VERIFIED', () => {
-    expect(validTransitions['GENERATED']).toEqual(['VERIFIED']);
+    expect(validTransitions.GENERATED).toEqual(['VERIFIED']);
   });
 
   test('VERIFIED can transition back to INITIALIZED for iteration', () => {
-    expect(validTransitions['VERIFIED']).toContain('INITIALIZED');
+    expect(validTransitions.VERIFIED).toContain('INITIALIZED');
   });
 });
 

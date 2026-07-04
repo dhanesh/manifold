@@ -13,10 +13,10 @@
  *            keyed on CLI binary version, set in vite.config.ts).
  */
 
-import { readdirSync, readFileSync, statSync, writeFileSync, existsSync } from 'fs';
-import { dirname, join, posix, sep, extname, resolve } from 'path';
-import { fileURLToPath } from 'url';
-import { spawnSync } from 'child_process';
+import { readdirSync, readFileSync, statSync, writeFileSync, existsSync } from 'node:fs';
+import { dirname, join, posix, sep, extname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 
 // Resolve repo paths relative to this file so the script works from any cwd.
 const __dirname = dirname(fileURLToPath(import.meta.url));

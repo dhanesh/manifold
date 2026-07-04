@@ -6,17 +6,17 @@
  * NOTE: This is the implementation. The Claude Code skill is in install/commands/parallel.md
  */
 
-import { TaskAnalyzer, Task } from './task-analyzer';
+import { TaskAnalyzer } from './task-analyzer';
 import { FilePredictor } from './file-predictor';
 import { OverlapDetector } from './overlap-detector';
-import { ParallelExecutor, ExecutionResult } from './parallel-executor';
-import { MergeOrchestrator, MergeOrchestratorResult } from './merge-orchestrator';
+import { ParallelExecutor, type ExecutionResult } from './parallel-executor';
+import { MergeOrchestrator, type MergeOrchestratorResult } from './merge-orchestrator';
 import { ProgressReporter } from './progress-reporter';
 import { ResourceMonitor } from './resource-monitor';
-import { ParallelConfigManager, parseParallelFlags, CliFlags } from './parallel-config';
+import { ParallelConfigManager, parseParallelFlags } from './parallel-config';
 
 // Import AutoSuggester from hooks (external to lib/parallel)
-import { AutoSuggester, ParallelSuggestion } from '../../hooks/auto-suggester';
+import { AutoSuggester, type ParallelSuggestion } from '../../hooks/auto-suggester';
 
 export interface ParallelCommandOptions {
   tasks: string[];
@@ -47,9 +47,6 @@ export interface ParallelCommandResult {
 export class ParallelCommand {
   private baseDir: string;
   private configManager: ParallelConfigManager;
-  private taskAnalyzer: TaskAnalyzer;
-  private filePredictor: FilePredictor;
-  private overlapDetector: OverlapDetector;
   private autoSuggester: AutoSuggester;
 
   constructor(baseDir: string) {

@@ -6,7 +6,7 @@
  * logical contradictions, resource tensions, and scope conflicts.
  */
 
-import type { Manifold, Constraint } from '../parser';
+import type { Manifold } from '../parser';
 
 /**
  * Constraint with metadata for cross-feature analysis
@@ -363,7 +363,7 @@ function detectCrossFeatureContradiction(
 /**
  * Normalize time values to milliseconds for comparison
  */
-function normalizeTimeToMs(value: number, unit: string): number {
+function _normalizeTimeToMs(value: number, unit: string): number {
   const u = unit.toLowerCase();
   if (u.startsWith('ms')) return value;
   if (u.startsWith('s')) return value * 1000;

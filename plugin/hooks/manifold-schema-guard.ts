@@ -9,9 +9,9 @@
  * Advisory-only: surfaces errors as additionalContext, never blocks.
  */
 
-import { existsSync } from 'fs';
-import { join, basename, dirname } from 'path';
-import { spawnSync } from 'child_process';
+import { existsSync } from 'node:fs';
+import { join, basename, dirname } from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 // Read hook input from stdin
 const input = await Bun.stdin.text();

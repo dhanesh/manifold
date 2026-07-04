@@ -90,12 +90,12 @@ const REQUIRED_TRUTH_PATTERN = /^(RT-\d+):\s*(.+)$/;
 /**
  * Match blockquote label pattern: > **Rationale:** ...
  */
-const BLOCKQUOTE_LABEL_PATTERN = /^\*\*(Rationale|Resolution):\*\*\s*/;
+const _BLOCKQUOTE_LABEL_PATTERN = /^\*\*(Rationale|Resolution):\*\*\s*/;
 
 /**
  * Match inline metadata: **Implemented by:** `path`
  */
-const METADATA_PATTERN = /^\*\*(Implemented by|Verified by):\*\*\s*/;
+const _METADATA_PATTERN = /^\*\*(Implemented by|Verified by):\*\*\s*/;
 
 // ============================================================
 // AST Helpers
@@ -237,7 +237,7 @@ export function parseManifoldMarkdown(markdown: string): ManifoldContent {
   // State machine for tracking current context
   let currentSection: 'outcome' | 'constraints' | 'tensions' | 'required_truths' | 'other' =
     'other';
-  let currentCategory:
+  let _currentCategory:
     | 'business'
     | 'technical'
     | 'user_experience'
@@ -353,17 +353,17 @@ export function parseManifoldMarkdown(markdown: string): ManifoldContent {
 
         // Otherwise it's a category (software or non-software)
         const lowerText = text.toLowerCase();
-        if (lowerText === 'business') currentCategory = 'business';
-        else if (lowerText === 'technical') currentCategory = 'technical';
+        if (lowerText === 'business') _currentCategory = 'business';
+        else if (lowerText === 'technical') _currentCategory = 'technical';
         else if (lowerText === 'user experience' || lowerText === 'ux')
-          currentCategory = 'user_experience';
-        else if (lowerText === 'security') currentCategory = 'security';
-        else if (lowerText === 'operational') currentCategory = 'operational';
-        else if (lowerText === 'obligations') currentCategory = 'obligations';
-        else if (lowerText === 'desires') currentCategory = 'desires';
-        else if (lowerText === 'resources') currentCategory = 'resources';
-        else if (lowerText === 'risks') currentCategory = 'risks';
-        else if (lowerText === 'dependencies') currentCategory = 'dependencies';
+          _currentCategory = 'user_experience';
+        else if (lowerText === 'security') _currentCategory = 'security';
+        else if (lowerText === 'operational') _currentCategory = 'operational';
+        else if (lowerText === 'obligations') _currentCategory = 'obligations';
+        else if (lowerText === 'desires') _currentCategory = 'desires';
+        else if (lowerText === 'resources') _currentCategory = 'resources';
+        else if (lowerText === 'risks') _currentCategory = 'risks';
+        else if (lowerText === 'dependencies') _currentCategory = 'dependencies';
         continue;
       }
 

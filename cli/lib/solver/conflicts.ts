@@ -268,8 +268,8 @@ function detectTemporalConflicts(
   nextId: () => string
 ): void {
   // Temporal keywords
-  const beforeKeywords = ['before', 'prior', 'first', 'initial', 'start'];
-  const afterKeywords = ['after', 'following', 'then', 'subsequent', 'end', 'final'];
+  const _beforeKeywords = ['before', 'prior', 'first', 'initial', 'start'];
+  const _afterKeywords = ['after', 'following', 'then', 'subsequent', 'end', 'final'];
   const simultaneousKeywords = ['simultaneous', 'concurrent', 'parallel', 'same time'];
   const sequentialKeywords = ['sequential', 'serial', 'one at a time', 'in order'];
 
@@ -417,5 +417,5 @@ export function formatConflictResults(result: ConflictDetectionResult): string {
 // Helper function
 function truncate(str: string, maxLen: number): string {
   if (str.length <= maxLen) return str;
-  return str.substring(0, maxLen - 3) + '...';
+  return `${str.substring(0, maxLen - 3)}...`;
 }

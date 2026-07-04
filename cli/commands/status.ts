@@ -9,7 +9,6 @@ import {
   listFeatures,
   loadFeature,
   type FeatureData,
-  type Manifold,
   type Iteration,
 } from '../lib/parser.js';
 import { countConstraints, countConstraintsByType } from '../lib/schema.js';
@@ -29,11 +28,7 @@ import {
   toJSON,
 } from '../lib/output.js';
 import { ConstraintSolver } from '../lib/solver.js';
-import {
-  miniGraphToMermaid,
-  renderMermaidToTerminal,
-  renderGraphToTerminal,
-} from '../lib/mermaid.js';
+import { miniGraphToMermaid, renderGraphToTerminal } from '../lib/mermaid.js';
 
 interface StatusOptions {
   json?: boolean;

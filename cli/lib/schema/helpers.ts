@@ -13,7 +13,7 @@ import type { ValidationError, ValidationWarning } from './types.js';
 export function validateTensionSummary(
   summary: Record<string, unknown>,
   tensions: unknown[],
-  errors: ValidationError[],
+  _errors: ValidationError[],
   warnings: ValidationWarning[]
 ): void {
   // Count actual tensions by type
@@ -85,7 +85,7 @@ export function validateTensionSummary(
 export function validateIterations(
   iterations: unknown,
   errors: ValidationError[],
-  warnings: ValidationWarning[]
+  _warnings: ValidationWarning[]
 ): void {
   if (!Array.isArray(iterations)) {
     errors.push({ field: 'iterations', message: 'Iterations must be an array' });

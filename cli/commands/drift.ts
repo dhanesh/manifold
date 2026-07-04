@@ -7,8 +7,8 @@
  */
 
 import type { Command } from 'commander';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
 import { findManifoldDir, loadFeature, listFeatures } from '../lib/parser.js';
 import { detectDrift, computeFileHash, type DriftReport } from '../lib/evidence.js';
 import { println, printError, formatHeader, formatKeyValue, style, toJSON } from '../lib/output.js';
@@ -246,5 +246,5 @@ async function updateHashes(
   verifyData.file_hashes = fileHashes;
   verifyData.hashes_updated_at = new Date().toISOString();
 
-  writeFileSync(verifyPath, JSON.stringify(verifyData, null, 2) + '\n');
+  writeFileSync(verifyPath, `${JSON.stringify(verifyData, null, 2)}\n`);
 }

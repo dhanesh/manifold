@@ -6,7 +6,7 @@
  * node statuses. Used by ConstraintSolver class methods.
  */
 
-import type { ConstraintGraph, ConstraintNode } from '../parser';
+import type { ConstraintGraph } from '../parser';
 
 /**
  * Find all prerequisites for a target node (backward reasoning)

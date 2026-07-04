@@ -9,10 +9,10 @@
  * hook response JSON to stdout. Exit code 0 always.
  */
 
-import { Command } from 'commander';
-import { existsSync, readdirSync, readFileSync } from 'fs';
-import { join, basename, dirname } from 'path';
-import { spawnSync } from 'child_process';
+import type { Command } from 'commander';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join, basename, dirname } from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 // ─── Shared utilities ───────────────────────────────────────────
 

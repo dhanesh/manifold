@@ -19,8 +19,8 @@ import {
   lstatSync,
   unlinkSync,
   rmSync,
-} from 'fs';
-import { join, resolve } from 'path';
+} from 'node:fs';
+import { join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dir, '..');
 const install = join(root, 'install');

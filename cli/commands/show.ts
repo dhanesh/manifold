@@ -6,7 +6,6 @@
  */
 
 import type { Command } from 'commander';
-import { join } from 'path';
 import { findManifoldDir, listFeatures, loadFeature } from '../lib/parser.js';
 import {
   loadManifoldByFeature,
@@ -17,11 +16,7 @@ import type { ManifoldStructure } from '../lib/structure-schema.js';
 import type { ManifoldContent } from '../lib/markdown-parser.js';
 import { println, printError, style, toJSON, formatHeader } from '../lib/output.js';
 import { ConstraintSolver } from '../lib/solver.js';
-import {
-  miniGraphToMermaid,
-  renderMermaidToTerminal,
-  renderGraphToTerminal,
-} from '../lib/mermaid.js';
+import { miniGraphToMermaid, renderGraphToTerminal } from '../lib/mermaid.js';
 
 interface ShowOptions {
   json?: boolean;
@@ -332,7 +327,7 @@ function printContent(content: ManifoldContent): void {
     for (const [id, c] of content.constraints) {
       println(`    ${style.feature(id)}: ${c.title}`);
       if (c.statement) {
-        const preview = c.statement.length > 80 ? c.statement.slice(0, 77) + '...' : c.statement;
+        const preview = c.statement.length > 80 ? `${c.statement.slice(0, 77)}...` : c.statement;
         println(`      ${style.dim(preview)}`);
       }
     }
@@ -346,7 +341,7 @@ function printContent(content: ManifoldContent): void {
       println(`    ${style.feature(id)}: ${t.title}`);
       if (t.description) {
         const preview =
-          t.description.length > 80 ? t.description.slice(0, 77) + '...' : t.description;
+          t.description.length > 80 ? `${t.description.slice(0, 77)}...` : t.description;
         println(`      ${style.dim(preview)}`);
       }
     }
@@ -359,7 +354,7 @@ function printContent(content: ManifoldContent): void {
     for (const [id, rt] of content.requiredTruths) {
       println(`    ${style.feature(id)}: ${rt.title}`);
       if (rt.statement) {
-        const preview = rt.statement.length > 80 ? rt.statement.slice(0, 77) + '...' : rt.statement;
+        const preview = rt.statement.length > 80 ? `${rt.statement.slice(0, 77)}...` : rt.statement;
         println(`      ${style.dim(preview)}`);
       }
     }

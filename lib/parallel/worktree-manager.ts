@@ -4,10 +4,10 @@
  * Required Truths: RT-3 (isolated execution environments)
  */
 
-import { execSync, exec } from 'child_process';
-import { existsSync, rmSync, mkdirSync } from 'fs';
-import { join, dirname } from 'path';
-import { promisify } from 'util';
+import { exec } from 'node:child_process';
+import { existsSync, rmSync, mkdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { promisify } from 'node:util';
 
 const execAsync = promisify(exec);
 
@@ -192,7 +192,7 @@ export class WorktreeManager {
       });
 
       this.activeWorktrees.delete(taskId);
-    } catch (error) {
+    } catch (_error) {
       // Force remove if normal remove fails
       await this.forceRemove(taskId);
     }

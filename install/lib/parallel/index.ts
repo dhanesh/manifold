@@ -76,7 +76,7 @@ export async function runParallel(
   // Quick analysis
   const analyzer = new TaskAnalyzer();
   const tasks = analyzer.parseTaskDescriptions(taskDescriptions);
-  const analysisResult = analyzer.analyze(tasks);
+  const _analysisResult = analyzer.analyze(tasks);
 
   // Predict files
   const predictor = new FilePredictor({ baseDir });

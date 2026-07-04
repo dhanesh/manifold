@@ -6,8 +6,8 @@
  * Returns empty defaults when config file is missing (backward compatible).
  */
 
-import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { z } from 'zod';
 
 // ============================================================
@@ -119,7 +119,7 @@ export function inferTestTier(
     const tierPatterns = patterns[tier] || [];
     for (const pattern of tierPatterns) {
       // Convert glob pattern to regex
-      const regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
+      const regex = new RegExp(`^${pattern.replace(/\./g, '\\.').replace(/\*/g, '.*')}$`);
       if (regex.test(fileName)) {
         return tier;
       }
