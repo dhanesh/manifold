@@ -6,9 +6,15 @@
 
 ```bash
 bun install                     # Install dependencies (includes commit hooks)
-bun test                        # Run tests
-bun run build:all               # Build all artifacts
+bun run verify                  # One command: format check + tests + build (the pre-PR gate)
+bun run format                  # Auto-fix formatting (Biome)
 ```
+
+`bun run verify` is the single entrypoint an agent or contributor runs before a PR: it
+checks formatting (Biome), runs the full test suite, and rebuilds all artifacts (catching
+plugin-sync drift). `bun run check:advisory` additionally runs typecheck + lint, which are
+**advisory** today due to pre-existing debt — they report but don't block. Promote them into
+`verify` once clean.
 
 ## Commit Convention
 
@@ -111,8 +117,8 @@ If CI fails after your changes, run `bun run build:all` locally and commit the r
 
 Before submitting a pull request:
 
-- [ ] Tests pass: `bun test`
-- [ ] Build succeeds: `bun run build:all`
+- [ ] Verify passes: `bun run verify` (format + tests + build in one command)
+- [ ] Formatting clean: `bun run format` (auto-fixes) — CI enforces this
 - [ ] Manifolds validate: `manifold validate`
 - [ ] If you added/changed a CLI command: updated `docs/cli-reference.md`
 - [ ] If you added/changed a template: updated `install/templates/README.md`

@@ -21,6 +21,32 @@ jobs:
     with:
       fail-on-gaps: false  # Set to true to fail on non-blocking gaps
 
+  # Enforce code formatting (Biome). Formatting is the load-bearing, deterministic
+  # half of house style — it gates. Linting + typecheck are advisory for now
+  # (pre-existing debt); promote them to blocking once clean.
+  format:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Check formatting
+        run: bun run format:check
+
+      - name: Advisory checks (non-blocking)
+        continue-on-error: true
+        run: bun run check:advisory
+
   # Run tests
   test:
     name: Tests
