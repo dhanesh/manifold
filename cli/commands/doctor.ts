@@ -26,11 +26,10 @@ export function registerDoctorCommand(program: Command): void {
       'Check repo health: detect invalid manifolds, constraint dependency cycles, plugin-sync drift, stale fingerprints, and file-drift'
     )
     .option('--json', 'Output as JSON')
-    .action(async function (options: DoctorOptions) {
+    .action(async function (this: Command, options: DoctorOptions) {
       // Use optsWithGlobals() to capture --json even when defined at parent level
       // Satisfies: RT-6 (U3) — --json must work whether passed as local or global flag
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const mergedOpts: DoctorOptions = (this as any).optsWithGlobals();
+      const mergedOpts = this.optsWithGlobals() as DoctorOptions;
       const exitCode = await doctorCommand(mergedOpts);
       process.exit(exitCode);
     });

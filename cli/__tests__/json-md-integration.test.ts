@@ -652,7 +652,9 @@ describe('Schema Validation for Real-World Data', () => {
     if (result.success) {
       expect(result.data.feature).toBe('payment-retry');
       expect(result.data.phase).toBe('ANCHORED');
-      expect(result.data.constraints!.business).toHaveLength(1);
+      expect(
+        (result.data.constraints as Record<string, Array<{ id: string }>>).business
+      ).toHaveLength(1);
       expect(result.data.tensions).toHaveLength(2);
       expect(result.data.anchors!.required_truths).toHaveLength(3);
       expect(result.data.convergence!.status).toBe('IN_PROGRESS');
@@ -1129,6 +1131,9 @@ describe('Combined Workflow Tests', () => {
     }
 
     const linkerConstraintIds = new Set<string>();
+    const linkerCats = linkerResult.structure!.constraints as
+      | Record<string, Array<{ id: string }>>
+      | undefined;
     for (const category of [
       'business',
       'technical',
@@ -1136,7 +1141,7 @@ describe('Combined Workflow Tests', () => {
       'security',
       'operational',
     ] as const) {
-      for (const c of linkerResult.structure!.constraints![category] || []) {
+      for (const c of linkerCats?.[category] || []) {
         linkerConstraintIds.add(c.id);
       }
     }
@@ -1282,9 +1287,9 @@ describe('Combined Workflow Tests', () => {
       // Renamed structural field round-trips…
       expect(rt1?.maps_to_constraints).toEqual(['B1']);
       // …a non-allowlisted field now survives (was dropped pre-restructure)…
-      expect((rt1 as Record<string, unknown>).priority).toBe(1);
+      expect((rt1 as unknown as Record<string, unknown>).priority).toBe(1);
       // …and the structure's original `maps_to` key is not left dangling.
-      expect((rt1 as Record<string, unknown>).maps_to).toBeUndefined();
+      expect((rt1 as unknown as Record<string, unknown>).maps_to).toBeUndefined();
     });
   });
 });

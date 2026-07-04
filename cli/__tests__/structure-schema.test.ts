@@ -110,8 +110,9 @@ describe('ManifoldStructureSchema', () => {
     const result = ManifoldStructureSchema.safeParse(structure);
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.constraints?.business).toHaveLength(2);
-      expect(result.data.constraints?.technical).toHaveLength(1);
+      const cats = result.data.constraints as Record<string, Array<{ id: string }>> | undefined;
+      expect(cats?.business).toHaveLength(2);
+      expect(cats?.technical).toHaveLength(1);
     }
   });
 

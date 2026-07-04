@@ -327,7 +327,7 @@ function buildCompactSummary(data: any, phase: string): string {
   const counts = Object.entries(cc)
     .map(([cat, items]) => `${catMap[cat] || cat[0]}:${(items as any[]).length}`)
     .filter((s) => !s.endsWith(':0'));
-  const total = Object.values(cc).reduce((sum, items) => sum + (items as any[]).length, 0);
+  const total = Object.values(cc).reduce((sum: number, items) => sum + (items as any[]).length, 0);
   if (total > 0) {
     lines.push(`Constraints: ${counts.join(' ')} (${total} total)`);
   }

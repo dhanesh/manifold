@@ -216,23 +216,17 @@ function printStructure(structure: ManifoldStructure): void {
 
   println();
 
-  // Constraints summary
+  // Constraints summary — domain-agnostic: iterate whatever category keys
+  // exist (software or non-software), rather than hardcoding software ones.
   if (structure.constraints) {
-    const counts = {
-      business: structure.constraints.business?.length || 0,
-      technical: structure.constraints.technical?.length || 0,
-      user_experience: structure.constraints.user_experience?.length || 0,
-      security: structure.constraints.security?.length || 0,
-      operational: structure.constraints.operational?.length || 0,
-    };
-    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    const entries = Object.entries(structure.constraints) as Array<[string, Array<{ id: string }>]>;
+    const total = entries.reduce((sum, [, arr]) => sum + (arr?.length || 0), 0);
 
     println(`  ${style.dim('Constraints:')} ${total} total`);
-    for (const [category, count] of Object.entries(counts)) {
+    for (const [category, arr] of entries) {
+      const count = arr?.length || 0;
       if (count > 0) {
-        const ids = structure.constraints[category as keyof typeof structure.constraints]
-          ?.map((c) => c.id)
-          .join(', ');
+        const ids = arr.map((c) => c.id).join(', ');
         println(`    ${category}: ${count} (${ids})`);
       }
     }

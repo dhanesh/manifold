@@ -318,6 +318,8 @@ function extractStructure(manifold: Manifold): ManifoldStructure {
     schema_version: 3,
     feature: manifold.feature,
     phase: manifold.phase,
+    // Legacy YAML manifolds always use software categories (business/technical/…).
+    domain: 'software',
     mode: manifold.mode,
     created: manifold.created,
     template: manifold.template,
