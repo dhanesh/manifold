@@ -3,7 +3,9 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022"
+    ],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -13,7 +15,9 @@
     "declarationMap": true,
     "outDir": "./dist",
     "rootDir": ".",
-    "types": ["bun-types"],
+    "types": [
+      "bun"
+    ],
     "noEmit": true
   },
   "include": [
