@@ -142,18 +142,13 @@ export class ParallelCommand {
 
       const executor = new ParallelExecutor({
         baseDir: this.baseDir,
-        maxConcurrent: Math.min(
-          config.maxParallel,
-          resourceStatus.overall.recommendedConcurrency
-        ),
+        maxConcurrent: Math.min(config.maxParallel, resourceStatus.overall.recommendedConcurrency),
         timeout: config.timeout,
         onProgress: (event) => progressReporter.handleProgressEvent(event),
       });
 
       // Find the group(s) that can actually be parallelized
-      const parallelizableGroups = suggestion.parallelGroups.filter(
-        g => g.taskIds.length > 1
-      );
+      const parallelizableGroups = suggestion.parallelGroups.filter((g) => g.taskIds.length > 1);
 
       if (parallelizableGroups.length === 0) {
         log('No parallelizable groups found.');
@@ -185,10 +180,9 @@ export class ParallelCommand {
       );
 
       const completedWorktrees = executor.getCompletedWorktrees();
-      const mergeResult = await mergeOrchestrator.mergeAll(
-        completedWorktrees,
-        { type: config.mergeStrategy }
-      );
+      const mergeResult = await mergeOrchestrator.mergeAll(completedWorktrees, {
+        type: config.mergeStrategy,
+      });
 
       progressReporter.reportMergeComplete(mergeResult);
 
@@ -199,7 +193,7 @@ export class ParallelCommand {
       }
 
       // Complete
-      const success = mergeResult.success && executionResults.every(r => r.success);
+      const success = mergeResult.success && executionResults.every((r) => r.success);
       progressReporter.complete(success);
 
       return {
@@ -210,7 +204,6 @@ export class ParallelCommand {
         duration: Date.now() - startTime,
         output: outputLines.join('\n'),
       };
-
     } catch (error) {
       log(`\n❌ Error: ${error}`);
       return {

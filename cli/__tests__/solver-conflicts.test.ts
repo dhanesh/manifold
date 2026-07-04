@@ -9,7 +9,7 @@ import {
   detectSemanticConflicts,
   formatConflictResults,
   detectCrossFeatureConflicts,
-  formatCrossFeatureResults
+  formatCrossFeatureResults,
 } from '../lib/solver.js';
 import type { Manifold } from '../lib/parser.js';
 
@@ -18,7 +18,7 @@ describe('detectSemanticConflicts', () => {
     const manifold: Manifold = {
       feature: 'test',
       phase: 'CONSTRAINED',
-      constraints: {}
+      constraints: {},
     };
     const result = detectSemanticConflicts(manifold);
     expect(result.hasConflicts).toBe(false);
@@ -32,12 +32,10 @@ describe('detectSemanticConflicts', () => {
       constraints: {
         business: [
           { id: 'B1', type: 'invariant', statement: 'Users must be authenticated' },
-          { id: 'B2', type: 'goal', statement: 'System should support SSO' }
+          { id: 'B2', type: 'goal', statement: 'System should support SSO' },
         ],
-        technical: [
-          { id: 'T1', type: 'boundary', statement: 'API response time under 200ms' }
-        ]
-      }
+        technical: [{ id: 'T1', type: 'boundary', statement: 'API response time under 200ms' }],
+      },
     };
     const result = detectSemanticConflicts(manifold);
     expect(result.hasConflicts).toBe(false);
@@ -49,12 +47,16 @@ describe('detectSemanticConflicts', () => {
       phase: 'CONSTRAINED',
       constraints: {
         business: [
-          { id: 'B1', type: 'invariant', statement: 'All user data must be encrypted at rest' }
+          { id: 'B1', type: 'invariant', statement: 'All user data must be encrypted at rest' },
         ],
         security: [
-          { id: 'S1', type: 'invariant', statement: 'User data must never be encrypted for debugging purposes' }
-        ]
-      }
+          {
+            id: 'S1',
+            type: 'invariant',
+            statement: 'User data must never be encrypted for debugging purposes',
+          },
+        ],
+      },
     };
     const result = detectSemanticConflicts(manifold);
     // Note: This may or may not detect a conflict depending on keyword overlap
@@ -69,13 +71,17 @@ describe('detectSemanticConflicts', () => {
       constraints: {
         technical: [
           { id: 'T1', type: 'boundary', statement: 'API latency must be under 50ms' },
-          { id: 'T2', type: 'boundary', statement: 'API latency should not exceed 200ms under load' }
-        ]
-      }
+          {
+            id: 'T2',
+            type: 'boundary',
+            statement: 'API latency should not exceed 200ms under load',
+          },
+        ],
+      },
     };
     const result = detectSemanticConflicts(manifold);
     // Should detect resource conflict on "latency"
-    const resourceConflicts = result.conflicts.filter(c => c.type === 'resource_conflict');
+    const resourceConflicts = result.conflicts.filter((c) => c.type === 'resource_conflict');
     expect(resourceConflicts.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -86,9 +92,9 @@ describe('detectSemanticConflicts', () => {
       constraints: {
         technical: [
           { id: 'T1', type: 'boundary', statement: 'Memory usage must be under 100MB' },
-          { id: 'T2', type: 'boundary', statement: 'Memory allocation should not exceed 500MB' }
-        ]
-      }
+          { id: 'T2', type: 'boundary', statement: 'Memory allocation should not exceed 500MB' },
+        ],
+      },
     };
     const result = detectSemanticConflicts(manifold);
 
@@ -111,9 +117,9 @@ describe('detectSemanticConflicts', () => {
       constraints: {
         technical: [
           { id: 'T1', type: 'boundary', statement: 'Request timeout must be 30 seconds' },
-          { id: 'T2', type: 'boundary', statement: 'Request timeout should be 60 seconds' }
-        ]
-      }
+          { id: 'T2', type: 'boundary', statement: 'Request timeout should be 60 seconds' },
+        ],
+      },
     };
     const result = detectSemanticConflicts(manifold);
 
@@ -130,8 +136,8 @@ describe('detectSemanticConflicts', () => {
       feature: 'test',
       phase: 'CONSTRAINED',
       constraints: {
-        business: [{ id: 'B1', type: 'invariant', statement: 'Test constraint' }]
-      }
+        business: [{ id: 'B1', type: 'invariant', statement: 'Test constraint' }],
+      },
     };
     const result = detectSemanticConflicts(manifold);
 
@@ -150,9 +156,9 @@ describe('detectSemanticConflicts', () => {
       constraints: {
         technical: [
           { id: 'T1', type: 'boundary', statement: 'CPU usage limit 50%' },
-          { id: 'T2', type: 'boundary', statement: 'CPU utilization cap at 80%' }
-        ]
-      }
+          { id: 'T2', type: 'boundary', statement: 'CPU utilization cap at 80%' },
+        ],
+      },
     };
     const result = detectSemanticConflicts(manifold);
 
@@ -173,8 +179,13 @@ describe('formatConflictResults', () => {
       summary: {
         total: 0,
         bySeverity: { critical: 0, high: 0, medium: 0, low: 0 },
-        byType: { contradictory_invariants: 0, resource_conflict: 0, temporal_conflict: 0, scope_conflict: 0 }
-      }
+        byType: {
+          contradictory_invariants: 0,
+          resource_conflict: 0,
+          temporal_conflict: 0,
+          scope_conflict: 0,
+        },
+      },
     };
     const output = formatConflictResults(result);
     expect(output).toContain('No semantic conflicts detected');
@@ -190,14 +201,19 @@ describe('formatConflictResults', () => {
           constraints: ['T1', 'T2'],
           severity: 'high' as const,
           explanation: 'Multiple constraints define limits for "latency"',
-          suggestion: 'Document as a resource_tension'
-        }
+          suggestion: 'Document as a resource_tension',
+        },
       ],
       summary: {
         total: 1,
         bySeverity: { critical: 0, high: 1, medium: 0, low: 0 },
-        byType: { contradictory_invariants: 0, resource_conflict: 1, temporal_conflict: 0, scope_conflict: 0 }
-      }
+        byType: {
+          contradictory_invariants: 0,
+          resource_conflict: 1,
+          temporal_conflict: 0,
+          scope_conflict: 0,
+        },
+      },
     };
     const output = formatConflictResults(result);
 
@@ -217,14 +233,19 @@ describe('formatConflictResults', () => {
           type: 'scope_conflict' as const,
           constraints: ['B1', 'T1'],
           severity: 'low' as const,
-          explanation: 'Test explanation'
-        }
+          explanation: 'Test explanation',
+        },
       ],
       summary: {
         total: 1,
         bySeverity: { critical: 0, high: 0, medium: 0, low: 1 },
-        byType: { contradictory_invariants: 0, resource_conflict: 0, temporal_conflict: 0, scope_conflict: 1 }
-      }
+        byType: {
+          contradictory_invariants: 0,
+          resource_conflict: 0,
+          temporal_conflict: 0,
+          scope_conflict: 1,
+        },
+      },
     };
     const output = formatConflictResults(result);
 
@@ -239,10 +260,8 @@ describe('conflict detection edge cases', () => {
       feature: 'test',
       phase: 'CONSTRAINED',
       constraints: {
-        ux: [
-          { id: 'U1', type: 'goal', statement: 'Response should be instant' }
-        ]
-      }
+        ux: [{ id: 'U1', type: 'goal', statement: 'Response should be instant' }],
+      },
     };
     const result = detectSemanticConflicts(manifold);
     // Should not throw, should process ux constraints
@@ -252,7 +271,7 @@ describe('conflict detection edge cases', () => {
   test('handles missing constraints section', () => {
     const manifold: Manifold = {
       feature: 'test',
-      phase: 'INITIALIZED'
+      phase: 'INITIALIZED',
     };
     const result = detectSemanticConflicts(manifold);
     expect(result.hasConflicts).toBe(false);
@@ -267,8 +286,8 @@ describe('conflict detection edge cases', () => {
         technical: [],
         user_experience: [],
         security: [],
-        operational: []
-      }
+        operational: [],
+      },
     };
     const result = detectSemanticConflicts(manifold);
     expect(result.hasConflicts).toBe(false);
@@ -279,12 +298,12 @@ describe('conflict detection edge cases', () => {
       feature: 'test',
       phase: 'CONSTRAINED',
       constraints: {
-        business: [{ id: 'B1', type: 'invariant', statement: 'Only one constraint here' }]
-      }
+        business: [{ id: 'B1', type: 'invariant', statement: 'Only one constraint here' }],
+      },
     };
     const result = detectSemanticConflicts(manifold);
     // Single constraint cannot conflict with itself
-    expect(result.conflicts.filter(c => c.type === 'contradictory_invariants')).toHaveLength(0);
+    expect(result.conflicts.filter((c) => c.type === 'contradictory_invariants')).toHaveLength(0);
   });
 });
 
@@ -300,16 +319,16 @@ describe('detectCrossFeatureConflicts', () => {
         feature: 'feature-a',
         phase: 'CONSTRAINED',
         constraints: {
-          business: [{ id: 'B1', type: 'invariant', statement: 'Users must authenticate' }]
-        }
+          business: [{ id: 'B1', type: 'invariant', statement: 'Users must authenticate' }],
+        },
       },
       {
         feature: 'feature-b',
         phase: 'CONSTRAINED',
         constraints: {
-          technical: [{ id: 'T1', type: 'boundary', statement: 'API response under 200ms' }]
-        }
-      }
+          technical: [{ id: 'T1', type: 'boundary', statement: 'API response under 200ms' }],
+        },
+      },
     ];
     const result = detectCrossFeatureConflicts(manifolds);
     expect(result.hasConflicts).toBe(false);
@@ -323,20 +342,20 @@ describe('detectCrossFeatureConflicts', () => {
         feature: 'feature-a',
         phase: 'CONSTRAINED',
         constraints: {
-          business: [{ id: 'B1', type: 'invariant', statement: 'Users must be verified' }]
-        }
+          business: [{ id: 'B1', type: 'invariant', statement: 'Users must be verified' }],
+        },
       },
       {
         feature: 'feature-b',
         phase: 'CONSTRAINED',
         constraints: {
-          business: [{ id: 'B1', type: 'invariant', statement: 'Orders must be confirmed' }]
-        }
-      }
+          business: [{ id: 'B1', type: 'invariant', statement: 'Orders must be confirmed' }],
+        },
+      },
     ];
     const result = detectCrossFeatureConflicts(manifolds);
     // Should NOT flag duplicate_id - that's not a real conflict
-    const duplicateIdConflicts = result.conflicts.filter(c => (c as any).type === 'duplicate_id');
+    const duplicateIdConflicts = result.conflicts.filter((c) => (c as any).type === 'duplicate_id');
     expect(duplicateIdConflicts).toHaveLength(0);
   });
 
@@ -346,21 +365,27 @@ describe('detectCrossFeatureConflicts', () => {
         feature: 'api-gateway',
         phase: 'CONSTRAINED',
         constraints: {
-          technical: [{ id: 'T1', type: 'invariant', statement: 'All API responses must use JSON format' }]
-        }
+          technical: [
+            { id: 'T1', type: 'invariant', statement: 'All API responses must use JSON format' },
+          ],
+        },
       },
       {
         feature: 'legacy-support',
         phase: 'CONSTRAINED',
         constraints: {
-          technical: [{ id: 'T3', type: 'invariant', statement: 'All API responses must use XML format' }]
-        }
-      }
+          technical: [
+            { id: 'T3', type: 'invariant', statement: 'All API responses must use XML format' },
+          ],
+        },
+      },
     ];
     const result = detectCrossFeatureConflicts(manifolds);
     expect(result.hasConflicts).toBe(true);
 
-    const logicalContradictions = result.conflicts.filter(c => c.type === 'logical_contradiction');
+    const logicalContradictions = result.conflicts.filter(
+      (c) => c.type === 'logical_contradiction'
+    );
     expect(logicalContradictions.length).toBeGreaterThanOrEqual(1);
     expect(logicalContradictions[0].severity).toBe('blocking');
   });
@@ -371,20 +396,24 @@ describe('detectCrossFeatureConflicts', () => {
         feature: 'performance',
         phase: 'CONSTRAINED',
         constraints: {
-          technical: [{ id: 'T2', type: 'boundary', statement: 'Memory usage must be under 100MB limit' }]
-        }
+          technical: [
+            { id: 'T2', type: 'boundary', statement: 'Memory usage must be under 100MB limit' },
+          ],
+        },
       },
       {
         feature: 'caching',
         phase: 'CONSTRAINED',
         constraints: {
-          technical: [{ id: 'T1', type: 'goal', statement: 'Support unlimited cache memory for performance' }]
-        }
-      }
+          technical: [
+            { id: 'T1', type: 'goal', statement: 'Support unlimited cache memory for performance' },
+          ],
+        },
+      },
     ];
     const result = detectCrossFeatureConflicts(manifolds);
 
-    const resourceTensions = result.conflicts.filter(c => c.type === 'resource_tension');
+    const resourceTensions = result.conflicts.filter((c) => c.type === 'resource_tension');
     expect(resourceTensions.length).toBeGreaterThanOrEqual(1);
     if (resourceTensions.length > 0) {
       expect(resourceTensions[0].severity).toBe('requires_acceptance');
@@ -397,16 +426,20 @@ describe('detectCrossFeatureConflicts', () => {
         feature: 'sync-api',
         phase: 'CONSTRAINED',
         constraints: {
-          technical: [{ id: 'T1', type: 'invariant', statement: 'All operations must be synchronous' }]
-        }
+          technical: [
+            { id: 'T1', type: 'invariant', statement: 'All operations must be synchronous' },
+          ],
+        },
       },
       {
         feature: 'async-api',
         phase: 'CONSTRAINED',
         constraints: {
-          technical: [{ id: 'T1', type: 'invariant', statement: 'All operations must be asynchronous' }]
-        }
-      }
+          technical: [
+            { id: 'T1', type: 'invariant', statement: 'All operations must be asynchronous' },
+          ],
+        },
+      },
     ];
     const result = detectCrossFeatureConflicts(manifolds);
 
@@ -426,10 +459,10 @@ describe('detectCrossFeatureConflicts', () => {
         constraints: {
           technical: [
             { id: 'T1', type: 'invariant', statement: 'All operations must be synchronous' },
-            { id: 'T2', type: 'invariant', statement: 'All operations must be asynchronous' }
-          ]
-        }
-      }
+            { id: 'T2', type: 'invariant', statement: 'All operations must be asynchronous' },
+          ],
+        },
+      },
     ];
     const result = detectCrossFeatureConflicts(manifolds);
     // Same-feature conflicts are handled by detectSemanticConflicts, not cross-feature
@@ -443,16 +476,16 @@ describe('detectCrossFeatureConflicts', () => {
         phase: 'CONSTRAINED',
         constraints: {
           business: [{ id: 'B1', type: 'invariant', statement: 'Test A' }],
-          technical: [{ id: 'T1', type: 'boundary', statement: 'Test B' }]
-        }
+          technical: [{ id: 'T1', type: 'boundary', statement: 'Test B' }],
+        },
       },
       {
         feature: 'feature-b',
         phase: 'CONSTRAINED',
         constraints: {
-          security: [{ id: 'S1', type: 'goal', statement: 'Test C' }]
-        }
-      }
+          security: [{ id: 'S1', type: 'goal', statement: 'Test C' }],
+        },
+      },
     ];
     const result = detectCrossFeatureConflicts(manifolds);
 
@@ -473,8 +506,8 @@ describe('formatCrossFeatureResults', () => {
         featuresAnalyzed: 3,
         constraintsAnalyzed: 15,
         bySeverity: { blocking: 0, requires_acceptance: 0, review_needed: 0 },
-        byType: { logical_contradiction: 0, resource_tension: 0, scope_conflict: 0 }
-      }
+        byType: { logical_contradiction: 0, resource_tension: 0, scope_conflict: 0 },
+      },
     };
     const output = formatCrossFeatureResults(result);
     expect(output).toContain('No semantic conflicts detected');
@@ -495,30 +528,30 @@ describe('formatCrossFeatureResults', () => {
             id: 'T1',
             category: 'technical',
             type: 'invariant' as const,
-            statement: 'All API responses must use JSON'
+            statement: 'All API responses must use JSON',
           },
           constraintB: {
             feature: 'legacy-api',
             id: 'T3',
             category: 'technical',
             type: 'invariant' as const,
-            statement: 'All API responses must use XML'
+            statement: 'All API responses must use XML',
           },
           sharedDomain: ['api', 'responses'],
           conflictReason: 'Incompatible format requirements',
           resolution: {
             options: ['Scope one constraint'],
-            requiresUserAcceptance: true
-          }
-        }
+            requiresUserAcceptance: true,
+          },
+        },
       ],
       summary: {
         total: 1,
         featuresAnalyzed: 2,
         constraintsAnalyzed: 10,
         bySeverity: { blocking: 1, requires_acceptance: 0, review_needed: 0 },
-        byType: { logical_contradiction: 1, resource_tension: 0, scope_conflict: 0 }
-      }
+        byType: { logical_contradiction: 1, resource_tension: 0, scope_conflict: 0 },
+      },
     };
     const output = formatCrossFeatureResults(result);
 
@@ -542,30 +575,30 @@ describe('formatCrossFeatureResults', () => {
             id: 'B1',
             category: 'business',
             type: 'invariant' as const,
-            statement: 'All data must be encrypted'
+            statement: 'All data must be encrypted',
           },
           constraintB: {
             feature: 'feature-b',
             id: 'O1',
             category: 'operational',
             type: 'goal' as const,
-            statement: 'Some data for debugging only'
+            statement: 'Some data for debugging only',
           },
           sharedDomain: ['data'],
           conflictReason: 'Scope conflict',
           resolution: {
             options: ['Review'],
-            requiresUserAcceptance: false
-          }
-        }
+            requiresUserAcceptance: false,
+          },
+        },
       ],
       summary: {
         total: 1,
         featuresAnalyzed: 2,
         constraintsAnalyzed: 10,
         bySeverity: { blocking: 0, requires_acceptance: 0, review_needed: 1 },
-        byType: { logical_contradiction: 0, resource_tension: 0, scope_conflict: 1 }
-      }
+        byType: { logical_contradiction: 0, resource_tension: 0, scope_conflict: 1 },
+      },
     };
     const output = formatCrossFeatureResults(result);
 

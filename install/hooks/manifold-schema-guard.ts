@@ -36,7 +36,8 @@ let filePath: string | undefined;
 if (toolName === 'MultiEdit' && Array.isArray(toolInput?.edits)) {
   // MultiEdit contains an array of edits — check if any target .manifold/*.json
   filePath = toolInput.edits.find(
-    (e: any) => e.file_path && dirname(e.file_path).endsWith('.manifold') && e.file_path.endsWith('.json')
+    (e: any) =>
+      e.file_path && dirname(e.file_path).endsWith('.manifold') && e.file_path.endsWith('.json')
   )?.file_path;
 } else {
   filePath = toolInput?.file_path || toolInput?.path;

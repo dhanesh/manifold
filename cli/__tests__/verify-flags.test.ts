@@ -8,7 +8,11 @@
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
 import { existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
-import { aggregateSatisfactionLevel, verifyAllEvidence, normalizeEvidence } from '../lib/evidence.js';
+import {
+  aggregateSatisfactionLevel,
+  verifyAllEvidence,
+  normalizeEvidence,
+} from '../lib/evidence.js';
 import { loadConfig } from '../lib/config.js';
 import type { Evidence } from '../lib/parser.js';
 import type { SatisfactionLevel } from '../lib/structure-schema.js';
@@ -41,9 +45,7 @@ describe('--levels flag: satisfaction level computation', () => {
   });
 
   test('computes IMPLEMENTED level for file_exists evidence', () => {
-    const evidence: Evidence[] = [
-      { type: 'file_exists', path: 'src/impl.ts', status: 'VERIFIED' },
-    ];
+    const evidence: Evidence[] = [{ type: 'file_exists', path: 'src/impl.ts', status: 'VERIFIED' }];
     const level = aggregateSatisfactionLevel(evidence);
     expect(level).toBe('IMPLEMENTED');
   });
@@ -77,10 +79,10 @@ describe('--levels flag: satisfaction level computation', () => {
 
   test('computes levels for a constraint set', () => {
     const constraintEvidence: Record<string, Evidence[]> = {
-      'B1': [{ type: 'test_passes', path: 'test.ts', status: 'VERIFIED' }],
-      'B2': [{ type: 'file_exists', path: 'impl.ts', status: 'VERIFIED' }],
-      'T1': [],
-      'S1': [{ type: 'manual_review', path: 'review.md', status: 'PENDING' }],
+      B1: [{ type: 'test_passes', path: 'test.ts', status: 'VERIFIED' }],
+      B2: [{ type: 'file_exists', path: 'impl.ts', status: 'VERIFIED' }],
+      T1: [],
+      S1: [{ type: 'manual_review', path: 'review.md', status: 'PENDING' }],
     };
 
     const levels: Record<string, SatisfactionLevel> = {};
@@ -96,14 +98,19 @@ describe('--levels flag: satisfaction level computation', () => {
 
   test('level counts for bar chart display', () => {
     const levels: Record<string, SatisfactionLevel> = {
-      'B1': 'VERIFIED',
-      'B2': 'IMPLEMENTED',
-      'T1': 'TESTED',
-      'T2': 'TESTED',
-      'U1': 'DOCUMENTED',
+      B1: 'VERIFIED',
+      B2: 'IMPLEMENTED',
+      T1: 'TESTED',
+      T2: 'TESTED',
+      U1: 'DOCUMENTED',
     };
 
-    const counts: Record<string, number> = { DOCUMENTED: 0, IMPLEMENTED: 0, TESTED: 0, VERIFIED: 0 };
+    const counts: Record<string, number> = {
+      DOCUMENTED: 0,
+      IMPLEMENTED: 0,
+      TESTED: 0,
+      VERIFIED: 0,
+    };
     for (const level of Object.values(levels)) {
       counts[level] = (counts[level] || 0) + 1;
     }
@@ -153,14 +160,22 @@ describe('--execute flag: config-based test runner', () => {
 
   test('evidence verification with runTests checks file content', async () => {
     const testFile = join(TEST_DIR, 'real.test.ts');
-    writeFileSync(testFile, `
+    writeFileSync(
+      testFile,
+      `
 test('my important test', () => {
   expect(true).toBe(true);
 });
-`);
+`
+    );
 
     const evidence: Evidence[] = [
-      { type: 'test_passes', path: 'real.test.ts', status: 'PENDING', test_name: 'my important test' },
+      {
+        type: 'test_passes',
+        path: 'real.test.ts',
+        status: 'PENDING',
+        test_name: 'my important test',
+      },
     ];
 
     const report = await verifyAllEvidence(evidence, {
@@ -206,9 +221,7 @@ describe('normalizeEvidence', () => {
   });
 
   test('passes through array of evidence unchanged', () => {
-    const input: Evidence[] = [
-      { type: 'file_exists', path: 'test.ts', status: 'VERIFIED' },
-    ];
+    const input: Evidence[] = [{ type: 'file_exists', path: 'test.ts', status: 'VERIFIED' }];
     expect(normalizeEvidence(input)).toEqual(input);
   });
 });
@@ -221,9 +234,7 @@ describe('verification report summary', () => {
   test('file_exists evidence passes for existing file', async () => {
     writeFileSync(join(TEST_DIR, 'exists.ts'), 'content');
 
-    const evidence: Evidence[] = [
-      { type: 'file_exists', path: 'exists.ts', status: 'PENDING' },
-    ];
+    const evidence: Evidence[] = [{ type: 'file_exists', path: 'exists.ts', status: 'PENDING' }];
 
     const report = await verifyAllEvidence(evidence, { projectRoot: TEST_DIR });
     expect(report.verified).toBe(1);
@@ -231,9 +242,7 @@ describe('verification report summary', () => {
   });
 
   test('file_exists evidence fails for missing file', async () => {
-    const evidence: Evidence[] = [
-      { type: 'file_exists', path: 'missing.ts', status: 'PENDING' },
-    ];
+    const evidence: Evidence[] = [{ type: 'file_exists', path: 'missing.ts', status: 'PENDING' }];
 
     const report = await verifyAllEvidence(evidence, { projectRoot: TEST_DIR });
     expect(report.verified).toBe(0);

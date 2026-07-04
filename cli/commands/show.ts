@@ -15,18 +15,12 @@ import {
 } from '../lib/manifold-linker.js';
 import type { ManifoldStructure } from '../lib/structure-schema.js';
 import type { ManifoldContent } from '../lib/markdown-parser.js';
-import {
-  println,
-  printError,
-  style,
-  toJSON,
-  formatHeader,
-} from '../lib/output.js';
+import { println, printError, style, toJSON, formatHeader } from '../lib/output.js';
 import { ConstraintSolver } from '../lib/solver.js';
 import {
   miniGraphToMermaid,
   renderMermaidToTerminal,
-  renderGraphToTerminal
+  renderGraphToTerminal,
 } from '../lib/mermaid.js';
 
 interface ShowOptions {
@@ -120,11 +114,13 @@ async function showCommand(feature: string | undefined, options: ShowOptions): P
 
   if (format === 'yaml') {
     if (options.json) {
-      println(toJSON({
-        feature,
-        format: 'yaml',
-        message: 'Use manifold migrate to convert to JSON+Markdown format',
-      }));
+      println(
+        toJSON({
+          feature,
+          format: 'yaml',
+          message: 'Use manifold migrate to convert to JSON+Markdown format',
+        })
+      );
     } else {
       println(`  ${style.warning('Manifold is in legacy YAML format')}`);
       println(`  ${style.dim('Run:')} manifold migrate ${feature} ${style.dim('to convert')}`);
@@ -286,7 +282,11 @@ function printStructure(structure: ManifoldStructure): void {
  * Uses parser path to build graph from manifold data
  * Satisfies: B1, B3, RT-4
  */
-function printConstraintMap(manifoldDir: string, feature: string, mode: 'ascii' | 'mermaid'): number {
+function printConstraintMap(
+  manifoldDir: string,
+  feature: string,
+  mode: 'ascii' | 'mermaid'
+): number {
   const data = loadFeature(manifoldDir, feature);
 
   if (!data?.manifold) {
@@ -351,7 +351,8 @@ function printContent(content: ManifoldContent): void {
     for (const [id, t] of content.tensions) {
       println(`    ${style.feature(id)}: ${t.title}`);
       if (t.description) {
-        const preview = t.description.length > 80 ? t.description.slice(0, 77) + '...' : t.description;
+        const preview =
+          t.description.length > 80 ? t.description.slice(0, 77) + '...' : t.description;
         println(`      ${style.dim(preview)}`);
       }
     }

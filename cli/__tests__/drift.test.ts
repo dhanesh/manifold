@@ -178,10 +178,7 @@ describe('drift edge cases', () => {
     const hash = computeFileHash(file)!;
     writeFileSync(file, 'v2');
 
-    const report = detectDrift(
-      [{ path: 'no-satisfies.ts', file_hash: hash }],
-      TEST_DIR
-    );
+    const report = detectDrift([{ path: 'no-satisfies.ts', file_hash: hash }], TEST_DIR);
 
     expect(report.drifted).toHaveLength(1);
     expect(report.drifted[0].constraint_ids).toEqual([]);

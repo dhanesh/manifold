@@ -33,9 +33,7 @@ export function generateWaves(graph: ConstraintGraph): Wave[] {
     const ready: string[] = [];
     for (const id of remaining) {
       const node = graph.nodes[id];
-      const depsResolved = node.depends_on.every(
-        (d) => satisfied.has(d) || !remaining.has(d)
-      );
+      const depsResolved = node.depends_on.every((d) => satisfied.has(d) || !remaining.has(d));
       if (depsResolved) ready.push(id);
     }
 
@@ -62,9 +60,7 @@ export function generateWaves(graph: ConstraintGraph): Wave[] {
       phase,
       parallel_tasks: createParallelTasks(graph, ready),
       blocking_dependencies: [...satisfied],
-      ...(cycleBrokenNode
-        ? { cycle_broken: true, cycle_broken_node: cycleBrokenNode }
-        : {}),
+      ...(cycleBrokenNode ? { cycle_broken: true, cycle_broken_node: cycleBrokenNode } : {}),
     });
 
     for (const id of ready) {

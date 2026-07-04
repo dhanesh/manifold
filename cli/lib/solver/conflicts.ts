@@ -63,23 +63,24 @@ export function detectSemanticConflicts(manifold: Manifold): ConflictDetectionRe
   const summary = {
     total: conflicts.length,
     bySeverity: {
-      critical: conflicts.filter(c => c.severity === 'critical').length,
-      high: conflicts.filter(c => c.severity === 'high').length,
-      medium: conflicts.filter(c => c.severity === 'medium').length,
-      low: conflicts.filter(c => c.severity === 'low').length,
+      critical: conflicts.filter((c) => c.severity === 'critical').length,
+      high: conflicts.filter((c) => c.severity === 'high').length,
+      medium: conflicts.filter((c) => c.severity === 'medium').length,
+      low: conflicts.filter((c) => c.severity === 'low').length,
     },
     byType: {
-      contradictory_invariants: conflicts.filter(c => c.type === 'contradictory_invariants').length,
-      resource_conflict: conflicts.filter(c => c.type === 'resource_conflict').length,
-      temporal_conflict: conflicts.filter(c => c.type === 'temporal_conflict').length,
-      scope_conflict: conflicts.filter(c => c.type === 'scope_conflict').length,
-    }
+      contradictory_invariants: conflicts.filter((c) => c.type === 'contradictory_invariants')
+        .length,
+      resource_conflict: conflicts.filter((c) => c.type === 'resource_conflict').length,
+      temporal_conflict: conflicts.filter((c) => c.type === 'temporal_conflict').length,
+      scope_conflict: conflicts.filter((c) => c.type === 'scope_conflict').length,
+    },
   };
 
   return {
     hasConflicts: conflicts.length > 0,
     conflicts,
-    summary
+    summary,
   };
 }
 
@@ -93,7 +94,13 @@ interface ConstraintWithCategory extends Constraint {
 function getAllConstraints(manifold: Manifold): ConstraintWithCategory[] {
   const result: ConstraintWithCategory[] = [];
 
-  const categories = ['business', 'technical', 'user_experience', 'security', 'operational'] as const;
+  const categories = [
+    'business',
+    'technical',
+    'user_experience',
+    'security',
+    'operational',
+  ] as const;
 
   for (const category of categories) {
     const constraints = manifold.constraints?.[category] ?? [];
@@ -120,7 +127,7 @@ function detectContradictoryInvariants(
   conflicts: SemanticConflict[],
   nextId: () => string
 ): void {
-  const invariants = constraints.filter(c => c.type === 'invariant');
+  const invariants = constraints.filter((c) => c.type === 'invariant');
 
   // Keywords that indicate opposite requirements
   const contradictionPairs = [
@@ -152,9 +159,9 @@ function detectContradictoryInvariants(
         // Check if they're about similar subjects and have opposing keywords
         if ((s1HasPositive && s2HasNegative) || (s1HasNegative && s2HasPositive)) {
           // Check for subject overlap using common nouns
-          const s1Words = new Set(statement1.split(/\s+/).filter(w => w.length > 3));
-          const s2Words = new Set(statement2.split(/\s+/).filter(w => w.length > 3));
-          const overlap = [...s1Words].filter(w => s2Words.has(w));
+          const s1Words = new Set(statement1.split(/\s+/).filter((w) => w.length > 3));
+          const s2Words = new Set(statement2.split(/\s+/).filter((w) => w.length > 3));
+          const overlap = [...s1Words].filter((w) => s2Words.has(w));
 
           if (overlap.length >= 2) {
             conflicts.push({
@@ -163,7 +170,8 @@ function detectContradictoryInvariants(
               constraints: [c1.id, c2.id],
               severity: 'critical',
               explanation: `Invariant ${c1.id} "${truncate(c1.statement, 40)}" may contradict ${c2.id} "${truncate(c2.statement, 40)}" - both are invariants with opposing requirements about: ${overlap.slice(0, 3).join(', ')}`,
-              suggestion: 'Review these invariants and either merge them, add explicit precedence, or convert one to a trade_off tension.'
+              suggestion:
+                'Review these invariants and either merge them, add explicit precedence, or convert one to a trade_off tension.',
             });
           }
         }
@@ -183,17 +191,32 @@ function detectResourceConflicts(
 ): void {
   // Resource-related keywords
   const resourceKeywords = [
-    'memory', 'cpu', 'disk', 'bandwidth', 'storage',
-    'time', 'latency', 'timeout', 'duration',
-    'budget', 'cost', 'price',
-    'connections', 'threads', 'workers', 'instances',
-    'tokens', 'limit', 'quota', 'capacity'
+    'memory',
+    'cpu',
+    'disk',
+    'bandwidth',
+    'storage',
+    'time',
+    'latency',
+    'timeout',
+    'duration',
+    'budget',
+    'cost',
+    'price',
+    'connections',
+    'threads',
+    'workers',
+    'instances',
+    'tokens',
+    'limit',
+    'quota',
+    'capacity',
   ];
 
   // Find constraints mentioning resources
-  const resourceConstraints = constraints.filter(c => {
+  const resourceConstraints = constraints.filter((c) => {
     const statement = c.statement.toLowerCase();
-    return resourceKeywords.some(kw => statement.includes(kw));
+    return resourceKeywords.some((kw) => statement.includes(kw));
   });
 
   // Group by resource type
@@ -215,21 +238,21 @@ function detectResourceConflicts(
     if (group.length < 2) continue;
 
     // Look for competing numeric requirements
-    const numericRequirements = group.filter(c => {
+    const numericRequirements = group.filter((c) => {
       const match = c.statement.match(/(\d+)\s*(ms|seconds?|minutes?|mb|gb|%)/i);
       return match !== null;
     });
 
     if (numericRequirements.length >= 2) {
       // Multiple numeric requirements for same resource
-      const ids = numericRequirements.map(c => c.id);
+      const ids = numericRequirements.map((c) => c.id);
       conflicts.push({
         id: nextId(),
         type: 'resource_conflict',
         constraints: ids,
         severity: 'high',
         explanation: `Multiple constraints define limits for "${resource}": ${ids.join(', ')}. These may compete for the same resource and require trade-off analysis.`,
-        suggestion: `Document as a resource_tension in the tensions section and specify priority order.`
+        suggestion: `Document as a resource_tension in the tensions section and specify priority order.`,
       });
     }
   }
@@ -259,16 +282,16 @@ function detectTemporalConflicts(
       const s2 = c2.statement.toLowerCase();
 
       // Check for simultaneous vs sequential conflict
-      const s1Simultaneous = simultaneousKeywords.some(kw => s1.includes(kw));
-      const s2Sequential = sequentialKeywords.some(kw => s2.includes(kw));
-      const s1Sequential = sequentialKeywords.some(kw => s1.includes(kw));
-      const s2Simultaneous = simultaneousKeywords.some(kw => s2.includes(kw));
+      const s1Simultaneous = simultaneousKeywords.some((kw) => s1.includes(kw));
+      const s2Sequential = sequentialKeywords.some((kw) => s2.includes(kw));
+      const s1Sequential = sequentialKeywords.some((kw) => s1.includes(kw));
+      const s2Simultaneous = simultaneousKeywords.some((kw) => s2.includes(kw));
 
       if ((s1Simultaneous && s2Sequential) || (s1Sequential && s2Simultaneous)) {
         // Check if they're about similar operations
-        const s1Words = new Set(s1.split(/\s+/).filter(w => w.length > 4));
-        const s2Words = new Set(s2.split(/\s+/).filter(w => w.length > 4));
-        const overlap = [...s1Words].filter(w => s2Words.has(w));
+        const s1Words = new Set(s1.split(/\s+/).filter((w) => w.length > 4));
+        const s2Words = new Set(s2.split(/\s+/).filter((w) => w.length > 4));
+        const overlap = [...s1Words].filter((w) => s2Words.has(w));
 
         if (overlap.length >= 1) {
           conflicts.push({
@@ -277,7 +300,8 @@ function detectTemporalConflicts(
             constraints: [c1.id, c2.id],
             severity: 'medium',
             explanation: `${c1.id} requires ${s1Simultaneous ? 'concurrent' : 'sequential'} execution while ${c2.id} requires ${s2Simultaneous ? 'concurrent' : 'sequential'} execution for operations involving: ${overlap.slice(0, 3).join(', ')}`,
-            suggestion: 'Clarify execution order requirements or document as a hidden_dependency tension.'
+            suggestion:
+              'Clarify execution order requirements or document as a hidden_dependency tension.',
           });
         }
       }
@@ -309,17 +333,17 @@ function detectScopeConflicts(
       const s1 = c1.statement.toLowerCase();
       const s2 = c2.statement.toLowerCase();
 
-      const s1Global = globalKeywords.some(kw => s1.includes(kw));
-      const s2Local = localKeywords.some(kw => s2.includes(kw));
-      const s1Local = localKeywords.some(kw => s1.includes(kw));
-      const s2Global = globalKeywords.some(kw => s2.includes(kw));
+      const s1Global = globalKeywords.some((kw) => s1.includes(kw));
+      const s2Local = localKeywords.some((kw) => s2.includes(kw));
+      const s1Local = localKeywords.some((kw) => s1.includes(kw));
+      const s2Global = globalKeywords.some((kw) => s2.includes(kw));
 
       // Check for global vs local scope conflict
       if ((s1Global && s2Local) || (s1Local && s2Global)) {
         // Check if they're about similar subjects
-        const s1Words = new Set(s1.split(/\s+/).filter(w => w.length > 4));
-        const s2Words = new Set(s2.split(/\s+/).filter(w => w.length > 4));
-        const overlap = [...s1Words].filter(w => s2Words.has(w));
+        const s1Words = new Set(s1.split(/\s+/).filter((w) => w.length > 4));
+        const s2Words = new Set(s2.split(/\s+/).filter((w) => w.length > 4));
+        const overlap = [...s1Words].filter((w) => s2Words.has(w));
 
         if (overlap.length >= 1) {
           conflicts.push({
@@ -328,7 +352,8 @@ function detectScopeConflicts(
             constraints: [c1.id, c2.id],
             severity: 'low',
             explanation: `${c1.id} (${c1.category}) has ${s1Global ? 'global' : 'local'} scope while ${c2.id} (${c2.category}) has ${s2Global ? 'global' : 'local'} scope for: ${overlap.slice(0, 3).join(', ')}`,
-            suggestion: 'Consider whether the local constraint is an exception to the global one, or if they need explicit scoping rules.'
+            suggestion:
+              'Consider whether the local constraint is an exception to the global one, or if they need explicit scoping rules.',
           });
         }
       }
@@ -351,19 +376,26 @@ export function formatConflictResults(result: ConflictDetectionResult): string {
     return lines.join('\n');
   }
 
-  lines.push(`Found ${result.summary.total} potential conflict${result.summary.total > 1 ? 's' : ''}:`);
+  lines.push(
+    `Found ${result.summary.total} potential conflict${result.summary.total > 1 ? 's' : ''}:`
+  );
   lines.push('');
 
   // Group by severity
   const severityOrder = ['critical', 'high', 'medium', 'low'] as const;
 
   for (const severity of severityOrder) {
-    const severityConflicts = result.conflicts.filter(c => c.severity === severity);
+    const severityConflicts = result.conflicts.filter((c) => c.severity === severity);
     if (severityConflicts.length === 0) continue;
 
-    const icon = severity === 'critical' ? '🚨' :
-                 severity === 'high' ? '⚠️' :
-                 severity === 'medium' ? '📊' : 'ℹ️';
+    const icon =
+      severity === 'critical'
+        ? '🚨'
+        : severity === 'high'
+          ? '⚠️'
+          : severity === 'medium'
+            ? '📊'
+            : 'ℹ️';
 
     lines.push(`${icon} ${severity.toUpperCase()} (${severityConflicts.length}):`);
     lines.push('');

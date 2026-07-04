@@ -138,9 +138,10 @@ export class AutoSuggester {
     }
 
     // Convert string descriptions to tasks if needed
-    const parsedTasks: Task[] = typeof tasks[0] === 'string'
-      ? this.taskAnalyzer.parseTaskDescriptions(tasks as string[])
-      : tasks as Task[];
+    const parsedTasks: Task[] =
+      typeof tasks[0] === 'string'
+        ? this.taskAnalyzer.parseTaskDescriptions(tasks as string[])
+        : (tasks as Task[]);
 
     // Check minimum task count
     if (parsedTasks.length < opts.minTasks) {
@@ -161,12 +162,7 @@ export class AutoSuggester {
     const overlapResult = this.overlapDetector.detect(predictions);
 
     // Build suggestion
-    return this.buildSuggestion(
-      analysisResult,
-      predictions,
-      overlapResult,
-      opts
-    );
+    return this.buildSuggestion(analysisResult, predictions, overlapResult, opts);
   }
 
   /**
@@ -183,13 +179,15 @@ export class AutoSuggester {
     const warnings: string[] = [];
 
     // Calculate overall confidence
-    const avgConfidence = predictions.reduce((sum: number, p: FilePrediction) => sum + p.confidence, 0) / predictions.length;
+    const avgConfidence =
+      predictions.reduce((sum: number, p: FilePrediction) => sum + p.confidence, 0) /
+      predictions.length;
 
     // Check if speedup is worth it
     if (analysis.analysis.estimatedSpeedup < options.minSpeedup) {
       reasoning.push(
         `Estimated speedup (${analysis.analysis.estimatedSpeedup.toFixed(2)}x) ` +
-        `is below threshold (${options.minSpeedup}x)`
+          `is below threshold (${options.minSpeedup}x)`
       );
     }
 
@@ -197,7 +195,7 @@ export class AutoSuggester {
     if (avgConfidence < options.minConfidence) {
       reasoning.push(
         `File prediction confidence (${(avgConfidence * 100).toFixed(0)}%) ` +
-        `is below threshold (${(options.minConfidence * 100).toFixed(0)}%)`
+          `is below threshold (${(options.minConfidence * 100).toFixed(0)}%)`
       );
       warnings.push('Low confidence in file predictions - manual verification recommended');
     }
@@ -334,7 +332,9 @@ export class AutoSuggester {
       const suggestion = await this.suggest(tasks);
 
       if (suggestion.shouldParallelize) {
-        const groupsWithMultiple = suggestion.parallelGroups.filter((g: SafeGroup) => g.taskIds.length > 1);
+        const groupsWithMultiple = suggestion.parallelGroups.filter(
+          (g: SafeGroup) => g.taskIds.length > 1
+        );
         if (groupsWithMultiple.length > 0) {
           return {
             suggest: true,

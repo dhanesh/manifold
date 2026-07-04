@@ -13,8 +13,9 @@ import { join, dirname } from 'path';
 function dropDomainFromRequired(schema: unknown): void {
   if (!schema || typeof schema !== 'object') return;
   const obj = schema as Record<string, unknown>;
-  const branches = (obj.definitions as Record<string, { anyOf?: Array<Record<string, unknown>> }> | undefined)
-    ?.ManifoldStructure?.anyOf;
+  const branches = (
+    obj.definitions as Record<string, { anyOf?: Array<Record<string, unknown>> }> | undefined
+  )?.ManifoldStructure?.anyOf;
   if (!Array.isArray(branches)) return;
   for (const branch of branches) {
     const required = branch.required;
@@ -24,7 +25,12 @@ function dropDomainFromRequired(schema: unknown): void {
   }
 }
 
-const outputPath = join(dirname(import.meta.dir), '..', 'install', 'manifold-structure.schema.json');
+const outputPath = join(
+  dirname(import.meta.dir),
+  '..',
+  'install',
+  'manifold-structure.schema.json'
+);
 
 dropDomainFromRequired(manifoldStructureJsonSchema);
 

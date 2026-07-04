@@ -8,11 +8,7 @@
  *            U1 (visual representation of relations).
  */
 
-export type GraphNodeKind =
-  | 'constraint'
-  | 'tension'
-  | 'required_truth'
-  | 'artifact';
+export type GraphNodeKind = 'constraint' | 'tension' | 'required_truth' | 'artifact';
 
 export type GraphEdgeKind = 'dependency' | 'conflict' | 'satisfies' | 'maps_to';
 
@@ -103,7 +99,7 @@ export function synthesiseGraph(json: any): GraphData {
     source: string,
     target: string,
     kind: GraphEdgeKind,
-    origin: GraphEdge['origin'],
+    origin: GraphEdge['origin']
   ) => {
     if (!nodes.has(source) || !nodes.has(target)) return;
     const k = edgeKey(source, target, kind);
@@ -134,8 +130,7 @@ export function synthesiseGraph(json: any): GraphData {
     const mapsTo = safeArray<string>(rt?.maps_to);
     for (const cid of mapsTo) pushEdge(rt.id, cid, 'maps_to', 'synthesised');
     const derivedFrom = safeArray<string>(rt?.derived_from);
-    for (const cid of derivedFrom)
-      pushEdge(cid, rt.id, 'satisfies', 'synthesised');
+    for (const cid of derivedFrom) pushEdge(cid, rt.id, 'satisfies', 'synthesised');
     const seedFrom = safeArray<string>(rt?.seed_from);
     for (const cid of seedFrom) pushEdge(cid, rt.id, 'satisfies', 'synthesised');
   }
@@ -156,11 +151,7 @@ export function synthesiseGraph(json: any): GraphData {
   }
 
   const source: GraphData['source'] =
-    nativeCount > 0 && synthCount > 0
-      ? 'mixed'
-      : nativeCount > 0
-      ? 'native'
-      : 'synthesised';
+    nativeCount > 0 && synthCount > 0 ? 'mixed' : nativeCount > 0 ? 'native' : 'synthesised';
 
   return { nodes: Array.from(nodes.values()), edges, source };
 }

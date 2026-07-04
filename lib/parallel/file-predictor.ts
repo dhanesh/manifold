@@ -11,18 +11,18 @@ import { join, dirname, basename, extname } from 'path';
 export interface FilePrediction {
   taskId: string;
   predictedFiles: string[];
-  confidence: number;  // 0-1
+  confidence: number; // 0-1
   method: PredictionMethod;
   reasoning?: string;
 }
 
 export type PredictionMethod =
-  | 'explicit'        // Files explicitly mentioned
-  | 'pattern'         // Pattern matching (e.g., "all *.test.ts")
-  | 'module'          // Module-based inference
-  | 'git_history'     // Based on git history patterns
-  | 'ast_analysis'    // Deep AST analysis (future)
-  | 'heuristic';      // General heuristics
+  | 'explicit' // Files explicitly mentioned
+  | 'pattern' // Pattern matching (e.g., "all *.test.ts")
+  | 'module' // Module-based inference
+  | 'git_history' // Based on git history patterns
+  | 'ast_analysis' // Deep AST analysis (future)
+  | 'heuristic'; // General heuristics
 
 export interface PredictorConfig {
   baseDir: string;
@@ -64,7 +64,8 @@ export class FilePredictor {
    * Satisfies: T4 (Dependency analysis should detect implicit dependencies)
    */
   predict(taskId: string, description: string): FilePrediction {
-    const predictions: Array<{ files: string[]; confidence: number; method: PredictionMethod }> = [];
+    const predictions: Array<{ files: string[]; confidence: number; method: PredictionMethod }> =
+      [];
 
     // Method 1: Explicit file mentions (highest confidence)
     const explicitFiles = this.extractExplicitFiles(description);
@@ -134,7 +135,7 @@ export class FilePredictor {
    * Predict files for multiple tasks
    */
   predictAll(tasks: Array<{ id: string; description: string }>): FilePrediction[] {
-    return tasks.map(task => this.predict(task.id, task.description));
+    return tasks.map((task) => this.predict(task.id, task.description));
   }
 
   /**
@@ -199,7 +200,8 @@ export class FilePredictor {
     const files: string[] = [];
 
     // Extract potential module names (PascalCase or camelCase identifiers)
-    const moduleRegex = /\b([A-Z][a-zA-Z0-9]+(?:Service|Component|Controller|Manager|Handler|Provider|Module|Store|Reducer|Action|Hook)?)\b/g;
+    const moduleRegex =
+      /\b([A-Z][a-zA-Z0-9]+(?:Service|Component|Controller|Manager|Handler|Provider|Module|Store|Reducer|Action|Hook)?)\b/g;
     const matches = [...description.matchAll(moduleRegex)];
 
     for (const match of matches) {
@@ -251,21 +253,33 @@ export class FilePredictor {
     const lowerDesc = description.toLowerCase();
 
     // Heuristic: authentication → auth-related files
-    if (lowerDesc.includes('auth') || lowerDesc.includes('login') || lowerDesc.includes('session')) {
+    if (
+      lowerDesc.includes('auth') ||
+      lowerDesc.includes('login') ||
+      lowerDesc.includes('session')
+    ) {
       files.push(...this.findFilesByPattern('**/*auth*'));
       files.push(...this.findFilesByPattern('**/*login*'));
       files.push(...this.findFilesByPattern('**/*session*'));
     }
 
     // Heuristic: API/endpoint → route files
-    if (lowerDesc.includes('api') || lowerDesc.includes('endpoint') || lowerDesc.includes('route')) {
+    if (
+      lowerDesc.includes('api') ||
+      lowerDesc.includes('endpoint') ||
+      lowerDesc.includes('route')
+    ) {
       files.push(...this.findFilesByPattern('**/routes/**/*'));
       files.push(...this.findFilesByPattern('**/api/**/*'));
       files.push(...this.findFilesByPattern('**/*.route.*'));
     }
 
     // Heuristic: database → model/schema files
-    if (lowerDesc.includes('database') || lowerDesc.includes('schema') || lowerDesc.includes('model')) {
+    if (
+      lowerDesc.includes('database') ||
+      lowerDesc.includes('schema') ||
+      lowerDesc.includes('model')
+    ) {
       files.push(...this.findFilesByPattern('**/models/**/*'));
       files.push(...this.findFilesByPattern('**/schemas/**/*'));
       files.push(...this.findFilesByPattern('**/*.model.*'));
@@ -304,7 +318,7 @@ export class FilePredictor {
     // Merge all unique files, weighted by confidence
     const allFiles = new Set<string>();
     for (const pred of predictions) {
-      pred.files.forEach(f => allFiles.add(f));
+      pred.files.forEach((f) => allFiles.add(f));
     }
 
     return {
@@ -365,7 +379,7 @@ export class FilePredictor {
       return output
         .split('\n')
         .filter(Boolean)
-        .map(f => f.replace(/^\.\//, ''));
+        .map((f) => f.replace(/^\.\//, ''));
     } catch {
       return [];
     }
@@ -414,18 +428,59 @@ export class FilePredictor {
   private extractKeywords(text: string): string[] {
     // Remove common words and extract meaningful terms
     const stopWords = new Set([
-      'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-      'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'been', 'be',
-      'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
-      'should', 'may', 'might', 'must', 'shall', 'can', 'need', 'dare',
-      'ought', 'used', 'fix', 'add', 'update', 'remove', 'change', 'make',
+      'the',
+      'a',
+      'an',
+      'and',
+      'or',
+      'but',
+      'in',
+      'on',
+      'at',
+      'to',
+      'for',
+      'of',
+      'with',
+      'by',
+      'from',
+      'as',
+      'is',
+      'was',
+      'are',
+      'been',
+      'be',
+      'have',
+      'has',
+      'had',
+      'do',
+      'does',
+      'did',
+      'will',
+      'would',
+      'could',
+      'should',
+      'may',
+      'might',
+      'must',
+      'shall',
+      'can',
+      'need',
+      'dare',
+      'ought',
+      'used',
+      'fix',
+      'add',
+      'update',
+      'remove',
+      'change',
+      'make',
     ]);
 
     return text
       .toLowerCase()
       .replace(/[^a-z0-9\s]/g, ' ')
       .split(/\s+/)
-      .filter(word => word.length > 2 && !stopWords.has(word));
+      .filter((word) => word.length > 2 && !stopWords.has(word));
   }
 
   /**
@@ -438,8 +493,8 @@ export class FilePredictor {
       return 'No files could be predicted for this task.';
     }
 
-    const parts = predictions.map(p =>
-      `${p.method}: ${p.files.length} files (${Math.round(p.confidence * 100)}% confidence)`
+    const parts = predictions.map(
+      (p) => `${p.method}: ${p.files.length} files (${Math.round(p.confidence * 100)}% confidence)`
     );
 
     return `Predictions based on: ${parts.join(', ')}`;

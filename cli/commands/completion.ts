@@ -329,7 +329,7 @@ export function registerCompletionCommand(program: Command): void {
       const manifoldDir = findManifoldDir();
       if (manifoldDir) {
         const features = listFeatures(manifoldDir);
-        features.forEach(f => console.log(f));
+        features.forEach((f) => console.log(f));
       }
     });
 }

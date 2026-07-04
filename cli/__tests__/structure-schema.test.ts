@@ -20,7 +20,14 @@ import {
 
 describe('PhaseSchema', () => {
   test('accepts all valid phases', () => {
-    const validPhases = ['INITIALIZED', 'CONSTRAINED', 'TENSIONED', 'ANCHORED', 'GENERATED', 'VERIFIED'];
+    const validPhases = [
+      'INITIALIZED',
+      'CONSTRAINED',
+      'TENSIONED',
+      'ANCHORED',
+      'GENERATED',
+      'VERIFIED',
+    ];
     for (const phase of validPhases) {
       const result = PhaseSchema.safeParse(phase);
       expect(result.success).toBe(true);
@@ -97,9 +104,7 @@ describe('ManifoldStructureSchema', () => {
           { id: 'B1', type: 'invariant' },
           { id: 'B2', type: 'goal' },
         ],
-        technical: [
-          { id: 'T1', type: 'boundary' },
-        ],
+        technical: [{ id: 'T1', type: 'boundary' }],
       },
     };
     const result = ManifoldStructureSchema.safeParse(structure);
@@ -175,9 +180,7 @@ describe('ManifoldStructureSchema', () => {
     const structure = {
       feature: 'test',
       phase: 'TENSIONED',
-      tensions: [
-        { id: 'TN1', type: 'trade_off', between: ['B1'], status: 'resolved' },
-      ],
+      tensions: [{ id: 'TN1', type: 'trade_off', between: ['B1'], status: 'resolved' }],
     };
     const result = ManifoldStructureSchema.safeParse(structure);
     expect(result.success).toBe(false);
@@ -239,7 +242,10 @@ describe('collectStructureIds', () => {
       phase: 'CONSTRAINED',
       constraints: {
         business: [{ id: 'B1', type: 'invariant' }],
-        technical: [{ id: 'T1', type: 'boundary' }, { id: 'T2', type: 'goal' }],
+        technical: [
+          { id: 'T1', type: 'boundary' },
+          { id: 'T2', type: 'goal' },
+        ],
         security: [{ id: 'S1', type: 'invariant' }],
       },
     };
@@ -294,9 +300,7 @@ describe('validateTensionReferences', () => {
         business: [{ id: 'B1', type: 'invariant' }],
         technical: [{ id: 'T1', type: 'boundary' }],
       },
-      tensions: [
-        { id: 'TN1', type: 'trade_off', between: ['B1', 'T1'], status: 'resolved' },
-      ],
+      tensions: [{ id: 'TN1', type: 'trade_off', between: ['B1', 'T1'], status: 'resolved' }],
     });
     const errors = validateTensionReferences(structure);
     expect(errors).toHaveLength(0);
@@ -309,9 +313,7 @@ describe('validateTensionReferences', () => {
       constraints: {
         business: [{ id: 'B1', type: 'invariant' }],
       },
-      tensions: [
-        { id: 'TN1', type: 'trade_off', between: ['B1', 'T1'], status: 'resolved' },
-      ],
+      tensions: [{ id: 'TN1', type: 'trade_off', between: ['B1', 'T1'], status: 'resolved' }],
     });
     const errors = validateTensionReferences(structure);
     expect(errors).toHaveLength(1);
@@ -329,13 +331,9 @@ describe('validateRequiredTruthReferences', () => {
         business: [{ id: 'B1', type: 'invariant' }],
         technical: [{ id: 'T1', type: 'boundary' }],
       },
-      tensions: [
-        { id: 'TN1', type: 'trade_off', between: ['B1', 'T1'], status: 'resolved' },
-      ],
+      tensions: [{ id: 'TN1', type: 'trade_off', between: ['B1', 'T1'], status: 'resolved' }],
       anchors: {
-        required_truths: [
-          { id: 'RT-1', status: 'SATISFIED', maps_to: ['B1', 'TN1'] },
-        ],
+        required_truths: [{ id: 'RT-1', status: 'SATISFIED', maps_to: ['B1', 'TN1'] }],
       },
     });
     const errors = validateRequiredTruthReferences(structure);
@@ -350,9 +348,7 @@ describe('validateRequiredTruthReferences', () => {
         business: [{ id: 'B1', type: 'invariant' }],
       },
       anchors: {
-        required_truths: [
-          { id: 'RT-1', status: 'SATISFIED', maps_to: ['B1', 'B99'] },
-        ],
+        required_truths: [{ id: 'RT-1', status: 'SATISFIED', maps_to: ['B1', 'B99'] }],
       },
     });
     const errors = validateRequiredTruthReferences(structure);

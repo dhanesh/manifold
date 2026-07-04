@@ -19,14 +19,13 @@ import {
   type RequiredTruth,
 } from '../lib/parser.js';
 import { detectManifoldFormat } from '../lib/manifold-linker.js';
-import type { ManifoldStructure, ConstraintRef, TensionRef, RequiredTruthRef } from '../lib/structure-schema.js';
-import {
-  println,
-  printError,
-  printWarning,
-  style,
-  toJSON,
-} from '../lib/output.js';
+import type {
+  ManifoldStructure,
+  ConstraintRef,
+  TensionRef,
+  RequiredTruthRef,
+} from '../lib/structure-schema.js';
+import { println, printError, printWarning, style, toJSON } from '../lib/output.js';
 
 interface MigrateOptions {
   json?: boolean;
@@ -55,7 +54,10 @@ export function registerMigrateCommand(program: Command): void {
 /**
  * Execute migrate command
  */
-async function migrateCommand(feature: string | undefined, options: MigrateOptions): Promise<number> {
+async function migrateCommand(
+  feature: string | undefined,
+  options: MigrateOptions
+): Promise<number> {
   const manifoldDir = findManifoldDir();
 
   if (!manifoldDir) {
@@ -93,15 +95,17 @@ async function migrateCommand(feature: string | undefined, options: MigrateOptio
       return 0;
     }
 
-    const successful = results.filter(r => r.success).length;
-    const failed = results.filter(r => !r.success).length;
+    const successful = results.filter((r) => r.success).length;
+    const failed = results.filter((r) => !r.success).length;
 
     if (options.json) {
-      println(toJSON({
-        migrated: successful,
-        failed,
-        results,
-      }));
+      println(
+        toJSON({
+          migrated: successful,
+          failed,
+          results,
+        })
+      );
     } else {
       println();
       println(`  ${style.dim('Summary:')} ${successful} migrated, ${failed} failed`);
@@ -115,10 +119,12 @@ async function migrateCommand(feature: string | undefined, options: MigrateOptio
 
   if (format === 'json-md') {
     if (options.json) {
-      println(toJSON({
-        feature,
-        message: 'Already in JSON+Markdown format',
-      }));
+      println(
+        toJSON({
+          feature,
+          message: 'Already in JSON+Markdown format',
+        })
+      );
     } else {
       println(`  ${style.check()} ${style.feature(feature)} is already in JSON+Markdown format`);
     }
@@ -127,10 +133,12 @@ async function migrateCommand(feature: string | undefined, options: MigrateOptio
 
   if (format === 'unknown') {
     if (options.json) {
-      println(toJSON({
-        feature,
-        error: 'Manifold not found',
-      }));
+      println(
+        toJSON({
+          feature,
+          error: 'Manifold not found',
+        })
+      );
     } else {
       printError(`Manifold "${feature}" not found`);
     }
@@ -322,7 +330,9 @@ function extractStructure(manifold: Manifold): ManifoldStructure {
     structure.constraints = {
       business: (manifold.constraints.business || []).map(extractConstraintRef),
       technical: (manifold.constraints.technical || []).map(extractConstraintRef),
-      user_experience: (manifold.constraints.user_experience || manifold.constraints.ux || []).map(extractConstraintRef),
+      user_experience: (manifold.constraints.user_experience || manifold.constraints.ux || []).map(
+        extractConstraintRef
+      ),
       security: (manifold.constraints.security || []).map(extractConstraintRef),
       operational: (manifold.constraints.operational || []).map(extractConstraintRef),
     };
@@ -345,7 +355,9 @@ function extractStructure(manifold: Manifold): ManifoldStructure {
       recommended_option: manifold.anchors.recommended_option,
       implementation_phases: manifold.anchors.implementation_phases,
       // Preserve enhancement fields
-      ...((manifold.anchors as any).binding_constraint && { binding_constraint: (manifold.anchors as any).binding_constraint }),
+      ...((manifold.anchors as any).binding_constraint && {
+        binding_constraint: (manifold.anchors as any).binding_constraint,
+      }),
     };
   }
 
@@ -365,7 +377,7 @@ function extractStructure(manifold: Manifold): ManifoldStructure {
       timestamp: manifold.generation.timestamp,
       option: manifold.generation.option,
       iteration: manifold.generation.iteration,
-      artifacts: manifold.generation.artifacts?.map(a => ({
+      artifacts: manifold.generation.artifacts?.map((a) => ({
         type: a.type,
         status: a.status,
         path: a.path,
@@ -374,13 +386,15 @@ function extractStructure(manifold: Manifold): ManifoldStructure {
         file_hash: a.file_hash,
         artifact_class: a.artifact_class,
       })),
-      coverage: manifold.generation.coverage ? {
-        constraints_addressed: manifold.generation.coverage.constraints_addressed,
-        constraints_total: manifold.generation.coverage.constraints_total,
-        required_truths_addressed: manifold.generation.coverage.required_truths_addressed,
-        required_truths_total: manifold.generation.coverage.required_truths_total,
-        percentage: manifold.generation.coverage.percentage,
-      } : undefined,
+      coverage: manifold.generation.coverage
+        ? {
+            constraints_addressed: manifold.generation.coverage.constraints_addressed,
+            constraints_total: manifold.generation.coverage.constraints_total,
+            required_truths_addressed: manifold.generation.coverage.required_truths_addressed,
+            required_truths_total: manifold.generation.coverage.required_truths_total,
+            percentage: manifold.generation.coverage.percentage,
+          }
+        : undefined,
     };
   }
 
@@ -526,15 +540,15 @@ function generateMarkdown(manifold: Manifold): string {
       }
 
       if (c.implemented_by?.length) {
-        lines.push(`**Implemented by:** ${c.implemented_by.map(p => `\`${p}\``).join(', ')}`);
+        lines.push(`**Implemented by:** ${c.implemented_by.map((p) => `\`${p}\``).join(', ')}`);
         lines.push('');
       }
 
       if (c.verified_by?.length) {
-        const verifiers = c.verified_by.map(e =>
+        const verifiers = c.verified_by.map((e) =>
           typeof e === 'string' ? e : e.path || 'unknown'
         );
-        lines.push(`**Verified by:** ${verifiers.map(p => `\`${p}\``).join(', ')}`);
+        lines.push(`**Verified by:** ${verifiers.map((p) => `\`${p}\``).join(', ')}`);
         lines.push('');
       }
     }
@@ -576,11 +590,12 @@ function generateMarkdown(manifold: Manifold): string {
       lines.push('');
 
       if (rt.evidence) {
-        const evidenceStr = typeof rt.evidence === 'string'
-          ? rt.evidence
-          : Array.isArray(rt.evidence)
-            ? rt.evidence.map(e => e.path || 'unknown').join(', ')
-            : 'unknown';
+        const evidenceStr =
+          typeof rt.evidence === 'string'
+            ? rt.evidence
+            : Array.isArray(rt.evidence)
+              ? rt.evidence.map((e) => e.path || 'unknown').join(', ')
+              : 'unknown';
         lines.push(`**Evidence:** ${evidenceStr}`);
         lines.push('');
       }
@@ -610,6 +625,8 @@ function printMigrationResult(feature: string, result: MigrationResult, dryRun?:
       }
     }
   } else {
-    println(`  ${style.cross()} ${style.feature(feature)}: ${style.error(result.error || 'Unknown error')}`);
+    println(
+      `  ${style.cross()} ${style.feature(feature)}: ${style.error(result.error || 'Unknown error')}`
+    );
   }
 }

@@ -43,14 +43,10 @@ export function parseServeOptions(opts: ServeOptions): ParsedOptions {
   if (opts.port !== undefined) {
     const parsed = Number.parseInt(opts.port, 10);
     if (!Number.isInteger(parsed) || String(parsed) !== String(opts.port).trim()) {
-      throw new PortValidationError(
-        `--port must be an integer; got "${opts.port}"`,
-      );
+      throw new PortValidationError(`--port must be an integer; got "${opts.port}"`);
     }
     if (parsed < 1024 || parsed > 65535) {
-      throw new PortValidationError(
-        `--port must be in [1024, 65535]; got ${parsed}`,
-      );
+      throw new PortValidationError(`--port must be in [1024, 65535]; got ${parsed}`);
     }
     port = parsed;
   }
@@ -68,8 +64,7 @@ export async function findFreePort(host: string): Promise<number | null> {
     probe.once('error', () => resolve(null));
     probe.listen(0, host, () => {
       const addr = probe.address();
-      const port =
-        addr && typeof addr === 'object' && 'port' in addr ? addr.port : null;
+      const port = addr && typeof addr === 'object' && 'port' in addr ? addr.port : null;
       probe.close(() => resolve(port));
     });
   });
@@ -82,7 +77,7 @@ export async function serveCommand(rawOpts: ServeOptions): Promise<number> {
   } catch (err) {
     printError(
       err instanceof PortValidationError ? err.message : String(err),
-      'Pass --port <integer> in the range 1024..65535',
+      'Pass --port <integer> in the range 1024..65535'
     );
     return 2;
   }
@@ -91,7 +86,7 @@ export async function serveCommand(rawOpts: ServeOptions): Promise<number> {
     process.stderr.write(
       `[33mWARNING[0m: --host=${opts.host} exposes the manifold visualiser to the network. ` +
         `Manifolds frequently contain unannounced product strategy and security thresholds. ` +
-        `Press Ctrl+C now and re-run with default loopback if this was unintended.\n`,
+        `Press Ctrl+C now and re-run with default loopback if this was unintended.\n`
     );
   }
 
@@ -99,7 +94,7 @@ export async function serveCommand(rawOpts: ServeOptions): Promise<number> {
   if (!manifoldDir) {
     printError(
       'No .manifold/ directory found in this project',
-      'Run `manifold init <feature>` first, or change to a directory containing manifolds.',
+      'Run `manifold init <feature>` first, or change to a directory containing manifolds.'
     );
     return 1;
   }

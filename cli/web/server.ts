@@ -10,15 +10,8 @@
  *            U4 (multi-manifold index lazy-loaded by feature).
  */
 
-import {
-  listManifolds,
-  loadManifoldDetail,
-} from '../lib/manifold-collection.js';
-import {
-  getEmbeddedAssets,
-  lookupAsset,
-  type EmbeddedAssetMap,
-} from '../lib/embedded-assets.js';
+import { listManifolds, loadManifoldDetail } from '../lib/manifold-collection.js';
+import { getEmbeddedAssets, lookupAsset, type EmbeddedAssetMap } from '../lib/embedded-assets.js';
 
 export interface ServeContext {
   manifoldDir: string;
@@ -68,19 +61,19 @@ function injectVersion(html: string, version: string): string {
   if (html.includes('name="manifold-version"')) {
     return html.replace(
       /<meta name="manifold-version"[^>]*>/,
-      `<meta name="manifold-version" content="${version}">`,
+      `<meta name="manifold-version" content="${version}">`
     );
   }
   return html.replace(
     /<head([^>]*)>/i,
-    `<head$1>\n    <meta name="manifold-version" content="${version}">`,
+    `<head$1>\n    <meta name="manifold-version" content="${version}">`
   );
 }
 
 function buildAssetResponse(
   asset: { contentType: string; body: Uint8Array; immutable: boolean },
   pathname: string,
-  version: string,
+  version: string
 ): Response {
   const isHtml = pathname.endsWith('.html') || pathname === '/' || pathname.endsWith('/');
   const headers: Record<string, string> = {
@@ -105,7 +98,7 @@ function buildAssetResponse(
 export async function handleRequest(
   ctx: ServeContext,
   assets: EmbeddedAssetMap,
-  request: Request,
+  request: Request
 ): Promise<Response> {
   if (!SAFE_METHODS.has(request.method)) {
     return methodNotAllowed();
@@ -143,9 +136,7 @@ export async function handleRequest(
   return notFound();
 }
 
-export async function startManifoldServer(
-  ctx: ServeContext,
-): Promise<RunningServer> {
+export async function startManifoldServer(ctx: ServeContext): Promise<RunningServer> {
   const assets = await getEmbeddedAssets();
   const bun = (globalThis as any).Bun as
     | {
@@ -159,7 +150,7 @@ export async function startManifoldServer(
 
   if (!bun) {
     throw new Error(
-      '`manifold serve` requires the Bun runtime. Use the prebuilt binary from GitHub releases.',
+      '`manifold serve` requires the Bun runtime. Use the prebuilt binary from GitHub releases.'
     );
   }
 

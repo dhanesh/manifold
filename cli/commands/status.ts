@@ -10,7 +10,7 @@ import {
   loadFeature,
   type FeatureData,
   type Manifold,
-  type Iteration
+  type Iteration,
 } from '../lib/parser.js';
 import { countConstraints, countConstraintsByType } from '../lib/schema.js';
 import {
@@ -26,13 +26,13 @@ import {
   formatNextAction,
   formatTable,
   style,
-  toJSON
+  toJSON,
 } from '../lib/output.js';
 import { ConstraintSolver } from '../lib/solver.js';
 import {
   miniGraphToMermaid,
   renderMermaidToTerminal,
-  renderGraphToTerminal
+  renderGraphToTerminal,
 } from '../lib/mermaid.js';
 
 interface StatusOptions {
@@ -68,7 +68,12 @@ async function statusCommand(feature: string | undefined, options: StatusOptions
 
   if (!manifoldDir) {
     if (options.json) {
-      println(toJSON({ error: 'No .manifold/ directory found', suggestion: 'Run manifold init <feature> to create one' }));
+      println(
+        toJSON({
+          error: 'No .manifold/ directory found',
+          suggestion: 'Run manifold init <feature> to create one',
+        })
+      );
     } else {
       printError('No .manifold/ directory found', 'Run manifold init <feature> to create one');
     }
@@ -90,13 +95,19 @@ async function statusCommand(feature: string | undefined, options: StatusOptions
 
     // Show status for all features
     if (options.json) {
-      const allStatus = features.map(f => {
-        const data = loadFeature(manifoldDir, f);
-        return data ? formatFeatureJSON(data, options.history) : null;
-      }).filter(Boolean);
+      const allStatus = features
+        .map((f) => {
+          const data = loadFeature(manifoldDir, f);
+          return data ? formatFeatureJSON(data, options.history) : null;
+        })
+        .filter(Boolean);
       println(toJSON({ features: allStatus }));
     } else {
-      println(formatHeader(`Manifold Status (${features.length} feature${features.length !== 1 ? 's' : ''})`));
+      println(
+        formatHeader(
+          `Manifold Status (${features.length} feature${features.length !== 1 ? 's' : ''})`
+        )
+      );
       println();
 
       for (const f of features) {
@@ -118,7 +129,10 @@ async function statusCommand(feature: string | undefined, options: StatusOptions
     if (options.json) {
       println(toJSON({ error: `Feature "${feature}" not found` }));
     } else {
-      printError(`Feature "${feature}" not found`, `Available features: ${listFeatures(manifoldDir).join(', ') || 'none'}`);
+      printError(
+        `Feature "${feature}" not found`,
+        `Available features: ${listFeatures(manifoldDir).join(', ') || 'none'}`
+      );
     }
     return 1;
   }
@@ -158,17 +172,17 @@ function formatFeatureJSON(data: FeatureData, includeHistory?: boolean): Record<
     constraints: {
       total: constraintCounts.total,
       byCategory: constraintCounts,
-      byType: constraintTypes
-    }
+      byType: constraintTypes,
+    },
   };
 
   // Tensions
   if (manifold.tensions?.length) {
-    const resolved = manifold.tensions.filter(t => t.status === 'resolved').length;
+    const resolved = manifold.tensions.filter((t) => t.status === 'resolved').length;
     result.tensions = {
       total: manifold.tensions.length,
       resolved,
-      unresolved: manifold.tensions.length - resolved
+      unresolved: manifold.tensions.length - resolved,
     };
   }
 
@@ -176,7 +190,7 @@ function formatFeatureJSON(data: FeatureData, includeHistory?: boolean): Record<
   if (manifold.anchors) {
     result.anchors = {
       requiredTruths: manifold.anchors.required_truths?.length ?? 0,
-      recommendedOption: manifold.anchors.recommended_option
+      recommendedOption: manifold.anchors.recommended_option,
     };
   }
 
@@ -220,7 +234,7 @@ function printFeatureStatus(data: FeatureData, includeHistory?: boolean): void {
 
   // Tensions
   if (manifold.tensions?.length) {
-    const resolved = manifold.tensions.filter(t => t.status === 'resolved').length;
+    const resolved = manifold.tensions.filter((t) => t.status === 'resolved').length;
     println(formatKeyValue('Tensions', formatTensionSummary(resolved, manifold.tensions.length)));
   }
 
@@ -237,9 +251,7 @@ function printFeatureStatus(data: FeatureData, includeHistory?: boolean): void {
       satisfied = match ? parseInt(match[1], 10) : 0;
     } else {
       // Fall back to counting from anchors
-      satisfied = manifold.anchors.required_truths.filter(
-        rt => rt.status === 'SATISFIED'
-      ).length;
+      satisfied = manifold.anchors.required_truths.filter((rt) => rt.status === 'SATISFIED').length;
     }
     println(formatKeyValue('Required Truths', `${satisfied}/${total} satisfied`));
   }
@@ -269,11 +281,11 @@ function printFeatureStatus(data: FeatureData, includeHistory?: boolean): void {
  * Print iteration history as a table
  */
 function printIterationTable(iterations: Iteration[]): void {
-  const rows = iterations.map(iter => ({
+  const rows = iterations.map((iter) => ({
     number: `#${iter.number}`,
     phase: iter.phase,
     timestamp: formatTimestamp(iter.timestamp),
-    result: formatIterationResult(iter.result)
+    result: formatIterationResult(iter.result),
   }));
 
   const table = formatTable(
@@ -281,7 +293,7 @@ function printIterationTable(iterations: Iteration[]): void {
       { header: '#', key: 'number', width: 4 },
       { header: 'Phase', key: 'phase', width: 12 },
       { header: 'Timestamp', key: 'timestamp', width: 20 },
-      { header: 'Result', key: 'result', width: 15 }
+      { header: 'Result', key: 'result', width: 15 },
     ],
     rows
   );
@@ -299,7 +311,7 @@ function formatTimestamp(ts: string): string {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   } catch {
     return ts;

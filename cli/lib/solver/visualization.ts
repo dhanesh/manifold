@@ -64,7 +64,9 @@ export function formatCrossFeatureResults(result: CrossFeatureConflictResult): s
   lines.push('SEMANTIC CONFLICT ANALYSIS');
   lines.push('═══════════════��══════════');
   lines.push('');
-  lines.push(`Analyzed: ${result.summary.featuresAnalyzed} features, ${result.summary.constraintsAnalyzed} constraints`);
+  lines.push(
+    `Analyzed: ${result.summary.featuresAnalyzed} features, ${result.summary.constraintsAnalyzed} constraints`
+  );
   lines.push('');
 
   if (!result.hasConflicts) {
@@ -75,20 +77,28 @@ export function formatCrossFeatureResults(result: CrossFeatureConflictResult): s
   // Group by severity and display
 
   // 1. BLOCKING conflicts (logical contradictions)
-  const blockingConflicts = result.conflicts.filter(c => c.severity === 'blocking');
+  const blockingConflicts = result.conflicts.filter((c) => c.severity === 'blocking');
   if (blockingConflicts.length > 0) {
-    lines.push(`🚫 BLOCKING CONFLICTS (${blockingConflicts.length}) - Cannot proceed without resolution`);
+    lines.push(
+      `🚫 BLOCKING CONFLICTS (${blockingConflicts.length}) - Cannot proceed without resolution`
+    );
     lines.push('─'.repeat(60));
     lines.push('');
 
     for (const conflict of blockingConflicts) {
       lines.push(`[${conflict.id}] ${conflict.type.replace('_', ' ')}`);
-      lines.push(`  Feature: ${conflict.constraintA.feature} (${conflict.constraintA.id}) vs Feature: ${conflict.constraintB.feature} (${conflict.constraintB.id})`);
+      lines.push(
+        `  Feature: ${conflict.constraintA.feature} (${conflict.constraintA.id}) vs Feature: ${conflict.constraintB.feature} (${conflict.constraintB.id})`
+      );
       lines.push('');
-      lines.push(`  ${conflict.constraintA.feature}/${conflict.constraintA.id} (${conflict.constraintA.type}):`);
+      lines.push(
+        `  ${conflict.constraintA.feature}/${conflict.constraintA.id} (${conflict.constraintA.type}):`
+      );
       lines.push(`    "${conflict.constraintA.statement}"`);
       lines.push('');
-      lines.push(`  ${conflict.constraintB.feature}/${conflict.constraintB.id} (${conflict.constraintB.type}):`);
+      lines.push(
+        `  ${conflict.constraintB.feature}/${conflict.constraintB.id} (${conflict.constraintB.type}):`
+      );
       lines.push(`    "${conflict.constraintB.statement}"`);
       lines.push('');
       lines.push(`  Shared Domain: [${conflict.sharedDomain.join(', ')}]`);
@@ -105,7 +115,7 @@ export function formatCrossFeatureResults(result: CrossFeatureConflictResult): s
   }
 
   // 2. REQUIRES ACCEPTANCE (resource tensions)
-  const tensionConflicts = result.conflicts.filter(c => c.severity === 'requires_acceptance');
+  const tensionConflicts = result.conflicts.filter((c) => c.severity === 'requires_acceptance');
   if (tensionConflicts.length > 0) {
     lines.push(`⚡ RESOURCE TENSIONS (${tensionConflicts.length}) - Require explicit acceptance`);
     lines.push('─'.repeat(60));
@@ -113,12 +123,18 @@ export function formatCrossFeatureResults(result: CrossFeatureConflictResult): s
 
     for (const conflict of tensionConflicts) {
       lines.push(`[${conflict.id}] ${conflict.type.replace('_', ' ')}`);
-      lines.push(`  Feature: ${conflict.constraintA.feature} (${conflict.constraintA.id}) vs Feature: ${conflict.constraintB.feature} (${conflict.constraintB.id})`);
+      lines.push(
+        `  Feature: ${conflict.constraintA.feature} (${conflict.constraintA.id}) vs Feature: ${conflict.constraintB.feature} (${conflict.constraintB.id})`
+      );
       lines.push('');
-      lines.push(`  ${conflict.constraintA.feature}/${conflict.constraintA.id} (${conflict.constraintA.type}):`);
+      lines.push(
+        `  ${conflict.constraintA.feature}/${conflict.constraintA.id} (${conflict.constraintA.type}):`
+      );
       lines.push(`    "${conflict.constraintA.statement}"`);
       lines.push('');
-      lines.push(`  ${conflict.constraintB.feature}/${conflict.constraintB.id} (${conflict.constraintB.type}):`);
+      lines.push(
+        `  ${conflict.constraintB.feature}/${conflict.constraintB.id} (${conflict.constraintB.type}):`
+      );
       lines.push(`    "${conflict.constraintB.statement}"`);
       lines.push('');
       lines.push(`  Shared Domain: [${conflict.sharedDomain.join(', ')}]`);
@@ -130,15 +146,19 @@ export function formatCrossFeatureResults(result: CrossFeatureConflictResult): s
   }
 
   // 3. REVIEW NEEDED (scope conflicts)
-  const reviewConflicts = result.conflicts.filter(c => c.severity === 'review_needed');
+  const reviewConflicts = result.conflicts.filter((c) => c.severity === 'review_needed');
   if (reviewConflicts.length > 0) {
-    lines.push(`📋 REVIEW NEEDED (${reviewConflicts.length}) - Potential conflicts requiring human judgment`);
+    lines.push(
+      `📋 REVIEW NEEDED (${reviewConflicts.length}) - Potential conflicts requiring human judgment`
+    );
     lines.push('─'.repeat(60));
     lines.push('');
 
     for (const conflict of reviewConflicts) {
       lines.push(`[${conflict.id}] ${conflict.type.replace('_', ' ')}`);
-      lines.push(`  ${conflict.constraintA.feature}/${conflict.constraintA.id} vs ${conflict.constraintB.feature}/${conflict.constraintB.id}`);
+      lines.push(
+        `  ${conflict.constraintA.feature}/${conflict.constraintA.id} vs ${conflict.constraintB.feature}/${conflict.constraintB.id}`
+      );
       lines.push(`  Shared Domain: [${conflict.sharedDomain.join(', ')}]`);
       lines.push(`  Issue: ${conflict.conflictReason}`);
       lines.push('');
@@ -149,10 +169,14 @@ export function formatCrossFeatureResults(result: CrossFeatureConflictResult): s
   lines.push('SUMMARY');
   lines.push('───────');
   lines.push(`- Blocking: ${result.summary.bySeverity.blocking} (must resolve before proceeding)`);
-  lines.push(`- Requires Acceptance: ${result.summary.bySeverity.requires_acceptance} (document as accepted trade-offs)`);
-  lines.push(`- Review Needed: ${result.summary.bySeverity.review_needed} (may or may not be actual conflicts)`);
+  lines.push(
+    `- Requires Acceptance: ${result.summary.bySeverity.requires_acceptance} (document as accepted trade-offs)`
+  );
+  lines.push(
+    `- Review Needed: ${result.summary.bySeverity.review_needed} (may or may not be actual conflicts)`
+  );
   lines.push('');
-  lines.push('To accept tensions, add to each feature\'s manifold:');
+  lines.push("To accept tensions, add to each feature's manifold:");
   lines.push('  accepted_tensions:');
   lines.push('    - cross_feature: "feature-name"');
   lines.push('      constraint: "T2"');

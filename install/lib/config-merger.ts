@@ -49,7 +49,7 @@ export function deepMerge(target: JsonObject, source: JsonObject): JsonObject {
       result[key] = deepMerge(targetVal as JsonObject, sourceVal as JsonObject);
     } else if (Array.isArray(sourceVal) && Array.isArray(targetVal)) {
       // Merge arrays: append items not already present (by JSON equality)
-      const existing = new Set(targetVal.map(v => JSON.stringify(v)));
+      const existing = new Set(targetVal.map((v) => JSON.stringify(v)));
       const merged = [...targetVal];
       for (const item of sourceVal) {
         if (!existing.has(JSON.stringify(item))) {
@@ -74,10 +74,10 @@ function getGeminiManifoldConfig(): JsonObject {
   return {
     customCommands: {
       manifoldContext: {
-        description: "Preserve Manifold constraint state across context compaction",
-        command: "bun run ~/.gemini/hooks/manifold-context.ts"
-      }
-    }
+        description: 'Preserve Manifold constraint state across context compaction',
+        command: 'bun run ~/.gemini/hooks/manifold-context.ts',
+      },
+    },
   };
 }
 

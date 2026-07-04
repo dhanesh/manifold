@@ -13,17 +13,10 @@ import {
   type FeatureData,
   type Manifold,
   type Constraint,
-  type Evidence
+  type Evidence,
 } from '../lib/parser.js';
 import { countConstraints, countConstraintsByType } from '../lib/schema.js';
-import {
-  println,
-  printError,
-  formatHeader,
-  formatKeyValue,
-  style,
-  toJSON
-} from '../lib/output.js';
+import { println, printError, formatHeader, formatKeyValue, style, toJSON } from '../lib/output.js';
 import {
   verifyAllEvidence,
   normalizeEvidence,
@@ -86,7 +79,10 @@ export function registerVerifyCommand(program: Command): void {
     .option('--verify-evidence', 'Verify concrete evidence for required truths (v3)')
     .option('--run-tests', 'Execute test evidence verification (requires --verify-evidence)')
     .option('--execute', 'Run configured test_runner subprocess for test evidence (GAP-01)')
-    .option('--levels', 'Show satisfaction level breakdown (DOCUMENTED/IMPLEMENTED/TESTED/VERIFIED)')
+    .option(
+      '--levels',
+      'Show satisfaction level breakdown (DOCUMENTED/IMPLEMENTED/TESTED/VERIFIED)'
+    )
     .action(async (feature: string | undefined, options: VerifyOptions) => {
       const exitCode = await verifyCommand(feature, options);
       process.exit(exitCode);
@@ -141,10 +137,12 @@ async function verifyCommand(feature: string | undefined, options: VerifyOptions
     }
 
     if (options.json) {
-      println(toJSON({
-        result: hasFailures ? 'FAIL' : 'PASS',
-        features: results
-      }));
+      println(
+        toJSON({
+          result: hasFailures ? 'FAIL' : 'PASS',
+          features: results,
+        })
+      );
     }
 
     return hasFailures ? 2 : 0;
@@ -157,7 +155,10 @@ async function verifyCommand(feature: string | undefined, options: VerifyOptions
     if (options.json) {
       println(toJSON({ error: `Feature "${feature}" not found` }));
     } else {
-      printError(`Feature "${feature}" not found`, `Available features: ${listFeatures(manifoldDir).join(', ') || 'none'}`);
+      printError(
+        `Feature "${feature}" not found`,
+        `Available features: ${listFeatures(manifoldDir).join(', ') || 'none'}`
+      );
     }
     return 1;
   }
@@ -187,7 +188,7 @@ async function verifyFeature(
     return {
       feature,
       result: 'FAIL',
-      issues: ['Manifold file not found or invalid']
+      issues: ['Manifold file not found or invalid'],
     };
   }
 
@@ -196,7 +197,7 @@ async function verifyFeature(
   const result: VerificationResult = {
     feature,
     result: 'PASS',
-    issues
+    issues,
   };
 
   // Verify artifacts if requested or if generation data exists
@@ -224,13 +225,15 @@ async function verifyFeature(
 
     // All required truths should be satisfied
     if (coverage.requiredTruthsSatisfied < coverage.requiredTruthsTotal) {
-      issues.push(`${coverage.requiredTruthsTotal - coverage.requiredTruthsSatisfied} required truth(s) not satisfied`);
+      issues.push(
+        `${coverage.requiredTruthsTotal - coverage.requiredTruthsSatisfied} required truth(s) not satisfied`
+      );
       result.result = 'FAIL';
     }
   }
 
   // Check for unresolved tensions
-  const unresolvedTensions = manifold.tensions?.filter(t => t.status === 'unresolved') ?? [];
+  const unresolvedTensions = manifold.tensions?.filter((t) => t.status === 'unresolved') ?? [];
   if (unresolvedTensions.length > 0) {
     issues.push(`${unresolvedTensions.length} unresolved tension(s)`);
     if (options.strict) {
@@ -267,7 +270,10 @@ async function verifyFeature(
 /**
  * Verify artifacts exist on disk
  */
-function verifyArtifacts(manifold: Manifold, projectRoot: string): NonNullable<VerificationResult['artifacts']> {
+function verifyArtifacts(
+  manifold: Manifold,
+  projectRoot: string
+): NonNullable<VerificationResult['artifacts']> {
   const artifacts = manifold.generation?.artifacts ?? [];
   const details: ArtifactVerification[] = [];
   const missing: string[] = [];
@@ -280,7 +286,7 @@ function verifyArtifacts(manifold: Manifold, projectRoot: string): NonNullable<V
       path: artifact.path,
       exists,
       type: artifact.type,
-      satisfies: artifact.satisfies
+      satisfies: artifact.satisfies,
     });
 
     if (!exists) {
@@ -289,10 +295,10 @@ function verifyArtifacts(manifold: Manifold, projectRoot: string): NonNullable<V
   }
 
   return {
-    verified: details.filter(d => d.exists).length,
+    verified: details.filter((d) => d.exists).length,
     total: artifacts.length,
     missing,
-    details
+    details,
   };
 }
 
@@ -317,12 +323,12 @@ function calculateCoverage(manifold: Manifold): NonNullable<VerificationResult['
   // Priority 3: Estimate based on phase
   else {
     const phaseProgress: Record<string, number> = {
-      'INITIALIZED': 0,
-      'CONSTRAINED': 0.2,
-      'TENSIONED': 0.4,
-      'ANCHORED': 0.6,
-      'GENERATED': 0.8,
-      'VERIFIED': 1.0
+      INITIALIZED: 0,
+      CONSTRAINED: 0.2,
+      TENSIONED: 0.4,
+      ANCHORED: 0.6,
+      GENERATED: 0.8,
+      VERIFIED: 1.0,
     };
     satisfiedConstraints = Math.floor(totalConstraints * (phaseProgress[manifold.phase] ?? 0));
   }
@@ -337,19 +343,18 @@ function calculateCoverage(manifold: Manifold): NonNullable<VerificationResult['
     const match = rtStr.match(/^(\d+)/);
     satisfiedTruths = match ? parseInt(match[1], 10) : 0;
   } else {
-    satisfiedTruths = requiredTruths.filter(rt => rt.status === 'SATISFIED').length;
+    satisfiedTruths = requiredTruths.filter((rt) => rt.status === 'SATISFIED').length;
   }
 
-  const percentage = totalConstraints > 0
-    ? Math.round((satisfiedConstraints / totalConstraints) * 100)
-    : 0;
+  const percentage =
+    totalConstraints > 0 ? Math.round((satisfiedConstraints / totalConstraints) * 100) : 0;
 
   return {
     constraintsTotal: totalConstraints,
     constraintsSatisfied: satisfiedConstraints,
     requiredTruthsTotal: requiredTruths.length,
     requiredTruthsSatisfied: satisfiedTruths,
-    percentage
+    percentage,
   };
 }
 
@@ -372,7 +377,13 @@ async function verifyEvidenceForFeature(
   }
 
   // Also collect evidence from constraints (v3)
-  const constraintCategories = ['business', 'technical', 'user_experience', 'security', 'operational'] as const;
+  const constraintCategories = [
+    'business',
+    'technical',
+    'user_experience',
+    'security',
+    'operational',
+  ] as const;
   for (const category of constraintCategories) {
     const constraints = manifold.constraints?.[category] ?? [];
     for (const constraint of constraints) {
@@ -390,45 +401,55 @@ async function verifyEvidenceForFeature(
     runTests: options.runTests,
     executeTests: options.execute,
     config,
-    projectRoot
+    projectRoot,
   });
 }
 
 /**
  * Print verification output to console
  */
-function printVerificationOutput(result: VerificationResult, options: VerifyOptions, manifoldDir?: string): void {
+function printVerificationOutput(
+  result: VerificationResult,
+  options: VerifyOptions,
+  manifoldDir?: string
+): void {
   // Header with result
-  const resultColor = result.result === 'PASS'
-    ? style.success(result.result)
-    : result.result === 'PARTIAL'
-      ? style.warning(result.result)
-      : style.error(result.result);
+  const resultColor =
+    result.result === 'PASS'
+      ? style.success(result.result)
+      : result.result === 'PARTIAL'
+        ? style.warning(result.result)
+        : style.error(result.result);
 
   println(formatHeader(`Verify: ${style.feature(result.feature)} → ${resultColor}`));
 
   // Coverage
   if (result.coverage) {
     const c = result.coverage;
-    println(formatKeyValue(
-      'Constraints',
-      `${c.constraintsSatisfied}/${c.constraintsTotal} (${c.percentage}%)`
-    ));
+    println(
+      formatKeyValue(
+        'Constraints',
+        `${c.constraintsSatisfied}/${c.constraintsTotal} (${c.percentage}%)`
+      )
+    );
 
     if (c.requiredTruthsTotal > 0) {
-      println(formatKeyValue(
-        'Required Truths',
-        `${c.requiredTruthsSatisfied}/${c.requiredTruthsTotal} satisfied`
-      ));
+      println(
+        formatKeyValue(
+          'Required Truths',
+          `${c.requiredTruthsSatisfied}/${c.requiredTruthsTotal} satisfied`
+        )
+      );
     }
   }
 
   // Artifacts
   if (result.artifacts) {
     const a = result.artifacts;
-    const artifactStatus = a.missing.length === 0
-      ? style.success(`${a.verified}/${a.total} exist`)
-      : style.warning(`${a.verified}/${a.total} exist, ${a.missing.length} missing`);
+    const artifactStatus =
+      a.missing.length === 0
+        ? style.success(`${a.verified}/${a.total} exist`)
+        : style.warning(`${a.verified}/${a.total} exist, ${a.missing.length} missing`);
 
     println(formatKeyValue('Artifacts', artifactStatus));
 
@@ -445,9 +466,10 @@ function printVerificationOutput(result: VerificationResult, options: VerifyOpti
   // Evidence (v3)
   if (result.evidence) {
     const e = result.evidence;
-    const evidenceStatus = e.failed === 0
-      ? style.success(`${e.verified}/${e.total} verified`)
-      : style.warning(`${e.verified}/${e.total} verified, ${e.failed} failed`);
+    const evidenceStatus =
+      e.failed === 0
+        ? style.success(`${e.verified}/${e.total} verified`)
+        : style.warning(`${e.verified}/${e.total} verified, ${e.failed} failed`);
 
     println(formatKeyValue('Evidence', evidenceStatus));
 
@@ -456,7 +478,11 @@ function printVerificationOutput(result: VerificationResult, options: VerifyOpti
       println();
       for (const r of e.results) {
         const icon = r.passed ? '✓' : r.evidence.status === 'PENDING' ? '⏳' : '✗';
-        const colorFn = r.passed ? style.success : r.evidence.status === 'PENDING' ? style.dim : style.error;
+        const colorFn = r.passed
+          ? style.success
+          : r.evidence.status === 'PENDING'
+            ? style.dim
+            : style.error;
         println(`    ${colorFn(icon)} [${r.evidence.type}] ${r.message}`);
       }
     }
@@ -473,7 +499,12 @@ function printVerificationOutput(result: VerificationResult, options: VerifyOpti
         if (Object.keys(levels).length > 0) {
           println();
           println(`  ${style.dim('Satisfaction Levels:')}`);
-          const counts: Record<string, number> = { DOCUMENTED: 0, IMPLEMENTED: 0, TESTED: 0, VERIFIED: 0 };
+          const counts: Record<string, number> = {
+            DOCUMENTED: 0,
+            IMPLEMENTED: 0,
+            TESTED: 0,
+            VERIFIED: 0,
+          };
           for (const level of Object.values(levels)) {
             counts[level] = (counts[level] || 0) + 1;
           }
@@ -504,7 +535,13 @@ function printVerificationOutput(result: VerificationResult, options: VerifyOpti
  */
 function computeSatisfactionLevels(manifold: Manifold): Record<string, SatisfactionLevel> {
   const levels: Record<string, SatisfactionLevel> = {};
-  const constraintCategories = ['business', 'technical', 'user_experience', 'security', 'operational'] as const;
+  const constraintCategories = [
+    'business',
+    'technical',
+    'user_experience',
+    'security',
+    'operational',
+  ] as const;
 
   // Build a map of constraint ID → evidence from required truths
   const rtEvidenceByConstraint = new Map<string, Evidence[]>();

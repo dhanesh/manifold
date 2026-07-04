@@ -131,7 +131,7 @@ export class WorktreeManager {
     if (this.activeWorktrees.size >= this.config.maxWorktrees) {
       throw new Error(
         `Maximum worktrees (${this.config.maxWorktrees}) reached. ` +
-        `Complete or remove existing worktrees first.`
+          `Complete or remove existing worktrees first.`
       );
     }
 
@@ -139,15 +139,14 @@ export class WorktreeManager {
     const worktreePath = join(this.config.worktreeDir, taskId);
 
     // Get base branch or use current
-    const base = baseBranch ?? await this.getCurrentBranch();
+    const base = baseBranch ?? (await this.getCurrentBranch());
     const commit = await this.getCurrentCommit();
 
     try {
       // Create the worktree with a new branch
-      await execAsync(
-        `git worktree add -b "${branchName}" "${worktreePath}" "${base}"`,
-        { cwd: this.config.baseDir }
-      );
+      await execAsync(`git worktree add -b "${branchName}" "${worktreePath}" "${base}"`, {
+        cwd: this.config.baseDir,
+      });
 
       const info: WorktreeInfo = {
         path: worktreePath,
@@ -299,16 +298,14 @@ export class WorktreeManager {
    * Get all completed worktrees
    */
   getCompleted(): WorktreeInfo[] {
-    return Array.from(this.activeWorktrees.values())
-      .filter(w => w.status === 'completed');
+    return Array.from(this.activeWorktrees.values()).filter((w) => w.status === 'completed');
   }
 
   /**
    * Get all failed worktrees
    */
   getFailed(): WorktreeInfo[] {
-    return Array.from(this.activeWorktrees.values())
-      .filter(w => w.status === 'failed');
+    return Array.from(this.activeWorktrees.values()).filter((w) => w.status === 'failed');
   }
 
   /**
@@ -319,7 +316,7 @@ export class WorktreeManager {
     const taskIds = Array.from(this.activeWorktrees.keys());
 
     for (const taskId of taskIds) {
-      await this.forceRemove(taskId).catch(error => {
+      await this.forceRemove(taskId).catch((error) => {
         console.error(`Failed to cleanup worktree ${taskId}:`, error);
       });
     }

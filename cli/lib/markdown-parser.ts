@@ -19,7 +19,17 @@
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
-import type { Root, Heading, Paragraph, Blockquote, Text, Strong, InlineCode, Content, PhrasingContent } from 'mdast';
+import type {
+  Root,
+  Heading,
+  Paragraph,
+  Blockquote,
+  Text,
+  Strong,
+  InlineCode,
+  Content,
+  PhrasingContent,
+} from 'mdast';
 
 // ============================================================
 // Content Types
@@ -225,10 +235,19 @@ export function parseManifoldMarkdown(markdown: string): ManifoldContent {
   };
 
   // State machine for tracking current context
-  let currentSection: 'outcome' | 'constraints' | 'tensions' | 'required_truths' | 'other' = 'other';
+  let currentSection: 'outcome' | 'constraints' | 'tensions' | 'required_truths' | 'other' =
+    'other';
   let currentCategory:
-    | 'business' | 'technical' | 'user_experience' | 'security' | 'operational'
-    | 'obligations' | 'desires' | 'resources' | 'risks' | 'dependencies'
+    | 'business'
+    | 'technical'
+    | 'user_experience'
+    | 'security'
+    | 'operational'
+    | 'obligations'
+    | 'desires'
+    | 'resources'
+    | 'risks'
+    | 'dependencies'
     | null = null;
   let currentConstraint: ConstraintContent | null = null;
   let currentTension: TensionContent | null = null;
@@ -336,7 +355,8 @@ export function parseManifoldMarkdown(markdown: string): ManifoldContent {
         const lowerText = text.toLowerCase();
         if (lowerText === 'business') currentCategory = 'business';
         else if (lowerText === 'technical') currentCategory = 'technical';
-        else if (lowerText === 'user experience' || lowerText === 'ux') currentCategory = 'user_experience';
+        else if (lowerText === 'user experience' || lowerText === 'ux')
+          currentCategory = 'user_experience';
         else if (lowerText === 'security') currentCategory = 'security';
         else if (lowerText === 'operational') currentCategory = 'operational';
         else if (lowerText === 'obligations') currentCategory = 'obligations';

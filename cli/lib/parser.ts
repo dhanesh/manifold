@@ -15,21 +15,26 @@ export type SchemaVersion = 1 | 2 | 3;
 // v3: Evidence System - Reality Grounding
 // ============================================================
 
-export type EvidenceType = 'file_exists' | 'content_match' | 'test_passes' | 'metric_value' | 'manual_review';
+export type EvidenceType =
+  | 'file_exists'
+  | 'content_match'
+  | 'test_passes'
+  | 'metric_value'
+  | 'manual_review';
 
 export type EvidenceStatus = 'VERIFIED' | 'PENDING' | 'FAILED' | 'STALE';
 
 export interface Evidence {
   type: EvidenceType;
-  path: string;                    // File path for file-based evidence
-  pattern?: string;                // Regex for content_match
-  test_name?: string;              // Test identifier for test_passes
-  metric_name?: string;            // Metric name for metric_value
-  threshold?: number | string;     // Expected value/threshold
-  verified_at?: string;            // ISO timestamp of last verification
+  path: string; // File path for file-based evidence
+  pattern?: string; // Regex for content_match
+  test_name?: string; // Test identifier for test_passes
+  metric_name?: string; // Metric name for metric_value
+  threshold?: number | string; // Expected value/threshold
+  verified_at?: string; // ISO timestamp of last verification
   verified_by?: 'cli' | 'ci' | 'human'; // Who/what verified
   status: EvidenceStatus;
-  message?: string;                // Verification result message
+  message?: string; // Verification result message
 }
 
 // ============================================================
@@ -42,17 +47,17 @@ export type ConstraintNodeStatus = 'UNKNOWN' | 'REQUIRED' | 'SATISFIED' | 'BLOCK
 export interface ConstraintNode {
   id: string;
   type: ConstraintNodeType;
-  label: string;                   // Human-readable label
+  label: string; // Human-readable label
 
   // Graph edges
-  depends_on: string[];            // What must be true for this to be satisfied
-  blocks: string[];                // What this blocks until satisfied
-  conflicts_with: string[];        // Tension edges (bidirectional)
+  depends_on: string[]; // What must be true for this to be satisfied
+  blocks: string[]; // What this blocks until satisfied
+  conflicts_with: string[]; // Tension edges (bidirectional)
 
   // Temporal state
   status: ConstraintNodeStatus;
   critical_path: boolean;
-  wave_number?: number;            // Which wave this executes in
+  wave_number?: number; // Which wave this executes in
 }
 
 export interface ConstraintGraph {
@@ -63,9 +68,9 @@ export interface ConstraintGraph {
   nodes: Record<string, ConstraintNode>;
 
   edges: {
-    dependencies: [string, string][];     // [from, to] = from depends on to
-    conflicts: [string, string][];        // Bidirectional conflict pairs
-    satisfies: [string, string][];        // [artifact, constraint]
+    dependencies: [string, string][]; // [from, to] = from depends on to
+    conflicts: [string, string][]; // Bidirectional conflict pairs
+    satisfies: [string, string][]; // [artifact, constraint]
   };
 
   execution_plan?: ExecutionPlan;
@@ -82,11 +87,11 @@ export interface ExecutionPlan {
 
 export interface Wave {
   number: number;
-  phase: ManifoldPhase;            // Conceptual phase for human comprehension
+  phase: ManifoldPhase; // Conceptual phase for human comprehension
   parallel_tasks: ParallelTask[];
   blocking_dependencies: string[];
-  cycle_broken?: boolean;          // True if this wave force-scheduled a node to break a dependency cycle
-  cycle_broken_node?: string;      // The node forced ready to break the cycle (ordering is heuristic past here)
+  cycle_broken?: boolean; // True if this wave force-scheduled a node to break a dependency cycle
+  cycle_broken_node?: string; // The node forced ready to break the cycle (ordering is heuristic past here)
 }
 
 export interface ParallelTask {
@@ -202,9 +207,9 @@ export interface Constraint {
   statement: string;
   rationale?: string;
   // v3: Implementation linking
-  implemented_by?: string[];       // Paths to implementation files
-  verified_by?: Evidence[];        // How this is verified
-  depends_on?: string[];           // Constraint dependencies
+  implemented_by?: string[]; // Paths to implementation files
+  verified_by?: Evidence[]; // How this is verified
+  depends_on?: string[]; // Constraint dependencies
   // Enhancement 2: Constraint genealogy
   source?: 'interview' | 'pre-mortem' | 'assumption';
   challenger?: 'regulation' | 'stakeholder' | 'technical-reality' | 'assumption';
@@ -253,10 +258,10 @@ export interface RequiredTruth {
   status: 'SATISFIED' | 'PARTIAL' | 'NOT_SATISFIED' | 'SPECIFICATION_READY';
   priority?: number;
   // v1/v2: Simple evidence string
-  evidence?: string | Evidence[];  // Support both string (v1/v2) and Evidence[] (v3)
+  evidence?: string | Evidence[]; // Support both string (v1/v2) and Evidence[] (v3)
   // v3: Enhanced tracking
-  maps_to_constraints?: string[];  // Constraint IDs this RT satisfies
-  last_verified?: string;          // ISO timestamp of last verification
+  maps_to_constraints?: string[]; // Constraint IDs this RT satisfies
+  last_verified?: string; // ISO timestamp of last verification
   // Enhancement 7: Recursive backward chaining
   depth?: number;
   children?: RequiredTruth[];
@@ -549,10 +554,12 @@ export function listFeatures(manifoldDir: string): string[] {
     if (!file.endsWith('.yaml') && !file.endsWith('.json')) continue;
 
     // Skip anchor, verify, and markdown files - only count main manifold files
-    if (file.endsWith('.anchor.yaml') ||
-        file.endsWith('.verify.yaml') ||
-        file.endsWith('.verify.json') ||
-        file.endsWith('.md')) {
+    if (
+      file.endsWith('.anchor.yaml') ||
+      file.endsWith('.verify.yaml') ||
+      file.endsWith('.verify.json') ||
+      file.endsWith('.md')
+    ) {
       continue;
     }
 
@@ -672,7 +679,13 @@ function loadJsonMdAsManifold(jsonPath: string, mdPath: string): Manifold | null
     // Reconstruct constraints with text from markdown
     if (structure.constraints) {
       manifold.constraints = {};
-      for (const category of ['business', 'technical', 'user_experience', 'security', 'operational'] as const) {
+      for (const category of [
+        'business',
+        'technical',
+        'user_experience',
+        'security',
+        'operational',
+      ] as const) {
         const refs = structure.constraints[category] || [];
         manifold.constraints[category] = refs.map((ref: any) => {
           const mdConstraint = mdSections.constraints.get(ref.id);
@@ -712,26 +725,26 @@ function loadJsonMdAsManifold(jsonPath: string, mdPath: string): Manifold | null
     // Reconstruct anchors with text from markdown
     if (structure.anchors) {
       manifold.anchors = {
-        required_truths: (structure.anchors.required_truths || []).map(
-          (ref: any) => {
-            const mdRT = mdSections.requiredTruths.get(ref.id);
-            // Structure uses `maps_to`; the manifold field is `maps_to_constraints`.
-            // Pull it out so the spread preserves every other structural field
-            // (status, evidence, depth, children, priority, and any later field)
-            // without leaving a stale `maps_to` key on the result.
-            const { maps_to, ...rest } = ref;
-            return {
-              ...rest,
-              maps_to_constraints: maps_to,
-              statement: mdRT?.statement || `[${ref.id}]`,
-            } as RequiredTruth;
-          }
-        ),
+        required_truths: (structure.anchors.required_truths || []).map((ref: any) => {
+          const mdRT = mdSections.requiredTruths.get(ref.id);
+          // Structure uses `maps_to`; the manifold field is `maps_to_constraints`.
+          // Pull it out so the spread preserves every other structural field
+          // (status, evidence, depth, children, priority, and any later field)
+          // without leaving a stale `maps_to` key on the result.
+          const { maps_to, ...rest } = ref;
+          return {
+            ...rest,
+            maps_to_constraints: maps_to,
+            statement: mdRT?.statement || `[${ref.id}]`,
+          } as RequiredTruth;
+        }),
         recommended_option: structure.anchors.recommended_option,
         implementation_phases: structure.anchors.implementation_phases,
         anchor_document: structure.anchors.anchor_document,
         // Enhancement 5: binding constraint
-        ...(structure.anchors.binding_constraint && { binding_constraint: structure.anchors.binding_constraint }),
+        ...(structure.anchors.binding_constraint && {
+          binding_constraint: structure.anchors.binding_constraint,
+        }),
       };
     }
 
@@ -894,7 +907,13 @@ function parseMarkdownSections(md: string): MdSections {
 
     // Skip separator lines and empty blockquotes
     if (line === '---' || line === '') continue;
-    if (line.startsWith('> **') || line.startsWith('**Implemented by:**') || line.startsWith('**Verified by:**') || line.startsWith('**Evidence:**')) continue;
+    if (
+      line.startsWith('> **') ||
+      line.startsWith('**Implemented by:**') ||
+      line.startsWith('**Verified by:**') ||
+      line.startsWith('**Evidence:**')
+    )
+      continue;
 
     // Collect content
     if (currentId && currentType) {

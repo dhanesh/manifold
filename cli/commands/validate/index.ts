@@ -13,10 +13,22 @@ export { registerValidateCommand } from './command.js';
 export { validateEvidenceIntegrity } from './runner.js';
 
 // Public API: types
-export type { EvidenceResult, ValidateOptions, FeatureValidationResult, ValidationMetrics } from './types.js';
+export type {
+  EvidenceResult,
+  ValidateOptions,
+  FeatureValidationResult,
+  ValidationMetrics,
+} from './types.js';
 
 // Internal but re-exported for completeness: formatting utilities
-export { printValidationOutput, printEvidenceResults, createMetrics, updateMetrics, formatMetrics, MAX_ERRORS_DISPLAY } from './formatter.js';
+export {
+  printValidationOutput,
+  printEvidenceResults,
+  createMetrics,
+  updateMetrics,
+  formatMetrics,
+  MAX_ERRORS_DISPLAY,
+} from './formatter.js';
 
 // Internal but re-exported for completeness: runner
 export { validateFeature } from './runner.js';

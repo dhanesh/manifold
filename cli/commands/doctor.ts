@@ -9,14 +9,7 @@ import type { Command } from 'commander';
 import { dirname } from 'path';
 import { findManifoldDir } from '../lib/parser.js';
 import { runDoctor, type DoctorReport } from '../lib/doctor.js';
-import {
-  println,
-  printError,
-  formatHeader,
-  formatKeyValue,
-  style,
-  toJSON,
-} from '../lib/output.js';
+import { println, printError, formatHeader, formatKeyValue, style, toJSON } from '../lib/output.js';
 
 interface DoctorOptions {
   json?: boolean;
@@ -29,9 +22,11 @@ interface DoctorOptions {
 export function registerDoctorCommand(program: Command): void {
   program
     .command('doctor')
-    .description('Check repo health: detect invalid manifolds, constraint dependency cycles, plugin-sync drift, stale fingerprints, and file-drift')
+    .description(
+      'Check repo health: detect invalid manifolds, constraint dependency cycles, plugin-sync drift, stale fingerprints, and file-drift'
+    )
     .option('--json', 'Output as JSON')
-    .action(async function(options: DoctorOptions) {
+    .action(async function (options: DoctorOptions) {
       // Use optsWithGlobals() to capture --json even when defined at parent level
       // Satisfies: RT-6 (U3) — --json must work whether passed as local or global flag
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -11,11 +11,7 @@
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
 import { dirname, join } from 'path';
-import {
-  findManifoldDir,
-  listFeatures,
-  loadFeature,
-} from './parser.js';
+import { findManifoldDir, listFeatures, loadFeature } from './parser.js';
 import { computeFileHash, detectDrift } from './evidence.js';
 import { fingerprintSkills, type SkillFingerprint } from './fingerprint.js';
 import { detectConstraintCycle } from './solver.js';
@@ -25,9 +21,9 @@ import { detectConstraintCycle } from './solver.js';
 // ============================================================
 
 export interface Problem {
-  check: string;   // check id, e.g. 'plugin-sync'
+  check: string; // check id, e.g. 'plugin-sync'
   message: string; // human-readable description of the problem
-  fix: string;     // a concrete, copy-pasteable remediation command
+  fix: string; // a concrete, copy-pasteable remediation command
 }
 
 export interface DoctorReport {
@@ -305,7 +301,9 @@ export function buildSnapshot(repoRoot: string): RepoSnapshot {
   let skillFingerprints: SkillFingerprint[] = [];
   if (existsSync(fingerprintBaseline)) {
     try {
-      skillFingerprints = JSON.parse(readFileSync(fingerprintBaseline, 'utf-8')) as SkillFingerprint[];
+      skillFingerprints = JSON.parse(
+        readFileSync(fingerprintBaseline, 'utf-8')
+      ) as SkillFingerprint[];
     } catch {
       skillFingerprints = [];
     }
@@ -358,7 +356,7 @@ function collectMdFiles(
   srcDir: string,
   relPrefix: string,
   installFiles: string[],
-  installFileHashes: Record<string, string>,
+  installFileHashes: Record<string, string>
 ): void {
   for (const entry of safeReaddir(srcDir)) {
     const srcPath = join(srcDir, entry);
@@ -386,7 +384,7 @@ function collectAllFiles(
   srcDir: string,
   relPrefix: string,
   installFiles: string[],
-  installFileHashes: Record<string, string>,
+  installFileHashes: Record<string, string>
 ): void {
   for (const entry of safeReaddir(srcDir)) {
     const srcPath = join(srcDir, entry);

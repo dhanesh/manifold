@@ -9,23 +9,11 @@
 import { readFileSync, existsSync } from 'fs';
 import { join, resolve } from 'path';
 import { ParseError } from '../../lib/errors.js';
-import {
-  loadFeature,
-  parseYamlSafe,
-  type Manifold,
-  type Evidence,
-} from '../../lib/parser.js';
+import { loadFeature, parseYamlSafe, type Manifold, type Evidence } from '../../lib/parser.js';
 import { validateManifold, type ValidationResult } from '../../lib/schema.js';
 import { detectConstraintCycle } from '../../lib/solver.js';
-import {
-  detectManifoldFormat,
-  loadManifoldByFeature,
-} from '../../lib/manifold-linker.js';
-import type {
-  ValidateOptions,
-  FeatureValidationResult,
-  EvidenceResult,
-} from './types.js';
+import { detectManifoldFormat, loadManifoldByFeature } from '../../lib/manifold-linker.js';
+import type { ValidateOptions, FeatureValidationResult, EvidenceResult } from './types.js';
 
 /**
  * Validate a single feature.
@@ -127,8 +115,8 @@ async function validateFeatureByFormat(
         feature,
         valid: false,
         error: 'Manifold file not found',
-        path: manifoldPath
-      }
+        path: manifoldPath,
+      },
     };
   }
 
@@ -147,8 +135,8 @@ async function validateFeatureByFormat(
         feature,
         valid: false,
         error: err.toUserMessage(),
-        path: manifoldPath
-      }
+        path: manifoldPath,
+      },
     };
   }
 
@@ -163,8 +151,8 @@ async function validateFeatureByFormat(
         feature,
         valid: false,
         error: 'Invalid YAML syntax',
-        path: manifoldPath
-      }
+        path: manifoldPath,
+      },
     };
   }
 
@@ -174,7 +162,7 @@ async function validateFeatureByFormat(
   return {
     valid: result.valid,
     result,
-    manifold: parsed,  // Include for conflict detection (INT-1)
+    manifold: parsed, // Include for conflict detection (INT-1)
     format: 'yaml',
     json: {
       feature,
@@ -183,8 +171,8 @@ async function validateFeatureByFormat(
       schemaVersion: result.schemaVersion,
       errors: result.errors.length > 0 ? result.errors : undefined,
       warnings: result.warnings.length > 0 ? result.warnings : undefined,
-      path: manifoldPath
-    }
+      path: manifoldPath,
+    },
   };
 }
 
@@ -213,8 +201,8 @@ async function validateJsonMdFeature(
         valid: false,
         format: 'json-md',
         error: loadResult.error,
-        paths: { json: jsonPath, md: mdPath }
-      }
+        paths: { json: jsonPath, md: mdPath },
+      },
     };
   }
 
@@ -253,16 +241,18 @@ async function validateJsonMdFeature(
       phase: structure?.phase,
       errors: errors.length > 0 ? errors : undefined,
       warnings: warnings.length > 0 ? warnings : undefined,
-      linking: linking ? {
-        totalConstraints: linking.summary.totalConstraints,
-        linkedConstraints: linking.summary.linkedConstraints,
-        totalTensions: linking.summary.totalTensions,
-        linkedTensions: linking.summary.linkedTensions,
-        totalRequiredTruths: linking.summary.totalRequiredTruths,
-        linkedRequiredTruths: linking.summary.linkedRequiredTruths,
-      } : undefined,
-      paths: { json: jsonPath, md: mdPath }
-    }
+      linking: linking
+        ? {
+            totalConstraints: linking.summary.totalConstraints,
+            linkedConstraints: linking.summary.linkedConstraints,
+            totalTensions: linking.summary.totalTensions,
+            linkedTensions: linking.summary.linkedTensions,
+            totalRequiredTruths: linking.summary.totalRequiredTruths,
+            linkedRequiredTruths: linking.summary.linkedRequiredTruths,
+          }
+        : undefined,
+      paths: { json: jsonPath, md: mdPath },
+    },
   };
 }
 
@@ -284,8 +274,8 @@ async function validateJsonOnlyFeature(
         feature,
         valid: false,
         error: 'Manifold file not found',
-        path: jsonPath
-      }
+        path: jsonPath,
+      },
     };
   }
 
@@ -301,8 +291,8 @@ async function validateJsonOnlyFeature(
         feature,
         valid: false,
         error: `Failed to read file: ${message}`,
-        path: jsonPath
-      }
+        path: jsonPath,
+      },
     };
   }
 
@@ -318,8 +308,8 @@ async function validateJsonOnlyFeature(
         feature,
         valid: false,
         error: 'Invalid JSON syntax',
-        path: jsonPath
-      }
+        path: jsonPath,
+      },
     };
   }
 
@@ -329,7 +319,7 @@ async function validateJsonOnlyFeature(
   return {
     valid: result.valid,
     result,
-    manifold: parsed,  // Include for conflict detection (INT-1)
+    manifold: parsed, // Include for conflict detection (INT-1)
     format: 'json',
     json: {
       feature,
@@ -338,8 +328,8 @@ async function validateJsonOnlyFeature(
       schemaVersion: result.schemaVersion,
       errors: result.errors.length > 0 ? result.errors : undefined,
       warnings: result.warnings.length > 0 ? result.warnings : undefined,
-      path: jsonPath
-    }
+      path: jsonPath,
+    },
   };
 }
 
@@ -360,10 +350,7 @@ async function validateJsonOnlyFeature(
  * @param feature - Feature name to validate
  * @returns Array of evidence validation results
  */
-export function validateEvidenceIntegrity(
-  manifoldDir: string,
-  feature: string
-): EvidenceResult[] {
+export function validateEvidenceIntegrity(manifoldDir: string, feature: string): EvidenceResult[] {
   const results: EvidenceResult[] = [];
 
   // Load the feature using the unified loader
@@ -376,7 +363,13 @@ export function validateEvidenceIntegrity(
   // Collect all constraint IDs and types
   const constraintIds = new Set<string>();
   const invariantIds = new Set<string>();
-  const constraintCategories = ['business', 'technical', 'user_experience', 'security', 'operational'] as const;
+  const constraintCategories = [
+    'business',
+    'technical',
+    'user_experience',
+    'security',
+    'operational',
+  ] as const;
 
   for (const category of constraintCategories) {
     const constraints = manifold.constraints?.[category] ?? [];
@@ -419,9 +412,7 @@ export function validateEvidenceIntegrity(
 
     const mapsTo = rt.maps_to_constraints ?? [];
     // Handle both string (v1/v2) and Evidence[] (v3) evidence formats
-    const evidenceArr: Evidence[] = Array.isArray(rt.evidence)
-      ? (rt.evidence as Evidence[])
-      : [];
+    const evidenceArr: Evidence[] = Array.isArray(rt.evidence) ? (rt.evidence as Evidence[]) : [];
 
     // --- Check 1: Orphaned maps_to references (ERROR) ---
     for (const constraintId of mapsTo) {
@@ -454,7 +445,7 @@ export function validateEvidenceIntegrity(
     }
 
     // --- Track test_passes evidence for invariant chain (Check 3) ---
-    const hasTestPasses = evidenceArr.some(ev => ev.type === 'test_passes');
+    const hasTestPasses = evidenceArr.some((ev) => ev.type === 'test_passes');
     if (hasTestPasses) {
       for (const constraintId of mapsTo) {
         constraintsWithTestEvidence.add(constraintId);
@@ -463,8 +454,8 @@ export function validateEvidenceIntegrity(
 
     // --- Check 4: Evidence type completeness (INFO) ---
     if (evidenceArr.length > 0) {
-      const hasFileExists = evidenceArr.some(ev => ev.type === 'file_exists');
-      const mapsToInvariant = mapsTo.some(id => invariantIds.has(id));
+      const hasFileExists = evidenceArr.some((ev) => ev.type === 'file_exists');
+      const mapsToInvariant = mapsTo.some((id) => invariantIds.has(id));
 
       if (!hasFileExists) {
         results.push({
@@ -512,8 +503,8 @@ export function validateEvidenceIntegrity(
   for (const invariantId of invariantIds) {
     if (!constraintsWithTestEvidence.has(invariantId)) {
       // Only warn if at least one RT maps to this invariant
-      const hasMappedRT = requiredTruths.some(
-        rt => (rt.maps_to_constraints ?? []).includes(invariantId)
+      const hasMappedRT = requiredTruths.some((rt) =>
+        (rt.maps_to_constraints ?? []).includes(invariantId)
       );
 
       if (hasMappedRT) {

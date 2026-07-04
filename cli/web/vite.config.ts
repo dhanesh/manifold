@@ -14,9 +14,9 @@ import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const cliPkg = JSON.parse(
-  readFileSync(resolve(__dirname, '..', 'package.json'), 'utf-8'),
-) as { version: string };
+const cliPkg = JSON.parse(readFileSync(resolve(__dirname, '..', 'package.json'), 'utf-8')) as {
+  version: string;
+};
 
 export default defineConfig({
   base: './',
@@ -27,8 +27,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'flow': ['d3-sankey', 'd3-array', 'd3-shape'],
-          'markdown': [
+          flow: ['d3-sankey', 'd3-array', 'd3-shape'],
+          markdown: [
             'unified',
             'remark-parse',
             'remark-gfm',

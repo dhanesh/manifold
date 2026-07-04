@@ -20,7 +20,7 @@ export const PhaseSchema = z.enum([
   'TENSIONED',
   'ANCHORED',
   'GENERATED',
-  'VERIFIED'
+  'VERIFIED',
 ]);
 
 export type Phase = z.infer<typeof PhaseSchema>;
@@ -37,11 +37,7 @@ export type ConstraintType = z.infer<typeof ConstraintTypeSchema>;
 // Tension Type and Status Enums
 // ============================================================
 
-export const TensionTypeSchema = z.enum([
-  'trade_off',
-  'resource_tension',
-  'hidden_dependency'
-]);
+export const TensionTypeSchema = z.enum(['trade_off', 'resource_tension', 'hidden_dependency']);
 
 export type TensionType = z.infer<typeof TensionTypeSchema>;
 
@@ -57,7 +53,7 @@ export const RequiredTruthStatusSchema = z.enum([
   'SATISFIED',
   'PARTIAL',
   'NOT_SATISFIED',
-  'SPECIFICATION_READY'
+  'SPECIFICATION_READY',
 ]);
 
 export type RequiredTruthStatus = z.infer<typeof RequiredTruthStatusSchema>;
@@ -66,11 +62,7 @@ export type RequiredTruthStatus = z.infer<typeof RequiredTruthStatusSchema>;
 // Convergence Status Enum
 // ============================================================
 
-export const ConvergenceStatusSchema = z.enum([
-  'NOT_STARTED',
-  'IN_PROGRESS',
-  'CONVERGED'
-]);
+export const ConvergenceStatusSchema = z.enum(['NOT_STARTED', 'IN_PROGRESS', 'CONVERGED']);
 
 export type ConvergenceStatus = z.infer<typeof ConvergenceStatusSchema>;
 
@@ -83,17 +75,12 @@ export const EvidenceTypeSchema = z.enum([
   'content_match',
   'test_passes',
   'metric_value',
-  'manual_review'
+  'manual_review',
 ]);
 
 export type EvidenceType = z.infer<typeof EvidenceTypeSchema>;
 
-export const EvidenceStatusSchema = z.enum([
-  'VERIFIED',
-  'PENDING',
-  'FAILED',
-  'STALE'
-]);
+export const EvidenceStatusSchema = z.enum(['VERIFIED', 'PENDING', 'FAILED', 'STALE']);
 
 export type EvidenceStatus = z.infer<typeof EvidenceStatusSchema>;
 
@@ -101,12 +88,7 @@ export type EvidenceStatus = z.infer<typeof EvidenceStatusSchema>;
 // Constraint Node Types (v3 Graph)
 // ============================================================
 
-export const NodeTypeSchema = z.enum([
-  'constraint',
-  'tension',
-  'required_truth',
-  'artifact'
-]);
+export const NodeTypeSchema = z.enum(['constraint', 'tension', 'required_truth', 'artifact']);
 
 export type NodeType = z.infer<typeof NodeTypeSchema>;
 
@@ -115,7 +97,7 @@ export const NodeStatusSchema = z.enum([
   'REQUIRED',
   'SATISFIED',
   'BLOCKED',
-  'CONFLICTED'
+  'CONFLICTED',
 ]);
 
 export type NodeStatus = z.infer<typeof NodeStatusSchema>;
@@ -128,10 +110,10 @@ export type NodeStatus = z.infer<typeof NodeStatusSchema>;
 
 // Satisfaction levels: tiered verification depth (GAP-05)
 export const SatisfactionLevelSchema = z.enum([
-  'DOCUMENTED',    // Constraint acknowledged in docs/specs
-  'IMPLEMENTED',   // Code exists that addresses constraint
-  'TESTED',        // Tests verify constraint behavior
-  'VERIFIED'       // Automated verification confirms satisfaction
+  'DOCUMENTED', // Constraint acknowledged in docs/specs
+  'IMPLEMENTED', // Code exists that addresses constraint
+  'TESTED', // Tests verify constraint behavior
+  'VERIFIED', // Automated verification confirms satisfaction
 ]);
 
 export type SatisfactionLevel = z.infer<typeof SatisfactionLevelSchema>;
@@ -152,9 +134,9 @@ export const EvidenceRefSchema = z.object({
   status: EvidenceStatusSchema.optional(),
   satisfies: z.array(z.string()).optional(),
   // v3.1: Framework gap remediation additions
-  test_tier: TestTierSchema.optional(),              // GAP-02: test tier classification
-  validation_criteria: z.string().optional(),         // GAP-08: tension resolution verification
-  file_hash: z.string().optional(),                   // GAP-07: drift detection baseline
+  test_tier: TestTierSchema.optional(), // GAP-02: test tier classification
+  validation_criteria: z.string().optional(), // GAP-08: tension resolution verification
+  file_hash: z.string().optional(), // GAP-07: drift detection baseline
 });
 
 export type EvidenceRef = z.infer<typeof EvidenceRefSchema>;
@@ -171,10 +153,12 @@ export type EvidenceRef = z.infer<typeof EvidenceRefSchema>;
  * - Security: S1, S2, ...
  * - Operational: O1, O2, ...
  */
-export const ConstraintIdSchema = z.string().regex(
-  /^([BTUSO]|OB|D|R|RK|DP)\d+$/,
-  'Constraint ID must match software prefix (B1, T2, U3, S4, O5) or non-software prefix (OB1, D1, R1, RK1, DP1)'
-);
+export const ConstraintIdSchema = z
+  .string()
+  .regex(
+    /^([BTUSO]|OB|D|R|RK|DP)\d+$/,
+    'Constraint ID must match software prefix (B1, T2, U3, S4, O5) or non-software prefix (OB1, D1, R1, RK1, DP1)'
+  );
 
 // Enhancement 2: Constraint genealogy source taxonomy
 export const ConstraintSourceSchema = z.enum(['interview', 'pre-mortem', 'assumption']);
@@ -185,7 +169,7 @@ export const ConstraintChallengerSchema = z.enum([
   'regulation',
   'stakeholder',
   'technical-reality',
-  'assumption'
+  'assumption',
 ]);
 export type ConstraintChallenger = z.infer<typeof ConstraintChallengerSchema>;
 
@@ -193,33 +177,37 @@ export type ConstraintChallenger = z.infer<typeof ConstraintChallengerSchema>;
 export const ThresholdKindSchema = z.enum(['deterministic', 'statistical']);
 export type ThresholdKind = z.infer<typeof ThresholdKindSchema>;
 
-export const ConstraintThresholdSchema = z.object({
-  kind: ThresholdKindSchema,
-  // Deterministic fields
-  ceiling: z.string().optional(),
-  // Statistical fields
-  p99: z.string().optional(),
-  p50: z.string().optional(),
-  failure_rate: z.string().optional(),
-  window: z.string().optional(),
-}).passthrough();
+export const ConstraintThresholdSchema = z
+  .object({
+    kind: ThresholdKindSchema,
+    // Deterministic fields
+    ceiling: z.string().optional(),
+    // Statistical fields
+    p99: z.string().optional(),
+    p50: z.string().optional(),
+    failure_rate: z.string().optional(),
+    window: z.string().optional(),
+  })
+  .passthrough();
 export type ConstraintThreshold = z.infer<typeof ConstraintThresholdSchema>;
 
 export const ConstraintRefSchema = z.object({
   id: ConstraintIdSchema,
   type: ConstraintTypeSchema,
-  verified_by: z.array(EvidenceRefSchema).optional(),  // v3: evidence verifying this constraint
+  verified_by: z.array(EvidenceRefSchema).optional(), // v3: evidence verifying this constraint
   // Enhancement 2: Constraint genealogy (optional, defaults inferred by AI)
   source: ConstraintSourceSchema.optional(),
   challenger: ConstraintChallengerSchema.optional(),
   // Enhancement 6: Probabilistic constraint bounds (optional, metric constraints only)
   threshold: ConstraintThresholdSchema.optional(),
   // Constraint quality scoring (specificity, measurability, testability: 1-3 each)
-  quality: z.object({
-    specificity: z.number().min(1).max(3),
-    measurability: z.number().min(1).max(3),
-    testability: z.number().min(1).max(3),
-  }).optional(),
+  quality: z
+    .object({
+      specificity: z.number().min(1).max(3),
+      measurability: z.number().min(1).max(3),
+      testability: z.number().min(1).max(3),
+    })
+    .optional(),
 });
 
 export type ConstraintRef = z.infer<typeof ConstraintRefSchema>;
@@ -231,10 +219,9 @@ export type ConstraintRef = z.infer<typeof ConstraintRefSchema>;
 /**
  * Tension ID pattern: TN1, TN2, ...
  */
-export const TensionIdSchema = z.string().regex(
-  /^TN\d+$/,
-  'Tension ID must match pattern like TN1, TN2'
-);
+export const TensionIdSchema = z
+  .string()
+  .regex(/^TN\d+$/, 'Tension ID must match pattern like TN1, TN2');
 
 // Enhancement 8: Propagation effect on a constraint after tension resolution
 export const PropagationEffectSchema = z.enum(['TIGHTENED', 'LOOSENED', 'VIOLATED']);
@@ -269,25 +256,26 @@ export type TensionRef = z.infer<typeof TensionRefSchema>;
 /**
  * Required Truth ID pattern: RT-1, RT-2, ...
  */
-export const RequiredTruthIdSchema = z.string().regex(
-  /^RT-\d+$/,
-  'Required Truth ID must match pattern like RT-1, RT-2'
-);
+export const RequiredTruthIdSchema = z
+  .string()
+  .regex(/^RT-\d+$/, 'Required Truth ID must match pattern like RT-1, RT-2');
 
 // Enhancement 7: Recursive backward chaining - sub-truth IDs use dotted notation (RT-1.1, RT-1.1.2)
 export const RequiredTruthRefSchema: z.ZodType<any> = z.object({
-  id: z.string().regex(/^RT-[\d.]+$/, 'Required Truth ID must match pattern like RT-1, RT-1.1, RT-1.1.2'),
+  id: z
+    .string()
+    .regex(/^RT-[\d.]+$/, 'Required Truth ID must match pattern like RT-1, RT-1.1, RT-1.1.2'),
   status: RequiredTruthStatusSchema,
   maps_to: z.array(z.string()).optional(),
-  evidence: z.array(EvidenceRefSchema).optional(),  // v3: evidence for this RT
+  evidence: z.array(EvidenceRefSchema).optional(), // v3: evidence for this RT
   // Enhancement 7: Recursive backward chaining
   depth: z.number().optional(),
   children: z.lazy(() => z.array(RequiredTruthRefSchema)).optional(),
   // Enhancement 8: Backward-reasoning edge map (parent→child relevance & confidence).
   // All optional/additive — existing manifolds without these continue to validate.
-  parent: z.string().optional(),                        // "OUTCOME" or a parent RT id (RT-n)
-  relevance: z.number().min(0).max(1).optional(),       // is the child a genuine prerequisite of parent?
-  confidence: z.number().min(0).max(1).optional(),      // how necessary: invariant-grade (→1) vs merely helpful (→0.4)
+  parent: z.string().optional(), // "OUTCOME" or a parent RT id (RT-n)
+  relevance: z.number().min(0).max(1).optional(), // is the child a genuine prerequisite of parent?
+  confidence: z.number().min(0).max(1).optional(), // how necessary: invariant-grade (→1) vs merely helpful (→0.4)
 });
 
 export type RequiredTruthRef = z.infer<typeof RequiredTruthRefSchema>;
@@ -297,10 +285,7 @@ export type RequiredTruthRef = z.infer<typeof RequiredTruthRefSchema>;
 // ============================================================
 
 // Edges can be arrays of [string, string] pairs OR objects with {from, to, reason}
-const EdgeItemSchema = z.union([
-  z.array(z.string()).min(2),
-  z.record(z.any()),
-]);
+const EdgeItemSchema = z.union([z.array(z.string()).min(2), z.record(z.any())]);
 
 export const ConstraintGraphEdgesSchema = z.object({
   dependencies: z.array(EdgeItemSchema).optional(),
@@ -337,13 +322,15 @@ export type ConstraintGraph = z.infer<typeof ConstraintGraphSchema>;
 // Constraints By Category
 // ============================================================
 
-export const ConstraintsByCategorySchema = z.object({
-  business: z.array(ConstraintRefSchema).default([]),
-  technical: z.array(ConstraintRefSchema).default([]),
-  user_experience: z.array(ConstraintRefSchema).default([]),
-  security: z.array(ConstraintRefSchema).default([]),
-  operational: z.array(ConstraintRefSchema).default([]),
-}).strict();
+export const ConstraintsByCategorySchema = z
+  .object({
+    business: z.array(ConstraintRefSchema).default([]),
+    technical: z.array(ConstraintRefSchema).default([]),
+    user_experience: z.array(ConstraintRefSchema).default([]),
+    security: z.array(ConstraintRefSchema).default([]),
+    operational: z.array(ConstraintRefSchema).default([]),
+  })
+  .strict();
 
 export type ConstraintsByCategory = z.infer<typeof ConstraintsByCategorySchema>;
 
@@ -353,15 +340,19 @@ export type ConstraintsByCategory = z.infer<typeof ConstraintsByCategorySchema>;
 // - resources: time/money/capability limits (replaces technical)
 // - risks: irreversible downsides (replaces security, broadened)
 // - dependencies: external factors that must hold (replaces operational)
-export const NonSoftwareConstraintsByCategorySchema = z.object({
-  obligations: z.array(ConstraintRefSchema).default([]),
-  desires: z.array(ConstraintRefSchema).default([]),
-  resources: z.array(ConstraintRefSchema).default([]),
-  risks: z.array(ConstraintRefSchema).default([]),
-  dependencies: z.array(ConstraintRefSchema).default([]),
-}).strict();
+export const NonSoftwareConstraintsByCategorySchema = z
+  .object({
+    obligations: z.array(ConstraintRefSchema).default([]),
+    desires: z.array(ConstraintRefSchema).default([]),
+    resources: z.array(ConstraintRefSchema).default([]),
+    risks: z.array(ConstraintRefSchema).default([]),
+    dependencies: z.array(ConstraintRefSchema).default([]),
+  })
+  .strict();
 
-export type NonSoftwareConstraintsByCategory = z.infer<typeof NonSoftwareConstraintsByCategorySchema>;
+export type NonSoftwareConstraintsByCategory = z.infer<
+  typeof NonSoftwareConstraintsByCategorySchema
+>;
 
 // ============================================================
 // Anchors Section
@@ -384,12 +375,16 @@ export const AnchorsSchema = z.object({
   // Enhancement 5: Theory of Constraints bottleneck identification
   binding_constraint: BindingConstraintSchema.optional(),
   // Cross-phase feedback: solution option validates m2 tension resolutions
-  tension_validation: z.array(z.object({
-    tension_id: z.string(),
-    status: z.enum(['CONFIRMED', 'REOPENED']),
-    by_option: z.string().optional(),
-    reason: z.string().optional(),
-  })).optional(),
+  tension_validation: z
+    .array(
+      z.object({
+        tension_id: z.string(),
+        status: z.enum(['CONFIRMED', 'REOPENED']),
+        by_option: z.string().optional(),
+        reason: z.string().optional(),
+      })
+    )
+    .optional(),
 });
 
 export type Anchors = z.infer<typeof AnchorsSchema>;
@@ -401,17 +396,19 @@ export type Anchors = z.infer<typeof AnchorsSchema>;
 export const ConvergenceSchema = z.object({
   status: ConvergenceStatusSchema,
   // Criteria can be a structured object or a plain string summary
-  criteria: z.union([
-    z.object({
-      all_invariants_satisfied: z.boolean().optional(),
-      all_required_truths_satisfied: z.boolean().optional(),
-      no_blocking_gaps: z.boolean().optional(),
-      all_integrations_complete: z.boolean().optional(),
-      strict_verification_passed: z.boolean().optional(),
-      verification_passed: z.boolean().optional(), // Legacy alias
-    }),
-    z.string(),
-  ]).optional(),
+  criteria: z
+    .union([
+      z.object({
+        all_invariants_satisfied: z.boolean().optional(),
+        all_required_truths_satisfied: z.boolean().optional(),
+        no_blocking_gaps: z.boolean().optional(),
+        all_integrations_complete: z.boolean().optional(),
+        strict_verification_passed: z.boolean().optional(),
+        verification_passed: z.boolean().optional(), // Legacy alias
+      }),
+      z.string(),
+    ])
+    .optional(),
   iterations_to_convergence: z.number().optional(),
   timestamp: z.string().optional(),
   progress: z.string().optional(),
@@ -424,12 +421,14 @@ export type Convergence = z.infer<typeof ConvergenceSchema>;
 // Iteration Section
 // ============================================================
 
-export const IterationSchema = z.object({
-  number: z.number(),
-  phase: z.string(),
-  timestamp: z.string(),
-  result: z.string(),
-}).passthrough(); // Allow additional phase-specific fields
+export const IterationSchema = z
+  .object({
+    number: z.number(),
+    phase: z.string(),
+    timestamp: z.string(),
+    result: z.string(),
+  })
+  .passthrough(); // Allow additional phase-specific fields
 
 export type Iteration = z.infer<typeof IterationSchema>;
 
@@ -449,8 +448,8 @@ export const ArtifactRefSchema = z.object({
   status: z.string(),
   description: z.string().optional(),
   // v3.1: Framework gap remediation additions
-  file_hash: z.string().optional(),                   // GAP-07: drift detection for artifacts
-  artifact_class: ArtifactClassSchema.optional(),      // GAP-13: substantive vs structural
+  file_hash: z.string().optional(), // GAP-07: drift detection for artifacts
+  artifact_class: ArtifactClassSchema.optional(), // GAP-13: substantive vs structural
 });
 
 export type ArtifactRef = z.infer<typeof ArtifactRefSchema>;
@@ -461,13 +460,16 @@ export const GenerationSchema = z.object({
   iteration: z.number().optional(),
   artifacts: z.array(ArtifactRefSchema).optional(),
   // Coverage fields are all optional to support varying manifold formats
-  coverage: z.object({
-    constraints_addressed: z.number().optional(),
-    constraints_total: z.number().optional(),
-    required_truths_addressed: z.number().optional(),
-    required_truths_total: z.number().optional(),
-    percentage: z.number().optional(),
-  }).passthrough().optional(),
+  coverage: z
+    .object({
+      constraints_addressed: z.number().optional(),
+      constraints_total: z.number().optional(),
+      required_truths_addressed: z.number().optional(),
+      required_truths_total: z.number().optional(),
+      percentage: z.number().optional(),
+    })
+    .passthrough()
+    .optional(),
 });
 
 export type Generation = z.infer<typeof GenerationSchema>;
@@ -480,7 +482,7 @@ export const SuggestedConstraintSchema = z.object({
   id: z.string(),
   category: z.enum(['business', 'technical', 'user_experience', 'security', 'operational']),
   type: ConstraintTypeSchema,
-  source_constraint: z.string(),   // ID of constraint that triggered auto-generation
+  source_constraint: z.string(), // ID of constraint that triggered auto-generation
   auto_generated: z.literal(true),
   promoted: z.boolean().default(false),
 });
@@ -532,14 +534,16 @@ const ManifoldBaseShape = z.object({
   tensions: z.array(TensionRefSchema).default([]),
 
   // Tension summary (derived)
-  tension_summary: z.object({
-    trade_offs: z.number(),
-    resource_tensions: z.number(),
-    hidden_dependencies: z.number(),
-    total: z.number(),
-    resolved: z.number(),
-    unresolved: z.number(),
-  }).optional(),
+  tension_summary: z
+    .object({
+      trade_offs: z.number(),
+      resource_tensions: z.number(),
+      hidden_dependencies: z.number(),
+      total: z.number(),
+      resolved: z.number(),
+      unresolved: z.number(),
+    })
+    .optional(),
 
   // Anchors (structure only - content in Markdown)
   anchors: AnchorsSchema.optional(),
@@ -554,12 +558,16 @@ const ManifoldBaseShape = z.object({
   generation: GenerationSchema.optional(),
 
   // Enhancement 4: Reversibility tagging per decision
-  reversibility_log: z.array(z.object({
-    action_step: z.number(),
-    description: z.string(),
-    reversibility: z.enum(['TWO_WAY', 'REVERSIBLE_WITH_COST', 'ONE_WAY']),
-    one_way_consequence: z.string().optional(),
-  })).optional(),
+  reversibility_log: z
+    .array(
+      z.object({
+        action_step: z.number(),
+        description: z.string(),
+        reversibility: z.enum(['TWO_WAY', 'REVERSIBLE_WITH_COST', 'ONE_WAY']),
+        one_way_consequence: z.string().optional(),
+      })
+    )
+    .optional(),
 
   // Evidence (v3)
   evidence: z.array(EvidenceRefSchema).optional(),
@@ -571,34 +579,48 @@ const ManifoldBaseShape = z.object({
   suggested_constraints: z.array(SuggestedConstraintSchema).optional(),
 
   // GAP checklist compliance (mandatory-or-skip tracking from m1)
-  gap_checklist_compliance: z.array(z.object({
-    gap: z.string(),
-    status: z.enum(['COMPLETED', 'SKIPPED']),
-    skip_reason: z.string().optional(),
-  })).optional(),
+  gap_checklist_compliance: z
+    .array(
+      z.object({
+        gap: z.string(),
+        status: z.enum(['COMPLETED', 'SKIPPED']),
+        skip_reason: z.string().optional(),
+      })
+    )
+    .optional(),
 
   // Draft required truths seeded by m1 for m3 consumption
-  draft_required_truths: z.array(z.object({
-    id: z.string(),
-    seed_from: z.array(z.string()),
-    draft_statement: z.string(),
-    confidence: z.enum(['high', 'medium', 'low']),
-  })).optional(),
+  draft_required_truths: z
+    .array(
+      z.object({
+        id: z.string(),
+        seed_from: z.array(z.string()),
+        draft_statement: z.string(),
+        confidence: z.enum(['high', 'medium', 'low']),
+      })
+    )
+    .optional(),
 
   // Blocking dependencies exported by m2 for m3 prioritization
-  blocking_dependencies: z.array(z.object({
-    blocker: z.string(),
-    blocked: z.string(),
-    tension_id: z.string(),
-  })).optional(),
+  blocking_dependencies: z
+    .array(
+      z.object({
+        blocker: z.string(),
+        blocked: z.string(),
+        tension_id: z.string(),
+      })
+    )
+    .optional(),
 
   // Quick summary for light mode
-  quick_summary: z.object({
-    started: z.string().optional(),
-    completed: z.string().optional(),
-    files_changed: z.number().optional(),
-    tests_added: z.number().optional(),
-  }).optional(),
+  quick_summary: z
+    .object({
+      started: z.string().optional(),
+      completed: z.string().optional(),
+      files_changed: z.number().optional(),
+      tests_added: z.number().optional(),
+    })
+    .optional(),
 });
 
 /**
@@ -633,7 +655,12 @@ const NonSoftwareManifoldShape = z.object({
  */
 export const ManifoldStructureSchema = z.preprocess(
   (val) => {
-    if (val && typeof val === 'object' && !Array.isArray(val) && !('domain' in (val as Record<string, unknown>))) {
+    if (
+      val &&
+      typeof val === 'object' &&
+      !Array.isArray(val) &&
+      !('domain' in (val as Record<string, unknown>))
+    ) {
       return { ...(val as Record<string, unknown>), domain: 'software' };
     }
     return val;
@@ -641,7 +668,7 @@ export const ManifoldStructureSchema = z.preprocess(
   z.discriminatedUnion('domain', [
     ManifoldBaseShape.merge(SoftwareManifoldShape),
     ManifoldBaseShape.merge(NonSoftwareManifoldShape),
-  ]),
+  ])
 );
 
 export type ManifoldStructure = z.infer<typeof ManifoldStructureSchema>;
@@ -675,7 +702,9 @@ export type CategoryKey = SoftwareCategoryKey | NonSoftwareCategoryKey;
  * Used by every constraint-iteration site (linker, reference validation,
  * ID collection) so non-software manifolds are traversed correctly.
  */
-export function getCategoryKeys(domain: 'software' | 'non-software' | undefined): readonly CategoryKey[] {
+export function getCategoryKeys(
+  domain: 'software' | 'non-software' | undefined
+): readonly CategoryKey[] {
   return domain === 'non-software' ? NON_SOFTWARE_CATEGORY_KEYS : SOFTWARE_CATEGORY_KEYS;
 }
 
@@ -700,13 +729,15 @@ export const manifoldStructureJsonSchema = zodToJsonSchema(ManifoldStructureSche
 /**
  * Parse and validate a JSON structure file
  */
-export function parseManifoldStructure(json: unknown): {
-  success: true;
-  data: ManifoldStructure;
-} | {
-  success: false;
-  error: z.ZodError;
-} {
+export function parseManifoldStructure(json: unknown):
+  | {
+      success: true;
+      data: ManifoldStructure;
+    }
+  | {
+      success: false;
+      error: z.ZodError;
+    } {
   const result = ManifoldStructureSchema.safeParse(json);
 
   if (result.success) {
@@ -748,7 +779,10 @@ export function collectStructureIds(structure: ManifoldStructure): Set<string> {
 
   // Collect constraint IDs (domain-aware)
   if (structure.constraints) {
-    const constraintsByCategory = structure.constraints as Record<string, Array<{ id: string }> | undefined>;
+    const constraintsByCategory = structure.constraints as Record<
+      string,
+      Array<{ id: string }> | undefined
+    >;
     for (const category of getCategoryKeys(structure.domain)) {
       for (const constraint of constraintsByCategory[category] || []) {
         ids.add(constraint.id);
@@ -782,7 +816,10 @@ export function validateTensionReferences(structure: ManifoldStructure): Array<{
 
   // Collect all constraint IDs (domain-aware)
   if (structure.constraints) {
-    const constraintsByCategory = structure.constraints as Record<string, Array<{ id: string }> | undefined>;
+    const constraintsByCategory = structure.constraints as Record<
+      string,
+      Array<{ id: string }> | undefined
+    >;
     for (const category of getCategoryKeys(structure.domain)) {
       for (const constraint of constraintsByCategory[category] || []) {
         constraintIds.add(constraint.id);

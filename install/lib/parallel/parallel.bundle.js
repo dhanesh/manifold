@@ -6981,7 +6981,9 @@ class WorktreeManager {
     const base = baseBranch ?? await this.getCurrentBranch();
     const commit = await this.getCurrentCommit();
     try {
-      await execAsync(`git worktree add -b "${branchName}" "${worktreePath}" "${base}"`, { cwd: this.config.baseDir });
+      await execAsync(`git worktree add -b "${branchName}" "${worktreePath}" "${base}"`, {
+        cwd: this.config.baseDir
+      });
       const info = {
         path: worktreePath,
         branch: branchName,
@@ -8351,7 +8353,9 @@ class MergeOrchestrator2 {
     }
   }
   async sequentialMerge(branch) {
-    await execAsync2(`git merge --no-ff "${branch}" -m "Merge parallel task: ${branch}"`, { cwd: this.baseDir });
+    await execAsync2(`git merge --no-ff "${branch}" -m "Merge parallel task: ${branch}"`, {
+      cwd: this.baseDir
+    });
   }
   async squashMerge(branch, message) {
     await execAsync2(`git merge --squash "${branch}"`, { cwd: this.baseDir });
@@ -8571,11 +8575,8 @@ Cleaning up worktrees...`);
     return [...this.state.updates];
   }
   explainParallelization(groups, sequentialTasks) {
-    const lines = [
-      `
-## Parallelization Analysis`,
-      ""
-    ];
+    const lines = [`
+## Parallelization Analysis`, ""];
     const totalParallel = groups.reduce((sum, g) => sum + g.taskIds.length, 0);
     lines.push(`Tasks parallelizable: ${totalParallel}`);
     lines.push(`Tasks sequential: ${sequentialTasks.length}`);

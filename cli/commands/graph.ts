@@ -5,26 +5,10 @@
  */
 
 import type { Command } from 'commander';
-import {
-  findManifoldDir,
-  loadFeature,
-  listFeatures
-} from '../lib/parser.js';
-import {
-  println,
-  printError,
-  toJSON
-} from '../lib/output.js';
-import {
-  ConstraintSolver,
-  type ConstraintGraph,
-  exportGraphDot
-} from '../lib/solver.js';
-import {
-  graphToMermaid,
-  renderMermaidToTerminal,
-  renderGraphToTerminal
-} from '../lib/mermaid.js';
+import { findManifoldDir, loadFeature, listFeatures } from '../lib/parser.js';
+import { println, printError, toJSON } from '../lib/output.js';
+import { ConstraintSolver, type ConstraintGraph, exportGraphDot } from '../lib/solver.js';
+import { graphToMermaid, renderMermaidToTerminal, renderGraphToTerminal } from '../lib/mermaid.js';
 
 interface GraphOptions {
   json?: boolean;
@@ -87,7 +71,10 @@ async function graphCommand(feature: string | undefined, options: GraphOptions):
   const data = loadFeature(manifoldDir, feature);
 
   if (!data || !data.manifold) {
-    printError(`Feature "${feature}" not found`, `Available features: ${listFeatures(manifoldDir).join(', ') || 'none'}`);
+    printError(
+      `Feature "${feature}" not found`,
+      `Available features: ${listFeatures(manifoldDir).join(', ') || 'none'}`
+    );
     return 1;
   }
 
@@ -123,13 +110,16 @@ function formatGraphForJson(graph: ConstraintGraph, feature: string): object {
     generated_at: graph.generated_at,
     statistics: {
       total_nodes: Object.keys(graph.nodes).length,
-      constraints: Object.values(graph.nodes).filter(n => n.type === 'constraint').length,
-      tensions: Object.values(graph.nodes).filter(n => n.type === 'tension').length,
-      required_truths: Object.values(graph.nodes).filter(n => n.type === 'required_truth').length,
-      artifacts: Object.values(graph.nodes).filter(n => n.type === 'artifact').length,
-      total_edges: graph.edges.dependencies.length + graph.edges.conflicts.length + graph.edges.satisfies.length
+      constraints: Object.values(graph.nodes).filter((n) => n.type === 'constraint').length,
+      tensions: Object.values(graph.nodes).filter((n) => n.type === 'tension').length,
+      required_truths: Object.values(graph.nodes).filter((n) => n.type === 'required_truth').length,
+      artifacts: Object.values(graph.nodes).filter((n) => n.type === 'artifact').length,
+      total_edges:
+        graph.edges.dependencies.length +
+        graph.edges.conflicts.length +
+        graph.edges.satisfies.length,
     },
     nodes: graph.nodes,
-    edges: graph.edges
+    edges: graph.edges,
   };
 }

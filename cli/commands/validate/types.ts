@@ -10,11 +10,11 @@ import type { LinkingResult } from '../../lib/manifold-linker.js';
 export interface ValidateOptions {
   json?: boolean;
   strict?: boolean;
-  all?: boolean;  // Show all errors instead of truncating at 20 (TN4 resolution)
-  conflicts?: boolean;  // Run semantic conflict detection (INT-1, B2, RT-4)
-  crossFeature?: boolean;  // Run cross-feature conflict detection (T4)
-  metrics?: boolean;  // Show validation metrics summary (GAP-4)
-  evidence?: boolean;  // Run evidence integrity validation
+  all?: boolean; // Show all errors instead of truncating at 20 (TN4 resolution)
+  conflicts?: boolean; // Run semantic conflict detection (INT-1, B2, RT-4)
+  crossFeature?: boolean; // Run cross-feature conflict detection (T4)
+  metrics?: boolean; // Show validation metrics summary (GAP-4)
+  evidence?: boolean; // Run evidence integrity validation
 }
 
 export interface FeatureValidationResult {
@@ -22,9 +22,9 @@ export interface FeatureValidationResult {
   json: Record<string, unknown>;
   result?: ValidationResult;
   parseError?: string;
-  manifold?: Manifold;  // For conflict detection (INT-1)
-  format?: 'yaml' | 'json' | 'json-md';  // Format of the manifold
-  linkingResult?: LinkingResult;  // For JSON+MD format
+  manifold?: Manifold; // For conflict detection (INT-1)
+  format?: 'yaml' | 'json' | 'json-md'; // Format of the manifold
+  linkingResult?: LinkingResult; // For JSON+MD format
 }
 
 /**
@@ -48,8 +48,8 @@ export interface ValidationMetrics {
   totalFeatures: number;
   validFeatures: number;
   invalidFeatures: number;
-  schemaVersions: Map<number, number>;  // version -> count
-  errorsByCategory: Map<string, number>;  // field category -> count
+  schemaVersions: Map<number, number>; // version -> count
+  errorsByCategory: Map<string, number>; // field category -> count
   warningsByCategory: Map<string, number>;
   totalErrors: number;
   totalWarnings: number;

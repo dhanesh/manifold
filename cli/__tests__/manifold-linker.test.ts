@@ -76,7 +76,7 @@ Statement.
 
     const result = validateManifoldLink(structure, content);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.message.includes('B2'))).toBe(true);
+    expect(result.errors.some((e) => e.message.includes('B2'))).toBe(true);
     expect(result.summary.linkedConstraints).toBe(1);
     expect(result.summary.totalConstraints).toBe(2);
   });
@@ -107,8 +107,8 @@ Not in JSON structure.
 
     const result = validateManifoldLink(structure, content);
     expect(result.valid).toBe(true); // Warnings don't invalidate
-    expect(result.warnings.some(w => w.message.includes('B2'))).toBe(true);
-    expect(result.warnings.some(w => w.type === 'extra_content')).toBe(true);
+    expect(result.warnings.some((w) => w.message.includes('B2'))).toBe(true);
+    expect(result.warnings.some((w) => w.type === 'extra_content')).toBe(true);
   });
 
   test('validates tension linking', () => {
@@ -119,9 +119,7 @@ Not in JSON structure.
         business: [{ id: 'B1', type: 'invariant' }],
         technical: [{ id: 'T1', type: 'boundary' }],
       },
-      tensions: [
-        { id: 'TN1', type: 'trade_off', between: ['B1', 'T1'], status: 'resolved' },
-      ],
+      tensions: [{ id: 'TN1', type: 'trade_off', between: ['B1', 'T1'], status: 'resolved' }],
     });
 
     const content = parseManifoldMarkdown(`# test
@@ -158,9 +156,7 @@ Description here.
     const structure = ManifoldStructureSchema.parse({
       feature: 'test',
       phase: 'TENSIONED',
-      tensions: [
-        { id: 'TN1', type: 'trade_off', between: ['B1', 'T1'], status: 'resolved' },
-      ],
+      tensions: [{ id: 'TN1', type: 'trade_off', between: ['B1', 'T1'], status: 'resolved' }],
     });
 
     const content = parseManifoldMarkdown(`# test
@@ -171,7 +167,7 @@ Description here.
 
     const result = validateManifoldLink(structure, content);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.message.includes('TN1'))).toBe(true);
+    expect(result.errors.some((e) => e.message.includes('TN1'))).toBe(true);
   });
 
   test('validates required truth linking', () => {
@@ -211,9 +207,7 @@ Statement.
       constraints: {
         business: [{ id: 'B1', type: 'invariant' }],
       },
-      tensions: [
-        { id: 'TN1', type: 'trade_off', between: ['B1', 'B99'], status: 'resolved' },
-      ],
+      tensions: [{ id: 'TN1', type: 'trade_off', between: ['B1', 'B99'], status: 'resolved' }],
     });
 
     const content = parseManifoldMarkdown(`# test
@@ -235,8 +229,8 @@ Description.
 
     const result = validateManifoldLink(structure, content);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.type === 'invalid_reference')).toBe(true);
-    expect(result.errors.some(e => e.message.includes('B99'))).toBe(true);
+    expect(result.errors.some((e) => e.type === 'invalid_reference')).toBe(true);
+    expect(result.errors.some((e) => e.message.includes('B99'))).toBe(true);
   });
 
   test('warns about quality issues', () => {
@@ -262,7 +256,7 @@ Description.
     if (b1) b1.statement = '';
 
     const result = validateManifoldLink(structure, content);
-    expect(result.warnings.some(w => w.type === 'quality')).toBe(true);
+    expect(result.warnings.some((w) => w.type === 'quality')).toBe(true);
   });
 });
 
@@ -325,16 +319,21 @@ describe('loadAndValidateManifold', () => {
     const jsonPath = join(testDir, 'test.json');
     const mdPath = join(testDir, 'test.md');
 
-    writeFileSync(jsonPath, JSON.stringify({
-      schema_version: 3,
-      feature: 'test',
-      phase: 'CONSTRAINED',
-      constraints: {
-        business: [{ id: 'B1', type: 'invariant' }],
-      },
-    }));
+    writeFileSync(
+      jsonPath,
+      JSON.stringify({
+        schema_version: 3,
+        feature: 'test',
+        phase: 'CONSTRAINED',
+        constraints: {
+          business: [{ id: 'B1', type: 'invariant' }],
+        },
+      })
+    );
 
-    writeFileSync(mdPath, `# test
+    writeFileSync(
+      mdPath,
+      `# test
 
 ## Outcome
 
@@ -347,7 +346,8 @@ Test outcome.
 #### B1: Test Constraint
 
 This is the statement.
-`);
+`
+    );
 
     const result = loadAndValidateManifold(jsonPath, mdPath);
     expect(result.success).toBe(true);
@@ -413,10 +413,13 @@ describe('loadManifoldByFeature', () => {
   });
 
   test('loads manifold by feature name', () => {
-    writeFileSync(join(testDir, 'my-feature.json'), JSON.stringify({
-      feature: 'my-feature',
-      phase: 'INITIALIZED',
-    }));
+    writeFileSync(
+      join(testDir, 'my-feature.json'),
+      JSON.stringify({
+        feature: 'my-feature',
+        phase: 'INITIALIZED',
+      })
+    );
     writeFileSync(join(testDir, 'my-feature.md'), '# my-feature\n\n## Outcome\n\nTest.');
 
     const result = loadManifoldByFeature(testDir, 'my-feature');

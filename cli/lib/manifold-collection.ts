@@ -81,7 +81,7 @@ function coerceCounts(json: any) {
   const constraints = json?.constraints ?? {};
   const constraintCount = Object.values(constraints).reduce(
     (acc: number, arr: any) => acc + (Array.isArray(arr) ? arr.length : 0),
-    0,
+    0
   );
   const tensions = Array.isArray(json?.tensions) ? json.tensions.length : 0;
   const required_truths = Array.isArray(json?.anchors?.required_truths)
@@ -109,10 +109,7 @@ export function listManifolds(manifoldDir: string): ManifoldSummary[] {
   return summaries;
 }
 
-export function loadManifoldSummary(
-  manifoldDir: string,
-  feature: string,
-): ManifoldSummary | null {
+export function loadManifoldSummary(manifoldDir: string, feature: string): ManifoldSummary | null {
   if (!FEATURE_NAME_PATTERN.test(feature)) return null;
 
   const files = getFeatureFiles(manifoldDir, feature);
@@ -159,10 +156,7 @@ function readVerifyData(manifoldDir: string, feature: string): VerifyData | null
   };
 }
 
-export function loadManifoldDetail(
-  manifoldDir: string,
-  feature: string,
-): ManifoldDetail | null {
+export function loadManifoldDetail(manifoldDir: string, feature: string): ManifoldDetail | null {
   if (!FEATURE_NAME_PATTERN.test(feature)) return null;
 
   const summary = loadManifoldSummary(manifoldDir, feature);

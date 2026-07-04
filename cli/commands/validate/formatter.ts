@@ -5,21 +5,9 @@
  * Contains: printValidationOutput, printEvidenceResults, metrics helpers
  */
 
-import {
-  detectSemanticConflicts,
-  formatConflictResults,
-} from '../../lib/solver.js';
-import {
-  println,
-  formatHeader,
-  formatValidationResult,
-  style,
-} from '../../lib/output.js';
-import type {
-  FeatureValidationResult,
-  EvidenceResult,
-  ValidationMetrics,
-} from './types.js';
+import { detectSemanticConflicts, formatConflictResults } from '../../lib/solver.js';
+import { println, formatHeader, formatValidationResult, style } from '../../lib/output.js';
+import type { FeatureValidationResult, EvidenceResult, ValidationMetrics } from './types.js';
 
 // Maximum errors to display before truncation (per U3)
 export const MAX_ERRORS_DISPLAY = 20;
@@ -39,7 +27,7 @@ export function createMetrics(): ValidationMetrics {
     totalErrors: 0,
     totalWarnings: 0,
     parseErrors: 0,
-    fileNotFound: 0
+    fileNotFound: 0,
   };
 }
 
@@ -104,7 +92,9 @@ export function formatMetrics(metrics: ValidationMetrics): string {
 
   // Summary
   lines.push(`  ${style.dim('Features Validated:')} ${metrics.totalFeatures}`);
-  lines.push(`  ${style.dim('Valid:')} ${style.success(String(metrics.validFeatures))} | ${style.dim('Invalid:')} ${metrics.invalidFeatures > 0 ? style.error(String(metrics.invalidFeatures)) : '0'}`);
+  lines.push(
+    `  ${style.dim('Valid:')} ${style.success(String(metrics.validFeatures))} | ${style.dim('Invalid:')} ${metrics.invalidFeatures > 0 ? style.error(String(metrics.invalidFeatures)) : '0'}`
+  );
   lines.push(`  ${style.dim('Duration:')} ${duration}ms`);
   lines.push('');
 
@@ -157,7 +147,11 @@ export function formatMetrics(metrics: ValidationMetrics): string {
  * Print validation output to console
  * Satisfies: U3 (error truncation), TN4 (--all flag), INT-1 (conflict detection)
  */
-export function printValidationOutput(feature: string, result: FeatureValidationResult, options: { showAll?: boolean; conflicts?: boolean } = {}): void {
+export function printValidationOutput(
+  feature: string,
+  result: FeatureValidationResult,
+  options: { showAll?: boolean; conflicts?: boolean } = {}
+): void {
   const { showAll = false, conflicts = false } = options;
   println(formatHeader(`Validating: ${style.feature(feature)}`));
 
@@ -170,13 +164,14 @@ export function printValidationOutput(feature: string, result: FeatureValidation
   // File not found or loading error
   if (!result.result) {
     // Use actual error message from the validation result
-    const errorMsg = typeof result.json?.error === 'string' && result.json.error
-      ? result.json.error
-      : 'Manifold file not found';
+    const errorMsg =
+      typeof result.json?.error === 'string' && result.json.error
+        ? result.json.error
+        : 'Manifold file not found';
     println(`  ${style.cross()} ${style.error(errorMsg)}`);
     if (result.format) {
-      const formatLabel = result.format === 'json-md' ? 'JSON+Markdown' :
-                          result.format === 'json' ? 'JSON' : 'YAML';
+      const formatLabel =
+        result.format === 'json-md' ? 'JSON+Markdown' : result.format === 'json' ? 'JSON' : 'YAML';
       println(`  ${style.dim('Format:')} ${formatLabel}`);
     }
     if (result.json?.paths) {
@@ -193,8 +188,8 @@ export function printValidationOutput(feature: string, result: FeatureValidation
 
   // Format indicator
   if (result.format) {
-    const formatLabel = result.format === 'json-md' ? 'JSON+Markdown' :
-                        result.format === 'json' ? 'JSON' : 'YAML';
+    const formatLabel =
+      result.format === 'json-md' ? 'JSON+Markdown' : result.format === 'json' ? 'JSON' : 'YAML';
     println(`  Format: ${formatLabel}`);
   }
 
@@ -204,9 +199,11 @@ export function printValidationOutput(feature: string, result: FeatureValidation
   // Linking summary for JSON+MD format
   if (result.linkingResult) {
     const { summary } = result.linkingResult;
-    println(`  Linked: ${summary.linkedConstraints}/${summary.totalConstraints} constraints, ` +
-            `${summary.linkedTensions}/${summary.totalTensions} tensions, ` +
-            `${summary.linkedRequiredTruths}/${summary.totalRequiredTruths} required truths`);
+    println(
+      `  Linked: ${summary.linkedConstraints}/${summary.totalConstraints} constraints, ` +
+        `${summary.linkedTensions}/${summary.totalTensions} tensions, ` +
+        `${summary.linkedRequiredTruths}/${summary.totalRequiredTruths} required truths`
+    );
   }
 
   // Overall result
@@ -230,7 +227,9 @@ export function printValidationOutput(feature: string, result: FeatureValidation
     if (!showAll && errors.length > MAX_ERRORS_DISPLAY) {
       const hidden = errors.length - MAX_ERRORS_DISPLAY;
       println();
-      println(`  ${style.dim(`... and ${hidden} more error${hidden > 1 ? 's' : ''}. Run with --all to see all ${errors.length} errors.`)}`);
+      println(
+        `  ${style.dim(`... and ${hidden} more error${hidden > 1 ? 's' : ''}. Run with --all to see all ${errors.length} errors.`)}`
+      );
     }
   }
 
@@ -252,7 +251,9 @@ export function printValidationOutput(feature: string, result: FeatureValidation
     if (!showAll && warnings.length > MAX_ERRORS_DISPLAY) {
       const hidden = warnings.length - MAX_ERRORS_DISPLAY;
       println();
-      println(`  ${style.dim(`... and ${hidden} more warning${hidden > 1 ? 's' : ''}. Run with --all to see all ${warnings.length} warnings.`)}`);
+      println(
+        `  ${style.dim(`... and ${hidden} more warning${hidden > 1 ? 's' : ''}. Run with --all to see all ${warnings.length} warnings.`)}`
+      );
     }
   }
 
@@ -268,12 +269,15 @@ export function printValidationOutput(feature: string, result: FeatureValidation
  * Print evidence validation results to console.
  * Groups results by severity (errors, warnings, info) with truncation support.
  */
-export function printEvidenceResults(results: EvidenceResult[], options: { showAll?: boolean } = {}): void {
+export function printEvidenceResults(
+  results: EvidenceResult[],
+  options: { showAll?: boolean } = {}
+): void {
   const { showAll = false } = options;
 
-  const errors = results.filter(r => r.level === 'error');
-  const warnings = results.filter(r => r.level === 'warning');
-  const infos = results.filter(r => r.level === 'info');
+  const errors = results.filter((r) => r.level === 'error');
+  const warnings = results.filter((r) => r.level === 'warning');
+  const infos = results.filter((r) => r.level === 'info');
 
   println();
   println(`  ${style.bold('Evidence Integrity:')}`);
@@ -298,7 +302,9 @@ export function printEvidenceResults(results: EvidenceResult[], options: { showA
     }
     if (!showAll && warnings.length > MAX_ERRORS_DISPLAY) {
       const hidden = warnings.length - MAX_ERRORS_DISPLAY;
-      println(`    ${style.dim(`... and ${hidden} more evidence warning${hidden > 1 ? 's' : ''}.`)}`);
+      println(
+        `    ${style.dim(`... and ${hidden} more evidence warning${hidden > 1 ? 's' : ''}.`)}`
+      );
     }
   }
 
@@ -310,14 +316,18 @@ export function printEvidenceResults(results: EvidenceResult[], options: { showA
     }
     if (!showAll && infos.length > MAX_ERRORS_DISPLAY) {
       const hidden = infos.length - MAX_ERRORS_DISPLAY;
-      println(`    ${style.dim(`... and ${hidden} more evidence info message${hidden > 1 ? 's' : ''}.`)}`);
+      println(
+        `    ${style.dim(`... and ${hidden} more evidence info message${hidden > 1 ? 's' : ''}.`)}`
+      );
     }
   }
 
   // Summary line
   const parts: string[] = [];
-  if (errors.length > 0) parts.push(style.error(`${errors.length} error${errors.length !== 1 ? 's' : ''}`));
-  if (warnings.length > 0) parts.push(style.warning(`${warnings.length} warning${warnings.length !== 1 ? 's' : ''}`));
+  if (errors.length > 0)
+    parts.push(style.error(`${errors.length} error${errors.length !== 1 ? 's' : ''}`));
+  if (warnings.length > 0)
+    parts.push(style.warning(`${warnings.length} warning${warnings.length !== 1 ? 's' : ''}`));
   if (infos.length > 0) parts.push(style.dim(`${infos.length} info`));
   if (parts.length > 0) {
     println(`    ${style.dim('Summary:')} ${parts.join(', ')}`);

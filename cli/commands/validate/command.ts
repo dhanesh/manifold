@@ -6,24 +6,10 @@
  */
 
 import type { Command } from 'commander';
-import {
-  findManifoldDir,
-  listFeatures,
-  type Manifold,
-} from '../../lib/parser.js';
-import {
-  detectCrossFeatureConflicts,
-  formatCrossFeatureResults
-} from '../../lib/solver.js';
-import {
-  println,
-  printError,
-  toJSON
-} from '../../lib/output.js';
-import type {
-  ValidateOptions,
-  EvidenceResult,
-} from './types.js';
+import { findManifoldDir, listFeatures, type Manifold } from '../../lib/parser.js';
+import { detectCrossFeatureConflicts, formatCrossFeatureResults } from '../../lib/solver.js';
+import { println, printError, toJSON } from '../../lib/output.js';
+import type { ValidateOptions, EvidenceResult } from './types.js';
 import { validateFeature } from './runner.js';
 import { validateEvidenceIntegrity } from './runner.js';
 import {
@@ -48,7 +34,10 @@ export function registerValidateCommand(program: Command): void {
     .option('--conflicts', 'Run semantic conflict detection on constraints')
     .option('--cross-feature', 'Run cross-feature conflict detection (requires no feature arg)')
     .option('--metrics', 'Show validation metrics summary (error breakdown, timing)')
-    .option('--evidence', 'Check evidence integrity (paths exist, invariant test chains, orphaned references)')
+    .option(
+      '--evidence',
+      'Check evidence integrity (paths exist, invariant test chains, orphaned references)'
+    )
     .action(async (feature: string | undefined, options: ValidateOptions) => {
       const exitCode = await validateCommand(feature, options);
       process.exit(exitCode);
@@ -60,7 +49,10 @@ export function registerValidateCommand(program: Command): void {
  * Returns exit code: 0 = valid, 1 = error, 2 = validation failure
  * Satisfies: T3 (Unix exit codes)
  */
-async function validateCommand(feature: string | undefined, options: ValidateOptions): Promise<number> {
+async function validateCommand(
+  feature: string | undefined,
+  options: ValidateOptions
+): Promise<number> {
   const manifoldDir = findManifoldDir();
 
   if (!manifoldDir) {
@@ -117,7 +109,7 @@ async function validateCommand(feature: string | undefined, options: ValidateOpt
           const evidenceIssues = validateEvidenceIntegrity(manifoldDir, f);
           if (evidenceIssues.length > 0) {
             printEvidenceResults(evidenceIssues, { showAll: options.all });
-            if (evidenceIssues.some(i => i.level === 'error')) {
+            if (evidenceIssues.some((i) => i.level === 'error')) {
               hasErrors = true;
             }
           }
@@ -152,7 +144,7 @@ async function validateCommand(feature: string | undefined, options: ValidateOpt
     if (options.json) {
       const jsonResult: Record<string, unknown> = {
         valid: !hasErrors,
-        features: results
+        features: results,
       };
 
       // Include evidence results in JSON output
@@ -162,7 +154,7 @@ async function validateCommand(feature: string | undefined, options: ValidateOpt
           const evidenceIssues = validateEvidenceIntegrity(manifoldDir, f);
           if (evidenceIssues.length > 0) {
             evidenceByFeature[f] = evidenceIssues;
-            if (evidenceIssues.some(i => i.level === 'error')) {
+            if (evidenceIssues.some((i) => i.level === 'error')) {
               hasErrors = true;
             }
           }
@@ -190,7 +182,7 @@ async function validateCommand(feature: string | undefined, options: ValidateOpt
           errorsByCategory: Object.fromEntries(metrics.errorsByCategory),
           warningsByCategory: Object.fromEntries(metrics.warningsByCategory),
           totalErrors: metrics.totalErrors,
-          totalWarnings: metrics.totalWarnings
+          totalWarnings: metrics.totalWarnings,
         };
       }
       println(toJSON(jsonResult));
@@ -213,7 +205,7 @@ async function validateCommand(feature: string | undefined, options: ValidateOpt
   if (options.evidence) {
     evidenceIssues = validateEvidenceIntegrity(manifoldDir, feature);
   }
-  const hasEvidenceErrors = evidenceIssues.some(i => i.level === 'error');
+  const hasEvidenceErrors = evidenceIssues.some((i) => i.level === 'error');
 
   if (options.json) {
     const jsonResult: Record<string, unknown> = { ...result.json };
@@ -229,7 +221,7 @@ async function validateCommand(feature: string | undefined, options: ValidateOpt
         totalErrors: metrics.totalErrors,
         totalWarnings: metrics.totalWarnings,
         errorsByCategory: Object.fromEntries(metrics.errorsByCategory),
-        warningsByCategory: Object.fromEntries(metrics.warningsByCategory)
+        warningsByCategory: Object.fromEntries(metrics.warningsByCategory),
       };
     }
     println(toJSON(jsonResult));

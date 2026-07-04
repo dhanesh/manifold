@@ -11,7 +11,7 @@ import {
   formatConvergence,
   formatConstraintSummary,
   formatTensionSummary,
-  formatNextAction
+  formatNextAction,
 } from '../lib/output.js';
 
 describe('setColorMode', () => {
@@ -62,7 +62,7 @@ describe('formatConstraintSummary', () => {
       technical: 5,
       user_experience: 2,
       security: 1,
-      operational: 2
+      operational: 2,
     };
     const result = formatConstraintSummary(counts);
     expect(result).toContain('Business: 3');
@@ -76,7 +76,7 @@ describe('formatConstraintSummary', () => {
       technical: 0,
       user_experience: 0,
       security: 0,
-      operational: 0
+      operational: 0,
     };
     const result = formatConstraintSummary(counts);
     expect(result).toBe('None discovered');

@@ -50,7 +50,11 @@ function mkGraph(specs: Array<{ id: string; depends_on?: string[] }>): Constrain
 describe('topologicalSort — acyclic', () => {
   test('orders dependencies before dependents', () => {
     // C depends on B depends on A  =>  A before B before C
-    const g = mkGraph([{ id: 'A' }, { id: 'B', depends_on: ['A'] }, { id: 'C', depends_on: ['B'] }]);
+    const g = mkGraph([
+      { id: 'A' },
+      { id: 'B', depends_on: ['A'] },
+      { id: 'C', depends_on: ['B'] },
+    ]);
     const { order, hasCycle, cycleNodes } = topologicalSort(g);
 
     expect(hasCycle).toBe(false);
@@ -79,7 +83,10 @@ describe('topologicalSort — acyclic', () => {
 describe('topologicalSort — cyclic (the regression this fix targets)', () => {
   test('detects a 2-node back edge instead of silently ordering it', () => {
     // A <-> B
-    const g = mkGraph([{ id: 'A', depends_on: ['B'] }, { id: 'B', depends_on: ['A'] }]);
+    const g = mkGraph([
+      { id: 'A', depends_on: ['B'] },
+      { id: 'B', depends_on: ['A'] },
+    ]);
     const { hasCycle, cycleNodes } = topologicalSort(g);
 
     expect(hasCycle).toBe(true);
@@ -113,7 +120,10 @@ describe('generateWaves — cycle handling', () => {
   });
 
   test('tags the wave that force-schedules a node to break a cycle', () => {
-    const g = mkGraph([{ id: 'A', depends_on: ['B'] }, { id: 'B', depends_on: ['A'] }]);
+    const g = mkGraph([
+      { id: 'A', depends_on: ['B'] },
+      { id: 'B', depends_on: ['A'] },
+    ]);
     const waves = generateWaves(g);
 
     const broken = waves.find((w) => w.cycle_broken);
@@ -138,12 +148,19 @@ describe('generateWaves — cycle handling', () => {
 
 describe('findCriticalPathInGraph', () => {
   test('returns the longest dependency chain on a DAG', () => {
-    const g = mkGraph([{ id: 'A' }, { id: 'B', depends_on: ['A'] }, { id: 'C', depends_on: ['B'] }]);
+    const g = mkGraph([
+      { id: 'A' },
+      { id: 'B', depends_on: ['A'] },
+      { id: 'C', depends_on: ['B'] },
+    ]);
     expect(findCriticalPathInGraph(g)).toEqual(['A', 'B', 'C']);
   });
 
   test('degrades gracefully (no throw) on a cyclic graph', () => {
-    const g = mkGraph([{ id: 'A', depends_on: ['B'] }, { id: 'B', depends_on: ['A'] }]);
+    const g = mkGraph([
+      { id: 'A', depends_on: ['B'] },
+      { id: 'B', depends_on: ['A'] },
+    ]);
     expect(() => findCriticalPathInGraph(g)).not.toThrow();
   });
 });

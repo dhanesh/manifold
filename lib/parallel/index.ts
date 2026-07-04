@@ -15,8 +15,18 @@ export { FilePredictor, FilePrediction, PredictionMethod } from './file-predicto
 export { OverlapDetector, OverlapResult, TaskOverlapPair, SafeGroup } from './overlap-detector';
 
 // Phase 3: Orchestration
-export { ParallelExecutor, ExecutionTask, ExecutionResult, ProgressEvent } from './parallel-executor';
-export { MergeOrchestrator, MergeResult, MergeOrchestratorResult, MergeStrategy } from './merge-orchestrator';
+export {
+  ParallelExecutor,
+  ExecutionTask,
+  ExecutionResult,
+  ProgressEvent,
+} from './parallel-executor';
+export {
+  MergeOrchestrator,
+  MergeResult,
+  MergeOrchestratorResult,
+  MergeStrategy,
+} from './merge-orchestrator';
 export { ProgressReporter, ProgressUpdate, ProgressState } from './progress-reporter';
 
 // Phase 4: Integration
@@ -71,7 +81,7 @@ export async function runParallel(
   // Predict files
   const predictor = new FilePredictor({ baseDir });
   const predictions = predictor.predictAll(
-    tasks.map(t => ({ id: t.id, description: t.description }))
+    tasks.map((t) => ({ id: t.id, description: t.description }))
   );
 
   // Check overlaps
@@ -79,7 +89,7 @@ export async function runParallel(
   const overlaps = detector.detect(predictions);
 
   // Find parallelizable groups
-  const parallelGroups = overlaps.safeGroups.filter(g => g.taskIds.length > 1);
+  const parallelGroups = overlaps.safeGroups.filter((g) => g.taskIds.length > 1);
 
   if (parallelGroups.length === 0) {
     return {
@@ -97,11 +107,13 @@ export async function runParallel(
     return {
       success: false,
       parallelized: false,
-      results: [{
-        taskId: 'resource-check',
-        success: false,
-        error: status.overall.reason,
-      }],
+      results: [
+        {
+          taskId: 'resource-check',
+          success: false,
+          error: status.overall.reason,
+        },
+      ],
     };
   }
 
@@ -115,12 +127,14 @@ export async function runParallel(
 
   for (const group of parallelGroups) {
     const groupResults = await executor.execute(group);
-    results.push(...groupResults.map(r => ({
-      taskId: r.taskId,
-      success: r.success,
-      output: r.output,
-      error: r.error,
-    })));
+    results.push(
+      ...groupResults.map((r) => ({
+        taskId: r.taskId,
+        success: r.success,
+        output: r.output,
+        error: r.error,
+      }))
+    );
   }
 
   // Merge if requested
@@ -134,7 +148,7 @@ export async function runParallel(
   await executor.cleanup();
 
   return {
-    success: results.every(r => r.success),
+    success: results.every((r) => r.success),
     parallelized: true,
     results,
   };

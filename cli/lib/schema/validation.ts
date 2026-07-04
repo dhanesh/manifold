@@ -3,12 +3,7 @@
  * Satisfies: T2 (Parse both schema v1 and v2 correctly), T3 (< 500 lines), T6, RT-5
  */
 
-import type {
-  Manifold,
-  ManifoldPhase,
-  Constraint,
-  SchemaVersion,
-} from '../parser.js';
+import type { Manifold, ManifoldPhase, Constraint, SchemaVersion } from '../parser.js';
 import {
   VALID_PHASES,
   VALID_CONSTRAINT_TYPES,
@@ -17,11 +12,7 @@ import {
 } from '../structure-schema.js';
 import type { ValidationResult, ValidationError, ValidationWarning } from './types.js';
 import { validateEvidence } from './evidence.js';
-import {
-  validateConstraintGraph,
-  collectConstraintIds,
-  validateReferences,
-} from './graph.js';
+import { validateConstraintGraph, collectConstraintIds, validateReferences } from './graph.js';
 import {
   validateTensionSummary,
   validateIterations,
@@ -43,7 +34,7 @@ export function validateManifold(manifold: unknown, strict: boolean = false): Va
       valid: false,
       errors: [{ field: 'root', message: 'Manifold must be an object' }],
       warnings: [],
-      schemaVersion: 1
+      schemaVersion: 1,
     };
   }
 
@@ -54,7 +45,10 @@ export function validateManifold(manifold: unknown, strict: boolean = false): Va
 
   // Required fields
   if (!m.feature || typeof m.feature !== 'string') {
-    errors.push({ field: 'feature', message: 'Required field "feature" must be a non-empty string' });
+    errors.push({
+      field: 'feature',
+      message: 'Required field "feature" must be a non-empty string',
+    });
   }
 
   // Phase validation
@@ -64,7 +58,7 @@ export function validateManifold(manifold: unknown, strict: boolean = false): Va
       errors.push({
         field: 'phase',
         message: `Invalid phase "${m.phase}". Must be one of: ${VALID_PHASES.join(', ')}`,
-        value: m.phase
+        value: m.phase,
       });
     }
   } else {
@@ -76,7 +70,7 @@ export function validateManifold(manifold: unknown, strict: boolean = false): Va
     warnings.push({
       field: 'outcome',
       message: 'No outcome specified',
-      suggestion: 'Add an outcome statement describing the desired result'
+      suggestion: 'Add an outcome statement describing the desired result',
     });
   }
 
@@ -145,7 +139,7 @@ export function validateManifold(manifold: unknown, strict: boolean = false): Va
     warnings.push({
       field: 'constraints.ux',
       message: 'Field "ux" is deprecated in schema v2',
-      suggestion: 'Rename "ux" to "user_experience" for v2 compliance'
+      suggestion: 'Rename "ux" to "user_experience" for v2 compliance',
     });
   }
 
@@ -153,7 +147,7 @@ export function validateManifold(manifold: unknown, strict: boolean = false): Va
     valid: errors.length === 0,
     errors,
     warnings,
-    schemaVersion
+    schemaVersion,
   };
 }
 
@@ -187,14 +181,21 @@ function validateConstraints(
   errors: ValidationError[],
   warnings: ValidationWarning[]
 ): void {
-  const validCategories = ['business', 'technical', 'user_experience', 'ux', 'security', 'operational'];
+  const validCategories = [
+    'business',
+    'technical',
+    'user_experience',
+    'ux',
+    'security',
+    'operational',
+  ];
 
   for (const [category, list] of Object.entries(constraints)) {
     if (!validCategories.includes(category)) {
       warnings.push({
         field: `constraints.${category}`,
         message: `Unknown constraint category "${category}"`,
-        suggestion: `Valid categories: ${validCategories.join(', ')}`
+        suggestion: `Valid categories: ${validCategories.join(', ')}`,
       });
       continue;
     }
@@ -202,7 +203,7 @@ function validateConstraints(
     if (!Array.isArray(list)) {
       errors.push({
         field: `constraints.${category}`,
-        message: `Constraint category "${category}" must be an array`
+        message: `Constraint category "${category}" must be an array`,
       });
       continue;
     }
@@ -224,13 +225,16 @@ function validateConstraints(
         errors.push({
           field: `${fieldPrefix}.type`,
           message: `Invalid constraint type "${constraint.type}". Must be: ${VALID_CONSTRAINT_TYPES.join(', ')}`,
-          value: constraint.type
+          value: constraint.type,
         });
       }
 
       // Statement required
       if (!constraint.statement || typeof constraint.statement !== 'string') {
-        errors.push({ field: `${fieldPrefix}.statement`, message: 'Constraint must have a string "statement"' });
+        errors.push({
+          field: `${fieldPrefix}.statement`,
+          message: 'Constraint must have a string "statement"',
+        });
       }
     }
   }
@@ -265,13 +269,16 @@ function validateTensions(
       errors.push({
         field: `${fieldPrefix}.type`,
         message: `Invalid tension type "${tension.type}". Must be: ${VALID_TENSION_TYPES.join(', ')}`,
-        value: tension.type
+        value: tension.type,
       });
     }
 
     // Between required
     if (!Array.isArray(tension.between) || tension.between.length < 2) {
-      errors.push({ field: `${fieldPrefix}.between`, message: 'Tension must have "between" array with at least 2 elements' });
+      errors.push({
+        field: `${fieldPrefix}.between`,
+        message: 'Tension must have "between" array with at least 2 elements',
+      });
     }
 
     // Status validation
@@ -281,21 +288,24 @@ function validateTensions(
       errors.push({
         field: `${fieldPrefix}.status`,
         message: `Invalid tension status "${tension.status}". Must be: ${VALID_TENSION_STATUSES.join(', ')}`,
-        value: tension.status
+        value: tension.status,
       });
     }
 
     // Description required
     // Satisfies: Schema enforcement - tensions use 'description', not 'statement'
     if (!tension.description || typeof tension.description !== 'string') {
-      errors.push({ field: `${fieldPrefix}.description`, message: 'Tension must have a string "description"' });
+      errors.push({
+        field: `${fieldPrefix}.description`,
+        message: 'Tension must have a string "description"',
+      });
     }
 
     // Resolution required if resolved
     if (tension.status === 'resolved' && !tension.resolution) {
       warnings.push({
         field: `${fieldPrefix}.resolution`,
-        message: 'Resolved tension should have a "resolution" explaining how it was resolved'
+        message: 'Resolved tension should have a "resolution" explaining how it was resolved',
       });
     }
   }
@@ -311,19 +321,23 @@ export function countConstraints(manifold: Manifold): Record<string, number> {
     user_experience: 0,
     security: 0,
     operational: 0,
-    total: 0
+    total: 0,
   };
 
   if (!manifold.constraints) return counts;
 
   counts.business = manifold.constraints.business?.length ?? 0;
   counts.technical = manifold.constraints.technical?.length ?? 0;
-  counts.user_experience = (manifold.constraints.user_experience?.length ?? 0) +
-                           (manifold.constraints.ux?.length ?? 0);
+  counts.user_experience =
+    (manifold.constraints.user_experience?.length ?? 0) + (manifold.constraints.ux?.length ?? 0);
   counts.security = manifold.constraints.security?.length ?? 0;
   counts.operational = manifold.constraints.operational?.length ?? 0;
-  counts.total = counts.business + counts.technical + counts.user_experience +
-                 counts.security + counts.operational;
+  counts.total =
+    counts.business +
+    counts.technical +
+    counts.user_experience +
+    counts.security +
+    counts.operational;
 
   return counts;
 }
@@ -335,7 +349,7 @@ export function countConstraintsByType(manifold: Manifold): Record<string, numbe
   const counts: Record<string, number> = {
     invariant: 0,
     goal: 0,
-    boundary: 0
+    boundary: 0,
   };
 
   if (!manifold.constraints) return counts;
@@ -346,7 +360,7 @@ export function countConstraintsByType(manifold: Manifold): Record<string, numbe
     ...(manifold.constraints.user_experience ?? []),
     ...(manifold.constraints.ux ?? []),
     ...(manifold.constraints.security ?? []),
-    ...(manifold.constraints.operational ?? [])
+    ...(manifold.constraints.operational ?? []),
   ];
 
   for (const c of allConstraints) {

@@ -10,12 +10,7 @@ import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync, statSy
 import { join, dirname } from 'path';
 import { findManifoldDir } from '../lib/parser.js';
 import { IOError } from '../lib/errors.js';
-import {
-  println,
-  printError,
-  style,
-  toJSON
-} from '../lib/output.js';
+import { println, printError, style, toJSON } from '../lib/output.js';
 
 interface InitOptions {
   json?: boolean;
@@ -35,7 +30,10 @@ export function registerInitCommand(program: Command): void {
     .option('--json', 'Output as JSON')
     .option('-o, --outcome <outcome>', 'Set the outcome statement')
     .option('-f, --force', 'Overwrite existing manifold')
-    .option('-t, --template <template>', 'Use a constraint template (auth, crud, payment, api, pm/*)')
+    .option(
+      '-t, --template <template>',
+      'Use a constraint template (auth, crud, payment, api, pm/*)'
+    )
     .option('-d, --domain <domain>', 'Domain type: software (default) or non-software', 'software')
     .action(async (feature: string, options: InitOptions) => {
       const exitCode = await initCommand(feature, options);
@@ -51,10 +49,12 @@ async function initCommand(feature: string, options: InitOptions): Promise<numbe
   // Validate feature name
   if (!isValidFeatureName(feature)) {
     if (options.json) {
-      println(toJSON({
-        error: 'Invalid feature name',
-        message: 'Feature name must be lowercase alphanumeric with hyphens only'
-      }));
+      println(
+        toJSON({
+          error: 'Invalid feature name',
+          message: 'Feature name must be lowercase alphanumeric with hyphens only',
+        })
+      );
     } else {
       printError(
         'Invalid feature name',
@@ -90,16 +90,17 @@ async function initCommand(feature: string, options: InitOptions): Promise<numbe
   const mdPath = join(manifoldDir, `${feature}.md`);
   const yamlPath = join(manifoldDir, `${feature}.yaml`);
 
-  const existingPath = existsSync(jsonPath) ? jsonPath :
-                       existsSync(yamlPath) ? yamlPath : null;
+  const existingPath = existsSync(jsonPath) ? jsonPath : existsSync(yamlPath) ? yamlPath : null;
 
   if (existingPath && !options.force) {
     if (options.json) {
-      println(toJSON({
-        error: 'Manifold already exists',
-        path: existingPath,
-        suggestion: 'Use --force to overwrite'
-      }));
+      println(
+        toJSON({
+          error: 'Manifold already exists',
+          path: existingPath,
+          suggestion: 'Use --force to overwrite',
+        })
+      );
     } else {
       printError(
         `Manifold "${feature}" already exists`,
@@ -162,22 +163,25 @@ async function initCommand(feature: string, options: InitOptions): Promise<numbe
 
   // Success output
   const domainLabel = options.domain === 'non-software' ? 'non-software' : 'software';
-  const domainNote = options.domain === 'non-software'
-    ? ' (non-software: uses universal constraint categories)'
-    : '';
+  const domainNote =
+    options.domain === 'non-software'
+      ? ' (non-software: uses universal constraint categories)'
+      : '';
   if (options.json) {
-    println(toJSON({
-      success: true,
-      feature,
-      format: 'json-md',
-      domain: domainLabel,
-      ...(options.template ? { template: options.template } : {}),
-      paths: {
-        json: jsonPath,
-        md: mdPath
-      },
-      nextAction: `/manifold:m1-constrain ${feature}`
-    }));
+    println(
+      toJSON({
+        success: true,
+        feature,
+        format: 'json-md',
+        domain: domainLabel,
+        ...(options.template ? { template: options.template } : {}),
+        paths: {
+          json: jsonPath,
+          md: mdPath,
+        },
+        nextAction: `/manifold:m1-constrain ${feature}`,
+      })
+    );
   } else {
     println(`${style.check()} Created manifold: ${style.feature(feature)}`);
     if (options.template) {
@@ -212,7 +216,11 @@ interface ManifoldTemplate {
  * Generate manifold template in JSON+MD format
  * Satisfies: Schema v3 with evidence[], constraint_graph
  */
-function generateManifoldTemplate(feature: string, outcome?: string, options?: InitOptions): ManifoldTemplate {
+function generateManifoldTemplate(
+  feature: string,
+  outcome?: string,
+  options?: InitOptions
+): ManifoldTemplate {
   const now = new Date().toISOString();
   const date = now.split('T')[0];
   const outcomeText = outcome || `[Describe the desired outcome for ${feature}]`;
@@ -232,7 +240,7 @@ function generateManifoldTemplate(feature: string, outcome?: string, options?: I
       technical: [],
       user_experience: [],
       security: [],
-      operational: []
+      operational: [],
     },
 
     // Tensions placeholder (populated by /manifold:m2-tension)
@@ -243,13 +251,13 @@ function generateManifoldTemplate(feature: string, outcome?: string, options?: I
       hidden_dependencies: 0,
       total: 0,
       resolved: 0,
-      unresolved: 0
+      unresolved: 0,
     },
 
     // Anchors placeholder (populated by /manifold:m3-anchor)
     anchors: {
       required_truths: [],
-      implementation_phases: []
+      implementation_phases: [],
     },
 
     // v2+: Iteration tracking
@@ -258,14 +266,14 @@ function generateManifoldTemplate(feature: string, outcome?: string, options?: I
         number: 0,
         phase: 'init',
         timestamp: now,
-        result: 'initialized'
-      }
+        result: 'initialized',
+      },
     ],
 
     // v2+: Convergence tracking
     convergence: {
-      status: 'NOT_STARTED'
-    }
+      status: 'NOT_STARTED',
+    },
   };
 
   // Markdown content (human-readable text)
@@ -368,7 +376,11 @@ function loadTemplate(feature: string, templateName: string, outcome?: string): 
   const templateDir = resolveTemplateDir();
 
   if (!templateDir) {
-    return { structure: {}, markdown: '', error: 'Template directory not found. Templates may not be installed.' };
+    return {
+      structure: {},
+      markdown: '',
+      error: 'Template directory not found. Templates may not be installed.',
+    };
   }
 
   // Resolve template path (supports "payment" and "pm/feature-launch" formats)
@@ -381,12 +393,16 @@ function loadTemplate(feature: string, templateName: string, outcome?: string): 
     return {
       structure: {},
       markdown: '',
-      error: `Template "${templateName}" not found. Available: ${available.join(', ')}`
+      error: `Template "${templateName}" not found. Available: ${available.join(', ')}`,
     };
   }
 
   if (!existsSync(mdPath)) {
-    return { structure: {}, markdown: '', error: `Template "${templateName}" is missing its .md file` };
+    return {
+      structure: {},
+      markdown: '',
+      error: `Template "${templateName}" is missing its .md file`,
+    };
   }
 
   // Load and customize JSON structure
@@ -413,7 +429,12 @@ function loadTemplate(feature: string, templateName: string, outcome?: string): 
 
   // Add iteration tracking
   structure.iterations = [
-    { number: 0, phase: 'init', timestamp: now, result: `initialized from template:${templateName}` }
+    {
+      number: 0,
+      phase: 'init',
+      timestamp: now,
+      result: `initialized from template:${templateName}`,
+    },
   ];
 
   // Load and customize markdown content
@@ -426,10 +447,7 @@ function loadTemplate(feature: string, templateName: string, outcome?: string): 
 
   // Replace outcome placeholder if provided
   if (outcome) {
-    markdown = markdown.replace(
-      /\[CUSTOMIZE:.*?\]/,
-      outcome
-    );
+    markdown = markdown.replace(/\[CUSTOMIZE:.*?\]/, outcome);
   }
 
   return { structure, markdown };

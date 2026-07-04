@@ -34,7 +34,12 @@ import {
 // ============================================================
 
 export interface LinkingError {
-  type: 'missing_content' | 'missing_structure' | 'invalid_reference' | 'empty_content' | 'schema_error';
+  type:
+    | 'missing_content'
+    | 'missing_structure'
+    | 'invalid_reference'
+    | 'empty_content'
+    | 'schema_error';
   field: string;
   message: string;
   suggestion?: string;
@@ -95,7 +100,10 @@ export function validateManifoldLink(
   // ============================================================
 
   if (structure.constraints) {
-    const constraintsByCategory = structure.constraints as Record<string, Array<{ id: string }> | undefined>;
+    const constraintsByCategory = structure.constraints as Record<
+      string,
+      Array<{ id: string }> | undefined
+    >;
     for (const category of getCategoryKeys(structure.domain)) {
       for (const constraint of constraintsByCategory[category] || []) {
         if (!content.constraints.has(constraint.id)) {
@@ -265,7 +273,10 @@ export function validateManifoldLink(
   let totalRequiredTruths = structure.anchors?.required_truths?.length || 0;
 
   if (structure.constraints) {
-    const constraintsByCategory = structure.constraints as Record<string, Array<unknown> | undefined>;
+    const constraintsByCategory = structure.constraints as Record<
+      string,
+      Array<unknown> | undefined
+    >;
     for (const category of getCategoryKeys(structure.domain)) {
       totalConstraints += constraintsByCategory[category]?.length || 0;
     }
@@ -302,7 +313,9 @@ function formatZodError(issue: ZodIssue, declaredDomain: unknown): string {
   if (issue.code === 'unrecognized_keys' && path === 'constraints') {
     const keys = (issue as ZodIssue & { keys?: string[] }).keys ?? [];
     const hitSoftware = keys.some((k) => (SOFTWARE_CATEGORY_KEYS as readonly string[]).includes(k));
-    const hitNonSoftware = keys.some((k) => (NON_SOFTWARE_CATEGORY_KEYS as readonly string[]).includes(k));
+    const hitNonSoftware = keys.some((k) =>
+      (NON_SOFTWARE_CATEGORY_KEYS as readonly string[]).includes(k)
+    );
     if (declaredDomain === 'non-software' && hitSoftware) {
       return `${base}\n      hint: domain is "non-software" — use ${NON_SOFTWARE_CATEGORY_KEYS.join('/')} (not ${SOFTWARE_CATEGORY_KEYS.join('/')}).`;
     }
@@ -337,10 +350,7 @@ export interface LoadManifoldResult {
   error?: string;
 }
 
-export function loadAndValidateManifold(
-  jsonPath: string,
-  mdPath: string
-): LoadManifoldResult {
+export function loadAndValidateManifold(jsonPath: string, mdPath: string): LoadManifoldResult {
   // Check JSON file exists
   if (!existsSync(jsonPath)) {
     return {
@@ -409,10 +419,7 @@ export function loadAndValidateManifold(
 /**
  * Load manifold by feature name from .manifold directory
  */
-export function loadManifoldByFeature(
-  manifoldDir: string,
-  feature: string
-): LoadManifoldResult {
+export function loadManifoldByFeature(manifoldDir: string, feature: string): LoadManifoldResult {
   const jsonPath = join(manifoldDir, `${feature}.json`);
   const mdPath = join(manifoldDir, `${feature}.md`);
 
@@ -503,7 +510,9 @@ export function formatLinkingResult(result: LinkingResult): string {
   lines.push('Summary:');
   lines.push(`  Constraints: ${summary.linkedConstraints}/${summary.totalConstraints} linked`);
   lines.push(`  Tensions: ${summary.linkedTensions}/${summary.totalTensions} linked`);
-  lines.push(`  Required Truths: ${summary.linkedRequiredTruths}/${summary.totalRequiredTruths} linked`);
+  lines.push(
+    `  Required Truths: ${summary.linkedRequiredTruths}/${summary.totalRequiredTruths} linked`
+  );
   lines.push('');
 
   // Status

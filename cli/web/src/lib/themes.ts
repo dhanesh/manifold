@@ -21,8 +21,7 @@ export interface Theme {
 
 const FONT_SANS =
   '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", system-ui, sans-serif';
-const FONT_MONO =
-  '"SF Mono", ui-monospace, "Menlo", "Cascadia Code", Consolas, monospace';
+const FONT_MONO = '"SF Mono", ui-monospace, "Menlo", "Cascadia Code", Consolas, monospace';
 
 const SHARED_TOKENS: ThemeVars = {
   '--font-sans': FONT_SANS,

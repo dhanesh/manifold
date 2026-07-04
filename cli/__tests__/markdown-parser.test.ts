@@ -347,6 +347,6 @@ This is a well-written constraint statement with sufficient detail.
     }
     const result = validateContentQuality(content);
     expect(result.valid).toBe(false);
-    expect(result.issues.some(i => i.id === 'B1')).toBe(true);
+    expect(result.issues.some((i) => i.id === 'B1')).toBe(true);
   });
 });

@@ -5,11 +5,7 @@
  * In-memory caching for constraint graphs with hash-based invalidation.
  */
 
-import type {
-  Manifold,
-  ConstraintGraph,
-  ExecutionPlan,
-} from '../parser';
+import type { Manifold, ConstraintGraph, ExecutionPlan } from '../parser';
 
 // ============================================================
 // Graph Cache
@@ -64,12 +60,17 @@ export function getCachedGraph(feature: string, manifold: Manifold): CachedGraph
 /**
  * Store graph in cache
  */
-export function cacheGraph(feature: string, manifold: Manifold, graph: ConstraintGraph, plan?: ExecutionPlan): void {
+export function cacheGraph(
+  feature: string,
+  manifold: Manifold,
+  graph: ConstraintGraph,
+  plan?: ExecutionPlan
+): void {
   graphCache.set(feature, {
     graph,
     plan,
     createdAt: Date.now(),
-    manifestHash: generateManifestHash(manifold)
+    manifestHash: generateManifestHash(manifold),
   });
 }
 
@@ -86,6 +87,6 @@ export function clearGraphCache(): void {
 export function getGraphCacheStats(): { size: number; features: string[] } {
   return {
     size: graphCache.size,
-    features: [...graphCache.keys()]
+    features: [...graphCache.keys()],
   };
 }
