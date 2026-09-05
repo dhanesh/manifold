@@ -21,6 +21,8 @@ on:
       - 'install/agents/**'
       - 'scripts/sync-plugin.ts'
       - 'plugin/**'
+      # Changes to the guard itself must re-run the guard.
+      - '.github/workflows/manifold-diff-guard.yml'
   pull_request:
     branches: [main]
     paths:
@@ -33,6 +35,8 @@ on:
       - 'install/agents/**'
       - 'scripts/sync-plugin.ts'
       - 'plugin/**'
+      # Changes to the guard itself must re-run the guard.
+      - '.github/workflows/manifold-diff-guard.yml'
 
 jobs:
   diff-guard:
