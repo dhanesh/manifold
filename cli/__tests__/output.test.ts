@@ -86,19 +86,24 @@ describe('formatConstraintSummary', () => {
 describe('formatTensionSummary', () => {
   test('formats all resolved', () => {
     const result = formatTensionSummary(5, 5);
-    expect(result).toContain('5 detected');
+    expect(result).toContain('5 documented');
     expect(result).toContain('all resolved');
   });
 
   test('formats some unresolved', () => {
     const result = formatTensionSummary(3, 5);
-    expect(result).toContain('5 detected');
+    expect(result).toContain('5 documented');
     expect(result).toContain('2 unresolved');
   });
 
-  test('formats none detected', () => {
+  test('formats none documented', () => {
     const result = formatTensionSummary(0, 0);
-    expect(result).toBe('None detected');
+    expect(result).toBe('None documented');
+  });
+
+  test('never claims the CLI detected anything', () => {
+    expect(formatTensionSummary(3, 5)).not.toContain('detected');
+    expect(formatTensionSummary(0, 0)).not.toContain('detected');
   });
 });
 
