@@ -9,8 +9,11 @@ Get from zero to a verified feature in 15 minutes.
 ### Option A: Claude Code Plugin (Recommended)
 
 ```bash
-claude plugin:install github:dhanesh/manifold#plugin
+claude plugin marketplace add dhanesh/manifold
+claude plugin install manifold@manifold
 ```
+
+Both steps are required — `plugin install` only resolves plugins from a marketplace you have already added. The in-session equivalent is `/plugin marketplace add dhanesh/manifold` followed by `/plugin install manifold@manifold`.
 
 Then inside Claude Code, install the native CLI:
 
