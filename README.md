@@ -2,364 +2,197 @@
 
 [![Release](https://img.shields.io/github/v/release/dhanesh/manifold)](https://github.com/dhanesh/manifold/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Works with](https://img.shields.io/badge/works%20with-Claude%20Code%20%C2%B7%20AMP%20%C2%B7%20Gemini%20CLI%20%C2%B7%20Codex%20CLI-555)](#install)
 
-Constraint-first development framework that makes ALL constraints visible BEFORE implementation.
+**Your design has contradictions in it right now. Manifold finds them before you write the code.**
+
+Your coding agent will happily implement a spec that contradicts itself. Manifold is the planning layer it doesn't have: you state an outcome, it interviews you across five constraint categories, then reports which pairs of your own requirements can't both be true — and makes you resolve them while resolving is still cheap.
+
+It doesn't write code. It decides what your agent should write, and it works with Claude Code, AMP, Gemini CLI, and Codex CLI. The CLI itself is a compiled binary with no model in the path.
+
+![A verified manifold, then a broken one: `manifold status manifold-doctor` reports Phase VERIFIED (6/6), 2 tensions resolved, 7/7 required truths. A tension is added referencing constraint ZZ9, which does not exist. `manifold validate manifold-doctor` then reports 2 errors and exits 2.](docs/assets/demo.gif)
+
+_v2.35.1 — the 72nd tagged release since January 2026. Manifold was specified with itself: [`.manifold/`](.manifold/) holds 22 manifolds, 21 of them verified — one is the example below._
+
+## A real one
+
+While designing `manifold doctor` — a command that runs four repo-health checks — two requirements were written down independently:
+
+- **T3:** completes in under 500ms
+- **T4:** each check is an independent unit; adding a fifth check doesn't modify the other four
+
+Both are reasonable. Together they're a trap, and Manifold said so before implementation:
 
 ```
-TRADITIONAL                          MANIFOLD
-─────────────────────────────────    ─────────────────────────────────
-Spec → Design → Build → Test         All constraints exist NOW
-Discover problems during build       Problems visible before build
-Sequential planning                  Constraint satisfaction
-Forward reasoning                    Backward from outcome
+### TN2: Modular Checks vs Redundant I/O
+
+T4 wants each check to be an independent unit. The naive realization — each
+check walks the filesystem itself — would read and hash the same files four
+times, undermining T3. T4's modularity has a hidden dependency on *how* I/O
+is structured.
+
+> Resolution: Each check becomes a pure function (snapshot) => Problem[] —
+> independent and individually testable (T4 preserved), with zero redundant
+> traversal. Modularity and performance are reconciled by the same
+> intermediary.
 ```
 
-## Start Here
+That "snapshot" is one shared filesystem pass, introduced a few lines earlier to resolve a related tension. Nobody wrote it down as a requirement; it fell out of holding two requirements next to each other.
 
-| I want to... | Go to |
-|---------------|-------|
-| Get running in 15 minutes | [Quickstart](docs/quickstart.md) |
-| See a full feature walkthrough | [Walkthrough](docs/walkthrough/README.md) |
-| Look up a CLI command | [CLI Reference](docs/cli-reference.md) |
-| Understand the terminology | [Glossary](docs/GLOSSARY.md) |
-| Use pre-built constraint patterns | [Templates](install/templates/README.md) |
-| Generate PRDs and user stories | [PM Guide](docs/pm/guide.md) |
-| Use Manifold for non-software decisions | [Non-Programming Guide](docs/non-programming/guide.md) |
-| Fix something that's broken | [Troubleshooting](docs/troubleshooting.md) |
-| Contribute to Manifold | [Contributing](CONTRIBUTING.md) |
+**Without this:** you write four clean, self-contained checks. It works. Months later it's the slowest thing in CI, and the modular design you were proud of is the reason — so the fix touches all four.
 
-## Features
+**With this:** the snapshot layer was in the spec before any code existed. [`cli/lib/doctor.ts`](cli/lib/doctor.ts) still carries the trace:
 
-- **Constraint-First Development** -- Surface all constraints before writing code
-- **Backward Reasoning** -- Reason from desired outcomes to required truths, with recursive decomposition for multi-level dependency chains
-- **Tension Detection** -- Find conflicts between constraints early, with TRIZ-guided resolution and directional propagation checks
-- **Pre-mortem Stress Testing** -- Mandatory failure-story pass in constraint discovery surfaces assumptions single-pass elicitation misses
-- **Constraint Genealogy** -- Track constraint origins (`source`) and challengeability (`challenger`) to guide tension resolution direction
-- **Probabilistic Bounds** -- Express metric constraints as statistical targets (p99, p50, failure rates) rather than only deterministic thresholds
-- **Bottleneck Identification** -- Theory of Constraints integration surfaces the binding constraint before solution generation
-- **Reversibility Tagging** -- Every action step tagged as TWO_WAY, REVERSIBLE_WITH_COST, or ONE_WAY with explicit acknowledgment for irreversible decisions
-- **Non-Software Domain Support** -- `--domain=non-software` activates universal categories (Obligations, Desires, Resources, Risks, Dependencies) and decision-focused artifacts
-- **All-at-Once Generation** -- Generate code, tests, docs, runbooks, and alerts from a single source
-- **Evidence System** -- Verify constraints with [concrete proof](docs/evidence-system.md)
-- **Drift Detection** -- Detect post-verification file changes using SHA-256 hashing
-- **Guided Workflow** -- Structured next-step suggestions guide you through each phase
-- **Constraint Templates** -- Pre-built patterns for [auth, CRUD, API, payment, and 13 PM templates](install/templates/README.md)
-- **Light Mode** -- Simplified 3-phase workflow for quick changes
-- **PM Workflows** -- Generate PRDs and user stories with constraint traceability
-- **Parallel Execution** -- Run independent tasks concurrently using git worktrees
-- **Native CLI** -- Fast, deterministic operations (<100ms) for CI/CD
-- **Multi-Agent Support** -- Works with Claude Code, AMP, Gemini CLI, and Codex CLI
+```ts
+// Satisfies: RT-2 (one shared snapshot, all filesystem reads in one pass)
 
-## Install
-
-### Claude Code Plugin (Recommended for Claude Code users)
-
-```bash
-claude plugin:install github:dhanesh/manifold#plugin
+/**
+ * All data needed by the four check functions, gathered in a single pass.
+ * Check functions are pure: (RepoSnapshot) => Problem[].
+ */
+export interface RepoSnapshot {
 ```
 
-This installs Manifold as a native Claude Code plugin, giving you:
-- 13 slash commands (`/manifold:m0-init` through `/manifold:parallel`, including `m4-prd` and `m4-stories` for PM workflows)
-- 4 hooks (context preservation, schema validation, interaction rules, phase context injection) plus a `SessionStart` script
-- Constraint templates (auth, CRUD, API, payment, + 13 PM templates)
-- `/manifold:setup` command to install the native CLI binary
+The tension, the resolution, and the code are all in this repo. Read [`.manifold/manifold-doctor.md`](.manifold/manifold-doctor.md) and check the work.
 
-After installing the plugin, run `/manifold:setup` inside Claude Code to get the fast CLI binary.
+## Try it in 60 seconds
 
-### Shell Installer (All Agents)
+No AI agent required for this part — the CLI is a standalone binary.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/dhanesh/manifold/main/install/install.sh | bash
+git clone https://github.com/dhanesh/manifold && cd manifold
+manifold status manifold-doctor
 ```
 
-The installer auto-detects which AI agents you have and installs per-agent:
+```
+Feature: manifold-doctor
+Schema: v3
+Phase: VERIFIED (6/6)
+Outcome: A `manifold doctor` CLI command detects repo-health problems ...
+Constraints: Business: 2, Technical: 4, UX: 3, Security: 1, Operational: 2
+Tensions: 2 detected, all resolved
+Required Truths: 7/7 satisfied
+Convergence: CONVERGED
+```
 
-| Agent | What Gets Installed | Location |
-|-------|-------------------|----------|
-| **Claude Code** | 13 slash commands (`.md`), parallel library, hooks, schema snippet in `CLAUDE.md` | `~/.claude/commands/`, `lib/`, `hooks/` |
-| **AMP** | Same as Claude Code | `~/.amp/commands/`, `lib/`, `hooks/` |
-| **Gemini CLI** | Translated `.toml` commands, parallel bundle (`.js`), schema snippet in `GEMINI.md` | `~/.gemini/commands/`, `lib/` |
-| **Codex CLI** | `SKILL.md` skill dirs, hook skills, parallel bundle, schema snippet in `AGENTS.md` | `~/.agents/skills/manifold-*/`, `~/.codex/lib/` |
-| **CLI binary** | `manifold` binary for your platform (darwin/linux/windows, arm64/x64) | `/usr/local/bin/`, `~/.local/bin/`, or `%LOCALAPPDATA%\manifold\bin\` |
-
-**Specifically, the installer creates:**
-- `commands/` -- 13 Manifold slash command files (m0-init through parallel, plus `m4-prd`, `m4-stories`, and SCHEMA_REFERENCE)
-- `lib/parallel/` -- TypeScript modules + pre-built bundle for git worktree-based parallel execution (including the `AutoSuggester` library that powers `/manifold:parallel`)
-- `hooks/` -- 4 compiled hook handlers dispatched via `manifold hook <name>`: `context` (PreCompact — context preservation), `schema-guard` (PostToolUse — schema validation), `prompt-enforcer` (UserPromptSubmit — interaction rules), `phase-commons` (UserPromptSubmit — injects live manifold state before phase commands). A cross-platform `session-start.sh` / `session-start.ps1` script is also wired to the `SessionStart` event.
-- `skills/manifold/SKILL.md` -- Overview skill for `/manifold` command
-- Schema snippet appended to your agent's instruction file (CLAUDE.md, GEMINI.md, or AGENTS.md)
-
-The installer is idempotent -- running it again updates existing files without duplication. Run `install.sh --validate` to check what was installed. See [Uninstall](#uninstall) to remove.
-
-Verify it worked:
+Now break it. Open `.manifold/manifold-doctor.json`, add a tension that points at a constraint ID you never defined, and run:
 
 ```bash
-manifold --version
+manifold validate manifold-doctor
 ```
 
-### CLI Binary (Standalone)
+```
+  Linked: 12/12 constraints, 2/3 tensions, 7/7 required truths
+  Result: ✗ Invalid (2 errors, 0 warnings)
 
-Download platform-specific binaries from [Releases](https://github.com/dhanesh/manifold/releases):
-
-**macOS / Linux:**
-
-```bash
-# macOS (Apple Silicon)
-curl -fsSL https://github.com/dhanesh/manifold/releases/latest/download/manifold-darwin-arm64 -o manifold
-
-# macOS (Intel)
-curl -fsSL https://github.com/dhanesh/manifold/releases/latest/download/manifold-darwin-x64 -o manifold
-
-# Linux (x64)
-curl -fsSL https://github.com/dhanesh/manifold/releases/latest/download/manifold-linux-x64 -o manifold
-
-# Linux (ARM64)
-curl -fsSL https://github.com/dhanesh/manifold/releases/latest/download/manifold-linux-arm64 -o manifold
-
-chmod +x manifold
+  Errors:
+    ✗ tensions.TN3: Tension "TN3" not found in Markdown
+    ✗ tensions.TN3.between: Tension "TN3" references unknown constraint "ZZ9"
 ```
 
-**Windows (PowerShell):**
+Exit code 2. Your design doc just failed CI.
 
-```powershell
-# Download and install via PowerShell
-Invoke-WebRequest -Uri "https://github.com/dhanesh/manifold/releases/latest/download/manifold-windows-x64.exe" -OutFile "$env:LOCALAPPDATA\manifold\bin\manifold.exe"
+## "Isn't this just…"
 
-# Or use the install script (handles PATH setup automatically)
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/dhanesh/manifold/main/plugin/bin/install-cli.ps1" -OutFile "$env:TEMP\install-manifold.ps1"
-powershell -ExecutionPolicy Bypass -File "$env:TEMP\install-manifold.ps1"
+**…another AI coding CLI?**
+It doesn't generate code and it doesn't wrap a model. A coding agent takes a description and produces a diff; Manifold runs before that and produces the file it reads. It's a layer up rather than an alternative — the same manifold feeds whichever agent you already use, so picking it up doesn't mean putting anything down. And the parts that enforce anything (`validate`, `verify`, `drift`, `doctor`) are a compiled binary that never calls a model.
+
+**…a linter with extra steps?**
+A linter reads code you already wrote. Manifold runs before the code exists. No linter will tell you that your modular design is going to cost you 4× the I/O, because by the time a linter can see it, the decision is already load-bearing across four files.
+
+**…a design doc?**
+A design doc is prose, and nothing checks prose. Manifold's output is a structured file: constraints have IDs, tensions reference those IDs, artifacts reference the constraints they satisfy. So `manifold validate` can exit 2 when a tension points at a constraint that doesn't exist, and `manifold drift` can tell you when the code moved away from the spec it was verified against. A design doc cannot fail your build.
+
+**…just prompt scaffolding for an LLM?**
+Partly, and that's the honest answer. The discovery phases (`m1-constrain`, `m2-tension`, `m3-anchor`) are structured prompts your coding agent runs — the elicitation quality comes from the agent. What is *not* prompting: the schema, the validator, the drift detection, and the CLI, which is a compiled binary with no AI in the path (on this repo, `status` runs in ~0.15s and `doctor` in ~0.3s). The prompts produce the artifact; the binary keeps it honest.
+
+**…way too much ceremony for a three-line fix?**
+Yes. Use `/manifold:m-quick` for those, or don't use Manifold at all — see [When NOT to Use](docs/WHEN_NOT_TO_USE.md), which is a real page in these docs.
+
+## The workflow
+
 ```
-
-The Windows binary is a standalone `.exe` -- no runtime (Bun/Node) required.
-
-## Quick Start
+INITIALIZED → CONSTRAINED → TENSIONED → ANCHORED → GENERATED → VERIFIED
+```
 
 ```bash
 /manifold:m0-init payment-retry --outcome="95% retry success"
-/manifold:m1-constrain payment-retry        # Discover constraints across 5 categories
-/manifold:m2-tension payment-retry          # Surface conflicts: latency vs idempotency
-/manifold:m3-anchor payment-retry           # Backward reasoning -> solution options
-/manifold:m4-generate payment-retry         # Create code, tests, docs, runbooks, alerts
-/manifold:m5-verify payment-retry           # Validate all artifacts against constraints
+/manifold:m1-constrain payment-retry   # discover constraints across 5 categories
+/manifold:m2-tension payment-retry     # surface conflicts: latency vs idempotency
+/manifold:m3-anchor payment-retry      # reason backward from outcome
+/manifold:m4-generate payment-retry    # code, tests, docs, runbooks, alerts
+/manifold:m5-verify payment-retry      # validate every artifact against every constraint
 ```
 
-For simple changes that don't need full constraint analysis:
+Constraints come in three flavors — **invariant** (never violate), **boundary** (hard limit), **goal** (optimize) — across business, technical, UX, security, and operational categories. Tensions are found between them. See the [Walkthrough](docs/walkthrough/README.md) for a full run with real outputs.
+
+## Install
+
+**Claude Code plugin** (recommended) — two steps; the marketplace has to be added before the install resolves:
 
 ```bash
-/manifold:m-quick fix-login-bug --outcome="Fix 504 timeout on login"
+claude plugin marketplace add dhanesh/manifold
+claude plugin install manifold@manifold
 ```
 
-See [Quickstart](docs/quickstart.md) for a complete 15-minute guide, or [When NOT to Use](docs/WHEN_NOT_TO_USE.md) for when simpler approaches work better.
+From inside a session it's the same two steps as slash commands: `/plugin marketplace add dhanesh/manifold`, then `/plugin install manifold@manifold`.
 
-## Commands
+Then `/manifold:setup` inside Claude Code to fetch the CLI binary. Gives you 14 slash commands, 4 hooks, and 17 templates.
 
-### AI Agent Commands (Claude Code / AMP)
-
-| Command | Purpose | Phase |
-|---------|---------|-------|
-| `/manifold:m0-init` | Initialize constraint manifold | INITIALIZED |
-| `/manifold:m1-constrain` | Discover constraints (interview-driven) | CONSTRAINED |
-| `/manifold:m2-tension` | Surface constraint conflicts | TENSIONED |
-| `/manifold:m3-anchor` | Backward reasoning from outcome | ANCHORED |
-| `/manifold:m4-generate` | Coordinate subagents to generate all artifacts, with in-loop review | GENERATED |
-| `/manifold:m4-prd` | Generate a PRD document from the manifold (PM workflow) | - |
-| `/manifold:m4-stories` | Generate user stories with acceptance criteria (PM workflow) | - |
-| `/manifold:m5-verify` | Validate against constraints | VERIFIED |
-| `/manifold:m6-integrate` | Wire artifacts together | - |
-| `/manifold:m-status` | Show current state | - |
-| `/manifold:m-solve` | Generate parallel execution plan | - |
-| `/manifold:m-quick` | Light mode: 3-phase workflow | - |
-| `/manifold:parallel` | Execute tasks in parallel worktrees | - |
-
-### Native CLI
-
-The CLI provides instant operations without AI round-trips. See [CLI Reference](docs/cli-reference.md) for complete documentation.
+**Shell installer** — auto-detects Claude Code, AMP, Gemini CLI, and Codex CLI:
 
 ```bash
-manifold status [feature]          # Show manifold state
-manifold validate [feature]        # Validate schema (exit 2 = invalid)
-manifold init <feature>            # Initialize new manifold
-manifold verify [feature]          # Verify artifacts exist
-manifold graph [feature]           # Visualize constraint network
-manifold show [feature]            # Combined JSON+MD view
-manifold solve [feature]           # Parallel execution plan
-manifold migrate [feature]         # Convert YAML -> JSON+MD
-manifold drift [feature]          # Detect post-verification file changes
-manifold doctor [--json]          # Detect repo-health problems (exit 2 = problems found)
-manifold serve [--port <n>] [--host <addr>]  # Local PWA visualiser (default port 6353)
-manifold completion [shell]        # Shell completions (bash/zsh/fish)
-manifold hook <name>               # Compiled hook handlers for Claude Code events
-                                   # Subcommands: context | schema-guard | prompt-enforcer | phase-commons
+curl -fsSL https://raw.githubusercontent.com/dhanesh/manifold/main/install/install.sh | bash
+manifold --version
 ```
 
-**`manifold serve`** opens a lightweight web visualiser of every manifold in your project — outcome banner, backward-reasoning Sankey, accordion cards (constraints → tensions → required truths → solution space), and the full Markdown narrative inline. All assets are embedded in the CLI binary; no network access required. Default port is `6353` (T9 keypad encoding of "MFLD"). Apple Light / Apple Dark / Nord themes plus `prefers-color-scheme` auto-follow. See [docs/manifold-serve/](docs/manifold-serve/README.md) for the architecture and the [theming + plugin contract](docs/manifold-serve/THEMES.md).
+Installs the slash commands, 3 hooks, 17 templates, and a platform binary (darwin/linux/windows, arm64/x64) — no `/manifold:setup` step, the binary comes with it. The command set is agent-specific: 11 for Claude Code and AMP, 13 for Gemini CLI. Idempotent — re-run it to update. Standalone binaries are on [Releases](https://github.com/dhanesh/manifold/releases); [Uninstall](#uninstall) below.
 
-**When to use CLI vs AI commands:**
-- **CLI**: Status checks, CI/CD validation, visualization, quick verification
-- **AI**: Constraint discovery, tension analysis, code generation
+## CLI
 
-## Phase Workflow
-
-```
-INITIALIZED -> CONSTRAINED -> TENSIONED -> ANCHORED -> GENERATED -> VERIFIED
-     ^                                                              |
-     +----------------------- (iteration) --------------------------+
-```
-
-Each phase builds on the previous:
-
-1. **Initialize** -- Name the feature, state the outcome
-2. **Constrain** -- Interview-driven discovery across 5 categories (business, technical, UX, security, operational), with pre-mortem stress testing and constraint genealogy tagging
-3. **Tension** -- Find and resolve conflicts between constraints, with TRIZ principle lookup and directional propagation checks
-4. **Anchor** -- Reason backward from outcome to derive required truths, with recursive decomposition and bottleneck identification
-5. **Generate** -- Create ALL artifacts (code, tests, docs, runbooks, alerts) simultaneously, with reversibility tagging per action step
-6. **Verify** -- Validate every artifact against every constraint with evidence
-
-See the [Walkthrough](docs/walkthrough/README.md) for a real example with actual outputs.
-
-## Constraint System
-
-### Types
-
-| Type | Meaning | Priority | Example |
-|------|---------|----------|---------|
-| **invariant** | Must NEVER be violated | Highest | "No duplicate payments" |
-| **boundary** | Hard limits | Medium | "Retry window <= 72 hours" |
-| **goal** | Should be optimized | Lowest | "95% retry success rate" |
-
-### Categories
-
-| Category | ID Prefix | Focus |
-|----------|-----------|-------|
-| Business | B1, B2... | Revenue, compliance, stakeholders |
-| Technical | T1, T2... | Performance, integration, data |
-| User Experience | U1, U2... | Response times, errors, accessibility |
-| Security | S1, S2... | Data protection, auth, audit |
-| Operational | O1, O2... | Monitoring, incidents, deployment |
-
-## Schema
-
-Manifold uses JSON+Markdown hybrid format stored in `.manifold/`:
-
-```
-.manifold/
-+-- <feature>.json           # Structure (IDs, types, phases)
-+-- <feature>.md             # Content (statements, rationale)
-+-- <feature>.verify.json    # Verification results
-```
-
-> Legacy YAML format (`.yaml` files) is still supported. Use `manifold migrate` to convert.
-
-### Valid Values
-
-| Field | Valid Values |
-|-------|--------------|
-| `phase` | INITIALIZED, CONSTRAINED, TENSIONED, ANCHORED, GENERATED, VERIFIED |
-| `constraint.type` | invariant, goal, boundary |
-| `tension.type` | trade_off, resource_tension, hidden_dependency |
-| `tension.status` | resolved, unresolved |
-| `required_truth.status` | SATISFIED, PARTIAL, NOT_SATISFIED, SPECIFICATION_READY |
-| `convergence.status` | NOT_STARTED, IN_PROGRESS, CONVERGED |
-
-See [Schema Reference](install/commands/SCHEMA_REFERENCE.md) for complete documentation.
-
-## Using Templates
-
-Pre-built constraint patterns for common scenarios:
+Deterministic, no AI round-trip, safe for CI:
 
 ```bash
-/manifold:m0-init user-auth --template=auth        # Authentication flows
-/manifold:m0-init user-crud --template=crud        # CRUD operations
-/manifold:m0-init payment-flow --template=payment  # Payment processing
-/manifold:m0-init api-endpoint --template=api      # API endpoints
+manifold status [feature]     # phase, constraints, tensions, convergence
+manifold validate [feature]   # schema + cross-reference check (exit 2 = invalid)
+manifold verify [feature]     # artifacts exist and cover constraints
+manifold drift [feature]      # files changed since verification (exit 2 = drift)
+manifold doctor               # repo health, each problem with a fix command
+manifold graph [feature]      # constraint network as ASCII, Mermaid, DOT, or JSON
+manifold serve                # local web visualiser, no network required
 ```
 
-See [Constraint Templates](install/templates/README.md) for all 17 templates including PM-specific patterns.
-
-## CI/CD Integration
-
-```bash
-# Validate manifolds (exit 2 = validation failure)
-manifold validate --json
-
-# Verify artifacts exist
-manifold verify --json
-
-# Evidence verification (strict mode for CI)
-manifold verify --verify-evidence --strict --json
-
-# Check for post-verification drift (exit 2 = drift detected)
-manifold drift --json
-```
-
-### GitHub Action
+Every command takes `--json`. In CI:
 
 ```yaml
-# .github/workflows/ci.yml
 jobs:
   manifold:
     uses: dhanesh/manifold/.github/workflows/manifold-verify.yml@main
-    with:
-      fail-on-gaps: false  # Set true to fail on non-blocking gaps
 ```
 
-## Parallel Execution
+Full list in the [CLI Reference](docs/cli-reference.md).
 
-Run independent tasks concurrently using isolated git worktrees:
+## Beyond code
 
-```bash
-/manifold:parallel "implement auth module" "add logging middleware" "create user tests"
-```
+`m4-prd` and `m4-stories` generate PRDs and user stories traceable to the same constraints ([PM Guide](docs/pm/guide.md)). `--domain=non-software` swaps in universal categories — Obligations, Desires, Resources, Risks, Dependencies — and produces decision briefs instead of code ([Non-Programming Guide](docs/non-programming/guide.md)).
 
-See [Parallel Agents Guide](docs/parallel-agents/README.md) for configuration and advanced usage.
+## Built with itself
 
-## Product Manager Workflow
+The `.manifold/` directory in this repo holds 22 manifolds, 21 carrying verification artifacts — `manifold-doctor`, `manifold-serve`, `parallel-agents`, `secret-detection`, and the rest. Every feature listed above was specified this way before it was built. They're readable, and the tensions in them are the real ones.
 
-Generate PRDs and user stories with constraint traceability:
+## Docs
 
-```bash
-/manifold:m0-init mobile-checkout --template=pm/feature-launch
-/manifold:m1-constrain mobile-checkout
-/manifold:m2-tension mobile-checkout
-/manifold:m3-anchor mobile-checkout
-/manifold:m4-generate mobile-checkout --prd --stories
-```
-
-See [PM Guide](docs/pm/guide.md) for detailed workflows and [PM Templates](install/templates/pm/README.md) for all 13 PM-specific templates.
-
-## Non-Programming Use Cases
-
-Manifold's constraint-first approach extends beyond software. Use `--domain=non-software` to activate universal categories and decision-focused artifacts:
-
-```bash
-/manifold:m0-init career-change --domain=non-software --outcome="Make the right career move"
-```
-
-| Domain | Best For |
-|--------|----------|
-| Research/Analysis | Methodology design, study planning |
-| Business | Strategic decisions, expansion planning |
-| Personal | Major life decisions, career choices |
-| Creative | Project planning (not creative direction) |
-
-Non-software mode uses five universal categories (Obligations, Desires, Resources, Risks, Dependencies) and generates decision artifacts (decision brief, scenario stress-tests, narrative guide, recovery playbook, risk watch list) instead of code.
-
-See [Non-Programming Guide](docs/non-programming/guide.md) for full details, universal category definitions, and examples.
-
-## Documentation
-
-| Document | Description |
-|----------|-------------|
-| [Quickstart](docs/quickstart.md) | Get started in 15 minutes |
-| [CLI Reference](docs/cli-reference.md) | Complete CLI command documentation |
-| [Evidence System](docs/evidence-system.md) | Evidence types and verification |
-| [Walkthrough](docs/walkthrough/README.md) | End-to-end feature example |
+| | |
+|---|---|
+| [Quickstart](docs/quickstart.md) | Zero to a verified feature in 15 minutes |
+| [Walkthrough](docs/walkthrough/README.md) | End-to-end example with real outputs |
+| [CLI Reference](docs/cli-reference.md) | Every command and flag |
+| [When NOT to Use](docs/WHEN_NOT_TO_USE.md) | Cases where simpler wins |
 | [Glossary](docs/GLOSSARY.md) | Plain-language terminology |
+| [Evidence System](docs/evidence-system.md) | How verification proves a constraint holds |
+| [Templates](install/templates/README.md) | 17 starter manifolds — 4 code (api, auth, crud, payment), 13 product |
 | [Troubleshooting](docs/troubleshooting.md) | Common errors and fixes |
-| [When NOT to Use](docs/WHEN_NOT_TO_USE.md) | Know when simpler approaches work |
-| [TRIZ Principles](docs/triz-principles.md) | 40 inventive principles for tension resolution |
-| [Non-Programming Guide](docs/non-programming/guide.md) | Using Manifold for non-software decisions |
-| [Scientific Foundations](docs/research/phase-scientific-foundations.md) | Research supporting each phase |
 | [Contributing](CONTRIBUTING.md) | How to contribute |
 
 ## Contributing
