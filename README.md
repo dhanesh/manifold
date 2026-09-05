@@ -2,14 +2,19 @@
 
 [![Release](https://img.shields.io/github/v/release/dhanesh/manifold)](https://github.com/dhanesh/manifold/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Works with](https://img.shields.io/badge/works%20with-Claude%20Code%20%C2%B7%20AMP%20%C2%B7%20Gemini%20CLI%20%C2%B7%20Codex%20CLI-555)](#install)
 
 **Your design has contradictions in it right now. Manifold finds them before you write the code.**
 
-You state an outcome. Manifold interviews you across five constraint categories, then reports which pairs of your own requirements can't both be true — and makes you resolve them while resolving is still cheap.
+Your coding agent will happily implement a spec that contradicts itself. Manifold is the planning layer it doesn't have: you state an outcome, it interviews you across five constraint categories, then reports which pairs of your own requirements can't both be true — and makes you resolve them while resolving is still cheap.
+
+It doesn't write code. It decides what your agent should write, and it works with Claude Code, AMP, Gemini CLI, and Codex CLI. The CLI itself is a compiled binary with no model in the path.
 
 <!-- DEMO-GIF-ANCHOR: replace this block with docs/assets/demo.gif once recorded -->
 
 > _Demo GIF landing here._
+
+_v2.35.1 — the 72nd tagged release since January 2026. Manifold was specified with itself: [`.manifold/`](.manifold/) holds 22 verified manifolds, one of which is the example below._
 
 ## A real one
 
@@ -91,6 +96,9 @@ manifold validate manifold-doctor
 Exit code 2. Your design doc just failed CI.
 
 ## "Isn't this just…"
+
+**…another AI coding CLI?**
+It doesn't generate code and it doesn't wrap a model. Copilot CLI, Codex CLI, Claude Code and Gemini CLI are implementation surfaces — they take a description and produce a diff. Manifold runs before any of that and produces a file those tools then read. It works with four of them rather than competing with one, and the parts that enforce anything (`validate`, `verify`, `drift`, `doctor`) are a compiled binary that never calls a model.
 
 **…a linter with extra steps?**
 A linter reads code you already wrote. Manifold runs before the code exists. No linter will tell you that your modular design is going to cost you 4× the I/O, because by the time a linter can see it, the decision is already load-bearing across four files.
