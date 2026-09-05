@@ -249,7 +249,7 @@ async function context(): Promise<void> {
 
     if (manifold.tensions?.length) {
       const resolved = manifold.tensions.filter((t: any) => t.resolved).length;
-      lines.push(`- Tensions: ${manifold.tensions.length} detected, ${resolved} resolved`);
+      lines.push(`- Tensions: ${manifold.tensions.length} documented, ${resolved} resolved`);
     }
 
     lines.push(`- Next: ${getNextAction(manifold.phase, featureName)}`);
