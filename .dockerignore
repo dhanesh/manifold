@@ -1,0 +1,16 @@
+# Keep the verification build context small and reproducible.
+# Anything excluded here is also unavailable to Dockerfile.verify — which is
+# the point: the container must build from committed sources only.
+.git
+node_modules
+**/node_modules
+cli/dist
+cli/manifold
+test-results
+_archive
+.roughwork
+.autoresearch
+.serena
+.manifold
+claudedocs
+**/.DS_Store

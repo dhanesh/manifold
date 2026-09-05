@@ -117,8 +117,12 @@ export async function serveCommand(rawOpts: ServeOptions): Promise<number> {
       await server.stop();
       process.exit(0);
     };
-    process.once('SIGINT', () => void shutdown('SIGINT'));
-    process.once('SIGTERM', () => void shutdown('SIGTERM'));
+    // bun-types re-declares process.once with a `memoryPressure`-only overload
+    // and does not restore the generic signature (oven-sh/bun#40003), so signal
+    // names are rejected. Go through EventEmitter, which types them correctly.
+    const signals = process as unknown as NodeJS.EventEmitter;
+    signals.once('SIGINT', () => void shutdown('SIGINT'));
+    signals.once('SIGTERM', () => void shutdown('SIGTERM'));
 
     return await new Promise<number>(() => {
       // Keep the process alive until shutdown handlers exit.
