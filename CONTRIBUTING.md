@@ -151,8 +151,9 @@ Each piece of information lives in **one place**. Other documents link to it.
 2. Register in `cli/index.ts`
 3. Add to `docs/cli-reference.md` (the canonical reference)
 4. Add tests in `cli/__tests__/`
-5. Update shell completions in `cli/commands/completion.ts` — **both** the bash
-   and zsh templates, and the command list at the top of each
+5. Update shell completions in `cli/commands/completion.ts` — **all three**
+   templates (`BASH_COMPLETION`, `ZSH_COMPLETION`, `FISH_COMPLETION`), including
+   the command list near the top of each
 
 ### Adding a template
 
