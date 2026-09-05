@@ -71,14 +71,16 @@ jobs:
 
       # RT-8: Rebuild parallel bundle and check for drift
       - name: Rebuild parallel bundle
-        run: bun build install/lib/parallel/bundle-entry.ts --outfile install/lib/parallel/parallel.bundle.js --target node
+        run: bun run build:parallel-bundle
 
       - name: Check for parallel bundle drift
         run: |
           if ! git diff --quiet install/lib/parallel/parallel.bundle.js; then
             echo "::error::Parallel library bundle is out of date!"
             echo ""
-            echo "Fix: Run 'bun build install/lib/parallel/index.ts --outfile install/lib/parallel/parallel.bundle.js --target node' and commit the result."
+            git diff --stat install/lib/parallel/parallel.bundle.js
+            echo ""
+            echo "Fix: Run 'bun run build:parallel-bundle' and commit the result."
             exit 1
           fi
           echo "✓ Parallel library bundle is up to date"
