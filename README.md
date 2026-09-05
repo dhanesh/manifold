@@ -145,7 +145,7 @@ curl -fsSL https://raw.githubusercontent.com/dhanesh/manifold/main/install/insta
 manifold --version
 ```
 
-Installs 13 slash commands, 4 hooks, 17 templates, and a platform binary (darwin/linux/windows, arm64/x64) — no `/manifold:setup` step, the binary comes with it. Idempotent — re-run it to update. Standalone binaries are on [Releases](https://github.com/dhanesh/manifold/releases); [Uninstall](#uninstall) below.
+Installs the slash commands, 3 hooks, 17 templates, and a platform binary (darwin/linux/windows, arm64/x64) — no `/manifold:setup` step, the binary comes with it. The command set is agent-specific: 11 for Claude Code and AMP, 13 for Gemini CLI. Idempotent — re-run it to update. Standalone binaries are on [Releases](https://github.com/dhanesh/manifold/releases); [Uninstall](#uninstall) below.
 
 ## CLI
 
