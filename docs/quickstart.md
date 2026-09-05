@@ -2,7 +2,15 @@
 
 Get from zero to a verified feature in 15 minutes.
 
-> **Prerequisites:** [Install Manifold](#install) first. Requires Claude Code or AMP.
+> **Prerequisites:** [Install Manifold](#install) first.
+>
+> The native CLI (`manifold init`, `status`, `validate`, `show`, `graph`,
+> `verify`, `doctor`) needs nothing else — it is a single offline binary. The
+> `/manifold:*` slash commands in this guide need one of Claude Code, AMP,
+> Gemini CLI or Codex CLI, because they are the part that talks to a model.
+>
+> New here and want output in a minute? Start with the
+> [60-Second Quickstart](../README.md#60-second-quickstart), then come back.
 
 ## Install
 
@@ -18,7 +26,7 @@ Then inside Claude Code, install the native CLI:
 /manifold:setup
 ```
 
-This gives you all 12 slash commands, hooks, templates, and the fast CLI binary.
+This gives you all 13 slash commands, hooks, templates, and the fast CLI binary.
 
 ### Option B: Shell Installer (All Agents)
 
@@ -32,15 +40,27 @@ Verify it worked:
 manifold --version
 ```
 
-The installer detects which AI agents you have (Claude Code, AMP, Gemini CLI, Codex CLI) and installs agent-specific files:
+If that prints `command not found`, the binary went to `~/.local/bin`, which is
+not on your `PATH`:
 
-- **12 slash commands** — `/manifold:m0-init` through `/manifold:parallel` (format varies by agent)
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+The installer detects which AI agents you have (Claude Code, AMP, Gemini CLI, Codex CLI) and installs agent-specific files. If you have none, it installs the CLI alone and tells you so — re-run it after installing an agent to add the commands.
+
+- **13 slash commands** — `/manifold:m0-init` through `/manifold:parallel` (format varies by agent)
 - **Parallel library** — 11 modules for git worktree-based concurrent execution
-- **2 hooks** — Context preservation across sessions + parallel auto-suggestions
+- **Hook handlers** — copied to your agent's `hooks/` directory; automatic wiring ships with the Claude Code plugin
 - **CLI binary** — `manifold` for fast operations without AI round-trips
+- **Constraint templates** — installed to `~/.local/share/manifold/templates/` for `manifold init --template=<name>`
 - **Schema snippet** — Appended to your agent's instruction file (CLAUDE.md/GEMINI.md/AGENTS.md)
 
 Files are placed in your agent's config directory (e.g., `~/.claude/commands/`, `~/.claude/lib/`, `~/.claude/hooks/`). The installer is idempotent — safe to run again. See [what gets installed](../README.md#install) for the full per-agent breakdown.
+
+Every command in this section is re-run from scratch in a bare container on
+every push ([`Dockerfile.verify`](../Dockerfile.verify)), so if it is written
+here, it worked on a machine that had never seen Manifold.
 
 ## Phase Workflow
 

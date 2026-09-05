@@ -1,9 +1,17 @@
 # Manifold
 
 [![Release](https://img.shields.io/github/v/release/dhanesh/manifold)](https://github.com/dhanesh/manifold/releases)
+[![Verify Install](https://github.com/dhanesh/manifold/actions/workflows/verify-install.yml/badge.svg)](https://github.com/dhanesh/manifold/actions/workflows/verify-install.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Constraint-first development framework that makes ALL constraints visible BEFORE implementation.
+
+You already know the failure: you are three days into a feature when you discover
+the rate limit, the idempotency requirement, and the compliance rule that make
+your design impossible. Manifold pulls those constraints out first, shows you
+where they conflict, and reasons backward from the outcome you want.
+
+![Manifold: init a feature, discover the conflict between constraints, see it resolved](docs/assets/demo.gif)
 
 ```
 TRADITIONAL                          MANIFOLD
@@ -13,6 +21,51 @@ Discover problems during build       Problems visible before build
 Sequential planning                  Constraint satisfaction
 Forward reasoning                    Backward from outcome
 ```
+
+## 60-Second Quickstart
+
+No AI agent required — the native CLI works on its own.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dhanesh/manifold/main/install/install.sh | bash
+manifold --version
+```
+
+Then, in any directory:
+
+```bash
+manifold init payment-retry --outcome="95% of failed payments recover within 3 retries"
+manifold status
+```
+
+```
+Manifold Status (1 feature)
+
+Feature: payment-retry
+Schema: v3
+Phase: INITIALIZED (1/6)
+Outcome: 95% of failed payments recover within 3 retries
+Constraints: None discovered
+Convergence: NOT STARTED
+```
+
+Start from a pre-built constraint set instead of a blank one:
+
+```bash
+manifold init checkout-auth --template=auth --outcome="Users authenticate without session loss"
+manifold show checkout-auth      # the constraints, tensions and required truths
+manifold graph checkout-auth     # the dependency graph, including conflicts
+manifold validate                # schema + link integrity
+```
+
+That is the deterministic half of Manifold, and it runs offline in well under a
+second. The [AI agent commands](#quick-start) do the other half — interviewing
+you to *discover* constraints, surfacing tensions, and generating artifacts.
+
+> This install path is rebuilt and re-run from scratch in a bare container on
+> every push — see [`Dockerfile.verify`](Dockerfile.verify). If the badge above
+> is green, the quickstart above worked on a machine that had never seen
+> Manifold.
 
 ## Start Here
 
@@ -72,7 +125,11 @@ After installing the plugin, run `/manifold:setup` inside Claude Code to get the
 curl -fsSL https://raw.githubusercontent.com/dhanesh/manifold/main/install/install.sh | bash
 ```
 
-The installer auto-detects which AI agents you have and installs per-agent:
+You do not need an AI agent for this. If none is found, the installer says so
+and installs the CLI on its own; re-run it after you install an agent to add the
+slash commands.
+
+When an agent *is* present, the installer auto-detects it and installs per-agent:
 
 | Agent | What Gets Installed | Location |
 |-------|-------------------|----------|
@@ -85,8 +142,9 @@ The installer auto-detects which AI agents you have and installs per-agent:
 **Specifically, the installer creates:**
 - `commands/` -- 13 Manifold slash command files (m0-init through parallel, plus `m4-prd`, `m4-stories`, and SCHEMA_REFERENCE)
 - `lib/parallel/` -- TypeScript modules + pre-built bundle for git worktree-based parallel execution (including the `AutoSuggester` library that powers `/manifold:parallel`)
-- `hooks/` -- 4 compiled hook handlers dispatched via `manifold hook <name>`: `context` (PreCompact — context preservation), `schema-guard` (PostToolUse — schema validation), `prompt-enforcer` (UserPromptSubmit — interaction rules), `phase-commons` (UserPromptSubmit — injects live manifold state before phase commands). A cross-platform `session-start.sh` / `session-start.ps1` script is also wired to the `SessionStart` event.
+- `hooks/` -- 3 hook handler sources (`manifold-context.ts`, `prompt-enforcer.ts`, `auto-suggester.ts`). Note that the shell installer **copies these but does not register them** with your agent — automatic hook wiring (PreCompact, SessionStart, PostToolUse schema validation, phase context injection) currently ships only via the [Claude Code plugin](#claude-code-plugin-recommended-for-claude-code-users).
 - `skills/manifold/SKILL.md` -- Overview skill for `/manifold` command
+- `~/.local/share/manifold/templates/` -- constraint templates used by `manifold init --template=<name>`
 - Schema snippet appended to your agent's instruction file (CLAUDE.md, GEMINI.md, or AGENTS.md)
 
 The installer is idempotent -- running it again updates existing files without duplication. Run `install.sh --validate` to check what was installed. See [Uninstall](#uninstall) to remove.
@@ -95,6 +153,23 @@ Verify it worked:
 
 ```bash
 manifold --version
+```
+
+If that prints `command not found`, the CLI went to `~/.local/bin`, which is not
+on your `PATH`. The installer prints the exact line to fix it:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+**Installing from a clone?** `install.sh` run from a source checkout builds the
+CLI from *that* checkout when [Bun](https://bun.sh) is available, so you get your
+branch rather than the last release:
+
+```bash
+git clone https://github.com/dhanesh/manifold.git
+cd manifold
+bash install/install.sh
 ```
 
 ### CLI Binary (Standalone)

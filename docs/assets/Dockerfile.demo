@@ -1,0 +1,70 @@
+# Renders docs/assets/demo.gif in a container, so regenerating the README demo
+# needs nothing installed locally except Docker.
+#
+#   docker build -f docs/assets/Dockerfile.demo -t manifold-demo .
+#   id=$(docker create manifold-demo) \
+#     && docker cp "$id:/out/demo.gif" docs/assets/demo.gif \
+#     && docker rm "$id"
+#
+# The tape it runs is docs/assets/demo.tape — edit that, not this file.
+
+# --- build the CLI from this checkout ---------------------------------------
+FROM ubuntu:24.04 AS cli
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN apt-get update -qq \
+ && apt-get install -y -qq --no-install-recommends curl ca-certificates unzip \
+ && rm -rf /var/lib/apt/lists/*
+ENV PATH="/root/.bun/bin:${PATH}"
+RUN curl -fsSL https://bun.sh/install | bash
+WORKDIR /src
+COPY . .
+RUN cd cli && bun install && bun run compile
+
+# --- record ------------------------------------------------------------------
+# Debian rather than Ubuntu: vhs drives a headless Chromium, and on Ubuntu 24.04
+# `chromium-browser` is a snap stub that cannot run inside a container.
+FROM debian:bookworm-slim AS record
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+ARG VHS_VERSION=0.11.0
+ARG TTYD_VERSION=1.7.7
+
+RUN apt-get update -qq \
+ && apt-get install -y -qq --no-install-recommends \
+      ca-certificates curl ffmpeg fontconfig unzip \
+      chromium \
+ && rm -rf /var/lib/apt/lists/*
+
+ENV VHS_NO_SANDBOX=true
+
+# ttyd and vhs are both single static binaries.
+RUN arch="$(dpkg --print-architecture)" \
+ && case "$arch" in \
+      arm64) ttyd_arch=aarch64; vhs_arch=arm64 ;; \
+      amd64) ttyd_arch=x86_64;  vhs_arch=amd64 ;; \
+      *) echo "unsupported arch: $arch"; exit 1 ;; \
+    esac \
+ && curl -fsSL "https://github.com/tsl0922/ttyd/releases/download/${TTYD_VERSION}/ttyd.${ttyd_arch}" \
+      -o /usr/local/bin/ttyd \
+ && chmod +x /usr/local/bin/ttyd \
+ && curl -fsSL "https://github.com/charmbracelet/vhs/releases/download/v${VHS_VERSION}/vhs_${VHS_VERSION}_Linux_${vhs_arch}.tar.gz" \
+      | tar -xz -C /usr/local/bin --strip-components=1 --wildcards '*/vhs' \
+ && chmod +x /usr/local/bin/vhs
+
+# The tape asks for JetBrains Mono; without it the box-drawing and ✓/⚠ glyphs
+# fall back to something ragged.
+RUN mkdir -p /usr/share/fonts/truetype/jetbrains \
+ && curl -fsSL "https://github.com/JetBrains/JetBrainsMono/releases/download/v2.304/JetBrainsMono-2.304.zip" -o /tmp/jbm.zip \
+ && unzip -q -j /tmp/jbm.zip 'fonts/ttf/*.ttf' -d /usr/share/fonts/truetype/jetbrains \
+ && rm /tmp/jbm.zip \
+ && fc-cache -f
+
+WORKDIR /src
+COPY . .
+COPY --from=cli /src/cli/manifold /src/cli/manifold
+
+ENV PATH="/src/cli:${PATH}"
+RUN mkdir -p /out && vhs docs/assets/demo.tape --output /out/demo.gif
+
+FROM scratch
+COPY --from=record /out/demo.gif /out/demo.gif
