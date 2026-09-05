@@ -14,7 +14,7 @@ It doesn't write code. It decides what your agent should write, and it works wit
 
 > _Demo GIF landing here._
 
-_v2.35.1 — the 72nd tagged release since January 2026. Manifold was specified with itself: [`.manifold/`](.manifold/) holds 22 verified manifolds, one of which is the example below._
+_v2.35.1 — the 72nd tagged release since January 2026. Manifold was specified with itself: [`.manifold/`](.manifold/) holds 22 manifolds, 21 of them verified — one is the example below._
 
 ## A real one
 
@@ -107,7 +107,7 @@ A linter reads code you already wrote. Manifold runs before the code exists. No 
 A design doc is prose, and nothing checks prose. Manifold's output is a structured file: constraints have IDs, tensions reference those IDs, artifacts reference the constraints they satisfy. So `manifold validate` can exit 2 when a tension points at a constraint that doesn't exist, and `manifold drift` can tell you when the code moved away from the spec it was verified against. A design doc cannot fail your build.
 
 **…just prompt scaffolding for an LLM?**
-Partly, and that's the honest answer. The discovery phases (`m1-constrain`, `m2-tension`, `m3-anchor`) are structured prompts your coding agent runs — the elicitation quality comes from the agent. What is *not* prompting: the schema, the validator, the drift detection, and the CLI, which is a compiled binary with no AI in the path (`status` ≈ 0.10s, `doctor` ≈ 0.2–0.35s on this repo). The prompts produce the artifact; the binary keeps it honest.
+Partly, and that's the honest answer. The discovery phases (`m1-constrain`, `m2-tension`, `m3-anchor`) are structured prompts your coding agent runs — the elicitation quality comes from the agent. What is *not* prompting: the schema, the validator, the drift detection, and the CLI, which is a compiled binary with no AI in the path (on this repo, `status` runs in ~0.15s and `doctor` in ~0.3s). The prompts produce the artifact; the binary keeps it honest.
 
 **…way too much ceremony for a three-line fix?**
 Yes. Use `/manifold:m-quick` for those, or don't use Manifold at all — see [When NOT to Use](docs/WHEN_NOT_TO_USE.md), which is a real page in these docs.
@@ -131,13 +131,14 @@ Constraints come in three flavors — **invariant** (never violate), **boundary*
 
 ## Install
 
-**Claude Code plugin** (recommended):
+**Claude Code plugin** (recommended) — two steps; the marketplace has to be added before the install resolves:
 
 ```bash
-claude plugin:install github:dhanesh/manifold#plugin
+claude plugin marketplace add dhanesh/manifold
+claude plugin install manifold@manifold
 ```
 
-Then `/manifold:setup` inside Claude Code to get the CLI binary.
+Then `/manifold:setup` inside Claude Code to fetch the CLI binary. Gives you 14 slash commands, 4 hooks, and 17 templates.
 
 **Shell installer** — auto-detects Claude Code, AMP, Gemini CLI, and Codex CLI:
 
@@ -146,7 +147,7 @@ curl -fsSL https://raw.githubusercontent.com/dhanesh/manifold/main/install/insta
 manifold --version
 ```
 
-Installs 13 slash commands, 4 hooks, 17 constraint templates, and a platform binary (darwin/linux/windows, arm64/x64). Idempotent — re-run it to update. Standalone binaries are on [Releases](https://github.com/dhanesh/manifold/releases); [Uninstall](#uninstall) below.
+Installs 13 slash commands, 4 hooks, 17 templates, and a platform binary (darwin/linux/windows, arm64/x64) — no `/manifold:setup` step, the binary comes with it. Idempotent — re-run it to update. Standalone binaries are on [Releases](https://github.com/dhanesh/manifold/releases); [Uninstall](#uninstall) below.
 
 ## CLI
 
@@ -178,7 +179,7 @@ Full list in the [CLI Reference](docs/cli-reference.md).
 
 ## Built with itself
 
-The `.manifold/` directory in this repo holds 22 verified manifolds — `manifold-doctor`, `manifold-serve`, `parallel-agents`, `secret-detection`, and the rest. Every feature listed above was specified this way before it was built. They're readable, and the tensions in them are the real ones.
+The `.manifold/` directory in this repo holds 22 manifolds, 21 carrying verification artifacts — `manifold-doctor`, `manifold-serve`, `parallel-agents`, `secret-detection`, and the rest. Every feature listed above was specified this way before it was built. They're readable, and the tensions in them are the real ones.
 
 ## Docs
 
@@ -190,7 +191,7 @@ The `.manifold/` directory in this repo holds 22 verified manifolds — `manifol
 | [When NOT to Use](docs/WHEN_NOT_TO_USE.md) | Cases where simpler wins |
 | [Glossary](docs/GLOSSARY.md) | Plain-language terminology |
 | [Evidence System](docs/evidence-system.md) | How verification proves a constraint holds |
-| [Templates](install/templates/README.md) | 17 pre-built constraint patterns |
+| [Templates](install/templates/README.md) | 17 starter manifolds — 4 code (api, auth, crud, payment), 13 product |
 | [Troubleshooting](docs/troubleshooting.md) | Common errors and fixes |
 | [Contributing](CONTRIBUTING.md) | How to contribute |
 
