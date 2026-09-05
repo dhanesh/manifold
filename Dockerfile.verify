@@ -1,0 +1,114 @@
+# Manifold install verification.
+#
+#   docker build -f Dockerfile.verify .
+#
+# Proves the documented install path works on a machine that has never seen
+# Manifold. Nobody on this project has a spare clean laptop, so this container
+# is the clean laptop — "works on my machine" has nowhere to hide.
+#
+# Deliberately bare: the base image gets curl, ca-certificates, git and unzip
+# and nothing else. Anything else the quickstart needs must be installed *by*
+# the quickstart or documented as a prerequisite. If a step here fails for want
+# of a tool we did not install, that is a missing prerequisite in the docs.
+#
+# Two stages, both of which must pass:
+#
+#   clone-install  — `git clone` + `install/install.sh`, exercising both the
+#                    no-agent and with-agent branches. Runs against a CLI built
+#                    from *this* checkout, so it gates the current push.
+#   plugin-layout  — the Claude Code plugin ships its own copy of the commands
+#                    and templates; check they are present and in sync.
+#
+# The published `curl … | bash` one-liner installs the last *release*, so it
+# cannot validate an unmerged push. It is checked by the scheduled
+# `verify-published-install` job in .github/workflows/verify-install.yml.
+
+# =============================================================================
+# Stage: clone-install
+# =============================================================================
+FROM ubuntu:24.04 AS clone-install
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+RUN apt-get update -qq \
+ && apt-get install -y -qq --no-install-recommends \
+      curl ca-certificates git unzip \
+ && rm -rf /var/lib/apt/lists/*
+
+# A stranger is not root. This also exercises the ~/.local/bin fallback in the
+# installer, which is the branch most likely to rot unnoticed.
+RUN useradd --create-home newcomer
+USER newcomer
+WORKDIR /home/newcomer
+ENV PATH="/home/newcomer/.local/bin:/home/newcomer/.bun/bin:${PATH}"
+
+# Bun is the documented toolchain for building Manifold from a checkout
+# (CONTRIBUTING.md). install.sh uses it to build the CLI from source; without
+# it, install.sh falls back to the released binary.
+RUN curl -fsSL https://bun.sh/install | bash
+
+# Stand in for `git clone`: same result, no network dependency on GitHub, and
+# it verifies the *working tree* rather than whatever is already pushed.
+COPY --chown=newcomer:newcomer . manifold/
+
+# --- 1. No AI agent installed. The CLI must still install and work. ----------
+RUN cd manifold && bash install/install.sh
+RUN bash manifold/install/verify-quickstart.sh
+RUN test -d "$HOME/.local/share/manifold/templates" \
+ && echo "templates installed for the standalone binary"
+
+# --- 2. With an agent present, which is the path most users take. ------------
+#        install.sh is documented as idempotent, so re-running must be safe.
+RUN mkdir -p /home/newcomer/.claude \
+ && cd manifold && bash install/install.sh
+RUN test -f "$HOME/.claude/skills/manifold/SKILL.md" \
+ && test -f "$HOME/.claude/CLAUDE.md" \
+ && test -f "$HOME/.claude/lib/parallel/index.ts" \
+ && test -f "$HOME/.claude/hooks/manifold-context.ts" \
+ && echo "agent assets installed"
+
+# Every command README.md advertises must actually be installed.
+RUN cd "$HOME/.claude/commands" \
+ && for cmd in m0-init m1-constrain m2-tension m3-anchor m4-generate m4-prd \
+               m4-stories m5-verify m6-integrate m-status m-solve m-quick \
+               parallel; do \
+      test -f "$cmd.md" || { echo "MISSING documented command: $cmd.md"; exit 1; }; \
+    done \
+ && echo "all documented slash commands installed"
+
+RUN cd manifold && bash install/install.sh --validate
+RUN bash manifold/install/verify-quickstart.sh
+
+# =============================================================================
+# Stage: plugin-layout
+# =============================================================================
+FROM ubuntu:24.04 AS plugin-layout
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+WORKDIR /src
+COPY . .
+
+# The Claude Code plugin is the recommended install path in the docs, and it is
+# resolved straight out of this directory, so it must be self-contained.
+RUN test -f plugin/plugin.json || { echo "plugin/plugin.json missing"; exit 1; } \
+ && test -d plugin/commands || { echo "plugin/commands missing"; exit 1; } \
+ && test -d plugin/templates || { echo "plugin/templates missing"; exit 1; } \
+ && echo "plugin layout intact"
+
+# The plugin's command set is generated from install/commands — drift here means
+# plugin users silently get a different set of commands than installer users.
+RUN missing=0; \
+    for f in install/commands/m*.md install/commands/parallel.md; do \
+      base="$(basename "$f")"; \
+      if [[ ! -f "plugin/commands/$base" ]]; then \
+        echo "plugin/commands is missing $base (run: bun run sync:plugin)"; missing=1; \
+      fi; \
+    done; \
+    [[ $missing -eq 0 ]] && echo "plugin commands in sync with install/commands"
+
+# =============================================================================
+# Final stage exists only so a plain `docker build` runs every stage above.
+# =============================================================================
+FROM ubuntu:24.04
+COPY --from=clone-install /home/newcomer/manifold/install/verify-quickstart.sh /verified-clone-install
+COPY --from=plugin-layout /src/plugin/plugin.json /verified-plugin-layout
+CMD ["echo", "Manifold install verification passed."]
