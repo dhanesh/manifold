@@ -181,80 +181,156 @@ function detectContradictoryInvariants(
 }
 
 /**
+ * Resource families: words that name the same underlying budget.
+ *
+ * Grouping by family rather than by literal keyword keeps synonyms together —
+ * "1000 concurrent logins" and "10 failed attempts" both constrain login
+ * throughput, so they belong in one group even though they share no word.
+ * Entries are matched on word boundaries with an optional plural, so "time"
+ * does not fire on "timestamp" and "login" does fire on "login attempts".
+ */
+const RESOURCE_FAMILIES: Record<string, string[]> = {
+  latency: ['latency', 'timeout', 'duration', 'response time', 'round trip', 'delay', 'time'],
+  throughput: [
+    'concurrent',
+    'concurrency',
+    'connection',
+    'thread',
+    'worker',
+    'request',
+    'login',
+    'attempt',
+    'throughput',
+    'rate',
+    'rps',
+    'qps',
+  ],
+  memory: ['memory', 'heap', 'buffer', 'cache'],
+  storage: ['disk', 'storage', 'volume'],
+  bandwidth: ['bandwidth', 'payload'],
+  compute: ['cpu', 'instance', 'replica', 'container'],
+  cost: ['budget', 'cost', 'price', 'spend'],
+  tokens: ['token'],
+  quota: ['quota', 'capacity', 'limit'],
+};
+
+/** Units that make a number unambiguously a magnitude rather than a version. */
+const UNIT_PATTERN =
+  '(?:ms|milliseconds?|s|secs?|seconds?|m|mins?|minutes?|h|hrs?|hours?|d|days?|kb|mb|gb|tb|%|rps|qps)';
+
+/**
+ * Words that mark a bare number as a *limit* rather than incidental prose.
+ * "handle 1000 concurrent logins" is a limit; "TLS 1.2" and "argon2" are not.
+ */
+const LIMIT_CONTEXT =
+  /(?:[<>]=?|≤|≥|max|maximum|min|minimum|at most|at least|no more than|up to|exceed|exceeds|limit|cap|handle|support|serve|after|per|under|over|within|below|above|between)/i;
+
+/**
+ * Strip `[CUSTOMIZE: n]` placeholders, keeping the value.
+ *
+ * The shipped templates write limits as `<[CUSTOMIZE: 500]ms`, which puts a
+ * bracket between the digits and the unit. Without this, every constraint in
+ * an uncustomized manifold is invisible to the numeric matcher.
+ */
+function stripPlaceholders(statement: string): string {
+  return statement.replace(/\[\s*CUSTOMIZE\s*:\s*([^\]]*)\]/gi, '$1');
+}
+
+interface NumericLimit {
+  /** True when the number carries a unit (500ms, 100MB, 50%). */
+  united: boolean;
+}
+
+/**
+ * Find the numeric limit in a statement, if any.
+ *
+ * A number with a unit is always a limit. A bare number counts only when a
+ * limit word sits near it, and never when it looks like a version or an
+ * identifier (`TLS 1.2`, `WCAG 2.1`, `argon2`, `p95`).
+ */
+function findNumericLimit(statement: string): NumericLimit | null {
+  const text = stripPlaceholders(statement);
+
+  if (new RegExp(`(?<![a-z0-9.])\\d+(?:\\.\\d+)?\\s*${UNIT_PATTERN}\\b`, 'i').test(text)) {
+    return { united: true };
+  }
+
+  const bare = /(?<![a-z0-9.])\d+(?![.\d])/gi;
+  for (const match of text.matchAll(bare)) {
+    const start = match.index ?? 0;
+    const before = text.slice(Math.max(0, start - 24), start);
+    const after = text.slice(start + match[0].length, start + match[0].length + 24);
+    if (LIMIT_CONTEXT.test(before) || LIMIT_CONTEXT.test(after)) {
+      return { united: false };
+    }
+  }
+
+  return null;
+}
+
+/** Match a family word on a word boundary, tolerating a trailing plural. */
+function mentionsResource(statement: string, word: string): boolean {
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`\\b${escaped}(?:s|es)?\\b`, 'i').test(statement);
+}
+
+/**
  * Detect resource conflicts (multiple goals/boundaries competing for same limited resource)
- * Severity: high
+ * Severity: high when every limit carries a unit, medium when any is unitless
  */
 function detectResourceConflicts(
   constraints: ConstraintWithCategory[],
   conflicts: SemanticConflict[],
   nextId: () => string
 ): void {
-  // Resource-related keywords
-  const resourceKeywords = [
-    'memory',
-    'cpu',
-    'disk',
-    'bandwidth',
-    'storage',
-    'time',
-    'latency',
-    'timeout',
-    'duration',
-    'budget',
-    'cost',
-    'price',
-    'connections',
-    'threads',
-    'workers',
-    'instances',
-    'tokens',
-    'limit',
-    'quota',
-    'capacity',
-  ];
+  // Group constraints by the resource family they name
+  const byFamily = new Map<string, ConstraintWithCategory[]>();
 
-  // Find constraints mentioning resources
-  const resourceConstraints = constraints.filter((c) => {
-    const statement = c.statement.toLowerCase();
-    return resourceKeywords.some((kw) => statement.includes(kw));
-  });
-
-  // Group by resource type
-  const byResource = new Map<string, ConstraintWithCategory[]>();
-
-  for (const c of resourceConstraints) {
-    const statement = c.statement.toLowerCase();
-    for (const resource of resourceKeywords) {
-      if (statement.includes(resource)) {
-        const group = byResource.get(resource) ?? [];
+  for (const c of constraints) {
+    const statement = stripPlaceholders(c.statement);
+    for (const [family, words] of Object.entries(RESOURCE_FAMILIES)) {
+      if (words.some((w) => mentionsResource(statement, w))) {
+        const group = byFamily.get(family) ?? [];
         group.push(c);
-        byResource.set(resource, group);
+        byFamily.set(family, group);
       }
     }
   }
 
-  // Check for conflicts within resource groups
-  for (const [resource, group] of byResource) {
+  // One conflict per distinct constraint set — a pair that lands in two
+  // families (e.g. "timeout" and "limit") is one finding, not two.
+  const reported = new Set<string>();
+
+  for (const [family, group] of byFamily) {
     if (group.length < 2) continue;
 
     // Look for competing numeric requirements
-    const numericRequirements = group.filter((c) => {
-      const match = c.statement.match(/(\d+)\s*(ms|seconds?|minutes?|mb|gb|%)/i);
-      return match !== null;
-    });
-
-    if (numericRequirements.length >= 2) {
-      // Multiple numeric requirements for same resource
-      const ids = numericRequirements.map((c) => c.id);
-      conflicts.push({
-        id: nextId(),
-        type: 'resource_conflict',
-        constraints: ids,
-        severity: 'high',
-        explanation: `Multiple constraints define limits for "${resource}": ${ids.join(', ')}. These may compete for the same resource and require trade-off analysis.`,
-        suggestion: `Document as a resource_tension in the tensions section and specify priority order.`,
-      });
+    const numericRequirements: Array<{ c: ConstraintWithCategory; limit: NumericLimit }> = [];
+    for (const c of group) {
+      const limit = findNumericLimit(c.statement);
+      if (limit) numericRequirements.push({ c, limit });
     }
+
+    if (numericRequirements.length < 2) continue;
+
+    const ids = numericRequirements.map((n) => n.c.id);
+    const key = [...ids].sort().join('|');
+    if (reported.has(key)) continue;
+    reported.add(key);
+
+    // Unitless limits are weaker evidence — "10 failed attempts" is a limit,
+    // but the matcher cannot tell what it is a limit *on*.
+    const allUnited = numericRequirements.every((n) => n.limit.united);
+    const qualifier = allUnited ? '' : ' (some limits are unitless, so this is a weaker signal)';
+
+    conflicts.push({
+      id: nextId(),
+      type: 'resource_conflict',
+      constraints: ids,
+      severity: allUnited ? 'high' : 'medium',
+      explanation: `Multiple constraints define limits for "${family}": ${ids.join(', ')}. These may compete for the same resource and require trade-off analysis${qualifier}.`,
+      suggestion: `Document as a resource_tension in the tensions section and specify priority order.`,
+    });
   }
 }
 

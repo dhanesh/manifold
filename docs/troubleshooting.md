@@ -168,7 +168,14 @@ manifold drift --update
 3. Manually update: run `/manifold:setup` inside Claude Code
 4. Or download directly from [Releases](https://github.com/dhanesh/manifold/releases)
 
-The auto-update only covers the CLI binary. Plugin command/hook updates require re-installing the plugin with `claude plugin:install`.
+The auto-update only covers the CLI binary. Plugin command/hook updates require refreshing the marketplace and then updating the plugin:
+
+```bash
+claude plugin marketplace update manifold
+claude plugin update manifold@manifold
+```
+
+Restart Claude Code afterwards to load the new version.
 
 ## Installation Issues
 

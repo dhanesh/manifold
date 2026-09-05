@@ -171,6 +171,152 @@ describe('detectSemanticConflicts', () => {
   });
 });
 
+describe('detectResourceConflicts', () => {
+  const manifoldOf = (constraints: Manifold['constraints']): Manifold => ({
+    feature: 'test',
+    phase: 'CONSTRAINED',
+    constraints,
+  });
+
+  const resourceConflicts = (constraints: Manifold['constraints']) =>
+    detectSemanticConflicts(manifoldOf(constraints)).conflicts.filter(
+      (c) => c.type === 'resource_conflict'
+    );
+
+  test('detects unitless numeric limits (auth template TN3)', () => {
+    // Verbatim from install/templates/auth.yaml, which declares TN3 between
+    // these two. Neither carries a unit, and they share no keyword.
+    const conflicts = resourceConflicts({
+      security: [
+        {
+          id: 'S4',
+          type: 'goal',
+          statement: 'Implement account lockout after [CUSTOMIZE: 10] failed attempts',
+        },
+      ],
+      operational: [
+        {
+          id: 'O1',
+          type: 'boundary',
+          statement: 'Auth service must handle [CUSTOMIZE: 1000] concurrent logins',
+        },
+      ],
+    });
+
+    expect(conflicts).toHaveLength(1);
+    expect(conflicts[0].constraints).toEqual(['S4', 'O1']);
+  });
+
+  test('ranks unitless limits below limits that carry a unit', () => {
+    const unitless = resourceConflicts({
+      operational: [
+        { id: 'O1', type: 'boundary', statement: 'Must handle 1000 concurrent logins' },
+        { id: 'O2', type: 'goal', statement: 'Lock the account after 10 failed attempts' },
+      ],
+    });
+    const united = resourceConflicts({
+      technical: [
+        { id: 'T1', type: 'boundary', statement: 'API latency must be under 50ms' },
+        { id: 'T2', type: 'boundary', statement: 'API latency should not exceed 200ms' },
+      ],
+    });
+
+    expect(unitless[0].severity).toBe('medium');
+    expect(united[0].severity).toBe('high');
+  });
+
+  test('sees through [CUSTOMIZE: n] placeholders wrapping the unit', () => {
+    // The templates write limits as `<[CUSTOMIZE: 500]ms` — the bracket sits
+    // between the digits and the unit.
+    const conflicts = resourceConflicts({
+      technical: [
+        {
+          id: 'T1',
+          type: 'boundary',
+          statement: 'Response time must be <[CUSTOMIZE: 200]ms at p95 for reads',
+        },
+        {
+          id: 'T2',
+          type: 'boundary',
+          statement: 'Response time must be <[CUSTOMIZE: 1000]ms at p95 for writes',
+        },
+      ],
+    });
+
+    expect(conflicts).toHaveLength(1);
+    expect(conflicts[0].severity).toBe('high');
+  });
+
+  test('groups synonyms of the same resource into one family', () => {
+    const conflicts = resourceConflicts({
+      technical: [
+        { id: 'T1', type: 'boundary', statement: 'Pool at most 100 database connections' },
+        { id: 'T2', type: 'boundary', statement: 'Support up to 500 concurrent requests' },
+      ],
+    });
+
+    expect(conflicts).toHaveLength(1);
+    expect(conflicts[0].constraints).toEqual(['T1', 'T2']);
+  });
+
+  test('reports a constraint pair once even when it lands in two families', () => {
+    const conflicts = resourceConflicts({
+      technical: [
+        { id: 'T1', type: 'boundary', statement: 'Request timeout limit must be 30 seconds' },
+        { id: 'T2', type: 'boundary', statement: 'Request timeout limit should be 60 seconds' },
+      ],
+    });
+
+    expect(conflicts).toHaveLength(1);
+  });
+
+  test('ignores version numbers and identifiers', () => {
+    const conflicts = resourceConflicts({
+      security: [
+        { id: 'S1', type: 'invariant', statement: 'All requests must use TLS 1.2+' },
+        { id: 'S2', type: 'invariant', statement: 'Request bodies must be hashed with argon2' },
+        { id: 'S3', type: 'goal', statement: 'Request forms must be accessible (WCAG 2.1 AA)' },
+      ],
+    });
+
+    expect(conflicts).toHaveLength(0);
+  });
+
+  test('ignores bare numbers with no limit context', () => {
+    const conflicts = resourceConflicts({
+      business: [
+        { id: 'B1', type: 'goal', statement: 'Requests are retried on the 3 documented codes' },
+        { id: 'B2', type: 'goal', statement: 'Request logs name the 2 owning teams' },
+      ],
+    });
+
+    expect(conflicts).toHaveLength(0);
+  });
+
+  test('does not match a resource word inside a longer word', () => {
+    // "timestamp" is not the resource "time".
+    const conflicts = resourceConflicts({
+      operational: [
+        { id: 'O1', type: 'goal', statement: 'Failures are logged with a timestamp under 1 hour' },
+        { id: 'O2', type: 'goal', statement: 'Audit rows keep a timestamp for up to 90 days' },
+      ],
+    });
+
+    expect(conflicts).toHaveLength(0);
+  });
+
+  test('needs two numeric limits, not one', () => {
+    const conflicts = resourceConflicts({
+      technical: [
+        { id: 'T1', type: 'boundary', statement: 'Memory usage must be under 100MB' },
+        { id: 'T2', type: 'goal', statement: 'Memory should be released promptly' },
+      ],
+    });
+
+    expect(conflicts).toHaveLength(0);
+  });
+});
+
 describe('formatConflictResults', () => {
   test('formats no conflicts message', () => {
     const result = {
