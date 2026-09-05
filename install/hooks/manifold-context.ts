@@ -167,7 +167,7 @@ function loadManifoldContext(): string | null {
 
     if (manifold.tensions?.length) {
       const resolved = manifold.tensions.filter((t: any) => t.resolved).length;
-      lines.push(`- Tensions: ${manifold.tensions.length} detected, ${resolved} resolved`);
+      lines.push(`- Tensions: ${manifold.tensions.length} documented, ${resolved} resolved`);
     }
 
     if (anchor?.solution_space?.length) {

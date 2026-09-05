@@ -170,13 +170,15 @@ export function formatConstraintSummary(counts: Record<string, number>): string 
  * Format tension summary
  */
 export function formatTensionSummary(resolved: number, total: number): string {
-  if (total === 0) return 'None detected';
+  // "documented", not "detected" — the CLI reports tensions already in the manifold;
+  // finding them is /manifold:m2-tension's job.
+  if (total === 0) return 'None documented';
 
   if (resolved === total) {
-    return style.success(`${total} detected, all resolved`);
+    return style.success(`${total} documented, all resolved`);
   } else {
     const unresolved = total - resolved;
-    return style.warning(`${total} detected, ${unresolved} unresolved`);
+    return style.warning(`${total} documented, ${unresolved} unresolved`);
   }
 }
 
