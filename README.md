@@ -98,7 +98,7 @@ Exit code 2. Your design doc just failed CI.
 ## "Isn't this just…"
 
 **…another AI coding CLI?**
-It doesn't generate code and it doesn't wrap a model. Copilot CLI, Codex CLI, Claude Code and Gemini CLI are implementation surfaces — they take a description and produce a diff. Manifold runs before any of that and produces a file those tools then read. It works with four of them rather than competing with one, and the parts that enforce anything (`validate`, `verify`, `drift`, `doctor`) are a compiled binary that never calls a model.
+It doesn't generate code and it doesn't wrap a model. A coding agent takes a description and produces a diff; Manifold runs before that and produces the file it reads. It's a layer up rather than an alternative — the same manifold feeds whichever agent you already use, so picking it up doesn't mean putting anything down. And the parts that enforce anything (`validate`, `verify`, `drift`, `doctor`) are a compiled binary that never calls a model.
 
 **…a linter with extra steps?**
 A linter reads code you already wrote. Manifold runs before the code exists. No linter will tell you that your modular design is going to cost you 4× the I/O, because by the time a linter can see it, the decision is already load-bearing across four files.
