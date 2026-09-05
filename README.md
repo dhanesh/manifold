@@ -10,9 +10,7 @@ Your coding agent will happily implement a spec that contradicts itself. Manifol
 
 It doesn't write code. It decides what your agent should write, and it works with Claude Code, AMP, Gemini CLI, and Codex CLI. The CLI itself is a compiled binary with no model in the path.
 
-<!-- DEMO-GIF-ANCHOR: replace this block with docs/assets/demo.gif once recorded -->
-
-> _Demo GIF landing here._
+![A verified manifold, then a broken one: `manifold status manifold-doctor` reports Phase VERIFIED (6/6), 2 tensions resolved, 7/7 required truths. A tension is added referencing constraint ZZ9, which does not exist. `manifold validate manifold-doctor` then reports 2 errors and exits 2.](docs/assets/demo.gif)
 
 _v2.35.1 — the 72nd tagged release since January 2026. Manifold was specified with itself: [`.manifold/`](.manifold/) holds 22 manifolds, 21 of them verified — one is the example below._
 
