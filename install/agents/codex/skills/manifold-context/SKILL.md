@@ -42,7 +42,7 @@ Read all files in the `.manifold/` directory of the current project. For each fe
 - Phase: <phase> (<n>/6)
 - Outcome: <outcome>
 - Constraints: Business: <n>, Technical: <n>, UX: <n>, Security: <n>, Operational: <n>
-- Tensions: <n> detected, <n> resolved
+- Tensions: <n> documented, <n> resolved
 - Next: <suggested next command>
 ```
 
