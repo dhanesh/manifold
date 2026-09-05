@@ -82,6 +82,74 @@ detect_platform() {
 }
 
 # Download and install CLI binary
+# Install the constraint templates the CLI's --template flag reads.
+#
+# The standalone binary is a single compiled executable, so it cannot resolve
+# templates relative to its own path. It looks in this XDG location instead —
+# without this step `manifold init --template=auth` fails for every user who
+# did not install from a source checkout.
+install_templates() {
+    local data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/manifold"
+    local templates_dir="$data_dir/templates"
+
+    print_step "Installing constraint templates..."
+    mkdir -p "$data_dir"
+
+    if [[ -n "$LOCAL_INSTALL" ]]; then
+        rm -rf "$templates_dir"
+        cp -R "$SCRIPT_DIR/templates" "$templates_dir"
+    else
+        # No directory listing over raw.githubusercontent, so take the tarball.
+        local tmp_dir
+        tmp_dir="$(mktemp -d)"
+        if curl -fsSL "https://github.com/dhanesh/manifold/archive/refs/tags/v${VERSION}.tar.gz" \
+             | tar -xz -C "$tmp_dir" --strip-components=1 "*/install/templates" 2>/dev/null; then
+            rm -rf "$templates_dir"
+            mv "$tmp_dir/install/templates" "$templates_dir"
+        else
+            rm -rf "$tmp_dir"
+            print_warning "Could not download templates — 'manifold init --template' will be unavailable"
+            return 1
+        fi
+        rm -rf "$tmp_dir"
+    fi
+
+    local count
+    count=$(find "$templates_dir" -name '*.json' | wc -l | tr -d ' ')
+    print_success "Installed $count constraint templates to $templates_dir/"
+    return 0
+}
+
+# Move a prepared binary into place, preferring the system path and falling
+# back to ~/.local/bin when it is not writable.
+place_cli_binary() {
+    local tmp_file="$1"
+    local install_dir="$2"
+
+    if [[ -w "$install_dir" ]] || sudo -n true 2>/dev/null; then
+        if [[ -w "$install_dir" ]]; then
+            mv "$tmp_file" "$install_dir/manifold"
+        else
+            sudo mv "$tmp_file" "$install_dir/manifold"
+        fi
+        print_success "CLI installed to $install_dir/manifold"
+        return 0
+    fi
+
+    local local_bin="$HOME/.local/bin"
+    mkdir -p "$local_bin"
+    mv "$tmp_file" "$local_bin/manifold"
+    print_success "CLI installed to $local_bin/manifold"
+    if ! command -v manifold &> /dev/null; then
+        print_warning "$local_bin is not on your PATH. Add it with:"
+        echo ""
+        echo "    echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc"
+        echo "    export PATH=\"\$HOME/.local/bin:\$PATH\""
+        echo ""
+    fi
+    return 0
+}
+
 install_cli() {
     local platform="$1"
     local install_dir="${2:-/usr/local/bin}"
@@ -96,29 +164,39 @@ install_cli() {
     local download_url="${RELEASES}/v${CLI_VERSION}/${binary_name}"
     local tmp_file="/tmp/manifold-cli-$$"
 
+    # Installing from a source checkout should give you *that* checkout's CLI,
+    # not whatever was last released. Otherwise a contributor installs their own
+    # branch and silently tests published code.
+    if [[ -n "$LOCAL_INSTALL" ]]; then
+        local cli_src="$(dirname "$SCRIPT_DIR")/cli"
+        if [[ -x "$cli_src/manifold" ]]; then
+            print_step "Using CLI already built in this checkout..."
+            cp "$cli_src/manifold" "$tmp_file"
+        elif command -v bun &> /dev/null; then
+            print_step "Building CLI from this checkout..."
+            if ( cd "$cli_src" && bun install --silent && bun run compile ) >/dev/null 2>&1; then
+                cp "$cli_src/manifold" "$tmp_file"
+            else
+                print_warning "Build from source failed — falling back to the released binary"
+            fi
+        else
+            print_warning "Bun not found — installing the released binary instead of this checkout"
+            print_warning "Install Bun (https://bun.sh) to build the CLI from source"
+        fi
+
+        if [[ -f "$tmp_file" ]]; then
+            chmod +x "$tmp_file"
+            place_cli_binary "$tmp_file" "$install_dir"
+            return $?
+        fi
+    fi
+
     print_step "Downloading CLI binary for ${platform}..."
 
     if curl -fsSL "$download_url" -o "$tmp_file" 2>/dev/null; then
         chmod +x "$tmp_file"
-
-        # Try to install to system path, fall back to local
-        if [[ -w "$install_dir" ]] || sudo -n true 2>/dev/null; then
-            if [[ -w "$install_dir" ]]; then
-                mv "$tmp_file" "$install_dir/manifold"
-            else
-                sudo mv "$tmp_file" "$install_dir/manifold"
-            fi
-            print_success "CLI installed to $install_dir/manifold"
-            return 0
-        else
-            # Fall back to ~/.local/bin
-            local local_bin="$HOME/.local/bin"
-            mkdir -p "$local_bin"
-            mv "$tmp_file" "$local_bin/manifold"
-            print_success "CLI installed to $local_bin/manifold"
-            print_warning "Add $local_bin to your PATH if not already present"
-            return 0
-        fi
+        place_cli_binary "$tmp_file" "$install_dir"
+        return $?
     else
         print_warning "CLI binary not yet available (release pending)"
         print_warning "You can build from source: cd cli && bun run compile"
@@ -173,6 +251,8 @@ COMMAND_FILES=(
     "m2-tension.md"
     "m3-anchor.md"
     "m4-generate.md"
+    "m4-prd.md"
+    "m4-stories.md"
     "m5-verify.md"
     "m6-integrate.md"
     "m-status.md"
@@ -361,7 +441,7 @@ install_manifold_gemini() {
             for toml_file in "$SCRIPT_DIR/$GEMINI_COMMAND_DIR"/*.toml; do
                 [[ -f "$toml_file" ]] || continue
                 cp "$toml_file" "$commands_dir/$(basename "$toml_file")"
-                ((toml_count++))
+                toml_count=$((toml_count + 1))
             done
         fi
     else
@@ -372,7 +452,7 @@ install_manifold_gemini() {
             [[ "$cmd_name" == SCHEMA_REFERENCE ]] && continue
             local toml_url="$REPO/install/$GEMINI_COMMAND_DIR/${cmd_name}.toml"
             if curl -fsSL "$toml_url" -o "$commands_dir/${cmd_name}.toml" 2>/dev/null; then
-                ((toml_count++))
+                toml_count=$((toml_count + 1))
             fi
         done
     fi
@@ -445,7 +525,7 @@ install_manifold_codex() {
                 dirname=$(basename "$skill_dir")
                 mkdir -p "$skills_base_dir/$dirname"
                 cp "$skill_dir/SKILL.md" "$skills_base_dir/$dirname/SKILL.md"
-                ((skill_count++))
+                skill_count=$((skill_count + 1))
             done
         fi
     else
@@ -456,7 +536,7 @@ install_manifold_codex() {
             local skill_url="$REPO/install/$CODEX_SKILLS_DIR/manifold-${cmd_name}/SKILL.md"
             mkdir -p "$skills_base_dir/manifold-${cmd_name}"
             if curl -fsSL "$skill_url" -o "$skills_base_dir/manifold-${cmd_name}/SKILL.md" 2>/dev/null; then
-                ((skill_count++))
+                skill_count=$((skill_count + 1))
             fi
         done
     fi
@@ -551,41 +631,43 @@ main() {
 
     echo ""
 
-    # Abort if no agents found
+    # No agent found is not a failure. The CLI works standalone, so install it
+    # anyway — adding an agent later is then the only remaining step.
     if [[ -z "$claude_dir" && -z "$amp_dir" && -z "$gemini_dir" && -z "$codex_dir" ]]; then
-        print_error "No supported AI agents found!"
+        print_warning "No supported AI agent found — installing the CLI only."
         echo ""
-        echo "Manifold requires one of:"
-        echo "  - Claude Code (https://claude.ai/code)"
-        echo "  - AMP (https://amp.dev)"
-        echo "  - Gemini CLI (https://github.com/google-gemini/gemini-cli)"
-        echo "  - Codex CLI (https://github.com/openai/codex)"
+        echo "  The slash commands need one of:"
+        echo "    - Claude Code (https://claude.ai/code)"
+        echo "    - AMP (https://amp.dev)"
+        echo "    - Gemini CLI (https://github.com/google-gemini/gemini-cli)"
+        echo "    - Codex CLI (https://github.com/openai/codex)"
         echo ""
-        exit 1
+        echo "  Install one, then re-run this installer to add them."
+        echo ""
     fi
 
     # Install to Claude Code (native .md commands)
     if [[ -n "$claude_dir" ]]; then
         install_manifold_native "$claude_dir" "Claude Code" "CLAUDE.md"
-        ((installed++))
+        installed=$((installed + 1))
     fi
 
     # Install to AMP (native .md commands, same as Claude Code)
     if [[ -n "$amp_dir" ]]; then
         install_manifold_native "$amp_dir" "AMP" "CLAUDE.md"
-        ((installed++))
+        installed=$((installed + 1))
     fi
 
     # Install to Gemini CLI (translated .toml commands)
     if [[ -n "$gemini_dir" ]]; then
         install_manifold_gemini "$gemini_dir"
-        ((installed++))
+        installed=$((installed + 1))
     fi
 
     # Install to Codex CLI (translated SKILL.md files)
     if [[ -n "$codex_dir" ]]; then
         install_manifold_codex "$codex_dir"
-        ((installed++))
+        installed=$((installed + 1))
     fi
 
     echo ""
@@ -602,43 +684,56 @@ main() {
     fi
 
     echo ""
+
+    # Templates are used by the CLI and by the agent commands alike.
+    install_templates || true
+
+    echo ""
     echo -e "${GREEN}════════════════════════════════════════════════════════${NC}"
-    if [[ $cli_installed -eq 1 ]]; then
+    if [[ $cli_installed -eq 1 && $installed -gt 0 ]]; then
         echo -e "${GREEN}  Manifold installed: $installed agent(s) + CLI binary${NC}"
+    elif [[ $cli_installed -eq 1 ]]; then
+        echo -e "${GREEN}  Manifold CLI installed (no AI agent configured yet)${NC}"
     else
         echo -e "${GREEN}  Manifold installed successfully to $installed agent(s)!${NC}"
     fi
     echo -e "${GREEN}════════════════════════════════════════════════════════${NC}"
     echo ""
-    echo -e "${BOLD}AI Agent Commands:${NC}"
-    echo ""
-    echo "  /manifold:m0-init my-feature        # Initialize manifold"
-    echo "  /manifold:m1-constrain my-feature   # Discover constraints"
-    echo "  /manifold:m2-tension my-feature     # Surface conflicts"
-    echo "  /manifold:m3-anchor my-feature      # Backward reasoning"
-    echo "  /manifold:m4-generate my-feature    # Create all artifacts"
-    echo "  /manifold:m6-integrate my-feature   # Wire artifacts together"
-    echo "  /manifold:m5-verify my-feature      # Validate constraints"
-    echo "  /manifold:m-status                  # Show current state"
-    echo ""
-    echo -e "${BOLD}Supported Agents:${NC}"
-    [[ -n "$claude_dir" ]] && echo "  Claude Code  — native .md commands in ~/.claude/commands/"
-    [[ -n "$amp_dir" ]]    && echo "  AMP          — native .md commands in ~/.amp/commands/"
-    [[ -n "$gemini_dir" ]] && echo "  Gemini CLI   — .toml commands in ~/.gemini/commands/"
-    [[ -n "$codex_dir" ]]  && echo "  Codex CLI    — SKILL.md files in ~/.agents/skills/"
-    echo ""
-    echo -e "${BOLD}Parallel Execution:${NC}"
-    echo "  /manifold:parallel \"task1\" \"task2\"  # Execute tasks in parallel worktrees"
-    echo ""
+
     if [[ $cli_installed -eq 1 ]]; then
-        echo -e "${BOLD}CLI Commands (fast, deterministic, no AI):${NC}"
+        echo -e "${BOLD}Try it now (no AI required):${NC}"
         echo ""
-        echo "  manifold status [feature]     # Show manifold state (<100ms)"
-        echo "  manifold validate [feature]   # Validate schema"
-        echo "  manifold init <feature>       # Initialize new manifold"
-        echo "  manifold verify [feature]     # Verify artifacts exist"
+        echo "  manifold init payment-retry --outcome=\"95% retry success\""
+        echo "  manifold status                 # Show manifold state (<100ms)"
+        echo "  manifold validate               # Validate schema"
+        echo "  manifold graph payment-retry    # Render the constraint graph"
+        echo "  manifold doctor                 # Health-check the repo"
         echo ""
     fi
+
+    if [[ $installed -gt 0 ]]; then
+        echo -e "${BOLD}AI Agent Commands:${NC}"
+        echo ""
+        echo "  /manifold:m0-init my-feature        # Initialize manifold"
+        echo "  /manifold:m1-constrain my-feature   # Discover constraints"
+        echo "  /manifold:m2-tension my-feature     # Surface conflicts"
+        echo "  /manifold:m3-anchor my-feature      # Backward reasoning"
+        echo "  /manifold:m4-generate my-feature    # Create all artifacts"
+        echo "  /manifold:m6-integrate my-feature   # Wire artifacts together"
+        echo "  /manifold:m5-verify my-feature      # Validate constraints"
+        echo "  /manifold:m-status                  # Show current state"
+        echo ""
+        echo -e "${BOLD}Supported Agents:${NC}"
+        [[ -n "$claude_dir" ]] && echo "  Claude Code  — native .md commands in ~/.claude/commands/"
+        [[ -n "$amp_dir" ]]    && echo "  AMP          — native .md commands in ~/.amp/commands/"
+        [[ -n "$gemini_dir" ]] && echo "  Gemini CLI   — .toml commands in ~/.gemini/commands/"
+        [[ -n "$codex_dir" ]]  && echo "  Codex CLI    — SKILL.md files in ~/.agents/skills/"
+        echo ""
+        echo -e "${BOLD}Parallel Execution:${NC}"
+        echo "  /manifold:parallel \"task1\" \"task2\"  # Execute tasks in parallel worktrees"
+        echo ""
+    fi
+
     echo "Documentation: https://github.com/dhanesh/manifold"
     echo ""
 }
@@ -655,7 +750,7 @@ validate_installation() {
     # Check skill file
     if [[ ! -f "$base_dir/skills/manifold/SKILL.md" ]]; then
         print_error "Missing: skills/manifold/SKILL.md"
-        ((errors++))
+        errors=$((errors + 1))
     else
         print_success "Found: skills/manifold/SKILL.md"
     fi
@@ -664,7 +759,7 @@ validate_installation() {
     for cmd_file in "${COMMAND_FILES[@]}"; do
         if [[ ! -f "$base_dir/commands/$cmd_file" ]]; then
             print_error "Missing: commands/$cmd_file"
-            ((errors++))
+            errors=$((errors + 1))
         else
             print_success "Found: commands/$cmd_file"
         fi
@@ -674,7 +769,7 @@ validate_installation() {
     for lib_file in "${PARALLEL_LIB_FILES[@]}"; do
         if [[ ! -f "$base_dir/lib/parallel/$lib_file" ]]; then
             print_error "Missing: lib/parallel/$lib_file"
-            ((errors++))
+            errors=$((errors + 1))
         else
             print_success "Found: lib/parallel/$lib_file"
         fi
@@ -685,7 +780,7 @@ validate_installation() {
     for hook_file in "${hooks[@]}"; do
         if [[ ! -f "$base_dir/hooks/$hook_file" ]]; then
             print_error "Missing: hooks/$hook_file"
-            ((errors++))
+            errors=$((errors + 1))
         else
             print_success "Found: hooks/$hook_file"
         fi
@@ -720,7 +815,7 @@ validate_gemini_installation() {
         print_success "Found: $toml_count .toml command files"
     else
         print_error "Missing: .toml command files in $base_dir/commands/"
-        ((errors++))
+        errors=$((errors + 1))
     fi
 
     # Check parallel library bundle
@@ -766,7 +861,7 @@ validate_codex_installation() {
         print_success "Found: $skill_count Codex skill directories"
     else
         print_error "Missing: Codex skills in $skills_dir/"
-        ((errors++))
+        errors=$((errors + 1))
     fi
 
     # Check hook skills
@@ -817,36 +912,36 @@ run_validation() {
     # Validate Claude Code
     if [[ -d "$HOME/.claude" ]]; then
         if validate_installation "$HOME/.claude" "Claude Code"; then
-            ((validated++))
+            validated=$((validated + 1))
         else
-            ((failed++))
+            failed=$((failed + 1))
         fi
     fi
 
     # Validate AMP
     if [[ -d "$HOME/.amp" ]]; then
         if validate_installation "$HOME/.amp" "AMP"; then
-            ((validated++))
+            validated=$((validated + 1))
         else
-            ((failed++))
+            failed=$((failed + 1))
         fi
     fi
 
     # Validate Gemini CLI
     if [[ -d "$HOME/.gemini" ]]; then
         if validate_gemini_installation "$HOME/.gemini"; then
-            ((validated++))
+            validated=$((validated + 1))
         else
-            ((failed++))
+            failed=$((failed + 1))
         fi
     fi
 
     # Validate Codex CLI
     if [[ -d "$HOME/.codex" ]]; then
         if validate_codex_installation "$HOME/.codex"; then
-            ((validated++))
+            validated=$((validated + 1))
         else
-            ((failed++))
+            failed=$((failed + 1))
         fi
     fi
 
