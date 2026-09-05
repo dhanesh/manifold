@@ -228,9 +228,16 @@ async function validateJsonMdFeature(
     schemaVersion: 3,
   };
 
+  // Include the parsed manifold for conflict detection (INT-1), the way the
+  // YAML and JSON-only branches do. The linker's structure carries constraint
+  // IDs but not their statement text, so rebuild via loadFeature() — the same
+  // source `show --constraints` feeds to the solver.
+  const manifold = loadFeature(manifoldDir, feature)?.manifold;
+
   return {
     valid: validationResult.valid,
     result: validationResult,
+    manifold,
     format: 'json-md',
     linkingResult: linking,
     json: {
