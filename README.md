@@ -136,6 +136,8 @@ claude plugin marketplace add dhanesh/manifold
 claude plugin install manifold@manifold
 ```
 
+From inside a session it's the same two steps as slash commands: `/plugin marketplace add dhanesh/manifold`, then `/plugin install manifold@manifold`.
+
 Then `/manifold:setup` inside Claude Code to fetch the CLI binary. Gives you 14 slash commands, 4 hooks, and 17 templates.
 
 **Shell installer** — auto-detects Claude Code, AMP, Gemini CLI, and Codex CLI:
