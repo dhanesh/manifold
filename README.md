@@ -8,10 +8,23 @@ Constraint-first development framework that makes ALL constraints visible BEFORE
 
 You already know the failure: you are three days into a feature when you discover
 the rate limit, the idempotency requirement, and the compliance rule that make
-your design impossible. Manifold pulls those constraints out first, shows you
-where they conflict, and reasons backward from the outcome you want.
+your design impossible. Manifold moves that discovery to the front — every
+constraint written down, and every place two of them fight, before there is code
+worth throwing away.
 
-![Manifold: init a feature, discover the conflict between constraints, see it resolved](docs/assets/demo.gif)
+![Terminal session. `manifold init checkout-auth --template=auth` scaffolds a feature, then `manifold show checkout-auth` prints 16 constraints across 5 categories, 3 tensions — TN1 and TN2 resolved, TN3 a resource tension between O1 and S4 still unresolved — and 3 required truths, none satisfied yet.](docs/assets/demo.gif)
+
+Two commands, no code yet, and the feature already has a problem. **O1 says the
+auth service handles 1000 concurrent logins. S4 says lock the account after 10
+failed attempts.** Lockout is per-account state every node has to agree on, so
+one of the two has to give — a distributed counter, or a weaker guarantee.
+Normally you find that in week two, with the schema already written. Here it is
+`⚠ TN3`, before anything is built.
+
+That constraint set came from `--template=auth`, tensions included — the CLI is
+showing you the file, fast and offline, not deriving it. Building one from *your*
+problem is what the [AI agent commands](#quick-start) do: they interview you, mark
+the tensions they find, and hand the result back to the same CLI.
 
 ```
 TRADITIONAL                          MANIFOLD
