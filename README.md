@@ -96,25 +96,38 @@ you to *discover* constraints, surfacing tensions, and generating artifacts.
 
 ## Features
 
-- **Constraint-First Development** -- Surface all constraints before writing code
-- **Backward Reasoning** -- Reason from desired outcomes to required truths, with recursive decomposition for multi-level dependency chains
-- **Tension Detection** -- Find conflicts between constraints early, with TRIZ-guided resolution and directional propagation checks
-- **Pre-mortem Stress Testing** -- Mandatory failure-story pass in constraint discovery surfaces assumptions single-pass elicitation misses
-- **Constraint Genealogy** -- Track constraint origins (`source`) and challengeability (`challenger`) to guide tension resolution direction
-- **Probabilistic Bounds** -- Express metric constraints as statistical targets (p99, p50, failure rates) rather than only deterministic thresholds
-- **Bottleneck Identification** -- Theory of Constraints integration surfaces the binding constraint before solution generation
-- **Reversibility Tagging** -- Every action step tagged as TWO_WAY, REVERSIBLE_WITH_COST, or ONE_WAY with explicit acknowledgment for irreversible decisions
-- **Non-Software Domain Support** -- `--domain=non-software` activates universal categories (Obligations, Desires, Resources, Risks, Dependencies) and decision-focused artifacts
-- **All-at-Once Generation** -- Generate code, tests, docs, runbooks, and alerts from a single source
-- **Evidence System** -- Verify constraints with [concrete proof](docs/evidence-system.md)
-- **Drift Detection** -- Detect post-verification file changes using SHA-256 hashing
-- **Guided Workflow** -- Structured next-step suggestions guide you through each phase
-- **Constraint Templates** -- Pre-built patterns for [auth, CRUD, API, payment, and 13 PM templates](install/templates/README.md)
-- **Light Mode** -- Simplified 3-phase workflow for quick changes
-- **PM Workflows** -- Generate PRDs and user stories with constraint traceability
-- **Parallel Execution** -- Run independent tasks concurrently using git worktrees
-- **Native CLI** -- Fast, deterministic operations (<100ms) for CI/CD
-- **Multi-Agent Support** -- Works with Claude Code, AMP, Gemini CLI, and Codex CLI
+Manifold is two halves that share one file. The CLI half is deterministic, offline
+and fast. The agent half does the parts that need a conversation.
+
+**Native CLI** -- no agent, no network, no API key
+
+- **Start from a constraint set, not a blank page.** `manifold init --template=auth`
+  scaffolds 16 constraints across 5 categories, 3 tensions and 3 required truths.
+  Also CRUD, API, payment, and [13 PM patterns](install/templates/README.md).
+- **Reason backward from the outcome.** `manifold solve --backward` walks the graph
+  from the result you want to the conditions it requires, and prints the critical
+  path and what blocks it. `manifold graph` and `manifold status` render the network.
+- **Fail a build on a broken graph.** `manifold validate` checks schema and link
+  integrity in under 100ms, with `--json` and real exit codes. No prompts, so it
+  drops into CI as-is.
+
+**AI agent commands** -- needs [Claude Code, AMP, Gemini CLI, or Codex CLI](#install)
+
+- **Find the constraints you would have missed.** `/manifold:m1-constrain` interviews
+  you, then runs a mandatory pre-mortem pass over your answers to surface the
+  assumptions a single pass does not.
+- **Find where they fight.** `/manifold:m2-tension` locates conflicts between
+  constraints and works resolutions with [TRIZ](docs/triz-principles.md)
+  classification and propagation checks. **The CLI displays tensions; it does not
+  detect them** -- that is this command's job.
+- **Generate everything from one source.** `/manifold:m4-generate` writes code, tests,
+  docs, runbooks and alerts together, each traceable to the constraint it satisfies
+  and provable with [evidence](docs/evidence-system.md).
+
+Also included: [PM workflows](docs/pm/guide.md), [non-software
+decisions](docs/non-programming/guide.md), light mode, [parallel
+execution](docs/parallel-agents/README.md) via git worktrees, and drift detection
+over verified artifacts. [Full feature list](docs/features.md).
 
 ## Install
 
