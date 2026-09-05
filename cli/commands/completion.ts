@@ -40,7 +40,7 @@ _manifold_completions() {
             ;;
         init)
             # init takes a new feature name, suggest templates
-            COMPREPLY=( $(compgen -W "--template --outcome" -- "\${cur}") )
+            COMPREPLY=( $(compgen -W "--json --outcome --force --template --domain" -- "\${cur}") )
             return 0
             ;;
         completion)
@@ -58,16 +58,16 @@ _manifold_completions() {
         -*)
             case "\${COMP_WORDS[1]}" in
                 status)
-                    COMPREPLY=( $(compgen -W "--json --history --diff --graph --mermaid" -- "\${cur}") )
+                    COMPREPLY=( $(compgen -W "--json --history --graph --mermaid" -- "\${cur}") )
                     ;;
                 validate)
                     COMPREPLY=( $(compgen -W "--json --strict --all --conflicts" -- "\${cur}") )
                     ;;
                 verify)
-                    COMPREPLY=( $(compgen -W "--json --actions --strict" -- "\${cur}") )
+                    COMPREPLY=( $(compgen -W "--json --artifacts --strict --verify-evidence --run-tests --execute --levels" -- "\${cur}") )
                     ;;
                 init)
-                    COMPREPLY=( $(compgen -W "--template --outcome --format" -- "\${cur}") )
+                    COMPREPLY=( $(compgen -W "--json --outcome --force --template --domain" -- "\${cur}") )
                     ;;
                 graph)
                     COMPREPLY=( $(compgen -W "--json --ascii --dot --mermaid" -- "\${cur}") )
@@ -132,7 +132,9 @@ _manifold() {
                     _arguments \\
                         '--template[Use template]:template:(auth crud payment api pm/feature-launch pm/experiment pm/deprecation pm/opportunity-assessment pm/product-vision pm/lean-canvas pm/pr-faq pm/mvp-definition pm/competitive-analysis pm/user-persona pm/go-to-market pm/product-roadmap pm/shape-up-pitch)' \\
                         '--outcome[Set outcome]:outcome:' \\
-                        '--format[Output format]:format:(yaml json-md)' \\
+                        '--json[Output as JSON]' \\
+                        '--force[Overwrite existing manifold]' \\
+                        '--domain[Domain type]:domain:(software non-software)' \\
                         '*:feature name:'
                     ;;
                 completion)
@@ -156,7 +158,6 @@ _manifold_features() {
             _arguments \\
                 '--json[Output as JSON]' \\
                 '--history[Show iteration history]' \\
-                '--diff[Show changes since last iteration]' \\
                 '--graph[Show constraint network graph]' \\
                 '--mermaid[Output constraint network as Mermaid]'
             ;;
@@ -170,8 +171,12 @@ _manifold_features() {
         verify)
             _arguments \\
                 '--json[Output as JSON]' \\
-                '--actions[Show actionable fix commands]' \\
-                '--strict[Enable strict verification]'
+                '--artifacts[Verify generated artifacts exist]' \\
+                '--strict[Enable strict verification]' \\
+                '--verify-evidence[Verify concrete evidence for required truths]' \\
+                '--run-tests[Execute test evidence verification]' \\
+                '--execute[Run configured test_runner subprocess]' \\
+                '--levels[Show satisfaction level breakdown]'
             ;;
         graph)
             _arguments \\
@@ -248,12 +253,13 @@ complete -c manifold -n "__fish_seen_subcommand_from completion" -a "bash zsh fi
 # init command
 complete -c manifold -n "__fish_seen_subcommand_from init" -l template -d "Use template" -a "auth crud payment api pm/feature-launch pm/experiment pm/deprecation pm/opportunity-assessment pm/product-vision pm/lean-canvas pm/pr-faq pm/mvp-definition pm/competitive-analysis pm/user-persona pm/go-to-market pm/product-roadmap pm/shape-up-pitch"
 complete -c manifold -n "__fish_seen_subcommand_from init" -l outcome -d "Set outcome"
-complete -c manifold -n "__fish_seen_subcommand_from init" -l format -d "Output format" -a "yaml json-md"
+complete -c manifold -n "__fish_seen_subcommand_from init" -l json -d "Output as JSON"
+complete -c manifold -n "__fish_seen_subcommand_from init" -l force -d "Overwrite existing manifold"
+complete -c manifold -n "__fish_seen_subcommand_from init" -l domain -d "Domain type" -a "software non-software"
 
 # status flags
 complete -c manifold -n "__fish_seen_subcommand_from status" -l json -d "Output as JSON"
 complete -c manifold -n "__fish_seen_subcommand_from status" -l history -d "Show iteration history"
-complete -c manifold -n "__fish_seen_subcommand_from status" -l diff -d "Show changes"
 complete -c manifold -n "__fish_seen_subcommand_from status" -l graph -d "Show constraint network graph"
 complete -c manifold -n "__fish_seen_subcommand_from status" -l mermaid -d "Output constraint network as Mermaid"
 
