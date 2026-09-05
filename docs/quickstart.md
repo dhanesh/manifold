@@ -9,8 +9,11 @@ Get from zero to a verified feature in 15 minutes.
 ### Option A: Claude Code Plugin (Recommended)
 
 ```bash
-claude plugin:install github:dhanesh/manifold#plugin
+claude plugin marketplace add dhanesh/manifold
+claude plugin install manifold@manifold
 ```
+
+Both steps are required — `plugin install` only resolves plugins from a marketplace you have already added. The in-session equivalent is `/plugin marketplace add dhanesh/manifold` followed by `/plugin install manifold@manifold`.
 
 Then inside Claude Code, install the native CLI:
 
@@ -18,7 +21,7 @@ Then inside Claude Code, install the native CLI:
 /manifold:setup
 ```
 
-This gives you all 12 slash commands, hooks, templates, and the fast CLI binary.
+This gives you all 14 slash commands, 4 hooks, templates, and the fast CLI binary.
 
 ### Option B: Shell Installer (All Agents)
 
@@ -34,9 +37,9 @@ manifold --version
 
 The installer detects which AI agents you have (Claude Code, AMP, Gemini CLI, Codex CLI) and installs agent-specific files:
 
-- **12 slash commands** — `/manifold:m0-init` through `/manifold:parallel` (format varies by agent)
+- **Slash commands** — `/manifold:m0-init` through `/manifold:parallel`; 11 for Claude Code and AMP, 13 for Gemini CLI (format varies by agent)
 - **Parallel library** — 11 modules for git worktree-based concurrent execution
-- **2 hooks** — Context preservation across sessions + parallel auto-suggestions
+- **3 hooks** — Context preservation on compact, parallel auto-suggestions, and prompt enforcement
 - **CLI binary** — `manifold` for fast operations without AI round-trips
 - **Schema snippet** — Appended to your agent's instruction file (CLAUDE.md/GEMINI.md/AGENTS.md)
 

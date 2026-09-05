@@ -1,0 +1,72 @@
+# Install verification.
+#
+# Builds Dockerfile.verify, which runs the documented install path end to end
+# on a bare Ubuntu image as a non-root user. Nobody on this project has a spare
+# clean machine, so verification must never depend on one — this job is the
+# clean machine, and it runs on every push to every branch.
+#
+# If this goes red, a stranger cannot install Manifold. Treat it that way.
+
+name: Verify Install
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Weekly, so release rot and upstream drift surface without a push.
+    - cron: '17 6 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-install-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The gate. Verifies the checkout being pushed, not the last release.
+  container-verify:
+    name: Quickstart in a fresh container
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Build verification image
+        run: docker build --pull --progress=plain -f Dockerfile.verify -t manifold-verify .
+
+      - name: Report
+        run: docker run --rm manifold-verify
+
+  # The published `curl … | bash` one-liner installs the most recent *release*,
+  # so it can never validate an unmerged push. It is checked on a schedule and
+  # on demand instead, to catch release rot rather than to gate a branch.
+  verify-published-install:
+    name: Published one-liner (release, not this push)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Run the README one-liner on a bare image
+        run: |
+          docker run --rm \
+            -v "$PWD/install/verify-quickstart.sh:/verify-quickstart.sh:ro" \
+            ubuntu:24.04 bash -c '
+              set -e
+              apt-get update -qq
+              apt-get install -y -qq --no-install-recommends curl ca-certificates git
+              useradd --create-home newcomer
+              cp /verify-quickstart.sh /home/newcomer/
+              su newcomer -c "
+                export PATH=\$HOME/.local/bin:\$PATH
+                curl -fsSL https://raw.githubusercontent.com/dhanesh/manifold/main/install/install.sh | bash
+                bash \$HOME/verify-quickstart.sh
+              "
+            '

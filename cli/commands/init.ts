@@ -345,7 +345,12 @@ _No required truths anchored yet. Run \`/manifold:m3-anchor ${feature}\` after r
  * Works for: local development, installed CLI, plugin context.
  */
 function resolveTemplateDir(): string | null {
+  const home = process.env.HOME || process.env.USERPROFILE || '';
+  const xdgData = process.env.XDG_DATA_HOME || (home ? join(home, '.local', 'share') : '');
+
   const candidates = [
+    // Explicit override, for tests and non-standard installs
+    process.env.MANIFOLD_TEMPLATES_DIR,
     // Relative to this file (cli/commands/init.ts -> install/templates)
     join(dirname(dirname(__dirname)), 'install', 'templates'),
     // Relative to cli dist (cli/dist -> install/templates)
@@ -354,7 +359,10 @@ function resolveTemplateDir(): string | null {
     join(dirname(dirname(__dirname)), 'plugin', 'templates'),
     // Peer templates directory
     join(dirname(dirname(__dirname)), 'templates'),
-  ];
+    // Installed by install.sh for the standalone binary, whose __dirname is
+    // internal to the executable and therefore resolves to none of the above.
+    xdgData ? join(xdgData, 'manifold', 'templates') : '',
+  ].filter((dir): dir is string => Boolean(dir));
 
   for (const dir of candidates) {
     if (existsSync(dir)) {
