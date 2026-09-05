@@ -362,6 +362,24 @@ See [Non-Programming Guide](docs/non-programming/guide.md) for full details, uni
 | [Scientific Foundations](docs/research/phase-scientific-foundations.md) | Research supporting each phase |
 | [Contributing](CONTRIBUTING.md) | How to contribute |
 
+## Contributing
+
+Contributions are welcome, and the on-ramp is deliberately short.
+
+- **[Good first issues](https://github.com/dhanesh/manifold/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)** — each one names the files to change and sketches the approach.
+- **First response on any PR within 3 days**, a decision on a scoped PR within 7. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full commitment.
+- Setup is `bun install && bun test`. No database, no API keys, no network at runtime.
+
+## Related
+
+[**agent-skills**](https://github.com/dhanesh/agent-skills) — a set of Agent Skills for
+Claude Code and other harnesses. Two overlap directly with Manifold's territory:
+
+| Skill | Relationship |
+|-------|--------------|
+| [`spec-first-planning`](https://github.com/dhanesh/agent-skills/tree/main/spec-first-planning) | Turns a fuzzy request into a falsifiable spec and a verifier-anchored task plan, inside a single session. Manifold is the persistent version of the same idea — constraints survive across sessions and are machine-checked by a CLI. |
+| [`agent-ready-rails`](https://github.com/dhanesh/agent-skills/tree/main/agent-ready-rails) | Audits whether a repo is safe for coding agents to work in. Manifold's `verify --verify-evidence` is one of the rails it looks for: a check that proves a requirement is actually satisfied, not just claimed. |
+
 ## Uninstall
 
 ```bash

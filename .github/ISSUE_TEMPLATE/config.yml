@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Good first issues
+    url: https://github.com/dhanesh/manifold/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
+    about: Scoped, ready-to-pick work with file pointers and a suggested approach.
+  - name: Documentation
+    url: https://github.com/dhanesh/manifold/tree/main/docs
+    about: CLI reference, quickstart, evidence system, troubleshooting.
