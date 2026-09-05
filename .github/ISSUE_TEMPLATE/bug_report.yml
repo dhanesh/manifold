@@ -1,0 +1,38 @@
+name: Bug report
+description: Something in Manifold does not do what it says it does.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you ran, and what you got. Paste the command and output if you have them.
+      placeholder: |
+        $ manifold validate user-auth
+        ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `manifold --version`. Skip it if the bug is in the docs.
+      placeholder: "2.33.0"
+    validations:
+      required: false
+
+  - type: input
+    id: platform
+    attributes:
+      label: OS
+      placeholder: "macOS 15 / Ubuntu 24.04 / Windows 11"
+    validations:
+      required: false
