@@ -111,7 +111,7 @@ function loadManifoldContext(): string | null {
       ];
 
       if (tensionCount > 0) {
-        lines.push(`- Tensions: ${tensionCount} detected, ${resolvedTensions} resolved`);
+        lines.push(`- Tensions: ${tensionCount} documented, ${resolvedTensions} resolved`);
       }
 
       if (rtCount > 0) {
