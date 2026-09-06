@@ -71,7 +71,7 @@ jobs:
           bun test --coverage 2>&1 | tee /tmp/coverage-output.txt
 
           # Extract coverage percentage for summary
-          COVERAGE=$(grep -oP 'All files\s*\|\s*\K[0-9.]+' /tmp/coverage-output.txt 2>/dev/null || echo "unknown")
+          COVERAGE=$(grep -oP 'All files\s*\|\s*[0-9.]+\s*\|\s*\K[0-9.]+' /tmp/coverage-output.txt 2>/dev/null || echo "unknown")
 
           echo "## Test Coverage" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
