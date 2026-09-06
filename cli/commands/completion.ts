@@ -76,7 +76,7 @@ _manifold_completions() {
                     COMPREPLY=( $(compgen -W "--json --ascii --dot --mermaid --backward --target" -- "\${cur}") )
                     ;;
                 migrate)
-                    COMPREPLY=( $(compgen -W "--dry-run --force" -- "\${cur}") )
+                    COMPREPLY=( $(compgen -W "--json --dry-run --backup --all" -- "\${cur}") )
                     ;;
                 show)
                     COMPREPLY=( $(compgen -W "--json --structure --content --validate --map --mermaid" -- "\${cur}") )
@@ -196,8 +196,10 @@ _manifold_features() {
             ;;
         migrate)
             _arguments \\
-                '--dry-run[Show what would be done]' \\
-                '--force[Overwrite existing files]'
+                '--json[Output as JSON]' \\
+                '--dry-run[Show what would be migrated without making changes]' \\
+                '--backup[Keep YAML file as .backup]' \\
+                '--all[Migrate all YAML manifolds]'
             ;;
         show)
             _arguments \\
@@ -289,8 +291,10 @@ complete -c manifold -n "__fish_seen_subcommand_from solve" -l backward -d "Back
 complete -c manifold -n "__fish_seen_subcommand_from solve" -l target -d "Target node for backward reasoning"
 
 # migrate flags
-complete -c manifold -n "__fish_seen_subcommand_from migrate" -l dry-run -d "Show what would be done"
-complete -c manifold -n "__fish_seen_subcommand_from migrate" -l force -d "Overwrite existing"
+complete -c manifold -n "__fish_seen_subcommand_from migrate" -l json -d "Output as JSON"
+complete -c manifold -n "__fish_seen_subcommand_from migrate" -l dry-run -d "Show what would be migrated without making changes"
+complete -c manifold -n "__fish_seen_subcommand_from migrate" -l backup -d "Keep YAML file as .backup"
+complete -c manifold -n "__fish_seen_subcommand_from migrate" -l all -d "Migrate all YAML manifolds"
 
 # show flags
 complete -c manifold -n "__fish_seen_subcommand_from show" -l json -d "Output as JSON"
