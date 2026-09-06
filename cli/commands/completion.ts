@@ -20,7 +20,7 @@ _manifold_completions() {
     prev="\${COMP_WORDS[COMP_CWORD-1]}"
 
     # Main commands
-    commands="status validate init verify graph solve migrate show completion"
+    commands="status validate init verify graph solve migrate show drift doctor serve hook completion"
 
     # Commands that take feature names
     feature_commands="status validate verify graph solve migrate show"
@@ -78,6 +78,18 @@ _manifold_completions() {
                 migrate)
                     COMPREPLY=( $(compgen -W "--json --dry-run --backup --all" -- "\${cur}") )
                     ;;
+                drift)
+                    COMPREPLY=( $(compgen -W "--json --update" -- "\${cur}") )
+                    ;;
+                doctor)
+                    COMPREPLY=( $(compgen -W "--json" -- "\${cur}") )
+                    ;;
+                serve)
+                    COMPREPLY=( $(compgen -W "--port --host" -- "\${cur}") )
+                    ;;
+                hook)
+                    COMPREPLY=( $(compgen -W "schema-guard context prompt-enforcer phase-commons" -- "\${cur}") )
+                    ;;
                 show)
                     COMPREPLY=( $(compgen -W "--json --structure --content --validate --map --mermaid" -- "\${cur}") )
                     ;;
@@ -108,6 +120,10 @@ _manifold() {
         'graph:Display constraint graph'
         'solve:Generate execution plan'
         'migrate:Migrate YAML to JSON+MD format'
+        'drift:Detect post-verification file changes'
+        'doctor:Check the manifold repository health'
+        'serve:Serve the manifold visualiser'
+        'hook:Cross-platform Claude Code hook handlers'
         'show:Show manifold content'
         'completion:Generate shell completions'
     )
@@ -201,6 +217,22 @@ _manifold_features() {
                 '--backup[Keep YAML file as .backup]' \\
                 '--all[Migrate all YAML manifolds]'
             ;;
+        drift)
+            _arguments \\
+                '--json[Output as JSON]' \\
+                '--update[Recompute and store current file hashes]'
+            ;;
+        doctor)
+            _arguments '--json[Output as JSON]'
+            ;;
+        serve)
+            _arguments \\
+                '--port[Listen port]:port:' \\
+                '--host[Bind host]:host:'
+            ;;
+        hook)
+            _values 'subcommand' schema-guard context prompt-enforcer phase-commons
+            ;;
         show)
             _arguments \\
                 '--json[Output as JSON]' \\
@@ -232,6 +264,10 @@ complete -c manifold -n "__fish_use_subcommand" -a "graph" -d "Display constrain
 complete -c manifold -n "__fish_use_subcommand" -a "solve" -d "Generate execution plan"
 complete -c manifold -n "__fish_use_subcommand" -a "migrate" -d "Migrate YAML to JSON+MD"
 complete -c manifold -n "__fish_use_subcommand" -a "show" -d "Show manifold content"
+complete -c manifold -n "__fish_use_subcommand" -a "drift" -d "Detect post-verification file changes"
+complete -c manifold -n "__fish_use_subcommand" -a "doctor" -d "Check the manifold repository health"
+complete -c manifold -n "__fish_use_subcommand" -a "serve" -d "Serve the manifold visualiser"
+complete -c manifold -n "__fish_use_subcommand" -a "hook" -d "Cross-platform Claude Code hook handlers"
 complete -c manifold -n "__fish_use_subcommand" -a "completion" -d "Generate shell completions"
 
 # Global flags
@@ -248,6 +284,23 @@ end
 
 # Completions for commands that take feature names
 complete -c manifold -n "__fish_seen_subcommand_from status validate verify graph solve migrate show" -a "(__manifold_features)" -d "Feature"
+
+# drift flags
+complete -c manifold -n "__fish_seen_subcommand_from drift" -l json -d "Output as JSON"
+complete -c manifold -n "__fish_seen_subcommand_from drift" -l update -d "Recompute and store current file hashes"
+
+# doctor flags
+complete -c manifold -n "__fish_seen_subcommand_from doctor" -l json -d "Output as JSON"
+
+# serve flags
+complete -c manifold -n "__fish_seen_subcommand_from serve" -l port -d "Listen port"
+complete -c manifold -n "__fish_seen_subcommand_from serve" -l host -d "Bind host"
+
+# hook subcommands
+complete -c manifold -n "__fish_seen_subcommand_from hook" -a "schema-guard" -d "PostToolUse hook: validate manifold JSON"
+complete -c manifold -n "__fish_seen_subcommand_from hook" -a "context" -d "PreCompact hook: inject manifold state"
+complete -c manifold -n "__fish_seen_subcommand_from hook" -a "prompt-enforcer" -d "UserPromptSubmit hook: advisory rules"
+complete -c manifold -n "__fish_seen_subcommand_from hook" -a "phase-commons" -d "Shared phase helpers"
 
 # Completion subcommand
 complete -c manifold -n "__fish_seen_subcommand_from completion" -a "bash zsh fish" -d "Shell type"
