@@ -5,6 +5,14 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.35.3](https://github.com/dhanesh/manifold/compare/v2.35.2...v2.35.3) (2026-09-11)
+
+### Bug Fixes
+
+* **ci:** assert the published one-liner installs the latest release ([c1e2e73](https://github.com/dhanesh/manifold/commit/c1e2e73db8196b58ae3d8b5c4dc408b0441f167d))
+* **ci:** capture line coverage, not function coverage ([d1628fc](https://github.com/dhanesh/manifold/commit/d1628fcabdb6c890a42adf9d258b6976a650adb9)), closes [#23](https://github.com/dhanesh/manifold/issues/23)
+* **release:** pin semantic-release plugins to unbreak generateNotes ([fd5dba5](https://github.com/dhanesh/manifold/commit/fd5dba52bbfa12ff8a3977d2ef1061d5dc4092fe))
+
 ## [2.35.2](https://github.com/dhanesh/manifold/compare/v2.35.1...v2.35.2) (2026-09-11)
 
 ### Bug Fixes
