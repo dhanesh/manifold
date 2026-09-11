@@ -20,6 +20,11 @@ on:
         required: false
         type: boolean
         default: false
+      manifold-version:
+        description: 'Manifold CLI version to install ("latest" or e.g. 2.35.1)'
+        required: false
+        type: string
+        default: latest
 
 jobs:
   verify:
@@ -36,23 +41,39 @@ jobs:
           bun-version: latest
 
       - name: Install Manifold CLI
+        env:
+          MANIFOLD_VERSION_INPUT: ${{ inputs.manifold-version }}
         run: |
-          # Download pre-built binary or build from source
-          MANIFOLD_VERSION="2.0.0"
-          PLATFORM="linux-x64"
-          BINARY_URL="https://github.com/dhanesh/manifold/releases/download/v${MANIFOLD_VERSION}/manifold-${PLATFORM}"
+          set -euo pipefail
 
-          if curl -fsSL "$BINARY_URL" -o /tmp/manifold 2>/dev/null; then
+          # Resolve "latest" to a concrete tag. A hardcoded default goes stale
+          # silently: v2.0.0 predates JSON+Markdown manifests and reports
+          # "Manifold file not found" for every one of them.
+          VERSION="${MANIFOLD_VERSION_INPUT:-latest}"
+          if [ "$VERSION" = "latest" ]; then
+            VERSION=$(curl -fsSLI -o /dev/null -w '%{url_effective}' \
+              https://github.com/dhanesh/manifold/releases/latest | sed 's#.*/tag/##')
+            echo "Resolved latest release to ${VERSION}"
+          fi
+          VERSION="${VERSION#v}"
+
+          PLATFORM="linux-x64"
+          BINARY_URL="https://github.com/dhanesh/manifold/releases/download/v${VERSION}/manifold-${PLATFORM}"
+
+          if curl -fsSL "$BINARY_URL" -o /tmp/manifold; then
             chmod +x /tmp/manifold
             sudo mv /tmp/manifold /usr/local/bin/manifold
-            echo "Installed Manifold CLI v${MANIFOLD_VERSION}"
-          else
+            echo "Installed Manifold CLI v${VERSION}"
+          elif [ -f cli/index.ts ]; then
             echo "Binary not available, building from source..."
             cd cli
             bun install
             bun run compile
             sudo mv ./manifold /usr/local/bin/manifold
             echo "Built Manifold CLI from source"
+          else
+            echo "::error::Could not download Manifold CLI from ${BINARY_URL}, and this repository has no cli/ source tree to build from."
+            exit 1
           fi
 
           manifold --version
@@ -69,64 +90,77 @@ jobs:
             echo "No .manifold directory found - skipping verification"
           fi
 
+      # Selection happens once, here, and is reused by every step below.
+      # Previously each step re-globbed independently and all three drifted.
+      - name: Select manifolds
+        id: select
+        if: steps.check-manifold.outputs.found == 'true'
+        env:
+          FEATURE_INPUT: ${{ inputs.feature }}
+        run: |
+          set -euo pipefail
+
+          if [ -n "$FEATURE_INPUT" ]; then
+            echo "$FEATURE_INPUT" > /tmp/manifold-features.txt
+          else
+            SELECTOR=scripts/select-manifolds.sh
+            if [ -x "$SELECTOR" ]; then
+              "$SELECTOR" .manifold > /tmp/manifold-features.txt
+            else
+              # Consumers of this reusable workflow do not vendor the script.
+              for f in .manifold/*.json .manifold/*.yaml .manifold/*.yml; do
+                [ -f "$f" ] || continue
+                name="${f##*/}"; name="${name%.json}"; name="${name%.yaml}"; name="${name%.yml}"
+                case "$name" in *.anchor | *.verify | *.integrate) continue ;; esac
+                echo "$name"
+              done | sort -u > /tmp/manifold-features.txt
+            fi
+          fi
+
+          COUNT=$(wc -l < /tmp/manifold-features.txt | tr -d ' ')
+          echo "count=$COUNT" >> $GITHUB_OUTPUT
+          echo "Selected $COUNT manifold(s):"
+          cat /tmp/manifold-features.txt
+
+          # A verification step that finds nothing to verify must not be green.
+          # This is the guard that would have caught the *.yaml glob drift.
+          if [ "$COUNT" -eq 0 ]; then
+            echo "::error::.manifold exists but no feature manifolds were selected. Expected <feature>.json or <feature>.yaml files."
+            exit 1
+          fi
+
       - name: Validate manifold schemas
         if: steps.check-manifold.outputs.found == 'true'
         run: |
-          if [ -n "${{ inputs.feature }}" ]; then
-            manifold validate "${{ inputs.feature }}" --json
-          else
-            # Validate all manifolds
-            for f in .manifold/*.yaml; do
-              if [ -f "$f" ]; then
-                feature=$(basename "$f" .yaml)
-                # Skip anchor and verify files (they have different schemas)
-                if [[ "$feature" != *.anchor && "$feature" != *.verify ]]; then
-                  echo "Validating: $feature"
-                  manifold validate "$feature" --json || exit 1
-                fi
-              fi
-            done
-          fi
+          set -euo pipefail
+          while read -r feature; do
+            [ -n "$feature" ] || continue
+            echo "Validating: $feature"
+            manifold validate "$feature" --json || exit 1
+          done < /tmp/manifold-features.txt
 
       - name: Verify artifact coverage
         if: steps.check-manifold.outputs.found == 'true'
         shell: bash {0}
+        env:
+          FAIL_ON_GAPS: ${{ inputs.fail-on-gaps }}
         run: |
           EXIT_CODE=0
 
-          if [ -n "${{ inputs.feature }}" ]; then
-            manifold verify "${{ inputs.feature }}" --json
+          while read -r feature; do
+            [ -n "$feature" ] || continue
+            echo "Verifying: $feature"
+            manifold verify "$feature" --json
             RESULT=$?
             if [ $RESULT -eq 2 ]; then
-              echo "::warning::Verification found gaps for ${{ inputs.feature }}"
-              if [ "${{ inputs.fail-on-gaps }}" == "true" ]; then
+              echo "::warning::Verification found gaps for $feature"
+              if [ "$FAIL_ON_GAPS" == "true" ]; then
                 EXIT_CODE=1
               fi
             elif [ $RESULT -ne 0 ]; then
               EXIT_CODE=1
             fi
-          else
-            # Verify all manifolds
-            for f in .manifold/*.yaml; do
-              if [ -f "$f" ]; then
-                feature=$(basename "$f" .yaml)
-                # Skip anchor and verify files (they have different schemas)
-                if [[ "$feature" != *.anchor && "$feature" != *.verify ]]; then
-                  echo "Verifying: $feature"
-                  manifold verify "$feature" --json
-                  RESULT=$?
-                  if [ $RESULT -eq 2 ]; then
-                    echo "::warning::Verification found gaps for $feature"
-                    if [ "${{ inputs.fail-on-gaps }}" == "true" ]; then
-                      EXIT_CODE=1
-                    fi
-                  elif [ $RESULT -ne 0 ]; then
-                    EXIT_CODE=1
-                  fi
-                fi
-              fi
-            done
-          fi
+          done < /tmp/manifold-features.txt
 
           exit $EXIT_CODE
 
@@ -135,19 +169,12 @@ jobs:
         run: |
           echo "## Manifold Verification Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Verified ${{ steps.select.outputs.count }} manifold(s)." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
-          if [ -n "${{ inputs.feature }}" ]; then
-            manifold status "${{ inputs.feature }}" >> $GITHUB_STEP_SUMMARY
-          else
-            for f in .manifold/*.yaml; do
-              if [ -f "$f" ]; then
-                feature=$(basename "$f" .yaml)
-                # Skip anchor and verify files (they have different schemas)
-                if [[ "$feature" != *.anchor && "$feature" != *.verify ]]; then
-                  echo "### $feature" >> $GITHUB_STEP_SUMMARY
-                  manifold status "$feature" >> $GITHUB_STEP_SUMMARY
-                  echo "" >> $GITHUB_STEP_SUMMARY
-                fi
-              fi
-            done
-          fi
+          while read -r feature; do
+            [ -n "$feature" ] || continue
+            echo "### $feature" >> $GITHUB_STEP_SUMMARY
+            manifold status "$feature" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          done < /tmp/manifold-features.txt
