@@ -12,6 +12,8 @@
 
 import { describe, test, expect } from 'bun:test';
 import { spawnSync } from 'child_process';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 // A simple module with known coverage: 2 branches, 1 always taken, 1 never taken
 const KNOWN_COVERAGE_MODULE = `
@@ -79,5 +81,69 @@ describe('Coverage Tool Validation', () => {
     // If neither is present, bun's coverage is not producing useful data
     expect(hasTable).toBe(true);
     expect(hasSummary).toBe(true);
+  });
+});
+
+/**
+ * Guards the number CI publishes under its "Line Coverage" heading.
+ *
+ * bun's table orders the columns `% Funcs | % Lines`, so an extraction that
+ * stops at the first number reports function coverage under a line-coverage
+ * label -- and the 70% threshold warning then gates on the wrong metric.
+ * A fixture whose two columns differ is the only way to catch that; when they
+ * happen to be equal, a wrong pattern still looks correct.
+ */
+describe('CI coverage extraction', () => {
+  // % Funcs and % Lines deliberately differ, so picking the wrong column shows up.
+  const BUN_COVERAGE_TABLE = [
+    '------------|---------|---------|-------------------',
+    'File        | % Funcs | % Lines | Uncovered Line #s',
+    '------------|---------|---------|-------------------',
+    'All files   |   50.00 |   66.67 |',
+    ' src/lib.ts |   50.00 |   66.67 | 7-8',
+    '------------|---------|---------|-------------------',
+  ].join('\n');
+
+  const FUNCS = '50.00';
+  const LINES = '66.67';
+
+  /** Read the `grep -oP '<pattern>'` CI uses, so the test tracks the workflow. */
+  function ciExtractionPattern(): string {
+    const workflow = readFileSync(
+      join(import.meta.dir, '..', '.github', 'workflows', 'ci.yml'),
+      'utf-8',
+    );
+    const line = workflow
+      .split('\n')
+      .find((l) => l.includes('COVERAGE=$(grep -oP'));
+    expect(line).toBeDefined();
+
+    const pattern = line?.match(/grep -oP '([^']+)'/)?.[1];
+    expect(pattern).toBeDefined();
+    return pattern as string;
+  }
+
+  /**
+   * Apply a PCRE pattern the way `grep -oP` does: everything before `\K` is
+   * matched but dropped from the output, so the trailing half is what CI keeps.
+   */
+  function grepOP(pattern: string, input: string): string | undefined {
+    const [prefix, captured] = pattern.split('\\K');
+    expect(captured).toBeDefined();
+    return new RegExp(`${prefix}(${captured})`).exec(input)?.[1];
+  }
+
+  test('CI extracts line coverage, not function coverage', () => {
+    const extracted = grepOP(ciExtractionPattern(), BUN_COVERAGE_TABLE);
+
+    expect(extracted).toBe(LINES);
+    expect(extracted).not.toBe(FUNCS);
+  });
+
+  test('extraction falls through to "unknown" when the table is absent', () => {
+    // grep exits non-zero on no match and CI substitutes "unknown", which
+    // skips the threshold check rather than warning on a bogus number.
+    expect(ciExtractionPattern()).toBeDefined();
+    expect(grepOP(ciExtractionPattern(), 'no coverage table here')).toBeUndefined();
   });
 });
