@@ -70,7 +70,10 @@ jobs:
           # TN2 resolution: warning-only until coverage tool validated
           bun test --coverage 2>&1 | tee /tmp/coverage-output.txt
 
-          # Extract coverage percentage for summary
+          # Extract coverage percentage for summary.
+          # bun's table is `All files | % Funcs | % Lines |` -- skip the funcs
+          # column so the number matches the "Line Coverage" label below.
+          # Guarded by tests/coverage-validation.test.ts.
           COVERAGE=$(grep -oP 'All files\s*\|\s*[0-9.]+\s*\|\s*\K[0-9.]+' /tmp/coverage-output.txt 2>/dev/null || echo "unknown")
 
           echo "## Test Coverage" >> $GITHUB_STEP_SUMMARY
