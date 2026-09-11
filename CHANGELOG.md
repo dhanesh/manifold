@@ -5,6 +5,36 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.35.2](https://github.com/dhanesh/manifold/compare/v2.35.1...v2.35.2) (2026-09-11)
+
+### Bug Fixes
+
+* **ci:** manifold-verify selected 1 of 22 manifolds and reported green ([fb5c9ef](https://github.com/dhanesh/manifold/commit/fb5c9ef0faabe61b9caf6a5ee8a3fb42b215ade6))
+* **ci:** pin @types/bun and freeze lockfile installs ([a461431](https://github.com/dhanesh/manifold/commit/a461431ea72485ec5744141a4d361b5d39a377d6)), closes [#40003](https://github.com/dhanesh/manifold/issues/40003)
+* **ci:** pin bun in the diff guard so generated artifacts reproduce ([6430c80](https://github.com/dhanesh/manifold/commit/6430c80d6b392285662c553476064869326e046c))
+* **ci:** point the bundle-drift hint at the real build command ([b8ace35](https://github.com/dhanesh/manifold/commit/b8ace358daa3d23263d3d28aef755de971d4d640))
+* **cli:** tensions are "documented", not "detected" ([0acfaad](https://github.com/dhanesh/manifold/commit/0acfaad0bc83fc4cd6e83f874c5f65dd2b6ae69f))
+* **install:** make the documented quickstart actually work from cold ([22a27a6](https://github.com/dhanesh/manifold/commit/22a27a600dd83b092b5878c9fb39660560cb6556))
+* **plugin:** re-sync the context hook after the tension wording change ([1e4b67b](https://github.com/dhanesh/manifold/commit/1e4b67b55f0e333651fe7dbf266f7f03637806ab))
+* **serve:** unbreak typecheck on bun-types signal overloads ([894b172](https://github.com/dhanesh/manifold/commit/894b1722d142d718ad749c5f900e40bf5b79e966)), closes [oven-sh/bun#40003](https://github.com/oven-sh/bun/issues/40003) [#30](https://github.com/dhanesh/manifold/issues/30)
+* **solver:** detect unitless numeric limits in resource conflicts ([c98b703](https://github.com/dhanesh/manifold/commit/c98b7035d9cf33dfb3374ea317ec1efe2c58e710))
+* **validate:** populate manifold on json-md so --conflicts runs ([f2ee6bf](https://github.com/dhanesh/manifold/commit/f2ee6bf4bfc27fc78743c483d554140a19df23f1))
+
+## [2.35.2](https://github.com/dhanesh/manifold/compare/v2.35.1...v2.35.2) (2026-09-11)
+
+### Bug Fixes
+
+* **ci:** manifold-verify selected 1 of 22 manifolds and reported green ([fb5c9ef](https://github.com/dhanesh/manifold/commit/fb5c9ef0faabe61b9caf6a5ee8a3fb42b215ade6))
+* **ci:** pin @types/bun and freeze lockfile installs ([a461431](https://github.com/dhanesh/manifold/commit/a461431ea72485ec5744141a4d361b5d39a377d6)), closes [#40003](https://github.com/dhanesh/manifold/issues/40003)
+* **ci:** pin bun in the diff guard so generated artifacts reproduce ([6430c80](https://github.com/dhanesh/manifold/commit/6430c80d6b392285662c553476064869326e046c))
+* **ci:** point the bundle-drift hint at the real build command ([b8ace35](https://github.com/dhanesh/manifold/commit/b8ace358daa3d23263d3d28aef755de971d4d640))
+* **cli:** tensions are "documented", not "detected" ([0acfaad](https://github.com/dhanesh/manifold/commit/0acfaad0bc83fc4cd6e83f874c5f65dd2b6ae69f))
+* **install:** make the documented quickstart actually work from cold ([22a27a6](https://github.com/dhanesh/manifold/commit/22a27a600dd83b092b5878c9fb39660560cb6556))
+* **plugin:** re-sync the context hook after the tension wording change ([1e4b67b](https://github.com/dhanesh/manifold/commit/1e4b67b55f0e333651fe7dbf266f7f03637806ab))
+* **serve:** unbreak typecheck on bun-types signal overloads ([894b172](https://github.com/dhanesh/manifold/commit/894b1722d142d718ad749c5f900e40bf5b79e966)), closes [oven-sh/bun#40003](https://github.com/oven-sh/bun/issues/40003) [#30](https://github.com/dhanesh/manifold/issues/30)
+* **solver:** detect unitless numeric limits in resource conflicts ([c98b703](https://github.com/dhanesh/manifold/commit/c98b7035d9cf33dfb3374ea317ec1efe2c58e710))
+* **validate:** populate manifold on json-md so --conflicts runs ([f2ee6bf](https://github.com/dhanesh/manifold/commit/f2ee6bf4bfc27fc78743c483d554140a19df23f1))
+
 ## [2.35.1](https://github.com/dhanesh/manifold/compare/v2.35.0...v2.35.1) (2026-07-04)
 
 ## [2.35.0](https://github.com/dhanesh/manifold/compare/v2.34.0...v2.35.0) (2026-06-20)
