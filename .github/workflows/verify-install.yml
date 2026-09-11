@@ -54,9 +54,34 @@ jobs:
         with:
           persist-credentials: false
 
+      # install.sh is fetched from main, but it resolves the CLI *binary* from
+      # the latest GitHub release. Those two can drift apart: if the Release
+      # workflow is broken, the script is current while the binary it installs
+      # is stale, and every functional check below still passes. That is not
+      # hypothetical — a broken Release left the one-liner serving the
+      # 2026-07-04 binary for two months without turning anything red.
+      #
+      # So assert the installed version equals the latest published release.
+      # This job is the only thing watching for that drift.
+      - name: Resolve expected version
+        id: expected
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          expected=$(gh api repos/${{ github.repository }}/releases/latest --jq '.tag_name' | sed 's/^v//')
+          if [ -z "$expected" ]; then
+            echo "::error::Could not resolve the latest release tag"
+            exit 1
+          fi
+          echo "Latest published release: $expected"
+          echo "expected=$expected" >> "$GITHUB_OUTPUT"
+
       - name: Run the README one-liner on a bare image
+        env:
+          EXPECTED_VERSION: ${{ steps.expected.outputs.expected }}
         run: |
           docker run --rm \
+            -e EXPECTED_VERSION \
             -v "$PWD/install/verify-quickstart.sh:/verify-quickstart.sh:ro" \
             ubuntu:24.04 bash -c '
               set -e
@@ -67,6 +92,12 @@ jobs:
               su newcomer -c "
                 export PATH=\$HOME/.local/bin:\$PATH
                 curl -fsSL https://raw.githubusercontent.com/dhanesh/manifold/main/install/install.sh | bash
+                installed=\$(manifold --version 2>&1 | tr -d \"[:space:]\")
+                echo \"installed=\$installed expected=$EXPECTED_VERSION\"
+                if [ \"\$installed\" != \"$EXPECTED_VERSION\" ]; then
+                  echo \"::error::The published one-liner installed \$installed but the latest release is $EXPECTED_VERSION. The Release workflow is probably failing, so merged fixes are not reaching users.\"
+                  exit 1
+                fi
                 bash \$HOME/verify-quickstart.sh
               "
             '
