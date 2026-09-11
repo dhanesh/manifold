@@ -72,12 +72,26 @@ jobs:
         uses: cycjimmy/semantic-release-action@v6
         with:
           semantic_version: 24
+          # Every plugin below is major-pinned on purpose. The action installs
+          # extra_plugins into its own node_modules at run time, so an unpinned
+          # entry silently floats to a new major and breaks a release nobody
+          # touched.
+          #
+          # conventional-changelog-conventionalcommits MUST stay on 9.x:
+          # semantic-release 24 pulls @semantic-release/release-notes-generator@14,
+          # which hard-pins conventional-changelog-writer@^8. Preset 10.x added a
+          # guard that throws 'Missing helper: ... requires
+          # conventional-changelog-writer@9 or newer' against a writer@8 host.
+          # That is what broke every release after v2.35.1 (2026-07-04): the
+          # preset floated to 10.x while the writer stayed pinned at 8.x.
+          # Moving the preset to 10 requires a semantic-release major that ships
+          # writer@9+ -- it is not just a bump of this line.
           extra_plugins: |
-            @semantic-release/changelog
-            @semantic-release/exec
-            @semantic-release/git
-            @semantic-release/github
-            conventional-changelog-conventionalcommits
+            @semantic-release/changelog@6
+            @semantic-release/exec@7
+            @semantic-release/git@10
+            @semantic-release/github@12
+            conventional-changelog-conventionalcommits@9
           dry_run: ${{ inputs.dry_run == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
