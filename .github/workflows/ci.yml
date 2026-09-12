@@ -47,6 +47,27 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
+  # The README's opening line states a release count, a version, and the size
+  # of .manifold/. All four are derivable from the repo; none of them were
+  # checked, and all four have gone stale. Now they fail the build instead.
+  readme-facts:
+    name: README Facts Guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # the release count needs the full tag list
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # No bun install: the script uses only node builtins and Bun's own APIs.
+      - name: Check README facts
+        run: bun scripts/check-readme-facts.ts --require-tags
+
   # Run tests
   test:
     name: Tests
@@ -54,6 +75,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          fetch-depth: 0 # tests/check-readme-facts.test.ts skips itself without tags
           persist-credentials: false
 
       - name: Setup Bun
