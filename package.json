@@ -14,7 +14,8 @@
     "format:check": "biome format .",
     "lint": "biome lint .",
     "typecheck": "cd cli && bun run typecheck",
-    "verify": "bun run format:check && bun run lint && bun run typecheck && bun test && bun run build:all"
+    "check:readme": "bun scripts/check-readme-facts.ts",
+    "verify": "bun run format:check && bun run lint && bun run typecheck && bun test && bun run check:readme && bun run build:all"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.2",
