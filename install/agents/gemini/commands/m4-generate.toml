@@ -70,36 +70,9 @@ subagent roles, all driven by templates in
 | **final reviewer** | `final-reviewer.md` | Whole-implementation pass after all tasks |
 
 Generators are dispatched **strictly sequentially** — never two at once. The
-per-task loop:
-
-```dot
-digraph m4_loop {
-    rankdir=TB;
-    "Dispatch generator subagent" [shape=box];
-    "Status?" [shape=diamond];
-    "Handle DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED" [shape=box];
-    "Dispatch manifold reviewer" [shape=box];
-    "Constraint-compliant?" [shape=diamond];
-    "Generator fixes compliance gaps" [shape=box];
-    "Dispatch code-quality reviewer" [shape=box];
-    "Critical/Important issues?" [shape=diamond];
-    "Generator fixes quality issues" [shape=box];
-    "Mark task complete, set artifact status=generated" [shape=box];
-
-    "Dispatch generator subagent" -> "Status?";
-    "Status?" -> "Handle DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED" [label="not DONE"];
-    "Handle DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED" -> "Dispatch generator subagent" [label="re-dispatch"];
-    "Status?" -> "Dispatch manifold reviewer" [label="DONE"];
-    "Dispatch manifold reviewer" -> "Constraint-compliant?";
-    "Constraint-compliant?" -> "Generator fixes compliance gaps" [label="no"];
-    "Generator fixes compliance gaps" -> "Dispatch manifold reviewer" [label="re-review"];
-    "Constraint-compliant?" -> "Dispatch code-quality reviewer" [label="yes"];
-    "Dispatch code-quality reviewer" -> "Critical/Important issues?";
-    "Critical/Important issues?" -> "Generator fixes quality issues" [label="yes"];
-    "Generator fixes quality issues" -> "Dispatch code-quality reviewer" [label="re-review"];
-    "Critical/Important issues?" -> "Mark task complete, set artifact status=generated" [label="no"];
-}
-```
+per-task loop is generator → manifold reviewer → code-quality reviewer, each
+reviewer re-dispatching the generator until its pass criteria are met. Phase 2
+below is the authoritative step list.
 
 **Model tiering** — pick the cheapest model that fits each dispatch:
 
