@@ -100,10 +100,18 @@ install_templates() {
         cp -R "$SCRIPT_DIR/templates" "$templates_dir"
     else
         # No directory listing over raw.githubusercontent, so take the tarball.
+        #
+        # The member path is spelled out in full on purpose. GNU tar — every
+        # Linux box — refuses a glob unless it is given --wildcards, and errors
+        # with "Pattern matching characters used in file names". bsdtar on macOS
+        # globs by default, so a pattern here works for whoever wrote it and
+        # fails for every Linux user. GitHub names the tarball's top directory
+        # after the repo and the tag with its leading v stripped, which is
+        # exactly $VERSION, so no glob is needed.
         local tmp_dir
         tmp_dir="$(mktemp -d)"
         if curl -fsSL "https://github.com/dhanesh/manifold/archive/refs/tags/v${VERSION}.tar.gz" \
-             | tar -xz -C "$tmp_dir" --strip-components=1 "*/install/templates" 2>/dev/null; then
+             | tar -xz -C "$tmp_dir" --strip-components=1 "manifold-${VERSION}/install/templates" 2>/dev/null; then
             rm -rf "$templates_dir"
             mv "$tmp_dir/install/templates" "$templates_dir"
         else
