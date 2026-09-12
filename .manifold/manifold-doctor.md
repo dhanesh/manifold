@@ -2,7 +2,7 @@
 
 ## Outcome
 
-A `manifold doctor` CLI command detects repo-health problems — invalid/unparseable manifold files, `plugin/` out of sync with `install/`, stale skill fingerprints, and post-verification file drift — and reports each with an actionable fix, exiting non-zero when problems are found.
+A `manifold doctor` CLI command detects repo-health problems — invalid/unparseable manifold files, `plugin/` out of sync with `install/`, stale skill fingerprints, post-verification file drift, and constraint dependency cycles — and reports each with an actionable fix, exiting non-zero when problems are found.
 
 ---
 
@@ -10,8 +10,8 @@ A `manifold doctor` CLI command detects repo-health problems — invalid/unparse
 
 ### Business
 
-#### B1: Detects All Four Health-Problem Classes
-`manifold doctor` must detect every one of the four repo-health problem classes: (1) invalid or unparseable `.manifold/*.json` / `.md` files, (2) `plugin/` out of sync with `install/`, (3) skill fingerprints in `tests/golden/skill-fingerprints.json` that no longer match `install/commands/`, and (4) post-verification file drift recorded against `.verify.json` baselines.
+#### B1: Detects All Five Health-Problem Classes
+`manifold doctor` must detect every one of the five repo-health problem classes: (1) invalid or unparseable `.manifold/*.json` / `.md` files, (2) `plugin/` out of sync with `install/`, (3) skill fingerprints in `tests/golden/skill-fingerprints.json` that no longer match `install/commands/`, (4) post-verification file drift recorded against `.verify.json` baselines, and (5) a directed cycle among `depends_on` / `maps_to_constraints` / artifact-satisfies edges, where no constraint satisfaction order exists.
 > **Rationale:** This is the command's reason to exist — missing any class makes the health check untrustworthy.
 
 #### B2: No False Positives On A Healthy Repo
@@ -43,7 +43,7 @@ Each problem doctor reports includes a concrete, copy-pasteable fix command (e.g
 > **Rationale:** "Reports with an actionable fix" is in the outcome — a problem without a remedy wastes the reader's time.
 
 #### U2: Reports All Problems, Never Stops At First
-doctor runs all four checks and reports every problem found, grouped by check. It never aborts after the first failing check.
+doctor runs all five checks and reports every problem found, grouped by check. It never aborts after the first failing check.
 > **Rationale:** A health check exists to show the full picture; fail-fast would hide problems and force repeated runs.
 
 #### U3: Provides A --json Output Mode
@@ -71,14 +71,14 @@ doctor's deterministic exit codes and `--json` mode make it adoptable by the exi
 ## Tensions
 
 ### TN1: Thoroughness vs Speed
-Detecting all four problem classes completely — hashing every skill file, diffing the full `install/`↔`plugin/` tree, parsing every manifold, comparing every drift baseline — costs I/O and CPU. The more exhaustive the checks (B1, U2 — both invariants), the harder the <500ms p99 goal (T3).
+Detecting all five problem classes completely — hashing every skill file, diffing the full `install/`↔`plugin/` tree, parsing every manifold, comparing every drift baseline — costs I/O and CPU. The more exhaustive the checks (B1, U2 — both invariants), the harder the <500ms p99 goal (T3).
 
 **TRIZ:** Technical contradiction — Performance vs Completeness. Nearest parameter pair: Performance vs Reliability → P2 (Extraction), P1 (Segmentation), P10 (Prior action).
 
-> **Resolution:** Extract all filesystem reads into a single pass that builds an in-memory **repo snapshot**; all four checks consume that snapshot rather than doing their own I/O. B1 and U2 are invariants and stay fully satisfied; T3 is a goal and is *helped* by eliminating redundant reads. **Propagation:** T3 LOOSENED (one pass, not four); T4 TIGHTENED (checks must now take the snapshot as input — see TN2).
+> **Resolution:** Extract all filesystem reads into a single pass that builds an in-memory **repo snapshot**; all five checks consume that snapshot rather than doing their own I/O. B1 and U2 are invariants and stay fully satisfied; T3 is a goal and is *helped* by eliminating redundant reads. **Propagation:** T3 LOOSENED (one pass, not five); T4 TIGHTENED (checks must now take the snapshot as input — see TN2).
 
 ### TN2: Modular Checks vs Redundant I/O
-T4 wants each check to be an independent unit. The naive realization — each check walks the filesystem itself — would read and hash the same files four times, undermining T3. T4's modularity has a hidden dependency on *how* I/O is structured.
+T4 wants each check to be an independent unit. The naive realization — each check walks the filesystem itself — would read and hash the same files five times, undermining T3. T4's modularity has a hidden dependency on *how* I/O is structured.
 
 **TRIZ:** P2 (Extraction — pull I/O out of the checks), P24 (Intermediary — the snapshot mediates between the filesystem and the checks).
 
@@ -97,7 +97,7 @@ Before any check runs, one filesystem pass builds an in-memory snapshot capturin
 **Gap:** No snapshot layer exists. This is the **binding constraint** — every check and the aggregator depend on it.
 
 ### RT-3: Each problem class has a dedicated check, pure over the snapshot
-Each of the four problem classes (invalid manifolds, plugin↔install sync drift, stale fingerprints, file drift) has its own check implemented as a pure function `(snapshot) => Problem[]`. All four always run.
+Each of the five problem classes (invalid manifolds, plugin↔install sync drift, stale fingerprints, file drift, constraint dependency cycles) has its own check implemented as a pure function `(snapshot) => Problem[]`. All five always run.
 **Gap:** No checks exist.
 
 ### RT-4: Each check's verdict matches its authoritative source
@@ -121,13 +121,13 @@ The entire `doctor` code path contains no `writeFileSync` / `mkdirSync` / `rmSyn
 ## Solution Space
 
 ### Option A: Single-file command
-Everything — snapshot builder, four checks, aggregation, rendering — lives in `cli/commands/doctor.ts`.
+Everything — snapshot builder, five checks, aggregation, rendering — lives in `cli/commands/doctor.ts`.
 - Satisfies: RT-1, RT-3, RT-5, RT-6, RT-7
 - Gaps: RT-2 modularity weak — checks are functions in one large file; RT-4 harder to test in isolation
 - Complexity: Low · Reversibility: TWO_WAY
 
 ### Option B: Command + checks module  ← Recommended
-`cli/commands/doctor.ts` handles registration, orchestration, and rendering. `cli/lib/doctor.ts` holds the snapshot builder and the four exported check functions.
+`cli/commands/doctor.ts` handles registration, orchestration, and rendering. `cli/lib/doctor.ts` holds the snapshot builder and the five exported check functions.
 - Satisfies: RT-1 – RT-7
 - Gaps: None
 - Complexity: Medium · Reversibility: TWO_WAY
@@ -136,7 +136,7 @@ Everything — snapshot builder, four checks, aggregation, rendering — lives i
 ### Option C: Command + per-check files
 `cli/commands/doctor.ts` + `cli/lib/doctor/snapshot.ts` + `cli/lib/doctor/checks/*.ts` (one file per check).
 - Satisfies: RT-1 – RT-7
-- Gaps: None, but more files than a four-check feature warrants (YAGNI)
+- Gaps: None, but more files than a five-check feature warrants (YAGNI)
 - Complexity: Medium-High · Reversibility: TWO_WAY
 
 **Recommendation: Option B** — full RT coverage, honours both tension resolutions (shared snapshot + pure-function checks), matches existing repo structure.
