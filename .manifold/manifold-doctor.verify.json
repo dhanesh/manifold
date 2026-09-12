@@ -207,11 +207,11 @@
     "notes": "Docs and Ops dimensions are not applicable to this feature: manifold-doctor is a read-only diagnostic CLI command — it is self-documenting via `--help`, and O2 (CI-adoptability) is satisfied in code by deterministic exit codes + --json, requiring no separate runbook/dashboard/alert. Default strictness is met: all 7 invariants are SATISFIED in Code+Test, the 1 boundary is SATISFIED in Code, and the single gap (G1) is a non-blocking GOAL."
   },
   "file_hashes": {
-    "cli/lib/doctor.ts": "e68a19b1d533333b6dca9029b56cffbdccf6c77a16a5a83d4c5b9b42863a1e2d",
-    "cli/lib/fingerprint.ts": "6565cca0c8824bf465ab1507b38f189ba50740221311b40dfdcfbad657f543b9",
-    "cli/commands/doctor.ts": "f18fcbd1c3bd1dc86363b6c39022e4eb7867de3656f90d00226a2bec8ad18aef",
-    "cli/index.ts": "50aee2612f70aee41a063caf32982340a1e8400c790767cb6c42a1c6277a21fc",
-    "tests/manifold-doctor/doctor.test.ts": "833f5cedd83990d3bd33792b2a4e17943371afac00c64d26336e55d70fe69b5d"
+    "cli/lib/doctor.ts": "cfbf68ff1e4c8e3568f00a899ff96ff7a59c85faa9a72b0fc709f299c49a2f15",
+    "cli/lib/fingerprint.ts": "ac5b0735297af80ee042e88baa05b65e64b7d5a22ddbf5da198189fcd570e47d",
+    "cli/commands/doctor.ts": "3efa50db7bc3570fc83a10d854f8314e75ae113605052707f77e0ec6d089fbe3",
+    "cli/index.ts": "3038558e52c705835347d7cd36028b241e28180aad31a165b59364987493aaef",
+    "tests/manifold-doctor/doctor.test.ts": "f02aad7887ae62c62706d3d1d53d08db20fc981e6718130b0b59f44d5e78950f"
   },
-  "hashes_updated_at": "2026-05-17T17:20:51.188Z"
+  "hashes_updated_at": "2026-09-12T21:25:42.081Z"
 }
