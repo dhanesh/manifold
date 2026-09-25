@@ -220,12 +220,12 @@ With `--auto-wire`, safe integrations are performed automatically:
 9. **⚠️ Run `manifold validate <feature>`** — fix any errors before proceeding
 10. Recommend `/manifold:m5-verify` after integration
 
-## User Interaction (MANDATORY)
+## User Interaction
 
 Integration produces a wiring checklist with copy-paste commands. Where the checklist requires a choice (e.g., "this artifact can wire into either route A or route B — which?"), use `AskUserQuestion` (or the agent-equivalent: numbered options for Gemini, labelled choices for Codex).
 
 - The final integration checklist itself does NOT need `AskUserQuestion` — it's a report. End with the suggested next command (`/manifold:m5-verify <feature>`).
-- Decision points within integration (which order to wire, whether to apply a destructive step) MUST use `AskUserQuestion`. Plain-prose "shall I proceed?" is the anti-pattern.
+- Decision points within integration (which order to wire, whether to apply a destructive step) MUST use `AskUserQuestion`. Never apply a destructive step without the user's explicit confirmation. Plain-prose "shall I proceed?" is the anti-pattern.
 - Exceptions: rhetorical phrasing, or "I will assume X — say so if not" assumption call-outs.
 
 See `install/agents/interaction-rules.md` for the canonical contract; the `prompt-enforcer.ts` hook injects the same rules at runtime as defence-in-depth.

@@ -155,7 +155,7 @@ When constraints involve shared state (caching, connection pools, singletons):
 - Should concurrent request handling tests be generated?
 - What shared-state constraints exist?
 
-### GAP Checklist Compliance (MANDATORY)
+### GAP Checklist Compliance
 
 After all five interviews, each GAP MUST be COMPLETED or SKIPPED (with reason). Record in JSON `"gap_checklist_compliance"`:
 
@@ -272,7 +272,7 @@ Before interviewing, use `WebSearch` to research the feature domain (best practi
 8. Set phase to `CONSTRAINED`, append iteration, run `manifold validate <feature>`
 9. Display summary and suggest next step
 
-## User Interaction (MANDATORY)
+## User Interaction
 
 This phase is interview-driven. Many moments call for user input — choosing which category to constrain first, picking between alternative phrasings of a constraint, confirming pre-mortem stories, resolving ambiguous constraint genealogy. **Every such moment MUST go through `AskUserQuestion`** (or the agent-equivalent: numbered options for Gemini, labelled choices for Codex).
 
@@ -283,7 +283,7 @@ This phase is interview-driven. Many moments call for user input — choosing wh
 
 **For each question, flag your recommended answer with rationale.** AskUserQuestion options should not be presented as a flat menu — name which option you would pick and why (in the question prose, not by re-ordering or hiding options). The user is then confirming or rejecting a position rather than choosing blind. The user can always override; the recommendation reduces cognitive load and prevents the "ten weak options" anti-pattern.
 
-See `install/agents/interaction-rules.md` for the canonical contract; the `prompt-enforcer.ts` hook injects the same rules at runtime as defence-in-depth.
+The canonical contract is `install/agents/interaction-rules.md` in the Manifold repository; the prompt-enforcer hook repeats it at runtime as defence-in-depth.
 
 ## Red Flags
 

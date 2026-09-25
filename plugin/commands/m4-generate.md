@@ -271,9 +271,9 @@ All non-software artifacts maintain full constraint traceability. Reversibility 
 - **Recovery Playbook**: One procedure per watch-list risk. Each: Trigger, Related constraint, Severity, Reversibility of response, Steps, Escalation path (3 levels)
 - **Risk Watch List**: Active risks, Assumption Watch table, Review Schedule, Decision Reversal Criteria checklist
 
-## STEP 0-A: Binding Constraint Check (MANDATORY)
+## STEP 0-A: Binding Constraint Check
 
-Before any planning or generation, read `anchors.binding_constraint` from `.manifold/<feature>.json`.
+Before any planning or generation, always read `anchors.binding_constraint` from `.manifold/<feature>.json`.
 
 If present:
 - Display: `BINDING CONSTRAINT: [RT-ID] -- [reason]`
@@ -389,9 +389,9 @@ For each task, IN ORDER — never two generators at once. (Default path — skip
 | "Reviewer found Minor issues only — but also one Important — ship it" | Critical and Important issues must be fixed and re-reviewed before the next task. |
 | "Generating on `main` is fine this once" | Never. Create a feature branch first. |
 
-## User Interaction (MANDATORY)
+## User Interaction
 
-Generation has two recurring decision points: (a) parallel-execution approval (STEP 0-B) — user confirms before isolated worktrees spin up; (b) ONE_WAY action acknowledgement — explicit user accept on irreversible steps. **Every such confirmation MUST go through `AskUserQuestion`** (or the agent-equivalent: numbered options for Gemini, labelled choices for Codex).
+Generation has two recurring decision points: (a) parallel-execution approval (STEP 0-B) — user confirms before isolated worktrees spin up; (b) ONE_WAY action acknowledgement — explicit user accept on irreversible steps. **Every such confirmation MUST go through `AskUserQuestion`** (or the agent-equivalent: numbered options for Gemini, labelled choices for Codex). Never run a ONE_WAY step without that explicit acceptance.
 
 - The parallelisation prompt for ≥3-file/multi-module plans is mandatory and must use `AskUserQuestion` — not a prose "OK to proceed?" question.
 - ONE_WAY steps in the reversibility log require explicit acknowledgement; that acknowledgement question goes through `AskUserQuestion`.

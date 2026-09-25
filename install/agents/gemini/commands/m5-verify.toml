@@ -9,7 +9,7 @@ prompt = """
 
 Verify ALL artifacts against ALL constraints.
 
-## Scope Guard (MANDATORY)
+## Scope Guard
 
 **This phase ONLY reads existing artifacts and creates/updates `.manifold/<feature>.verify.json`.** It verifies what exists — it does not create what's missing.
 
@@ -341,7 +341,7 @@ When verifying JSON+Markdown manifolds, check:
 - `tension.between` references exist as constraint IDs
 - `required_truth.maps_to` references exist
 
-## User Interaction (MANDATORY)
+## User Interaction
 
 m5-verify is mostly read-only — its output is a verification matrix + `.verify.json` artifact + suggested next steps. The verify report itself does NOT need `AskUserQuestion` (it is a status report, end with "Waiting for your command"). However, two interactive paths can arise:
 

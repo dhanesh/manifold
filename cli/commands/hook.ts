@@ -280,10 +280,13 @@ async function promptEnforcer(): Promise<void> {
 
   emitContext(
     [
-      'MANIFOLD INTERACTION RULES (advisory):',
-      '1. Use AskUserQuestion (or agent-equivalent structured input) when you need user decisions, preferences, or clarification. Avoid plain-text questions.',
-      '2. After completing any Manifold phase, ALWAYS include the concrete next command: /manifold:mN-xxx <feature>',
-      '3. When presenting options or trade-offs, use AskUserQuestion with labeled choices.',
+      'Manifold interaction rules:',
+      '1. When a reply asks the user to choose, decide, clarify, or confirm, ask through AskUserQuestion (or the agent-equivalent structured input).',
+      '   - Markdown options/tables/bulleted lists that effectively ask "which one?" are not a substitute. Wrapping a decision in prose is the anti-pattern this rule exists to prevent.',
+      '   - Exceptions (plain prose is fine): rhetorical phrasing that does not solicit a response, and "I will assume X — say so if not" call-outs where waiting for a structured answer would be heavier than just proceeding.',
+      '2. After completing a Manifold phase, include the concrete next command (/manifold:mN-xxx <feature>) and a one-line explanation of what that phase does.',
+      '3. Labeled prose options are fine for describing alternatives or trade-offs; when the next step depends on the user choosing one, the question goes through AskUserQuestion.',
+      '4. Read-only / status / report-style responses (m-status, verify summaries, drift reports) do not need AskUserQuestion. End them with "Waiting for your command" and stop.',
     ].join('\n')
   );
 }

@@ -265,9 +265,9 @@ When `--domain=non-software`, the manifold's `constraints` object uses **differe
 <!-- #### DP1: Title -->
 ```
 
-**Common mistake to avoid:** The earlier guidance told the model to keep software keys (`business`, `technical`, ...) and only rename the IDs. That produces a hybrid-broken manifold that the schema discriminated union now rejects at parse time. The JSON keys themselves must change.
+**Rename the JSON keys, not just the IDs.** Keeping the software keys (`business`, `technical`, ...) with non-software IDs produces a hybrid manifold that the schema rejects at parse time.
 
-## Scope Guard (MANDATORY)
+## Scope Guard
 
 **This phase ONLY creates manifold files.** After creating `.manifold/<feature>.json` and `.manifold/<feature>.md`, display the confirmation table and **STOP**.
 

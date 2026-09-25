@@ -21,7 +21,7 @@ Show current Manifold state and next recommended action.
 > **CRITICAL**: When displaying phase information, use ONLY the phases listed above.
 > See SCHEMA_REFERENCE.md for all valid values. Do NOT invent or display invalid phases.
 
-## Scope Guard (MANDATORY)
+## Scope Guard
 
 **This command is READ-ONLY.** It displays the current state of the manifold and suggests the next action. It does not modify any files.
 

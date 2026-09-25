@@ -202,7 +202,7 @@ This:
    - Future developers can see what constraints were considered
    - Audit trail is preserved
 
-## Security Intent Detection (MANDATORY)
+## Security Intent Detection
 
 Before proceeding with light mode, check the feature name and outcome for security-relevant keywords: `auth`, `token`, `password`, `permission`, `secret`, `encrypt`, `certificate`, `credential`, `oauth`, `session`, `login`.
 
@@ -247,12 +247,12 @@ If validation fails, fix the JSON structure before proceeding. The light-mode ma
 - `/manifold:m5-verify` - Full verification (can be run on light mode manifolds)
 
 
-## Interaction Rules (MANDATORY)
+## Interaction Rules
 <!-- Satisfies: RT-1 (next-step templates), RT-3 (structured input), U1 (suggest next), U2 (AskUserQuestion) -->
 
-1. **Questions → AskUserQuestion**: When you need user input during this phase, use the `AskUserQuestion` tool with structured options. NEVER ask questions as plain text without options.
-2. **Phase complete → Suggest next**: After completing this phase, ALWAYS include the concrete next command (`/manifold:mN-xxx <feature>`) and a one-line explanation of what the next phase does.
-3. **Trade-offs → Labeled options**: When presenting alternatives, use `AskUserQuestion` with labeled choices (A, B, C) and descriptions.
+1. **Decisions → AskUserQuestion**: When a reply asks the user to choose, decide, clarify, or confirm, use the `AskUserQuestion` tool with structured options rather than ending on a prose question. Rhetorical phrasing and "I will assume X — say so if not" call-outs are fine as prose.
+2. **Phase complete → Suggest next**: After completing this phase, include the concrete next command (`/manifold:mN-xxx <feature>`) and a one-line explanation of what the next phase does.
+3. **Trade-offs → Labeled options**: Labeled prose options (A, B, C) are fine for describing alternatives; when the next step depends on the user choosing one, the question goes through `AskUserQuestion`.
 
 ## Red Flags
 

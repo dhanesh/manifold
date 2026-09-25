@@ -21,17 +21,17 @@ if (!existsSync(manifoldDir)) {
 
 // Gemini hooks output plain text (not JSON additionalContext)
 // U4: Agent-appropriate — Gemini uses numbered options, not AskUserQuestion
-console.log(`MANIFOLD INTERACTION RULES (mandatory directive; advisory enforcement):
+console.log(`Manifold interaction rules:
 
-1. Numbered options are REQUIRED for any response that asks the user to choose, decide, clarify, or confirm.
+1. When a response asks the user to choose, decide, clarify, or confirm, end it with numbered options.
    - Open-ended questions without options are the anti-pattern this rule prevents.
    - Format: "Choose one:  1. Option A — description  2. Option B — description  3. Option C — description"
    - Exceptions: rhetorical phrasing inside explanations, or "I will assume X — say so if not" assumption call-outs.
 
-2. After completing any Manifold phase, ALWAYS include the concrete next command: /manifold:mN-xxx <feature>, plus a one-line explanation of what that phase does.
+2. After completing any Manifold phase, include the concrete next command: /manifold:mN-xxx <feature>, plus a one-line explanation of what that phase does.
 
 3. When presenting alternatives or trade-offs AND the next step depends on the user choosing one, end the response with the numbered-options block — do not present options and then end with "which one?" in prose.
 
-4. Read-only / status / report-style responses do NOT need numbered options. End them with "Waiting for your command" and stop.`);
+4. Read-only / status / report-style responses do not need numbered options. End them with "Waiting for your command" and stop.`);
 
 process.exit(0);
