@@ -13,6 +13,13 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+    inputs:
+      install_ref:
+        description: >-
+          Branch to fetch install/install.sh from in the published-install job.
+          Defaults to main, which is what a stranger's one-liner actually runs.
+        required: false
+        default: main
   schedule:
     # Weekly, so release rot and upstream drift surface without a push.
     - cron: '17 6 * * 1'
@@ -44,6 +51,12 @@ jobs:
   # The published `curl … | bash` one-liner installs the most recent *release*,
   # so it can never validate an unmerged push. It is checked on a schedule and
   # on demand instead, to catch release rot rather than to gate a branch.
+  #
+  # `install_ref` exists because "will merging this fix the published install?"
+  # kept being argued from first principles instead of measured. The one-liner
+  # takes its script from a branch and its binary from the latest release, so
+  # pointing this at a fix branch changes exactly one variable and answers the
+  # question against the release users have today — no merge, no release cut.
   verify-published-install:
     name: Published one-liner (release, not this push)
     runs-on: ubuntu-latest
@@ -79,9 +92,12 @@ jobs:
       - name: Run the README one-liner on a bare image
         env:
           EXPECTED_VERSION: ${{ steps.expected.outputs.expected }}
+          INSTALL_REF: ${{ inputs.install_ref || 'main' }}
         run: |
+          echo "install.sh from: $INSTALL_REF   binary + templates from: v$EXPECTED_VERSION"
           docker run --rm \
             -e EXPECTED_VERSION \
+            -e INSTALL_REF \
             -v "$PWD/install/verify-quickstart.sh:/verify-quickstart.sh:ro" \
             ubuntu:24.04 bash -c '
               set -e
@@ -91,7 +107,7 @@ jobs:
               cp /verify-quickstart.sh /home/newcomer/
               su newcomer -c "
                 export PATH=\$HOME/.local/bin:\$PATH
-                curl -fsSL https://raw.githubusercontent.com/dhanesh/manifold/main/install/install.sh | bash
+                curl -fsSL https://raw.githubusercontent.com/dhanesh/manifold/$INSTALL_REF/install/install.sh | bash
                 installed=\$(manifold --version 2>&1 | tr -d \"[:space:]\")
                 echo \"installed=\$installed expected=$EXPECTED_VERSION\"
                 if [ \"\$installed\" != \"$EXPECTED_VERSION\" ]; then
