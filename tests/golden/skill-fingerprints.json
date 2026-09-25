@@ -11,43 +11,43 @@
   },
   {
     "path": "install/commands/m-quick.md",
-    "sha256": "52c40d339cc898ebc30d223310cd711014388bbbc9f65d2d1c06f07ceda5f54a",
-    "bytes": 8930
+    "sha256": "559549ed69ff1a9f1e9181f58cf81638bf116729ef331c1c013cf7f7e51e009c",
+    "bytes": 9066
   },
   {
     "path": "install/commands/m-solve.md",
-    "sha256": "2d0cbef53799d624448b60c4da6fbfe0eccaf69ddbc1a68a88f327bbf5952a33",
-    "bytes": 9745
+    "sha256": "1e27f4c2b660321bb3eb0550843fa1e92fe07274faa57a990010903e14f0feba",
+    "bytes": 9893
   },
   {
     "path": "install/commands/m-status.md",
-    "sha256": "0380c19b3cef1587155e3891bfd36e773786ce6bd422da953fb6de5103eeb17a",
-    "bytes": 9790
+    "sha256": "0f7bee25429ffffca7d1247b4376defd5e459428773035e8f38cc1de4900c594",
+    "bytes": 9778
   },
   {
     "path": "install/commands/m0-init.md",
-    "sha256": "297dad9c9226f87ac04da2492ad04de3762531bd77f29090cf08fb7c5b00824a",
-    "bytes": 12137
+    "sha256": "e931fdc0146360911bb51c0242a73ab63cdb6db6d834876cca514d75e8e4d6b1",
+    "bytes": 12031
   },
   {
     "path": "install/commands/m1-constrain.md",
-    "sha256": "031b25b69c4d9ba43bd0c87fb4ad12e92bb575a68eb01b6aa7ffcdacd6155c2d",
-    "bytes": 14560
+    "sha256": "1477dd5f4605e0d3db505a31f5512c2ac9d0b0286bb804d843512b0fe7c79711",
+    "bytes": 14541
   },
   {
     "path": "install/commands/m2-tension.md",
-    "sha256": "e81f1a40aac6ca9e96a1d6831499b587757b07e49c8ed353a0ba791d46b3e788",
-    "bytes": 14578
+    "sha256": "f38cdbf614db08313f156826f7253edda89b5baada8c84f056889f25b3470097",
+    "bytes": 14566
   },
   {
     "path": "install/commands/m3-anchor.md",
-    "sha256": "600f18c6ed48522f1234367d860d18799021b9de4621bfec7e52dd654f5cc4d1",
-    "bytes": 15380
+    "sha256": "c2e6f385c45a186f4ee3e6f11b2cc5d7d41e0ec9a77db3994bdf5f8fe8024d24",
+    "bytes": 15086
   },
   {
     "path": "install/commands/m4-generate.md",
-    "sha256": "d173689c850dc90ea74442fdb47af240f040aa2d995a5ebc368f678c9b9f7280",
-    "bytes": 20174
+    "sha256": "f7b400c3a11c5cb7da3e9f4c35d6ac7fd5ca3b557b4c4c7c7c5d061028ef8eef",
+    "bytes": 20216
   },
   {
     "path": "install/commands/m4-prd.md",
@@ -61,13 +61,13 @@
   },
   {
     "path": "install/commands/m5-verify.md",
-    "sha256": "9d55954958343c12e4ba30cbaf5b232fe296d6d943f4c0cf8ab4ac2250660281",
-    "bytes": 16793
+    "sha256": "588235e7ec451810b5180b26f967483dacc94599c64ea55020fe96990597c073",
+    "bytes": 16769
   },
   {
     "path": "install/commands/m6-integrate.md",
-    "sha256": "b61e69366e298e0b5442c0cafd55e8c46c534aef9b5cbe716fe4941b61d672bd",
-    "bytes": 7991
+    "sha256": "29215d5a20b130b6547351d83cc55d921830f990c15fa9f6284f39bb9efb5cb9",
+    "bytes": 8052
   },
   {
     "path": "install/commands/parallel.md",

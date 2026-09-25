@@ -33,7 +33,7 @@ Backward reasoning from desired outcome to required conditions.
 
 ## Output Format: JSON+Markdown Hybrid
 
-**CRITICAL**: Generate TWO outputs, not one YAML file.
+Generate two outputs: the JSON structure and the Markdown content below.
 
 ### 1. JSON Structure (IDs, statuses, maps ONLY)
 
@@ -181,24 +181,22 @@ parent→child **edge** carries two scores in `[0,1]`:
 - **Calibrate to what an independent reviewer would assign, not to your hopes.** Before writing each
   edge, ask: *"If a skeptical reviewer who has never seen my reasoning re-scored this edge from the
   outcome and the constraints alone, what number would they pick?"* Emit **that** number. Your score
-  is correct only when it survives that re-scoring — systematic over- or under-confidence is the
-  primary defect this phase is graded on.
+  is correct only when it survives that re-scoring — systematic over- or under-confidence misleads
+  everyone who plans from the tree.
 - **Use the full scale; mid-range is the common case.** Snap each score to the nearest anchor in the
   tables above (`1.0 / 0.85 / 0.7 / 0.5 / 0.4 / 0.3`) rather than rounding everything to `1.0`.
   Reserve `confidence = 1.0` for genuinely substitutable-by-nothing, invariant-grade truths; most
   real prerequisites land at `0.7–0.85` because an alternative path usually exists. A tree whose
-  edges are all `0.9–1.0` is almost always over-confident and will lose calibration points.
-- **Raise the tree's *true* strength by selecting necessary RTs, not by inflating scores.** Two
-  scores are graded together: a *map-strength* score that rewards edges a skeptical reviewer would
-  *also* rate high (rel & conf near `1.0`), and a *calibration* score that rewards matching that
-  reviewer. The way to score well on BOTH is to **keep the tree to RTs that are genuinely
-  load-bearing** — invariant-grade, no-substitute preconditions the outcome literally cannot hold
-  without — and report their high rel/conf honestly. Do **not** pad the tree with merely-helpful RTs
-  carried at `conf 0.4–0.5`: each one drags `mean(confidence)` down and weakens map strength. If an
-  RT is only one helpful option among several, it belongs in **solution space**, not the truth tree —
-  move it there. The ideal tree is *small, fully necessary, and honestly high-scored*, not *large and
-  defensively low-scored*. Inflating a weak edge to `1.0` to chase strength is self-defeating: the
-  reviewer re-scores it low and you lose more on calibration than you gain on strength.
+  edges are all `0.9–1.0` is almost always over-confident.
+- **Raise the tree's *true* strength by selecting necessary RTs, not by inflating scores.** A strong
+  tree is one whose edges a skeptical reviewer would *also* rate high, so **keep the tree to RTs that
+  are genuinely load-bearing** — invariant-grade, no-substitute preconditions the outcome literally
+  cannot hold without — and report their high rel/conf honestly. Do **not** pad the tree with
+  merely-helpful RTs carried at `conf 0.4–0.5`: each one drags `mean(confidence)` down and dilutes the
+  tree. If an RT is only one helpful option among several, it belongs in **solution space**, not the
+  truth tree — move it there. The ideal tree is *small, fully necessary,
+  and honestly high-scored*, not *large and defensively low-scored*; a weak edge inflated to `1.0` is
+  still a weak edge.
 - **Justify each score in one clause** (in the derivation, e.g. "conf 0.7: alternative via queue
   exists"). An edge you cannot justify in a clause is a guessed score — re-derive it.
 - **Prune low-relevance edges.** Any edge with `relevance ≤ 0.3` means the RT is not actually

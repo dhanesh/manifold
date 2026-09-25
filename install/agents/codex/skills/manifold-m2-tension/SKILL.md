@@ -308,7 +308,7 @@ Next: /manifold:m3-anchor payment-retry
 10. Run `manifold validate <feature>` -- fix errors before proceeding
 11. Display summary and suggest next step
 
-## User Interaction (MANDATORY)
+## User Interaction
 
 Tension resolution is decision-heavy: picking among A/B/C resolution options, confirming TRIZ classifications, accepting propagation effects on tightened constraints. **Every decision-soliciting moment MUST go through `AskUserQuestion`** (or the agent-equivalent: numbered options for Gemini, labelled choices for Codex). The `--resolve` flag implies interactive resolution — the resolution prompts must use structured input.
 

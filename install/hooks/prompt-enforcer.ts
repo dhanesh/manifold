@@ -24,24 +24,17 @@ if (!existsSync(manifoldDir)) {
   process.exit(0);
 }
 
-// T2: Advisory at runtime — never block. But the directive language is
-// strengthened to MUST so the model can self-enforce reliably.
+// T2: Advisory at runtime — never block. Text must stay identical to
+// promptEnforcer() in cli/commands/hook.ts (the plugin's runtime path).
 const context = {
   additionalContext: [
-    'MANIFOLD INTERACTION RULES (mandatory directive; advisory enforcement):',
-    '',
-    '1. AskUserQuestion is REQUIRED for any response that asks the user to choose, decide, clarify, or confirm.',
-    '   - If your reply contains a question soliciting a user response → use AskUserQuestion (or the agent-equivalent structured input).',
-    '   - Markdown options/tables/bulleted lists that effectively ask "which one?" are NOT a substitute. Wrapping a decision in prose is the anti-pattern this rule exists to prevent.',
-    '   - Exceptions (plain prose is fine):',
-    '     a) Rhetorical phrasing inside an explanation that does NOT solicit a response.',
-    '     b) Quick "I will assume X — say so if not" assumption-call-outs where waiting for a structured answer would be heavier than just proceeding.',
-    '',
-    '2. After completing any Manifold phase, ALWAYS include the concrete next command: /manifold:mN-xxx <feature>, plus a one-line explanation of what that phase does.',
-    '',
-    '3. When presenting alternatives or trade-offs AND the next step depends on the user choosing one, wrap them in AskUserQuestion. Do not present options and then end with "which one?" in prose.',
-    '',
-    '4. Read-only / status / report-style responses (m-status, verify summaries, drift reports) do NOT need AskUserQuestion. End them with "Waiting for your command" and stop.',
+    'Manifold interaction rules:',
+    '1. When a reply asks the user to choose, decide, clarify, or confirm, ask through AskUserQuestion (or the agent-equivalent structured input).',
+    '   - Markdown options/tables/bulleted lists that effectively ask "which one?" are not a substitute. Wrapping a decision in prose is the anti-pattern this rule exists to prevent.',
+    '   - Exceptions (plain prose is fine): rhetorical phrasing that does not solicit a response, and "I will assume X — say so if not" call-outs where waiting for a structured answer would be heavier than just proceeding.',
+    '2. After completing a Manifold phase, include the concrete next command (/manifold:mN-xxx <feature>) and a one-line explanation of what that phase does.',
+    '3. Labeled prose options are fine for describing alternatives or trade-offs; when the next step depends on the user choosing one, the question goes through AskUserQuestion.',
+    '4. Read-only / status / report-style responses (m-status, verify summaries, drift reports) do not need AskUserQuestion. End them with "Waiting for your command" and stop.',
   ].join('\n'),
 };
 
