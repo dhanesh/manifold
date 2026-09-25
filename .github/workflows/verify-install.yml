@@ -28,7 +28,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: verify-install-${{ github.ref }}
+  # install_ref is part of the key: two dispatches on one ref that point the
+  # published-install job at different branches are different questions, and
+  # cancel-in-progress would otherwise kill the first to answer the second.
+  group: verify-install-${{ github.ref }}-${{ inputs.install_ref || 'main' }}
   cancel-in-progress: true
 
 jobs:
