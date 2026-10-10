@@ -46,8 +46,8 @@
   },
   {
     "path": "install/commands/m4-generate.md",
-    "sha256": "d173689c850dc90ea74442fdb47af240f040aa2d995a5ebc368f678c9b9f7280",
-    "bytes": 20174
+    "sha256": "ae3c2876b94733335d0f7b50e3493fc35c4e7b23bd17f32297a368ce99d4cf29",
+    "bytes": 18823
   },
   {
     "path": "install/commands/m4-prd.md",
