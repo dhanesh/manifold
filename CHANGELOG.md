@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.35.4](https://github.com/dhanesh/manifold/compare/v2.35.3...v2.35.4) (2026-10-10)
+
+### Bug Fixes
+
+* **install:** templates never install on linux — tar glob is rejected ([33660bf](https://github.com/dhanesh/manifold/commit/33660bf1eed3088fec4891a687940ebacba497b7))
+
 ## [2.35.3](https://github.com/dhanesh/manifold/compare/v2.35.2...v2.35.3) (2026-09-11)
 
 ### Bug Fixes
