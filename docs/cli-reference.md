@@ -136,7 +136,7 @@ manifold doctor              # Human-readable health report
 manifold doctor --json       # Machine-readable report (for CI)
 ```
 
-Runs four checks against a single shared repo snapshot:
+Runs five checks against a single shared repo snapshot:
 
 | Check | Detects |
 |-------|---------|
@@ -144,6 +144,7 @@ Runs four checks against a single shared repo snapshot:
 | `plugin-sync` | `plugin/` out of sync with `install/` |
 | `stale-fingerprints` | recorded skill fingerprints no longer matching `install/commands/` |
 | `file-drift` | files changed since their last verification baseline |
+| `constraint-cycles` | features whose constraint graph contains a directed cycle, so no satisfaction order exists |
 
 Every reported problem includes a copy-pasteable fix command.
 
