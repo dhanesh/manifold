@@ -5,6 +5,12 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.35.5](https://github.com/dhanesh/manifold/compare/v2.35.4...v2.35.5) (2026-10-10)
+
+### Bug Fixes
+
+* **m4-generate:** restore the 400-line phase-file ceiling ([63ba323](https://github.com/dhanesh/manifold/commit/63ba323f3f4252bd4d1e9c92103694b9ab00be42))
+
 ## [2.35.4](https://github.com/dhanesh/manifold/compare/v2.35.3...v2.35.4) (2026-10-10)
 
 ### Bug Fixes
