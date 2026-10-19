@@ -52,13 +52,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: 22
 
@@ -69,7 +69,7 @@ jobs:
 
       - name: Run semantic-release
         id: semantic
-        uses: cycjimmy/semantic-release-action@v6
+        uses: cycjimmy/semantic-release-action@v8
         with:
           semantic_version: 24
           # Every plugin below is major-pinned on purpose. The action installs
@@ -116,7 +116,7 @@ jobs:
 
     steps:
       - name: Checkout tagged commit
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.semantic-release.outputs.new_release_git_tag }}
 
